@@ -13,11 +13,11 @@ const TARGET_LANG_1 = 'zh-CN'
 const TARGET_LANG_2 = 'en'
 
 // ─── 艾宾浩斯复习周期（天数）───
-const EBBINGHAUS_DAYS = [1, 2, 4, 7, 15, 30, 60, 120, 240]
+const EBBINGHAUS_DAYS = [1, 2, 4, 7, 15, 30]
 
 // ─── 监听地址 ───
 const HOST = '0.0.0.0'
-const PORT = 3000
+const PORT = 443
 
 // ─── 数据目录（相对于项目根目录）───
 const DATA_DIR = 'data'
