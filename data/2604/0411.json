@@ -130,5 +130,49 @@
     "reviewStage": 0,
     "nextReview": "2026-04-12",
     "reviewHistory": []
+  },
+  {
+    "id": "mnu8q8hisbst",
+    "word": "un bagage cabine",
+    "translation": "随身行李",
+    "translation2": "cabin baggage",
+    "deckId": "default",
+    "createdAt": "2026-04-11",
+    "reviewStage": 0,
+    "nextReview": "2026-04-12",
+    "reviewHistory": []
+  },
+  {
+    "id": "mnu8qxou301a",
+    "word": "un dépliant",
+    "translation": "一张传单",
+    "translation2": "a leaflet",
+    "deckId": "default",
+    "createdAt": "2026-04-11",
+    "reviewStage": 0,
+    "nextReview": "2026-04-12",
+    "reviewHistory": []
+  },
+  {
+    "id": "mnu8tsg9mnhw",
+    "word": "des sentiers insolites",
+    "translation": "不寻常的小径",
+    "translation2": "unusual trails",
+    "deckId": "default",
+    "createdAt": "2026-04-11",
+    "reviewStage": 0,
+    "nextReview": "2026-04-12",
+    "reviewHistory": []
+  },
+  {
+    "id": "mnu8wutn8yv9",
+    "word": "un contretemps, un imprévu",
+    "translation": "挫折，不可预见的事件",
+    "translation2": "a setback, an unforeseen event",
+    "deckId": "default",
+    "createdAt": "2026-04-11",
+    "reviewStage": 0,
+    "nextReview": "2026-04-12",
+    "reviewHistory": []
   }
 ]
