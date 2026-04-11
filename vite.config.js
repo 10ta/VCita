@@ -16,7 +16,7 @@ const TARGET_LANG_2 = 'en'
 const EBBINGHAUS_DAYS = [1, 2, 4, 7, 15, 30]
 
 // ─── 监听地址 ───
-const HOST = '0.0.0.0'
+const HOST = '127.0.0.1'
 const PORT = 31777
 
 // ─── 数据目录（相对于项目根目录）───
@@ -40,7 +40,7 @@ function fileStoragePlugin(dataDir) {
     name: 'file-storage',
     configureServer(server) {
       // POST /api/write { path: "2604/0411.json", data: "..." }
-      server.middlewares.use('/api/write', async (req, res) => {
+      server.middlewares.use('/vocab-forge/api/write', async (req, res) => {
         if (req.method !== 'POST') { res.statusCode = 405; res.end(); return }
         let body = ''
         req.on('data', c => body += c)
@@ -62,7 +62,7 @@ function fileStoragePlugin(dataDir) {
       })
 
       // POST /api/read { path: "2604/0411.json" }
-      server.middlewares.use('/api/read', async (req, res) => {
+      server.middlewares.use('/vocab-forge/api/read', async (req, res) => {
         if (req.method !== 'POST') { res.statusCode = 405; res.end(); return }
         let body = ''
         req.on('data', c => body += c)
@@ -87,7 +87,7 @@ function fileStoragePlugin(dataDir) {
       })
 
       // POST /api/delete { path: "2604/0411.json" }
-      server.middlewares.use('/api/delete', async (req, res) => {
+      server.middlewares.use('/vocab-forge/api/delete', async (req, res) => {
         if (req.method !== 'POST') { res.statusCode = 405; res.end(); return }
         let body = ''
         req.on('data', c => body += c)
@@ -110,7 +110,7 @@ function fileStoragePlugin(dataDir) {
       })
 
       // GET /api/list — returns all json files in data dir
-      server.middlewares.use('/api/list', (req, res) => {
+      server.middlewares.use('/vocab-forge/api/list', (req, res) => {
         if (req.method !== 'GET') { res.statusCode = 405; res.end(); return }
         try {
           const files = []
