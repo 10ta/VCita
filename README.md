@@ -28,6 +28,23 @@ npm run dev
 
 Open http://localhost:3000 — first launch will ask for your **Anthropic API key**.
 
+PM2 守护 Vite dev server
+bash
+# 先把 vite.config.js 里的端口改回 3000（别用 443）
+# PORT = 3000
+
+pm2 start npm --name "vocab-forge" -- run dev
+pm2 save
+pm2 startup  # 按提示执行输出的那行 sudo 命令，实现开机自启
+
+pm2 startup          # 设置开机自启
+pm2 save             # 保存当前进程列表
+pm2 list             # 查看所有进程
+pm2 restart my-app   # 重启
+pm2 stop my-app      # 停止
+pm2 delete my-app    # 删除
+
+
 ### Get an API Key
 
 1. Go to [console.anthropic.com/settings/keys](https://console.anthropic.com/settings/keys)

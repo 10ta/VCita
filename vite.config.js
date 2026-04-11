@@ -17,7 +17,7 @@ const EBBINGHAUS_DAYS = [1, 2, 4, 7, 15, 30]
 
 // ─── 监听地址 ───
 const HOST = '0.0.0.0'
-const PORT = 443
+const PORT = 31777
 
 // ─── 数据目录（相对于项目根目录）───
 const DATA_DIR = 'data'
@@ -143,9 +143,11 @@ export default defineConfig({
     __TARGET_LANG_2__: JSON.stringify(TARGET_LANG_2),
     __EBBINGHAUS_DAYS__: JSON.stringify(EBBINGHAUS_DAYS),
   },
+  base: '/vocab-forge/',
   server: {
     host: HOST,
     port: PORT,
     open: false,
+	  allowedHosts: true,
   },
 })

@@ -24,24 +24,26 @@ const dateToDayPath = ds => {
 };
 
 // ─── File API helpers ───
+const BASE = import.meta.env.BASE_URL; // Vite injects the `base` from vite.config.js
+
 const api = {
   async write(p, data) {
-    await fetch("/api/write", { method: "POST", headers: { "Content-Type": "application/json" },
+    await fetch(`${BASE}api/write`, { method: "POST", headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ path: p, data: typeof data === "string" ? data : JSON.stringify(data, null, 2) }) });
   },
   async read(p) {
-    const r = await fetch("/api/read", { method: "POST", headers: { "Content-Type": "application/json" },
+    const r = await fetch(`${BASE}api/read`, { method: "POST", headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ path: p }) });
     const j = await r.json();
     if (!j.exists) return null;
     try { return JSON.parse(j.data); } catch { return j.data; }
   },
   async del(p) {
-    await fetch("/api/delete", { method: "POST", headers: { "Content-Type": "application/json" },
+    await fetch(`${BASE}api/delete`, { method: "POST", headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ path: p }) });
   },
   async list() {
-    const r = await fetch("/api/list");
+    const r = await fetch(`${BASE}api/list`);
     const j = await r.json();
     return j.files || [];
   },
