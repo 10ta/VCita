@@ -1,0 +1,50 @@
+[
+  {
+    "id": "mnu4kje9adgc",
+    "word": "l'enregistrement des bagages",
+    "translation": "行李托运",
+    "translation2": "baggage check-in",
+    "deckId": "default",
+    "createdAt": "2026-04-11",
+    "reviewStage": 0,
+    "nextReview": "2026-04-12",
+    "reviewHistory": [
+      {
+        "date": "2025-04-12",
+        "remembered": false
+      },
+      {
+        "date": "2025-04-13",
+        "remembered": false
+      },
+      {
+        "date": "2025-04-15",
+        "remembered": false
+      },
+      {
+        "date": "2025-04-18",
+        "remembered": false
+      },
+      {
+        "date": "2025-04-26",
+        "remembered": false
+      },
+      {
+        "date": "2025-05-11",
+        "remembered": false
+      },
+      {
+        "date": "2025-06-10",
+        "remembered": false
+      },
+      {
+        "date": "2025-08-09",
+        "remembered": false
+      },
+      {
+        "date": "2025-12-07",
+        "remembered": false
+      }
+    ]
+  }
+]
