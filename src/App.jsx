@@ -4,6 +4,11 @@ const INIT_SRC = __SOURCE_LANG__;
 const INIT_T1 = __TARGET_LANG_1__;
 const INIT_T2 = __TARGET_LANG_2__;
 const EBB = __EBBINGHAUS_DAYS__;
+const INIT_SHOW_SRC = __SHOW_SOURCE__;
+const INIT_SHOW_T1 = __SHOW_TARGET_1__;
+const INIT_SHOW_T2 = __SHOW_TARGET_2__;
+const PAGE_SIZES = __PAGE_SIZES__;
+const DEFAULT_PAGE_SIZE = __DEFAULT_PAGE_SIZE__;
 
 const LANGS = [
   { code: "zh-CN", label: "中文" }, { code: "ja", label: "日本語" }, { code: "ko", label: "한국어" },
@@ -13,19 +18,17 @@ const LANGS = [
 ];
 const LN = Object.fromEntries(LANGS.map(l => [l.code, l.label]));
 
-// ─── Date ───
 const todayStr = () => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`; };
 const addDays = (ds, n) => { const d = new Date(ds+"T00:00:00"); d.setDate(d.getDate()+n); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`; };
-const fmtShort = ds => ds.slice(2).replace(/-/g,""); // "2026-04-12" → "260412"
-// "2026-04-12" → "2604/0412"
-const dateToDayPath = ds => {
+const fmtShort = ds => ds.slice(2).replace(/-/g,"");
+// User-scoped path: users/{userId}/YYMM/MMDD.json
+const dateToDayPath = (userId, ds) => {
   const [y, m, d] = ds.split("-");
-  return `${y.slice(2)}${m}/${m}${d}.json`;
+  return `users/${userId}/${y.slice(2)}${m}/${m}${d}.json`;
 };
+const userMetaPath = uid => `users/${uid}/meta.json`;
 
-// ─── File API helpers ───
-const BASE = import.meta.env.BASE_URL; // Vite injects the `base` from vite.config.js
-
+const BASE = import.meta.env.BASE_URL;
 const api = {
   async write(p, data) {
     await fetch(`${BASE}api/write`, { method: "POST", headers: { "Content-Type": "application/json" },
@@ -49,14 +52,23 @@ const api = {
   },
 };
 
-// Meta (decks + lang settings) stored in data/meta.json
-const loadMeta = async () => (await api.read("meta.json")) || { decks: [{ id: "default", name: "Default", createdAt: Date.now() }], sourceLang: INIT_SRC, targetLang1: INIT_T1, targetLang2: INIT_T2 };
-const saveMeta = m => api.write("meta.json", m);
+// Global config: data/global.json stores user list + active user
+const GLOBAL_KEY = "global.json";
+const loadGlobal = async () => (await api.read(GLOBAL_KEY)) || { users: [{ id: "default", name: "Default" }], activeUser: "default" };
+const saveGlobal = g => api.write(GLOBAL_KEY, g);
 
-// Load all cards from all daily files
-const loadAllCards = async () => {
+// Per-user meta
+const loadUserMeta = async uid => (await api.read(userMetaPath(uid))) || {
+  decks: [{ id: "default", name: "Default", createdAt: Date.now() }],
+  sourceLang: INIT_SRC, targetLang1: INIT_T1, targetLang2: INIT_T2,
+};
+const saveUserMeta = (uid, m) => api.write(userMetaPath(uid), m);
+
+// Per-user cards
+const loadUserCards = async uid => {
   const files = await api.list();
-  const dayFiles = files.filter(f => f !== "meta.json");
+  const prefix = `users/${uid}/`;
+  const dayFiles = files.filter(f => f.startsWith(prefix) && !f.endsWith("meta.json"));
   const cards = [];
   for (const f of dayFiles) {
     const arr = await api.read(f);
@@ -65,9 +77,8 @@ const loadAllCards = async () => {
   return cards;
 };
 
-// Save card to its daily file
-const saveCardToDay = async (card) => {
-  const p = dateToDayPath(card.createdAt);
+const saveCardToDay = async (uid, card) => {
+  const p = dateToDayPath(uid, card.createdAt);
   let arr = (await api.read(p)) || [];
   if (!Array.isArray(arr)) arr = [];
   const idx = arr.findIndex(c => c.id === card.id);
@@ -75,16 +86,14 @@ const saveCardToDay = async (card) => {
   await api.write(p, arr);
 };
 
-// Remove card from its daily file
-const removeCardFromDay = async (card) => {
-  const p = dateToDayPath(card.createdAt);
+const removeCardFromDay = async (uid, card) => {
+  const p = dateToDayPath(uid, card.createdAt);
   let arr = (await api.read(p)) || [];
   arr = arr.filter(c => c.id !== card.id);
   if (arr.length === 0) await api.del(p);
   else await api.write(p, arr);
 };
 
-// ─── Google Translate ───
 const gTranslate = async (word, sl, tl) => {
   try {
     const r = await fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=${sl}&tl=${tl}&dt=t&dj=1&q=${encodeURIComponent(word)}`);
@@ -93,22 +102,45 @@ const gTranslate = async (word, sl, tl) => {
   } catch { return "翻译失败"; }
 };
 
-// ─── Ebbinghaus schedule dates for a card ───
 const getScheduleDates = card => EBB.map(d => addDays(card.createdAt, d));
 
-// ─── Icons ───
+// Day diff: positive = future, negative = past, 0 = today
+const dayDiff = (dateStr) => {
+  const t = new Date(todayStr()+"T00:00:00"), d = new Date(dateStr+"T00:00:00");
+  return Math.round((d - t) / 86400000);
+};
+
+// TTS via local proxy (bypasses Google referrer check)
+const speak = (text, lang) => {
+  if (!text) return;
+  const audio = new Audio(`${import.meta.env.BASE_URL}api/tts?q=${encodeURIComponent(text)}&tl=${lang}`);
+  audio.play().catch(() => {});
+};
+
 const I = {
   Plus: () => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>,
   Check: () => <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><polyline points="20 6 9 17 4 12"/></svg>,
   X: () => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>,
   Download: () => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>,
   Trash: () => <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 011-1h4a1 1 0 011 1v2"/></svg>,
-  Folder: () => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z"/></svg>,
+  Folder: () => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z"/></svg>,
   Edit: () => <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>,
+  User: () => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>,
+  ChevronDown: () => <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><polyline points="6 9 12 15 18 9"/></svg>,
+  // Nav icons
+  Book: () => <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M4 19.5A2.5 2.5 0 016.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"/></svg>,
+  PlusCircle: () => <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>,
+  RefreshCw: () => <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/></svg>,
+  Layers: () => <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg>,
+  Save: () => <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>,
+  Speaker: ({size=13}) => <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M19.07 4.93a10 10 0 010 14.14"/><path d="M15.54 8.46a5 5 0 010 7.07"/></svg>,
+  Rotate: () => <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 102.13-9.36L1 10"/></svg>,
+  ArrowUp: () => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>,
+  ArrowDown: () => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/></svg>,
 };
 
-// ═══ MAIN ═══
 export default function App() {
+  const [global, setGlobal] = useState(null);
   const [meta, setMeta] = useState(null);
   const [cards, setCards] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -119,29 +151,105 @@ export default function App() {
   const [translating, setTranslating] = useState(false);
   const [reviewIndex, setReviewIndex] = useState(0);
   const [reviewRevealed, setReviewRevealed] = useState(false);
+  const [reviewDate, setReviewDate] = useState(todayStr());
   const [newDeckName, setNewDeckName] = useState("");
   const [showDeckModal, setShowDeckModal] = useState(false);
+  const [renameDeckId, setRenameDeckId] = useState(null);
+  const [renameDeckVal, setRenameDeckVal] = useState("");
   const [deleteDeckConfirm, setDeleteDeckConfirm] = useState(null);
   const [toast, setToast] = useState(null);
   const [selected, setSelected] = useState(new Set());
   const [editingCard, setEditingCard] = useState(null);
+  const [editT0, setEditT0] = useState("");
   const [editT1, setEditT1] = useState("");
   const [editT2, setEditT2] = useState("");
   const [dayFiles, setDayFiles] = useState([]);
+  const [deckExpanded, setDeckExpanded] = useState(false);
+  // User management
+  const [newUserName, setNewUserName] = useState("");
+  const [showUserModal, setShowUserModal] = useState(false);
+  const [deleteUserConfirm, setDeleteUserConfirm] = useState(null);
+  const [exportUsers, setExportUsers] = useState(new Set());
+  const [autoPlay, setAutoPlay] = useState(true);
+  const [showSrc, setShowSrc] = useState(INIT_SHOW_SRC);
+  const [showT1, setShowT1] = useState(INIT_SHOW_T1);
+  const [showT2, setShowT2] = useState(INIT_SHOW_T2);
+  const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE);
+  const [page, setPage] = useState(0);
+  const [canScroll, setCanScroll] = useState(false);
   const inputRef = useRef(null);
+  const deckRowRef = useRef(null);
+
+  const uid = () => global?.activeUser || "default";
 
   const reload = async () => {
-    const [m, c, f] = await Promise.all([loadMeta(), loadAllCards(), api.list()]);
+    const g = await loadGlobal();
+    setGlobal(g);
+    const u = g.activeUser || "default";
+    const [m, c, f] = await Promise.all([loadUserMeta(u), loadUserCards(u), api.list()]);
     if (!m.sourceLang) m.sourceLang = INIT_SRC;
     if (!m.targetLang1) m.targetLang1 = INIT_T1;
     if (!m.targetLang2) m.targetLang2 = INIT_T2;
-    setMeta(m); setCards(c); setDayFiles(f.filter(x => x !== "meta.json"));
+    setMeta(m); setCards(c);
+    setDayFiles(f.filter(x => x.startsWith(`users/${u}/`) && !x.endsWith("meta.json")));
   };
 
   useEffect(() => { reload().then(() => setLoading(false)); }, []);
 
-  const updateMeta = async (m) => { setMeta(m); await saveMeta(m); };
+  // Track if page is scrollable
+  useEffect(() => {
+    const check = () => setCanScroll(document.documentElement.scrollHeight > window.innerHeight + 50);
+    check();
+    window.addEventListener("resize", check);
+    const observer = new MutationObserver(check);
+    observer.observe(document.body, { childList: true, subtree: true });
+    return () => { window.removeEventListener("resize", check); observer.disconnect(); };
+  }, []);
+
+  const updateMeta = async m => { setMeta(m); await saveUserMeta(uid(), m); };
+  const updateGlobal = async g => { setGlobal(g); await saveGlobal(g); };
   const showToast = msg => { setToast(msg); setTimeout(() => setToast(null), 2200); };
+
+  // Switch user
+  const switchUser = async userId => {
+    const g = { ...global, activeUser: userId };
+    await saveGlobal(g);
+    setActiveDeck("default"); setSelected(new Set()); setView("home");
+    // Full reload with new user
+    setLoading(true);
+    const [m, c, f] = await Promise.all([loadUserMeta(userId), loadUserCards(userId), api.list()]);
+    if (!m.sourceLang) m.sourceLang = INIT_SRC;
+    if (!m.targetLang1) m.targetLang1 = INIT_T1;
+    if (!m.targetLang2) m.targetLang2 = INIT_T2;
+    setGlobal(g); setMeta(m); setCards(c);
+    setDayFiles(f.filter(x => x.startsWith(`users/${userId}/`) && !x.endsWith("meta.json")));
+    setLoading(false);
+  };
+
+  const createUser = async () => {
+    if (!newUserName.trim()) return;
+    const id = Date.now().toString(36);
+    const g = { ...global, users: [...global.users, { id, name: newUserName.trim() }] };
+    await saveGlobal(g); setGlobal(g);
+    // Init user meta
+    await saveUserMeta(id, { decks: [{ id: "default", name: "Default", createdAt: Date.now() }], sourceLang: INIT_SRC, targetLang1: INIT_T1, targetLang2: INIT_T2 });
+    setNewUserName(""); setShowUserModal(false);
+    showToast(`User "${newUserName.trim()}" created`);
+  };
+
+  const deleteUser = async userId => {
+    if (userId === "default") return;
+    // Delete all user files
+    const files = await api.list();
+    const prefix = `users/${userId}/`;
+    for (const f of files.filter(f => f.startsWith(prefix))) await api.del(f);
+    const g = { ...global, users: global.users.filter(u => u.id !== userId), activeUser: global.activeUser === userId ? "default" : global.activeUser };
+    await saveGlobal(g);
+    setDeleteUserConfirm(null);
+    if (global.activeUser === userId) await switchUser("default");
+    else setGlobal(g);
+    showToast("User deleted");
+  };
 
   // ─── Card ops ───
   const addCard = async () => {
@@ -156,71 +264,64 @@ export default function App() {
       word: newWord.trim(), translation: t1, translation2: t2,
       deckId: activeDeck, createdAt: addDate,
       reviewStage: 0, nextReview: addDays(addDate, EBB[0]),
-      reviewHistory: [], // { date, remembered }
+      reviewHistory: [],
     };
-    await saveCardToDay(card);
+    await saveCardToDay(uid(), card);
     await reload();
     setNewWord(""); setTranslating(false);
     showToast(`✓ ${card.word} → ${t1} / ${t2}`);
-    inputRef.current?.focus();
+    if (autoPlay) speak(card.word, meta.sourceLang);
+    // Keep focus on input
+    setTimeout(() => inputRef.current?.focus(), 50);
   };
 
-  const deleteCard = async (card) => {
-    await removeCardFromDay(card); await reload();
+  const deleteCard = async card => {
+    await removeCardFromDay(uid(), card); await reload();
     setSelected(s => { const n = new Set(s); n.delete(card.id); return n; });
   };
-
   const batchDelete = async () => {
     if (selected.size === 0) return;
-    const toDelete = cards.filter(c => selected.has(c.id));
-    for (const c of toDelete) await removeCardFromDay(c);
+    for (const c of cards.filter(c => selected.has(c.id))) await removeCardFromDay(uid(), c);
     await reload(); showToast(`Deleted ${selected.size} cards`); setSelected(new Set());
   };
-
   const toggleSelect = id => setSelected(s => { const n = new Set(s); n.has(id)?n.delete(id):n.add(id); return n; });
-
-  const updateCardTranslation = async (card, t1, t2) => {
-    await saveCardToDay({ ...card, translation: t1, translation2: t2 });
+  const updateCardTranslation = async (card, t0, t1, t2) => {
+    const rot = (card.rot || 0) % 3;
+    const fields = ["word", "translation", "translation2"];
+    const updated = { ...card };
+    updated[fields[rot]] = t0;
+    updated[fields[(rot+1)%3]] = t1;
+    updated[fields[(rot+2)%3]] = t2;
+    await saveCardToDay(uid(), updated);
     await reload(); setEditingCard(null); showToast("Updated");
   };
-
   const updateCardDate = async (card, newDate) => {
-    await removeCardFromDay(card);
-    // Recalculate entire schedule based on new date
-    // Keep reviewHistory as-is, but recalc nextReview based on current stage
+    await removeCardFromDay(uid(), card);
     const updated = { ...card, createdAt: newDate, nextReview: addDays(newDate, EBB[card.reviewStage]) };
-    await saveCardToDay(updated);
-    await reload();
+    await saveCardToDay(uid(), updated); await reload();
   };
 
-  // ─── Review logic ───
-  // When user reviews: mark ALL past-due schedule dates as reviewed
+  const [reviewSnapshot, setReviewSnapshot] = useState(null); // snapshot of card after review
+
   const doReview = async (cardId, remembered) => {
     const card = cards.find(c => c.id === cardId);
     if (!card) return;
-    const td = todayStr();
+    const rd = reviewDate;
     const sched = getScheduleDates(card);
-
-    // Find all schedule dates that are <= today and haven't been reviewed yet
     const newHistory = [...card.reviewHistory];
     sched.forEach(schDate => {
-      if (schDate <= td && !newHistory.find(h => h.date === schDate)) {
+      if (schDate <= rd && !newHistory.find(h => h.date === schDate))
         newHistory.push({ date: schDate, remembered });
-      }
     });
-
-    // Advance/regress stage
-    let ns = remembered
-      ? Math.min(card.reviewStage + 1, EBB.length - 1)
-      : Math.max(0, card.reviewStage - 1);
-
-    const updated = { ...card, reviewStage: ns, nextReview: addDays(td, EBB[ns]), reviewHistory: newHistory };
-    await saveCardToDay(updated);
-    await reload();
+    let ns = remembered ? Math.min(card.reviewStage + 1, EBB.length - 1) : Math.max(0, card.reviewStage - 1);
+    const updated = { ...card, reviewStage: ns, nextReview: addDays(rd, EBB[ns]), reviewHistory: newHistory };
+    await saveCardToDay(uid(), updated);
+    // Snapshot the card for display before reload changes dueCards
+    setReviewSnapshot(updated);
     setReviewRevealed(true);
+    await reload();
   };
-
-  const nextReviewCard = () => { setReviewRevealed(false); setReviewIndex(i => i + 1); };
+  const nextReviewCard = () => { setReviewRevealed(false); setReviewSnapshot(null); setReviewIndex(i => i + 1); };
 
   // ─── Deck ops ───
   const createDeck = async () => {
@@ -230,11 +331,16 @@ export default function App() {
     setNewDeckName(""); setShowDeckModal(false); setActiveDeck(deck.id);
     showToast(`Deck "${deck.name}" created`);
   };
+  const renameDeck = async () => {
+    if (!renameDeckVal.trim() || !renameDeckId) return;
+    await updateMeta({ ...meta, decks: meta.decks.map(d => d.id === renameDeckId ? { ...d, name: renameDeckVal.trim() } : d) });
+    setRenameDeckId(null); setRenameDeckVal(""); showToast("Deck renamed");
+  };
   const doDeleteDeck = async () => {
     const deckId = deleteDeckConfirm;
     const dn = meta.decks.find(d => d.id === deckId)?.name;
     const toRemove = cards.filter(c => c.deckId === deckId);
-    for (const c of toRemove) await removeCardFromDay(c);
+    for (const c of toRemove) await removeCardFromDay(uid(), c);
     await updateMeta({ ...meta, decks: meta.decks.filter(d => d.id !== deckId) });
     await reload();
     if (activeDeck === deckId) setActiveDeck("default");
@@ -245,80 +351,91 @@ export default function App() {
   // ─── Computed ───
   const td = todayStr();
   const deckCards = cards.filter(c => c.deckId === activeDeck);
-  const dueCards = cards.filter(c => c.deckId === activeDeck && c.nextReview <= td);
-  const allDueCount = cards.filter(c => c.nextReview <= td).length;
+  // A card is due if: nextReview <= reviewDate, OR any unreviewed schedule date <= reviewDate
+  const isDueOn = (card, date) => {
+    if (card.nextReview <= date) return true;
+    const sched = getScheduleDates(card);
+    return sched.some(sd => sd <= date && !card.reviewHistory.find(h => h.date === sd));
+  };
+  const dueCards = cards.filter(c => c.deckId === activeDeck && isDueOn(c, reviewDate));
+  const allDueCount = cards.filter(c => isDueOn(c, td)).length;
   const currentDeck = meta?.decks.find(d => d.id === activeDeck);
   const toggleSelectAll = () => {
     if (selected.size === deckCards.length) setSelected(new Set());
     else setSelected(new Set(deckCards.map(c => c.id)));
   };
 
-  // ─── Export / Import ───
+  // ─── Export (multi-user) / Import ───
   const exportAll = async () => {
+    const usersToExport = exportUsers.size > 0 ? [...exportUsers] : [uid()];
     const files = {};
     const allFiles = await api.list();
     for (const f of allFiles) {
-      const data = await api.read(f);
-      files[f] = data;
+      if (f === GLOBAL_KEY || usersToExport.some(u => f.startsWith(`users/${u}/`))) {
+        files[f] = await api.read(f);
+      }
     }
-    const blob = new Blob([JSON.stringify({ version: 3, exportedAt: new Date().toISOString(), files }, null, 2)], { type: "application/json" });
+    const blob = new Blob([JSON.stringify({ version: 4, exportedAt: new Date().toISOString(), files }, null, 2)], { type: "application/json" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a"); a.href = url; a.download = `vocabforge-${td}.json`; a.click();
     URL.revokeObjectURL(url);
-    showToast(`Exported ${allFiles.length} files`);
+    showToast(`Exported ${Object.keys(files).length} files (${usersToExport.length} users)`);
   };
 
-  const importAll = (e) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+  const importAll = e => {
+    const file = e.target.files?.[0]; if (!file) return;
     const reader = new FileReader();
-    reader.onload = async (ev) => {
+    reader.onload = async ev => {
       try {
         const imp = JSON.parse(ev.target.result);
-        if (imp.version === 3 && imp.files) {
-          for (const [path, data] of Object.entries(imp.files)) {
-            await api.write(path, typeof data === "string" ? data : JSON.stringify(data, null, 2));
-          }
+        if (imp.files) {
+          for (const [p, data] of Object.entries(imp.files))
+            await api.write(p, typeof data === "string" ? data : JSON.stringify(data, null, 2));
         } else if (imp.decks && imp.cards) {
-          // Legacy v1/v2
-          await saveMeta({ ...(await loadMeta()), decks: imp.decks });
-          for (const c of imp.cards) await saveCardToDay(c);
+          await saveUserMeta(uid(), { ...(await loadUserMeta(uid())), decks: imp.decks });
+          for (const c of imp.cards) await saveCardToDay(uid(), c);
         }
-        await reload();
-        showToast("Import complete");
+        await reload(); showToast("Import complete");
       } catch { showToast("Import failed"); }
     };
-    reader.readAsText(file);
-    e.target.value = "";
+    reader.readAsText(file); e.target.value = "";
   };
 
   const setSourceLang = v => updateMeta({ ...meta, sourceLang: v });
   const setTargetLang1 = v => updateMeta({ ...meta, targetLang1: v });
   const setTargetLang2 = v => updateMeta({ ...meta, targetLang2: v });
 
-  if (loading || !meta) return <div style={S.loadingScreen}><div style={S.loadingPulse}>鍛</div></div>;
+  if (loading || !meta || !global) return <div style={S.loadingScreen}><div style={S.loadingPulse}>鍛</div></div>;
 
-  // ─── Schedule dots ───
+  const toggleReviewDot = async (card, schDate) => {
+    const rh = card.reviewHistory.find(h => h.date === schDate);
+    if (!rh) return; // only toggle already-reviewed dots
+    const newHistory = card.reviewHistory.map(h => h.date === schDate ? { ...h, remembered: !h.remembered } : h);
+    await saveCardToDay(uid(), { ...card, reviewHistory: newHistory });
+    await reload();
+  };
+
   const ScheduleDots = ({ card }) => {
     const sched = getScheduleDates(card);
     return (
       <div style={{ display: "flex", gap: 3, flexWrap: "wrap", alignItems: "center" }}>
         {sched.map((schDate, i) => {
           const rh = card.reviewHistory.find(h => h.date === schDate);
-          const isToday = schDate === td;
-          const isPast = schDate < td;
-          let bg = "#333", clr = "#666"; // future
-          if (rh) {
-            bg = rh.remembered ? "#16a34a" : "#dc2626"; clr = "#fff";
-          } else if (isToday) {
-            bg = accent; clr = "#fff";
-          } else if (isPast) {
-            bg = "#555"; clr = "#aaa"; // missed
-          }
+          const isToday = schDate === td, isPast = schDate < td;
+          const diff = dayDiff(schDate);
+          let bg = "#333", clr = "#666";
+          if (rh) { bg = rh.remembered ? "#16a34a" : "#dc2626"; clr = "#fff"; }
+          else if (isToday) { bg = accent; clr = "#fff"; }
+          else if (isPast) { bg = "#555"; clr = "#aaa"; }
+          const diffLabel = isToday ? "" : diff > 0 ? `+${diff}` : `${diff}`;
+          const clickable = !!rh;
           return (
-            <span key={i} title={`Day ${EBB[i]} → ${schDate}`}
+            <span key={i} title={`Day ${EBB[i]} → ${schDate}${clickable ? " (click to toggle)" : ""}`}
+              onClick={clickable ? (e) => { e.stopPropagation(); toggleReviewDot(card, schDate); } : undefined}
               style={{ fontFamily: mono, fontSize: 9, padding: "2px 5px", borderRadius: 3,
-                background: bg, color: clr, lineHeight: 1.2 }}>
+                background: bg, color: clr, lineHeight: 1.2, display: "inline-flex", flexDirection: "column", alignItems: "center", gap: 0,
+                cursor: clickable ? "pointer" : "default" }}>
+              {diffLabel && <span style={{ fontSize: 7, opacity: 0.7, lineHeight: 1 }}>{diffLabel}</span>}
               {fmtShort(schDate)}
             </span>
           );
@@ -327,41 +444,57 @@ export default function App() {
     );
   };
 
-  const startEdit = card => { setEditingCard(card.id); setEditT1(card.translation); setEditT2(card.translation2 || ""); };
+  const startEdit = card => {
+    const rot = (card.rot || 0) % 3;
+    const texts = [card.word, card.translation, card.translation2];
+    setEditingCard(card.id);
+    setEditT0(texts[rot] || "");
+    setEditT1(texts[(rot+1)%3] || "");
+    setEditT2(texts[(rot+2)%3] || "");
+  };
+  const LangSelect = ({ value, onChange }) => <select style={S.langSel} value={value} onChange={e => onChange(e.target.value)}>{LANGS.map(l => <option key={l.code} value={l.code}>{l.label}</option>)}</select>;
+  const DateInput = ({ value, onChange, style: sx }) => <input type="date" value={value} onChange={e => e.target.value && onChange(e.target.value)} style={{ ...S.dateInput, ...sx }}/>;
 
-  const LangSelect = ({ value, onChange }) => (
-    <select style={S.langSel} value={value} onChange={e => onChange(e.target.value)}>
-      {LANGS.map(l => <option key={l.code} value={l.code}>{l.label}</option>)}
-    </select>
-  );
+  const activeUser = global.users.find(u => u.id === global.activeUser) || global.users[0];
+  const NAV = [
+    { id: "home", label: "词库", icon: <I.Book/> },
+    { id: "add", label: "添加", icon: <I.PlusCircle/> },
+    { id: "review", label: `复习${dueCards.length?` (${dueCards.length})`:""}`, icon: <I.RefreshCw/> },
+    { id: "decks", label: "牌组", icon: <I.Layers/> },
+    { id: "export", label: "备份", icon: <I.Save/> },
+    { id: "users", label: "用户", icon: <I.User/> },
+  ];
 
-  // Date input formatted as YYYY/MM/DD via text display
-  const DateInput = ({ value, onChange, style: sx }) => (
-    <input type="date" value={value} onChange={e => e.target.value && onChange(e.target.value)}
-      style={{ ...S.dateInput, ...sx }} />
-  );
+  const toggleExportUser = uid => setExportUsers(s => { const n = new Set(s); n.has(uid)?n.delete(uid):n.add(uid); return n; });
 
   return (
     <div style={S.root}>
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&family=Noto+Sans+SC:wght@300;400;500;700&family=Crimson+Pro:wght@400;500;600;700&display=swap');
-        * { box-sizing:border-box; margin:0; padding:0; }
-        body { background:#0a0a0b; margin:0; }
-        input:focus,select:focus,button:focus { outline:none; }
-        ::selection { background:#e8440033; color:#fff; }
-        @keyframes fadeUp { from{opacity:0;transform:translateY(12px)} to{opacity:1;transform:translateY(0)} }
-        @keyframes slideIn { from{opacity:0;transform:translateX(-8px)} to{opacity:1;transform:translateX(0)} }
-        @keyframes pulse { 0%,100%{opacity:.4} 50%{opacity:1} }
-        @keyframes toast { 0%{opacity:0;transform:translateY(20px)} 10%{opacity:1;transform:translateY(0)} 90%{opacity:1} 100%{opacity:0;transform:translateY(-10px)} }
-        @keyframes cardFlip { from{transform:rotateX(90deg);opacity:0} to{transform:rotateX(0);opacity:1} }
-        .hi:hover { background:#161618 !important; }
-        .nb:hover { background:#1a1a1e !important; }
-        .ab:hover { transform:translateY(-1px); filter:brightness(1.1); }
-        .dk:hover { border-color:#e84400 !important; }
-        input::placeholder { color:#444; }
-        .cb { appearance:none;width:16px;height:16px;border:2px solid #333;border-radius:4px;cursor:pointer;flex-shrink:0;position:relative;background:transparent; }
-        .cb:checked { border-color:#e84400;background:#e84400; }
-        .cb:checked::after { content:'✓';position:absolute;top:-2px;left:2px;font-size:11px;color:#fff;font-weight:700; }
+        *{box-sizing:border-box;margin:0;padding:0}body{background:#0a0a0b;margin:0}
+        input:focus,select:focus,button:focus{outline:none}::selection{background:#e8440033;color:#fff}
+        @keyframes fadeUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+        @keyframes slideIn{from{opacity:0;transform:translateX(-8px)}to{opacity:1;transform:translateX(0)}}
+        @keyframes pulse{0%,100%{opacity:.4}50%{opacity:1}}
+        @keyframes toast{0%{opacity:0;transform:translateY(20px)}10%{opacity:1;transform:translateY(0)}90%{opacity:1}100%{opacity:0;transform:translateY(-10px)}}
+        @keyframes cardFlip{from{transform:rotateX(90deg);opacity:0}to{transform:rotateX(0);opacity:1}}
+        .hi:hover{background:#161618!important}
+        @media(hover:none){.hi:hover{background:inherit!important}}
+        .card-due{border:1px solid #e8440088!important;box-shadow:0 0 8px #e8440022}
+        .card-sel{background:#1a1410!important;border-left:3px solid #e84400!important}.nb:hover:not(.nav-active){background:#1a1a1e!important}
+        .ab:hover{transform:translateY(-1px);filter:brightness(1.1)}.dk:hover{border-color:#e84400!important}
+        .spk:hover{color:#e84400!important}
+        .scb:hover{opacity:1!important;border-color:#e84400!important;color:#e84400!important}
+        input::placeholder{color:#444}
+        .cb{appearance:none;width:16px;height:16px;border:2px solid #333;border-radius:4px;cursor:pointer;flex-shrink:0;position:relative;background:transparent;outline:none}
+        .cb:checked{border-color:#e84400;background:#e84400}.cb:checked::after{content:'✓';position:absolute;top:-2px;left:2px;font-size:11px;color:#fff;font-weight:700}
+        .cb:focus{box-shadow:none}
+        .pill{font-family:'JetBrains Mono',monospace;font-size:11px;padding:4px 10px;border-radius:20px;cursor:pointer;border:1px solid #333;background:transparent;color:#777;transition:all .15s;display:inline-flex;align-items:center;gap:4px}
+        .pill:hover{border-color:#555;color:#e8e6e3}.pill.on{border-color:#e84400;background:#e8440022;color:#e84400}
+        .deck-tabs{display:flex;gap:0;overflow:hidden;flex:1;min-width:0}
+        .deck-tabs.expanded{flex-wrap:wrap;overflow:visible}
+        .dtab{font-family:'JetBrains Mono',monospace;font-size:11px;padding:4px 10px;border-radius:4px;cursor:pointer;border:1px solid #222226;background:transparent;color:#777;white-space:nowrap;transition:all .15s}
+        .dtab:hover{background:#1a1a1e;color:#e8e6e3}.dtab.active{background:#e84400;color:#fff;border-color:#e84400}
       `}</style>
 
       {toast && <div style={S.toast}>{toast}</div>}
@@ -373,101 +506,164 @@ export default function App() {
           <span style={S.logoText}>VocabForge</span>
         </div>
         <div style={S.headerRight}>
-          {allDueCount > 0 && <div style={S.dueBadge} onClick={() => setView("review")}>{allDueCount} due</div>}
-          <div style={S.langDisplay}>
-            <LangSelect value={meta.sourceLang} onChange={setSourceLang}/>
-            <span style={{ color: accent, fontSize: 11, fontFamily: mono }}>→</span>
-            <LangSelect value={meta.targetLang1} onChange={setTargetLang1}/>
-            <span style={{ color: "#555", fontSize: 10, fontFamily: mono }}>/</span>
-            <LangSelect value={meta.targetLang2} onChange={setTargetLang2}/>
-          </div>
+          {allDueCount > 0 && <div style={S.dueBadge} onClick={() => { setView("review"); setReviewIndex(0); setReviewRevealed(false); }}>{allDueCount} due</div>}
+          <LangSelect value={meta.sourceLang} onChange={setSourceLang}/>
+          <span style={{ color: accent, fontSize: 11, fontFamily: mono }}>→</span>
+          <LangSelect value={meta.targetLang1} onChange={setTargetLang1}/>
+          <span style={{ color: "#555", fontSize: 10, fontFamily: mono }}>/</span>
+          <LangSelect value={meta.targetLang2} onChange={setTargetLang2}/>
         </div>
       </header>
 
-      {/* Nav */}
+      {/* Nav — fix: use onClick to set view, no toggling issues */}
       <nav style={S.nav}>
-        {[
-          { id: "home", label: "词库" }, { id: "add", label: "添加" },
-          { id: "review", label: `复习${dueCards.length?` (${dueCards.length})`:""}` },
-          { id: "decks", label: "牌组" }, { id: "export", label: "备份" },
-        ].map(t => (
-          <button key={t.id} className="nb" style={{ ...S.navBtn, ...(view===t.id?S.navBtnActive:{}) }}
-            onClick={() => { setView(t.id); setSelected(new Set()); if(t.id==="review"){setReviewIndex(0);setReviewRevealed(false);} }}>{t.label}</button>
+        {NAV.map(t => (
+          <button key={t.id} className={`nb${view === t.id ? " nav-active" : ""}`}
+            style={{ ...S.navBtn, ...(view === t.id ? S.navBtnActive : {}) }}
+            onClick={() => { setView(t.id); setSelected(new Set()); if (t.id==="review") { setReviewIndex(0); setReviewRevealed(false); } }}>
+            {t.icon} {t.label}
+          </button>
         ))}
+        {/* Active user indicator */}
+        <div style={{ marginLeft: "auto", fontFamily: mono, fontSize: 11, color: textDim, display: "flex", alignItems: "center", gap: 4 }}>
+          <I.User/> {activeUser?.name}
+        </div>
       </nav>
 
-      {/* Deck selector */}
-      <div style={S.deckSelector}>
-        <I.Folder/>
-        <select style={S.deckSelect} value={activeDeck} onChange={e => { setActiveDeck(e.target.value); setSelected(new Set()); }}>
-          {meta.decks.map(d => <option key={d.id} value={d.id}>{d.name} ({cards.filter(c=>c.deckId===d.id).length})</option>)}
-        </select>
-      </div>
+      {/* Deck tabs — inline, one row, expand button */}
+      {(view === "home" || view === "add" || view === "review") && (
+        <div style={{ display: "flex", alignItems: "center", gap: 6, padding: "8px 0", borderBottom: `1px solid ${border}` }}>
+          <div className={`deck-tabs${deckExpanded ? " expanded" : ""}`} ref={deckRowRef}>
+            {meta.decks.map(d => (
+              <button key={d.id} className={`dtab${activeDeck===d.id?" active":""}`}
+                onClick={() => { setActiveDeck(d.id); setSelected(new Set()); }}>
+                {d.name} ({cards.filter(c=>c.deckId===d.id).length})
+              </button>
+            ))}
+          </div>
+          <button style={{ background: "transparent", border: "none", color: textDim, cursor: "pointer", padding: 4, flexShrink: 0, transform: deckExpanded ? "rotate(180deg)" : "none", transition: "transform .2s" }}
+            onClick={() => setDeckExpanded(!deckExpanded)}>
+            <I.ChevronDown/>
+          </button>
+        </div>
+      )}
 
       <main style={S.main}>
 
         {/* ═══ HOME ═══ */}
-        {view === "home" && (
+        {view === "home" && (() => {
+          const sorted = [...deckCards].sort((a,b) => b.createdAt.localeCompare(a.createdAt) || b.id.localeCompare(a.id));
+          const totalPages = Math.max(1, Math.ceil(sorted.length / pageSize));
+          const safePage = Math.min(page, totalPages - 1);
+          const paged = sorted.slice(safePage * pageSize, (safePage + 1) * pageSize);
+
+          // Rotation helper: get display order for a card
+          const getDisplay = (card) => {
+            const rot = (card.rot || 0) % 3;
+            const texts = [card.word, card.translation, card.translation2];
+            const langs = [meta.sourceLang, meta.targetLang1, meta.targetLang2];
+            return { src: texts[rot], t1: texts[(rot+1)%3], t2: texts[(rot+2)%3],
+                     srcL: langs[rot], t1L: langs[(rot+1)%3], t2L: langs[(rot+2)%3] };
+          };
+          const rotateCard = async (cardId) => {
+            const card = cards.find(c => c.id === cardId);
+            if (!card) return;
+            const updated = { ...card, rot: ((card.rot || 0) + 1) % 3 };
+            await saveCardToDay(uid(), updated);
+            await reload();
+            showToast("Rotated");
+          };
+
+          return (
           <div style={S.content}>
-            <div style={S.sectionHeader}>
-              <h2 style={S.sectionTitle}>{currentDeck?.name||"Default"}</h2>
-              <span style={S.cardCount}>{deckCards.length} cards</span>
-            </div>
             {deckCards.length > 0 && (
-              <div style={S.batchBar}>
-                <label style={S.batchCheck}>
-                  <input type="checkbox" className="cb" checked={selected.size===deckCards.length&&deckCards.length>0} onChange={toggleSelectAll}/>
-                  <span style={S.batchLabel}>{selected.size>0?`${selected.size} selected`:"Select all"}</span>
-                </label>
-                {selected.size > 0 && <button className="ab" style={S.batchDeleteBtn} onClick={batchDelete}><I.Trash/> Delete</button>}
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "8px 0", marginBottom: 4, gap: 8, flexWrap: "wrap" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
+                  <button className={`pill${selected.size===deckCards.length&&deckCards.length>0?" on":""}`} onClick={toggleSelectAll}>
+                    {selected.size>0?`${selected.size} selected`:"Select all"}
+                  </button>
+                  <button className={`pill${showSrc?" on":""}`} onClick={()=>setShowSrc(!showSrc)}>目标</button>
+                  <button className={`pill${showT1?" on":""}`} onClick={()=>setShowT1(!showT1)}>翻译1</button>
+                  <button className={`pill${showT2?" on":""}`} onClick={()=>setShowT2(!showT2)}>翻译2</button>
+                </div>
+                <div style={{ display: "flex", gap: 6 }}>
+                  {selected.size > 0 && <button className="pill on" style={{borderColor:"#16a34a",color:"#4ade80",background:"#16a34a22"}} onClick={async () => { for (const id of selected) await rotateCard(id); }}><I.Rotate/> Rotate</button>}
+                  {selected.size > 0 && <button className="pill on" style={{borderColor:"#dc2626",color:"#f87171",background:"#dc262622"}} onClick={batchDelete}><I.Trash/> Delete</button>}
+                </div>
               </div>
             )}
             {deckCards.length === 0 ? (
-              <div style={S.empty}>
-                <p style={S.emptyText}>No cards yet</p>
-                <button className="ab" style={S.emptyBtn} onClick={() => setView("add")}><I.Plus/> Add word</button>
-              </div>
-            ) : (
+              <div style={S.empty}><p style={S.emptyText}>No cards yet</p><button className="ab" style={S.emptyBtn} onClick={() => setView("add")}><I.Plus/> Add word</button></div>
+            ) : (<>
               <div style={S.cardList}>
-                {[...deckCards].sort((a,b) => a.nextReview<=td?-1:1).map((card, i) => {
+                {paged.map((card, i) => {
                   const isEditing = editingCard === card.id;
+                  const isDue = isDueOn(card, td);
+                  const isSel = selected.has(card.id);
+                  const d = getDisplay(card);
                   return (
-                    <div key={card.id} className="hi" style={{ ...S.cardItem, animationDelay: `${i*30}ms`,
-                      ...(selected.has(card.id)?{background:"#1a1410",borderLeft:`3px solid ${accent}`}:{}) }}>
-                      <input type="checkbox" className="cb" checked={selected.has(card.id)}
+                    <div key={card.id} className={`hi${isSel?" card-sel":""}${isDue && !isSel?" card-due":""}`} style={{ ...S.cardItem, animationDelay: `${Math.min(i,20)*25}ms` }}>
+                      <input type="checkbox" className="cb" checked={isSel}
                         onChange={() => toggleSelect(card.id)} style={{ marginRight: 10, marginTop: 4 }}/>
                       <div style={{ flex: 1, minWidth: 0 }}>
-                        <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 3 }}>
-                          <span style={S.cardWord}>{card.word}</span>
-                        </div>
+                        {/* Source line */}
+                        {showSrc && (
+                          <div style={{ display: "flex", alignItems: "center", gap: 4, marginBottom: 3 }}>
+                            <span style={S.cardWord}>{d.src}</span>
+                            <button className="spk" style={S.speakBtn} onClick={e => { e.stopPropagation(); speak(d.src, d.srcL); }} title={LN[d.srcL]}><I.Speaker/></button>
+                          </div>
+                        )}
+                        {/* Target lines */}
                         {isEditing ? (
-                          <div style={{ display: "flex", gap: 6, alignItems: "center", marginTop: 4 }}>
-                            <input style={S.editInput} value={editT1} onChange={e => setEditT1(e.target.value)} placeholder={LN[meta.targetLang1]}/>
-                            <input style={S.editInput} value={editT2} onChange={e => setEditT2(e.target.value)} placeholder={LN[meta.targetLang2]}/>
-                            <button style={S.editSave} onClick={() => updateCardTranslation(card,editT1,editT2)}>✓</button>
+                          <div style={{ display: "flex", gap: 6, alignItems: "center", marginTop: 4, flexWrap: "wrap" }}>
+                            <input style={{ ...S.editInput, fontWeight: 600 }} value={editT0} onChange={e => setEditT0(e.target.value)} placeholder={LN[d.srcL]}/>
+                            <input style={S.editInput} value={editT1} onChange={e => setEditT1(e.target.value)} placeholder={LN[d.t1L]}/>
+                            <input style={S.editInput} value={editT2} onChange={e => setEditT2(e.target.value)} placeholder={LN[d.t2L]}/>
+                            <button style={S.editSave} onClick={() => updateCardTranslation(card,editT0,editT1,editT2)}>✓</button>
                             <button style={S.editCancel} onClick={() => setEditingCard(null)}>✕</button>
                           </div>
                         ) : (
-                          <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 3 }}>
-                            <span style={S.cardTrans}>{card.translation}</span>
-                            <span style={{ color: "#444", fontSize: 11 }}>/</span>
-                            <span style={S.cardTrans2}>{card.translation2}</span>
+                          <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 3, flexWrap: "wrap" }}>
+                            {showT1 && <><span style={S.cardTrans}>{d.t1}</span><button className="spk" style={S.speakBtn} onClick={e => { e.stopPropagation(); speak(d.t1, d.t1L); }} title={LN[d.t1L]}><I.Speaker/></button></>}
+                            {showT1 && showT2 && <span style={{ color: "#444", fontSize: 11 }}>/</span>}
+                            {showT2 && <><span style={S.cardTrans2}>{d.t2}</span><button className="spk" style={S.speakBtn} onClick={e => { e.stopPropagation(); speak(d.t2, d.t2L); }} title={LN[d.t2L]}><I.Speaker/></button></>}
                             <button style={S.editBtn} onClick={() => startEdit(card)}><I.Edit/></button>
                           </div>
                         )}
                         <ScheduleDots card={card}/>
                       </div>
                       <div style={S.cardItemRight}>
-                        <DateInput value={card.createdAt} onChange={d => updateCardDate(card, d)}/>
+                        <button className="spk" style={{ ...S.speakBtn, padding: 4 }} onClick={e => { e.stopPropagation(); rotateCard(card.id); }} title="Rotate languages"><I.Rotate/></button>
+                        <DateInput value={card.createdAt} onChange={dd => updateCardDate(card, dd)}/>
                         <button style={S.deleteBtn} onClick={() => deleteCard(card)}><I.Trash/></button>
                       </div>
                     </div>
                   );
                 })}
               </div>
-            )}
+              {/* Pagination */}
+              <div style={{ display: "flex", flexDirection: "column", gap: 8, alignItems: "center", padding: "16px 0" }}>
+                <div style={{ display: "flex", gap: 4 }}>
+                  {PAGE_SIZES.map(s => (
+                    <button key={s} className="nb" style={{ ...S.pageBtn, ...(pageSize===s?S.pageBtnActive:{}) }}
+                      onClick={() => { setPageSize(s); setPage(0); }}>{s}</button>
+                  ))}
+                </div>
+                {totalPages > 1 && (
+                  <div style={{ display: "flex", gap: 4, flexWrap: "wrap", justifyContent: "center", alignItems: "center" }}>
+                    {safePage > 0 && <button style={S.pageLink} onClick={() => setPage(safePage - 1)}>‹ prev</button>}
+                    {Array.from({length:totalPages},(_,i) => (
+                      <button key={i} style={{ ...S.pageLink, ...(safePage===i?{color:accent,fontWeight:700}:{}) }}
+                        onClick={() => setPage(i)}>{i+1}</button>
+                    ))}
+                    {safePage < totalPages - 1 && <button style={S.pageLink} onClick={() => setPage(safePage + 1)}>next ›</button>}
+                  </div>
+                )}
+              </div>
+            </>)}
           </div>
-        )}
+          );
+        })()}
 
         {/* ═══ ADD ═══ */}
         {view === "add" && (
@@ -486,6 +682,10 @@ export default function App() {
                   {translating?<span style={{animation:"pulse 1s infinite"}}>翻译中...</span>:<><I.Plus/> Add</>}
                 </button>
               </div>
+              <label style={{ display: "flex", alignItems: "center", gap: 8, fontFamily: mono, fontSize: 12, color: textDim, marginBottom: 20, cursor: "pointer" }}>
+                <input type="checkbox" className="cb" checked={autoPlay} onChange={() => setAutoPlay(!autoPlay)}/>
+                <I.Speaker size={14}/> Auto-play pronunciation on add
+              </label>
               <div style={{ marginBottom: 32 }}>
                 <h3 style={S.smallTitle}>Recently Added</h3>
                 {deckCards.slice(-5).reverse().map(c => (
@@ -495,14 +695,10 @@ export default function App() {
                     <span style={S.recentTrans}>{c.translation}</span>
                     <span style={{ color: "#555", fontSize: 12 }}>/</span>
                     <span style={S.recentTrans2}>{c.translation2}</span>
-                    <button style={S.editBtn} onClick={() => { startEdit(c); setView("home"); }}><I.Edit/></button>
                   </div>
                 ))}
               </div>
-              <div>
-                <h3 style={S.smallTitle}>Ebbinghaus Schedule</h3>
-                <div style={S.intervals}>{EBB.map((d,i) => <div key={i} style={S.intervalPill}>Day {d}</div>)}</div>
-              </div>
+              <div><h3 style={S.smallTitle}>Ebbinghaus Schedule</h3><div style={S.intervals}>{EBB.map((d,i) => <div key={i} style={S.intervalPill}>Day {d}</div>)}</div></div>
             </div>
           </div>
         )}
@@ -510,43 +706,44 @@ export default function App() {
         {/* ═══ REVIEW ═══ */}
         {view === "review" && (
           <div style={S.content}>
+            <div style={{ display: "flex", alignItems: "center", gap: 12, padding: "12px 0" }}>
+              <span style={{ fontFamily: mono, fontSize: 12, color: textDim }}>Review date:</span>
+              <DateInput value={reviewDate} onChange={d => { setReviewDate(d); setReviewIndex(0); setReviewRevealed(false); }}/>
+              {reviewDate !== td && <button style={{ fontFamily: mono, fontSize: 11, background: "transparent", border: `1px solid ${border}`, color: textDim, padding: "3px 10px", borderRadius: 6, cursor: "pointer" }} onClick={() => { setReviewDate(todayStr()); setReviewIndex(0); setReviewRevealed(false); }}>Today</button>}
+            </div>
             {dueCards.length===0||reviewIndex>=dueCards.length ? (
-              <div style={S.empty}>
-                <div style={{ fontSize: 48, color: "#4ade80", marginBottom: 8 }}>✓</div>
-                <p style={S.emptyText}>{dueCards.length===0?"No cards due today":"All done!"}</p>
-              </div>
+              <div style={S.empty}><div style={{ fontSize: 48, color: "#4ade80", marginBottom: 8 }}>✓</div>
+                <p style={S.emptyText}>{dueCards.length===0?`No cards due on ${reviewDate}`:"All done!"}</p></div>
             ) : (() => {
-              const rc = dueCards[reviewIndex];
+              // When revealed, use the snapshot (the card as it was when reviewed)
+              // When not revealed, use the current dueCards[reviewIndex]
+              const rc = reviewRevealed && reviewSnapshot ? reviewSnapshot : dueCards[reviewIndex];
+              if (!rc) return <div style={S.empty}><div style={{ fontSize: 48, color: "#4ade80", marginBottom: 8 }}>✓</div><p style={S.emptyText}>All done!</p></div>;
+              const rot = (rc.rot || 0) % 3;
+              const texts = [rc.word, rc.translation, rc.translation2];
+              const rSrc = texts[rot], rT1 = texts[(rot+1)%3], rT2 = texts[(rot+2)%3];
               return (
                 <div style={S.reviewArea}>
-                  <div style={S.reviewProgress}>{reviewIndex+1} / {dueCards.length}</div>
-                  <div style={S.reviewCard} key={rc.id+String(reviewRevealed)}>
-                    <div style={S.reviewWord}>{rc.word}</div>
-                    <div style={{ marginTop: 8 }}><ScheduleDots card={rc}/></div>
-                    {!reviewRevealed ? (
-                      <div>
-                        <p style={{ fontFamily: mono, fontSize: 12, color: textDim, marginTop: 24, marginBottom: 20 }}>
-                          Do you know this word?
-                        </p>
+                  <div style={S.reviewProgress}>{reviewIndex+1} / {(reviewRevealed ? reviewIndex + 1 + dueCards.length : dueCards.length)}</div>
+                  <div style={S.reviewCard} key={rc.id}>
+                    <div style={S.reviewWord}>{rSrc}</div>
+                    <div style={{ marginTop: 8, marginBottom: 24 }}><ScheduleDots card={rc}/></div>
+                    {/* Button area — fixed position, swaps between Wrong/Correct and Next */}
+                    <div style={{ minHeight: 52 }}>
+                      {!reviewRevealed ? (
                         <div style={S.reviewActions}>
-                          <button className="ab" style={S.forgotBtn} onClick={() => doReview(rc.id,false)}>
-                            <I.X/> Wrong
-                          </button>
-                          <button className="ab" style={S.knewBtn} onClick={() => doReview(rc.id,true)}>
-                            <I.Check/> Correct
-                          </button>
+                          <button className="ab" style={S.forgotBtn} onClick={() => doReview(rc.id,false)}><I.X/> Wrong</button>
+                          <button className="ab" style={S.knewBtn} onClick={() => doReview(rc.id,true)}><I.Check/> Correct</button>
                         </div>
-                      </div>
-                    ) : (
-                      <div style={{ animation: "fadeUp 0.3s ease" }}>
-                        <div style={S.reviewTrans}>{rc.translation}</div>
-                        <div style={S.reviewTrans2}>{rc.translation2}</div>
-                        <div style={{ fontFamily: mono, fontSize: 11, color: "#555", marginTop: 16 }}>
-                          Stage {rc.reviewStage+1}/{EBB.length}
-                        </div>
-                        <button className="ab" style={{ ...S.showBtn, marginTop: 20 }} onClick={nextReviewCard}>
-                          Next →
-                        </button>
+                      ) : (
+                        <button className="ab" style={{ ...S.showBtn, width: "100%", justifyContent: "center" }} onClick={nextReviewCard}>Next →</button>
+                      )}
+                    </div>
+                    {/* Answer revealed below buttons */}
+                    {reviewRevealed && (
+                      <div style={{ animation: "fadeUp 0.3s ease", marginTop: 20, borderTop: `1px solid ${border}`, paddingTop: 16 }}>
+                        <div style={S.reviewTrans}>{rT1}</div>
+                        <div style={S.reviewTrans2}>{rT2}</div>
                       </div>
                     )}
                   </div>
@@ -575,40 +772,78 @@ export default function App() {
                       <span>{count} cards</span>
                       {due>0&&<span style={{color:accent,fontWeight:600}}>{due} due</span>}
                     </div>
-                    {deck.id!=="default"&&<button style={S.deckDeleteBtn} onClick={e=>{e.stopPropagation();setDeleteDeckConfirm(deck.id);}}><I.Trash/></button>}
+                    <div style={{ position: "absolute", top: 8, right: 8, display: "flex", gap: 4 }}>
+                      <button style={S.deckActionBtn} onClick={e => { e.stopPropagation(); setRenameDeckId(deck.id); setRenameDeckVal(deck.name); }} title="Rename"><I.Edit/></button>
+                      {deck.id!=="default"&&<button style={S.deckActionBtn} onClick={e=>{e.stopPropagation();setDeleteDeckConfirm(deck.id);}} title="Delete"><I.Trash/></button>}
+                    </div>
                   </div>
                 );
               })}
             </div>
+            {/* New deck modal */}
             {showDeckModal&&(
-              <div style={S.modal} onClick={()=>setShowDeckModal(false)}>
-                <div style={S.modalContent} onClick={e=>e.stopPropagation()}>
-                  <h3 style={S.modalTitle}>New Deck</h3>
-                  <input style={S.modalInput} placeholder="Deck name..." value={newDeckName}
-                    onChange={e=>setNewDeckName(e.target.value)} onKeyDown={e=>e.key==="Enter"&&createDeck()} autoFocus/>
-                  <div style={S.modalActions}>
-                    <button className="ab" style={S.modalCancel} onClick={()=>setShowDeckModal(false)}>Cancel</button>
-                    <button className="ab" style={S.modalConfirm} onClick={createDeck}>Create</button>
-                  </div>
-                </div>
-              </div>
+              <div style={S.modal} onClick={()=>setShowDeckModal(false)}><div style={S.modalContent} onClick={e=>e.stopPropagation()}>
+                <h3 style={S.modalTitle}>New Deck</h3>
+                <input style={S.modalInput} placeholder="Deck name..." value={newDeckName} onChange={e=>setNewDeckName(e.target.value)} onKeyDown={e=>e.key==="Enter"&&createDeck()} autoFocus/>
+                <div style={S.modalActions}><button className="ab" style={S.modalCancel} onClick={()=>setShowDeckModal(false)}>Cancel</button><button className="ab" style={S.modalConfirm} onClick={createDeck}>Create</button></div>
+              </div></div>
             )}
+            {/* Rename deck modal */}
+            {renameDeckId&&(
+              <div style={S.modal} onClick={()=>setRenameDeckId(null)}><div style={S.modalContent} onClick={e=>e.stopPropagation()}>
+                <h3 style={S.modalTitle}>Rename Deck</h3>
+                <input style={S.modalInput} value={renameDeckVal} onChange={e=>setRenameDeckVal(e.target.value)} onKeyDown={e=>e.key==="Enter"&&renameDeck()} autoFocus/>
+                <div style={S.modalActions}><button className="ab" style={S.modalCancel} onClick={()=>setRenameDeckId(null)}>Cancel</button><button className="ab" style={S.modalConfirm} onClick={renameDeck}>Rename</button></div>
+              </div></div>
+            )}
+            {/* Delete confirm */}
             {deleteDeckConfirm&&(
-              <div style={S.modal} onClick={()=>setDeleteDeckConfirm(null)}>
-                <div style={S.modalContent} onClick={e=>e.stopPropagation()}>
-                  <h3 style={S.modalTitle}>确认删除</h3>
-                  <p style={{fontFamily:sans,fontSize:14,color:textDim,lineHeight:1.6,marginBottom:8}}>
-                    确定要删除 <strong style={{color:text}}>"{meta.decks.find(d=>d.id===deleteDeckConfirm)?.name}"</strong> 吗？
-                  </p>
-                  <p style={{fontFamily:mono,fontSize:12,color:"#f87171",marginBottom:16}}>
-                    将删除 {cards.filter(c=>c.deckId===deleteDeckConfirm).length} 张卡片，不可撤销。
-                  </p>
-                  <div style={S.modalActions}>
-                    <button className="ab" style={S.modalCancel} onClick={()=>setDeleteDeckConfirm(null)}>取消</button>
-                    <button className="ab" style={S.deleteConfirmBtn} onClick={doDeleteDeck}>确认删除</button>
+              <div style={S.modal} onClick={()=>setDeleteDeckConfirm(null)}><div style={S.modalContent} onClick={e=>e.stopPropagation()}>
+                <h3 style={S.modalTitle}>确认删除</h3>
+                <p style={{fontFamily:sans,fontSize:14,color:textDim,lineHeight:1.6,marginBottom:8}}>确定要删除 <strong style={{color:text}}>"{meta.decks.find(d=>d.id===deleteDeckConfirm)?.name}"</strong> 吗？</p>
+                <p style={{fontFamily:mono,fontSize:12,color:"#f87171",marginBottom:16}}>将删除 {cards.filter(c=>c.deckId===deleteDeckConfirm).length} 张卡片，不可撤销。</p>
+                <div style={S.modalActions}><button className="ab" style={S.modalCancel} onClick={()=>setDeleteDeckConfirm(null)}>取消</button><button className="ab" style={S.deleteConfirmBtn} onClick={doDeleteDeck}>确认删除</button></div>
+              </div></div>
+            )}
+          </div>
+        )}
+
+        {/* ═══ USERS ═══ */}
+        {view === "users" && (
+          <div style={S.content}>
+            <div style={S.sectionHeader}>
+              <h2 style={S.sectionTitle}>Users</h2>
+              <button className="ab" style={S.newDeckBtn} onClick={() => setShowUserModal(true)}><I.Plus/> New User</button>
+            </div>
+            <div style={S.deckGrid}>
+              {global.users.map(user => (
+                <div key={user.id} className="dk" style={{ ...S.deckCard, ...(global.activeUser===user.id?{borderColor:accent}:{}) }}
+                  onClick={() => switchUser(user.id)}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                    <I.User/> <span style={S.deckName}>{user.name}</span>
                   </div>
+                  {global.activeUser===user.id && <span style={{ fontFamily: mono, fontSize: 10, color: accent }}>ACTIVE</span>}
+                  {user.id!=="default"&&(
+                    <button style={{ ...S.deckActionBtn, position: "absolute", top: 8, right: 8 }}
+                      onClick={e=>{e.stopPropagation();setDeleteUserConfirm(user.id);}}><I.Trash/></button>
+                  )}
                 </div>
-              </div>
+              ))}
+            </div>
+            {showUserModal&&(
+              <div style={S.modal} onClick={()=>setShowUserModal(false)}><div style={S.modalContent} onClick={e=>e.stopPropagation()}>
+                <h3 style={S.modalTitle}>New User</h3>
+                <input style={S.modalInput} placeholder="User name..." value={newUserName} onChange={e=>setNewUserName(e.target.value)} onKeyDown={e=>e.key==="Enter"&&createUser()} autoFocus/>
+                <div style={S.modalActions}><button className="ab" style={S.modalCancel} onClick={()=>setShowUserModal(false)}>Cancel</button><button className="ab" style={S.modalConfirm} onClick={createUser}>Create</button></div>
+              </div></div>
+            )}
+            {deleteUserConfirm&&(
+              <div style={S.modal} onClick={()=>setDeleteUserConfirm(null)}><div style={S.modalContent} onClick={e=>e.stopPropagation()}>
+                <h3 style={S.modalTitle}>确认删除用户</h3>
+                <p style={{fontFamily:sans,fontSize:14,color:textDim,lineHeight:1.6,marginBottom:8}}>确定要删除用户 <strong style={{color:text}}>"{global.users.find(u=>u.id===deleteUserConfirm)?.name}"</strong> 吗？</p>
+                <p style={{fontFamily:mono,fontSize:12,color:"#f87171",marginBottom:16}}>将删除该用户的所有数据，不可撤销。</p>
+                <div style={S.modalActions}><button className="ab" style={S.modalCancel} onClick={()=>setDeleteUserConfirm(null)}>取消</button><button className="ab" style={S.deleteConfirmBtn} onClick={()=>deleteUser(deleteUserConfirm)}>确认删除</button></div>
+              </div></div>
             )}
           </div>
         )}
@@ -618,77 +853,66 @@ export default function App() {
           <div style={S.content}>
             <div style={{ padding: "20px 0" }}>
               <h2 style={S.sectionTitle}>Backup & Sync</h2>
-              <p style={{fontFamily:mono,fontSize:12,color:textDim,marginTop:4,marginBottom:24}}>
-                Data stored as data/YYMM/MMDD.json — git add & push to backup
-              </p>
-              <div style={S.exportCards}>
-                <div style={S.exportCard} onClick={exportAll}>
-                  <I.Download/>
-                  <span style={{fontFamily:mono,fontSize:13,fontWeight:600}}>Export All</span>
-                  <span style={{fontFamily:mono,fontSize:11,color:textDim}}>{dayFiles.length} daily files</span>
-                </div>
-                <label style={S.exportCard}>
-                  <input type="file" accept=".json" onChange={importAll} style={{display:"none"}}/>
-                  <I.Plus/>
-                  <span style={{fontFamily:mono,fontSize:13,fontWeight:600}}>Import</span>
-                  <span style={{fontFamily:mono,fontSize:11,color:textDim}}>Restore backup</span>
-                </label>
-              </div>
-              <div style={{ marginBottom: 24 }}>
-                <h3 style={{fontFamily:mono,fontSize:13,fontWeight:600,color:text,marginBottom:12}}>Data Files</h3>
-                <div style={S.codeBlock}>
-                  <code style={S.code}>{dayFiles.length>0?dayFiles.join("\n"):"(no daily files yet)"}</code>
-                </div>
-              </div>
-              <div style={{ marginBottom: 32 }}>
-                <h3 style={{fontFamily:mono,fontSize:13,fontWeight:600,color:text,marginBottom:12}}>Git Workflow</h3>
-                <div style={S.codeBlock}>
-                  <code style={S.code}>{`# data/ 目录会自动生成文件
-# 直接 git add & push 即可
+              <p style={{fontFamily:mono,fontSize:12,color:textDim,marginTop:4,marginBottom:16}}>data/users/{uid()}/YYMM/MMDD.json</p>
 
-cd ~/vocab-forge
-git add data/
-git commit -m "vocab $(date +%F)"
-git push`}</code>
+              {/* User selection for export */}
+              <div style={{ marginBottom: 20 }}>
+                <h3 style={S.smallTitle}>Export users</h3>
+                <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                  {global.users.map(u => (
+                    <label key={u.id} style={{ display: "flex", alignItems: "center", gap: 6, cursor: "pointer", fontFamily: mono, fontSize: 12, color: exportUsers.has(u.id) ? text : textDim }}>
+                      <input type="checkbox" className="cb" checked={exportUsers.has(u.id)} onChange={() => toggleExportUser(u.id)}/>
+                      {u.name}
+                    </label>
+                  ))}
                 </div>
+                <p style={{ fontFamily: mono, fontSize: 10, color: "#555", marginTop: 6 }}>
+                  {exportUsers.size === 0 ? "No selection = export current user only" : `${exportUsers.size} user(s) selected`}
+                </p>
               </div>
+
+              <div style={S.exportCards}>
+                <div style={S.exportCard} onClick={exportAll}><I.Download/><span style={{fontFamily:mono,fontSize:13,fontWeight:600}}>Export</span><span style={{fontFamily:mono,fontSize:11,color:textDim}}>{dayFiles.length} files</span></div>
+                <label style={S.exportCard}><input type="file" accept=".json" onChange={importAll} style={{display:"none"}}/><I.Plus/><span style={{fontFamily:mono,fontSize:13,fontWeight:600}}>Import</span><span style={{fontFamily:mono,fontSize:11,color:textDim}}>Restore</span></label>
+              </div>
+              <div style={{ marginBottom: 24 }}><h3 style={{fontFamily:mono,fontSize:13,fontWeight:600,color:text,marginBottom:12}}>Data Files</h3>
+                <div style={S.codeBlock}><code style={S.code}>{dayFiles.length>0?dayFiles.join("\n"):"(empty)"}</code></div></div>
               <div style={S.statsGrid}>
-                {[
-                  {n:cards.length,l:"Total"},{n:meta.decks.length,l:"Decks"},
-                  {n:allDueCount,l:"Due"},{n:cards.filter(c=>c.reviewStage>=EBB.length-1).length,l:"Mastered"},
-                ].map((s,i) => (
-                  <div key={i} style={S.statCard}><div style={S.statNum}>{s.n}</div>
-                    <div style={{fontFamily:mono,fontSize:11,color:textDim,marginTop:4}}>{s.l}</div></div>
+                {[{n:cards.length,l:"Total"},{n:meta.decks.length,l:"Decks"},{n:allDueCount,l:"Due"},{n:cards.filter(c=>c.reviewStage>=EBB.length-1).length,l:"Done"}].map((s,i) => (
+                  <div key={i} style={S.statCard}><div style={S.statNum}>{s.n}</div><div style={{fontFamily:mono,fontSize:11,color:textDim,marginTop:4}}>{s.l}</div></div>
                 ))}
               </div>
             </div>
           </div>
         )}
       </main>
+      {/* Floating scroll buttons */}
+      {canScroll && (
+        <div style={{ position: "fixed", bottom: 24, right: 20, display: "flex", flexDirection: "column", gap: 6, zIndex: 90 }}>
+          <button className="scb" style={S.scrollBtn} onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}><I.ArrowUp/></button>
+          <button className="scb" style={S.scrollBtn} onClick={() => window.scrollTo({ top: document.documentElement.scrollHeight, behavior: "smooth" })}><I.ArrowDown/></button>
+        </div>
+      )}
     </div>
   );
 }
 
 const accent="#e84400",accentDim="#e8440033",bg="#0a0a0b",surface="#111113",surface2="#1a1a1e",border="#222226",text="#e8e6e3",textDim="#777";
 const mono="'JetBrains Mono',monospace",serif="'Crimson Pro',serif",sans="'Noto Sans SC',system-ui,sans-serif";
-
 const S = {
   root:{background:bg,minHeight:"100vh",color:text,fontFamily:sans,maxWidth:720,margin:"0 auto",padding:"0 16px",paddingBottom:60},
   loadingScreen:{display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",height:"100vh",background:bg},
   loadingPulse:{fontSize:48,color:accent,animation:"pulse 1.5s infinite"},
-  header:{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"16px 0 10px",borderBottom:`1px solid ${border}`,flexWrap:"wrap",gap:8},
-  headerRight:{display:"flex",alignItems:"center",gap:8},
+  header:{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"14px 0 10px",borderBottom:`1px solid ${border}`,flexWrap:"wrap",gap:6},
+  headerRight:{display:"flex",alignItems:"center",gap:4,flexWrap:"wrap"},
   logo:{display:"flex",alignItems:"center",gap:8,cursor:"pointer"},
   logoMark:{fontSize:22,fontWeight:700,color:accent},
   logoText:{fontFamily:mono,fontSize:15,fontWeight:600,color:text,letterSpacing:"-0.5px"},
   dueBadge:{fontFamily:mono,fontSize:11,fontWeight:600,background:accentDim,color:accent,padding:"3px 9px",borderRadius:20,cursor:"pointer"},
-  langDisplay:{display:"flex",alignItems:"center",gap:4},
   langSel:{fontFamily:mono,fontSize:11,background:surface,color:text,border:`1px solid ${border}`,borderRadius:4,padding:"3px 4px",cursor:"pointer"},
-  nav:{display:"flex",gap:2,padding:"10px 0",borderBottom:`1px solid ${border}`},
-  navBtn:{fontFamily:mono,fontSize:12,fontWeight:500,background:"transparent",color:textDim,border:"none",padding:"5px 12px",borderRadius:6,cursor:"pointer",transition:"all 0.2s"},
+  nav:{display:"flex",gap:2,padding:"10px 0",borderBottom:`1px solid ${border}`,alignItems:"center",flexWrap:"wrap"},
+  navBtn:{fontFamily:mono,fontSize:12,fontWeight:500,background:"transparent",color:textDim,border:"none",padding:"5px 12px",borderRadius:6,cursor:"pointer",transition:"all .15s",display:"flex",alignItems:"center",gap:4},
   navBtnActive:{background:surface2,color:text},
-  deckSelector:{display:"flex",alignItems:"center",gap:8,padding:"8px 0",color:textDim},
-  deckSelect:{fontFamily:mono,fontSize:12,background:"transparent",color:text,border:"none",cursor:"pointer",flex:1},
   main:{paddingTop:6},
   content:{animation:"fadeUp 0.3s ease"},
   sectionHeader:{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"10px 0"},
@@ -702,13 +926,19 @@ const S = {
   emptyText:{fontFamily:serif,fontSize:18,color:textDim},
   emptyBtn:{display:"flex",alignItems:"center",gap:8,fontFamily:mono,fontSize:13,fontWeight:500,background:accent,color:"#fff",border:"none",padding:"10px 20px",borderRadius:8,cursor:"pointer"},
   cardList:{display:"flex",flexDirection:"column",gap:3},
-  cardItem:{display:"flex",alignItems:"flex-start",padding:"10px 12px",borderRadius:8,background:surface,transition:"all 0.15s",animation:"fadeUp 0.3s ease both",borderLeft:"3px solid transparent"},
+  cardItem:{display:"flex",alignItems:"flex-start",padding:"10px 12px",borderRadius:8,background:surface,transition:"all .15s",animation:"fadeUp 0.3s ease both",borderLeft:"3px solid transparent"},
   cardWord:{fontFamily:serif,fontSize:16,fontWeight:600,color:text},
   cardTrans:{fontFamily:sans,fontSize:13,color:textDim},
   cardTrans2:{fontFamily:mono,fontSize:12,color:"#666"},
   cardItemRight:{display:"flex",alignItems:"center",gap:6,marginLeft:8,flexShrink:0,paddingTop:2},
   deleteBtn:{background:"transparent",border:"none",color:"#444",cursor:"pointer",padding:4,display:"flex"},
   editBtn:{background:"transparent",border:"none",color:"#555",cursor:"pointer",padding:2,display:"flex",marginLeft:4},
+  speakBtn:{background:"transparent",border:"none",color:"#666",cursor:"pointer",padding:2,display:"flex",transition:"color .15s"},
+  visToggle:{display:"flex",alignItems:"center",gap:5,cursor:"pointer",fontFamily:mono,fontSize:11},
+  pageBtn:{fontFamily:mono,fontSize:11,background:"transparent",color:textDim,border:`1px solid ${border}`,padding:"4px 12px",borderRadius:6,cursor:"pointer"},
+  pageBtnActive:{background:accent,color:"#fff",borderColor:accent},
+  pageLink:{fontFamily:mono,fontSize:12,background:"transparent",border:"none",color:textDim,cursor:"pointer",padding:"2px 8px"},
+  scrollBtn:{width:36,height:36,borderRadius:"50%",background:`${surface}cc`,border:`1px solid ${border}`,color:textDim,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",backdropFilter:"blur(8px)",transition:"all .15s",opacity:0.6},
   editInput:{fontFamily:sans,fontSize:13,background:bg,color:text,border:`1px solid ${border}`,borderRadius:6,padding:"4px 8px",width:120},
   editSave:{fontFamily:mono,fontSize:14,background:"#16a34a33",color:"#4ade80",border:"none",borderRadius:4,padding:"4px 8px",cursor:"pointer"},
   editCancel:{fontFamily:mono,fontSize:14,background:"#dc262622",color:"#f87171",border:"none",borderRadius:4,padding:"4px 8px",cursor:"pointer"},
@@ -736,10 +966,10 @@ const S = {
   forgotBtn:{display:"flex",alignItems:"center",gap:6,fontFamily:mono,fontSize:13,fontWeight:600,background:"#dc262622",color:"#f87171",border:"1px solid #dc262644",padding:"12px 28px",borderRadius:10,cursor:"pointer"},
   knewBtn:{display:"flex",alignItems:"center",gap:6,fontFamily:mono,fontSize:13,fontWeight:600,background:"#16a34a22",color:"#4ade80",border:"1px solid #16a34a44",padding:"12px 28px",borderRadius:10,cursor:"pointer"},
   deckGrid:{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(170px,1fr))",gap:12,paddingTop:8},
-  deckCard:{background:surface,borderRadius:12,padding:"18px 14px",border:`1px solid ${border}`,cursor:"pointer",transition:"all 0.2s",position:"relative"},
+  deckCard:{background:surface,borderRadius:12,padding:"18px 14px",border:`1px solid ${border}`,cursor:"pointer",transition:"all .2s",position:"relative"},
   deckName:{fontFamily:serif,fontSize:16,fontWeight:600,color:text,marginBottom:6},
   deckStats:{fontFamily:mono,fontSize:11,color:textDim,display:"flex",gap:8},
-  deckDeleteBtn:{position:"absolute",top:8,right:8,background:"transparent",border:"none",color:"#444",cursor:"pointer",padding:4,display:"flex"},
+  deckActionBtn:{background:"transparent",border:"none",color:"#555",cursor:"pointer",padding:3,display:"flex"},
   newDeckBtn:{display:"flex",alignItems:"center",gap:6,fontFamily:mono,fontSize:12,fontWeight:500,background:surface2,color:text,border:`1px solid ${border}`,padding:"5px 12px",borderRadius:8,cursor:"pointer"},
   modal:{position:"fixed",inset:0,background:"rgba(0,0,0,0.7)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:100},
   modalContent:{background:surface,borderRadius:16,padding:24,width:"90%",maxWidth:360,border:`1px solid ${border}`},
