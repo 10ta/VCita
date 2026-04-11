@@ -13,7 +13,7 @@ const TARGET_LANG_1 = 'zh-CN'
 const TARGET_LANG_2 = 'en'
 
 // ─── 艾宾浩斯复习周期（天数）───
-const EBBINGHAUS_DAYS = [1, 2, 4, 7, 15, 30]
+const EBBINGHAUS_DAYS = [1, 3, 7, 15, 30]
 
 // ─── 监听地址 ───
 const HOST = '127.0.0.1'

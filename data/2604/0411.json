@@ -108,5 +108,27 @@
     "reviewStage": 0,
     "nextReview": "2026-04-12",
     "reviewHistory": []
+  },
+  {
+    "id": "mnu7okjl73j4",
+    "word": "une avanture/ mésaventure",
+    "translation": "一次冒险/不幸的冒险",
+    "translation2": "an adventure/misadventure",
+    "deckId": "default",
+    "createdAt": "2026-04-11",
+    "reviewStage": 0,
+    "nextReview": "2026-04-12",
+    "reviewHistory": []
+  },
+  {
+    "id": "mnu7qqgzovv9",
+    "word": "un circuit organisé, un voyage en groupe",
+    "translation": "有组织的旅行，团体旅行",
+    "translation2": "an organized tour, a group trip",
+    "deckId": "default",
+    "createdAt": "2026-04-11",
+    "reviewStage": 0,
+    "nextReview": "2026-04-12",
+    "reviewHistory": []
   }
 ]
