@@ -649,7 +649,9 @@ export default function App() {
         @media(hover:none){.hi:hover{background:inherit!important}}
         .card-due{border:1px solid #e8440088!important;box-shadow:0 0 8px #e8440022}
         .card-sel{background:#1a1410!important;border-left:3px solid #e84400!important}
-        .nb:hover:not(.nav-active){background:#1a1a1e!important}
+        .nb{font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:500;background:transparent;color:#777;border:1px solid transparent;padding:4px 11px;border-radius:6px;cursor:pointer;transition:all .15s;display:flex;align-items:center;gap:4px}
+        .nb:hover:not(.nav-active){background:#1a1a1e}
+        .nb.nav-active{background:#1a1a1e;border-color:#e84400;color:#e8e6e3}
         .ab:hover{transform:translateY(-1px);filter:brightness(1.1)}.dk:hover{border-color:#e84400!important}
         .spk:hover{color:#e84400!important}.scb:hover{opacity:1!important;border-color:#e84400!important;color:#e84400!important}
         input::placeholder{color:#444}
@@ -683,7 +685,6 @@ export default function App() {
       <nav style={S.nav}>
         {NAV.map(t => (
           <button key={t.id} className={`nb${view===t.id?" nav-active":""}`}
-            style={{ ...S.navBtn, ...(view===t.id?S.navBtnActive:{}) }}
             onClick={() => {
               setView(t.id); setSelected(new Set());
               if (t.id==="review") startReviewSession(reviewDate);
@@ -777,7 +778,8 @@ export default function App() {
                           </div>
                         )}
                         {isEditing ? (
-                          <div style={{ display: "flex", gap: 6, alignItems: "center", marginTop: 4, flexWrap: "wrap" }}>
+                          <div style={{ display: "flex", gap: 6, alignItems: "center", marginTop: 4, flexWrap: "wrap" }}
+                            onKeyDown={e => { if (e.key === "Enter") updateCardTranslation(card,editT0,editT1,editT2); }}>
                             <input style={{ ...S.editInput, fontWeight: 600 }} value={editT0} onChange={e => setEditT0(e.target.value)} placeholder={LN[d.srcL]}/>
                             <input style={S.editInput} value={editT1} onChange={e => setEditT1(e.target.value)} placeholder={LN[d.t1L]}/>
                             <input style={S.editInput} value={editT2} onChange={e => setEditT2(e.target.value)} placeholder={LN[d.t2L]}/>
@@ -1134,8 +1136,8 @@ const S = {
   dueBadge:{fontFamily:mono,fontSize:11,fontWeight:600,background:accentDim,color:accent,padding:"3px 9px",borderRadius:20,cursor:"pointer"},
   langSel:{fontFamily:mono,fontSize:11,background:surface,color:text,border:`1px solid ${border}`,borderRadius:4,padding:"3px 4px",cursor:"pointer"},
   nav:{display:"flex",gap:2,padding:"10px 0",borderBottom:`1px solid ${border}`,alignItems:"center",flexWrap:"wrap"},
-  navBtn:{fontFamily:mono,fontSize:12,fontWeight:500,background:"transparent",color:textDim,border:"none",padding:"5px 12px",borderRadius:6,cursor:"pointer",transition:"all .15s",display:"flex",alignItems:"center",gap:4},
-  navBtnActive:{background:surface2,color:text},
+  navBtn:{fontFamily:mono,fontSize:12,fontWeight:500,background:"transparent",color:textDim,border:"1px solid transparent",padding:"4px 11px",borderRadius:6,cursor:"pointer",transition:"all .15s",display:"flex",alignItems:"center",gap:4},
+  navBtnActive:{background:surface2,color:text,borderColor:accent},
   main:{paddingTop:6},
   content:{animation:"fadeUp 0.3s ease"},
   sectionHeader:{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"10px 0"},
