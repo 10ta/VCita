@@ -14,7 +14,10 @@
         "remembered": true
       }
     ],
-    "rot": 1
+    "rot": 1,
+    "tags": [
+      "Police et Justice"
+    ]
   },
   {
     "id": "mnvew0wh9zf0",
@@ -23,10 +26,18 @@
     "translation2": "police and justice",
     "deckId": "default",
     "createdAt": "2026-04-12",
-    "reviewStage": 0,
-    "nextReview": "2026-04-12",
-    "reviewHistory": [],
-    "rot": 0
+    "reviewStage": 1,
+    "nextReview": "2026-04-13",
+    "reviewHistory": [
+      {
+        "date": "2026-04-12",
+        "remembered": true
+      }
+    ],
+    "rot": 1,
+    "tags": [
+      "Police et Justice"
+    ]
   },
   {
     "id": "mnvewo5z66jl",
@@ -37,44 +48,56 @@
     "createdAt": "2026-04-12",
     "reviewStage": 0,
     "nextReview": "2026-04-12",
-    "reviewHistory": [],
-    "rot": 0
+    "reviewHistory": [
+      {
+        "date": "2026-04-12",
+        "remembered": false
+      }
+    ],
+    "rot": 1,
+    "tags": [
+      "Police et Justice"
+    ]
   },
   {
     "id": "mnvezqzddovs",
     "word": "un(e) avocat(e) de la défense/de l'accusation",
-    "translation": "辩护/控方律师",
+    "translation": "辩护律师/控方律师",
     "translation2": "a defense/prosecution lawyer",
     "deckId": "default",
     "createdAt": "2026-04-12",
-    "reviewStage": 0,
-    "nextReview": "2026-04-12",
-    "reviewHistory": [],
-    "rot": 0
+    "reviewStage": 1,
+    "nextReview": "2026-04-13",
+    "reviewHistory": [
+      {
+        "date": "2026-04-12",
+        "remembered": true
+      }
+    ],
+    "rot": 1,
+    "tags": [
+      "Police et Justice"
+    ]
   },
   {
     "id": "mnvezzuol22h",
     "word": "un avocat général",
-    "translation": "总法律顾问",
+    "translation": "公共律师",
     "translation2": "a general counsel",
     "deckId": "default",
     "createdAt": "2026-04-12",
-    "reviewStage": 0,
-    "nextReview": "2026-04-12",
-    "reviewHistory": [],
-    "rot": 0
-  },
-  {
-    "id": "mnvf0fpc0q2q",
-    "word": "un commissaire de police",
-    "translation": "警察局长",
-    "translation2": "a police commissioner",
-    "deckId": "default",
-    "createdAt": "2026-04-12",
-    "reviewStage": 0,
-    "nextReview": "2026-04-12",
-    "reviewHistory": [],
-    "rot": 0
+    "reviewStage": 1,
+    "nextReview": "2026-04-13",
+    "reviewHistory": [
+      {
+        "date": "2026-04-12",
+        "remembered": true
+      }
+    ],
+    "rot": 1,
+    "tags": [
+      "Police et Justice"
+    ]
   },
   {
     "id": "mnvf14ej4i3q",
@@ -83,22 +106,38 @@
     "translation2": "a police officer, a policeman",
     "deckId": "default",
     "createdAt": "2026-04-12",
-    "reviewStage": 0,
-    "nextReview": "2026-04-12",
-    "reviewHistory": [],
-    "rot": 0
+    "reviewStage": 1,
+    "nextReview": "2026-04-13",
+    "reviewHistory": [
+      {
+        "date": "2026-04-12",
+        "remembered": true
+      }
+    ],
+    "rot": 1,
+    "tags": [
+      "Police et Justice"
+    ]
   },
   {
     "id": "mnvf1auwkw7m",
     "word": "un flic",
-    "translation": "一名警察",
+    "translation": "一名警察(俗",
     "translation2": "a cop",
     "deckId": "default",
     "createdAt": "2026-04-12",
-    "reviewStage": 0,
-    "nextReview": "2026-04-12",
-    "reviewHistory": [],
-    "rot": 0
+    "reviewStage": 1,
+    "nextReview": "2026-04-13",
+    "reviewHistory": [
+      {
+        "date": "2026-04-12",
+        "remembered": true
+      }
+    ],
+    "rot": 1,
+    "tags": [
+      "Police et Justice"
+    ]
   },
   {
     "id": "mnvf1uiihp8m",
@@ -107,10 +146,18 @@
     "translation2": "the judicial police",
     "deckId": "default",
     "createdAt": "2026-04-12",
-    "reviewStage": 0,
-    "nextReview": "2026-04-12",
-    "reviewHistory": [],
-    "rot": 0
+    "reviewStage": 1,
+    "nextReview": "2026-04-13",
+    "reviewHistory": [
+      {
+        "date": "2026-04-12",
+        "remembered": true
+      }
+    ],
+    "rot": 1,
+    "tags": [
+      "Police et Justice"
+    ]
   },
   {
     "id": "mnvf21lzu85z",
@@ -121,8 +168,16 @@
     "createdAt": "2026-04-12",
     "reviewStage": 0,
     "nextReview": "2026-04-12",
-    "reviewHistory": [],
-    "rot": 0
+    "reviewHistory": [
+      {
+        "date": "2026-04-12",
+        "remembered": false
+      }
+    ],
+    "rot": 1,
+    "tags": [
+      "Police et Justice"
+    ]
   },
   {
     "id": "mnvf2bdkx6er",
@@ -131,22 +186,38 @@
     "translation2": "a policeman",
     "deckId": "default",
     "createdAt": "2026-04-12",
-    "reviewStage": 0,
-    "nextReview": "2026-04-12",
-    "reviewHistory": [],
-    "rot": 0
+    "reviewStage": 1,
+    "nextReview": "2026-04-13",
+    "reviewHistory": [
+      {
+        "date": "2026-04-12",
+        "remembered": true
+      }
+    ],
+    "rot": 1,
+    "tags": [
+      "Police et Justice"
+    ]
   },
   {
     "id": "mnvf2lp53pd0",
     "word": "un greffier(ère)",
-    "translation": "一名职员",
+    "translation": "书记员",
     "translation2": "a clerk",
     "deckId": "default",
     "createdAt": "2026-04-12",
     "reviewStage": 0,
     "nextReview": "2026-04-12",
-    "reviewHistory": [],
-    "rot": 0
+    "reviewHistory": [
+      {
+        "date": "2026-04-12",
+        "remembered": false
+      }
+    ],
+    "rot": 0,
+    "tags": [
+      "Police et Justice"
+    ]
   },
   {
     "id": "mnvf33hd4248",
@@ -157,8 +228,16 @@
     "createdAt": "2026-04-12",
     "reviewStage": 0,
     "nextReview": "2026-04-12",
-    "reviewHistory": [],
-    "rot": 0
+    "reviewHistory": [
+      {
+        "date": "2026-04-12",
+        "remembered": false
+      }
+    ],
+    "rot": 1,
+    "tags": [
+      "Police et Justice"
+    ]
   },
   {
     "id": "mnvf3ijvvag7",
@@ -169,8 +248,16 @@
     "createdAt": "2026-04-12",
     "reviewStage": 0,
     "nextReview": "2026-04-12",
-    "reviewHistory": [],
-    "rot": 0
+    "reviewHistory": [
+      {
+        "date": "2026-04-12",
+        "remembered": false
+      }
+    ],
+    "rot": 1,
+    "tags": [
+      "Police et Justice"
+    ]
   },
   {
     "id": "mnvf4di9goci",
@@ -179,10 +266,18 @@
     "translation2": "a juror/jury, popular jury",
     "deckId": "default",
     "createdAt": "2026-04-12",
-    "reviewStage": 0,
-    "nextReview": "2026-04-12",
-    "reviewHistory": [],
-    "rot": 0
+    "reviewStage": 1,
+    "nextReview": "2026-04-13",
+    "reviewHistory": [
+      {
+        "date": "2026-04-12",
+        "remembered": true
+      }
+    ],
+    "rot": 1,
+    "tags": [
+      "Police et Justice"
+    ]
   },
   {
     "id": "mnvf4n0zutsq",
@@ -193,8 +288,16 @@
     "createdAt": "2026-04-12",
     "reviewStage": 0,
     "nextReview": "2026-04-12",
-    "reviewHistory": [],
-    "rot": 0
+    "reviewHistory": [
+      {
+        "date": "2026-04-12",
+        "remembered": false
+      }
+    ],
+    "rot": 1,
+    "tags": [
+      "Police et Justice"
+    ]
   },
   {
     "id": "mnvf5hpix6vk",
@@ -203,10 +306,18 @@
     "translation2": "a prosecutor",
     "deckId": "default",
     "createdAt": "2026-04-12",
-    "reviewStage": 0,
-    "nextReview": "2026-04-12",
-    "reviewHistory": [],
-    "rot": 0
+    "reviewStage": 1,
+    "nextReview": "2026-04-13",
+    "reviewHistory": [
+      {
+        "date": "2026-04-12",
+        "remembered": true
+      }
+    ],
+    "rot": 1,
+    "tags": [
+      "Police et Justice"
+    ]
   },
   {
     "id": "mnvf5zfobsox",
@@ -215,22 +326,38 @@
     "translation2": "witness, testify",
     "deckId": "default",
     "createdAt": "2026-04-12",
-    "reviewStage": 0,
-    "nextReview": "2026-04-12",
-    "reviewHistory": [],
-    "rot": 0
+    "reviewStage": 1,
+    "nextReview": "2026-04-13",
+    "reviewHistory": [
+      {
+        "date": "2026-04-12",
+        "remembered": true
+      }
+    ],
+    "rot": 1,
+    "tags": [
+      "Police et Justice"
+    ]
   },
   {
     "id": "mnvf6zrg9nhi",
     "word": "un accusé, un prévenu",
-    "translation": "被告人，被告人",
+    "translation": "重罪被告人，轻罪被告人",
     "translation2": "an accused, a defendant",
     "deckId": "default",
     "createdAt": "2026-04-12",
-    "reviewStage": 0,
-    "nextReview": "2026-04-12",
-    "reviewHistory": [],
-    "rot": 0
+    "reviewStage": 1,
+    "nextReview": "2026-04-13",
+    "reviewHistory": [
+      {
+        "date": "2026-04-12",
+        "remembered": true
+      }
+    ],
+    "rot": 1,
+    "tags": [
+      "Police et Justice"
+    ]
   },
   {
     "id": "mnvgfhtud913",
@@ -239,10 +366,18 @@
     "translation2": "premeditation",
     "deckId": "default",
     "createdAt": "2026-04-12",
-    "reviewStage": 0,
-    "nextReview": "2026-04-12",
-    "reviewHistory": [],
-    "rot": 0
+    "reviewStage": 1,
+    "nextReview": "2026-04-13",
+    "reviewHistory": [
+      {
+        "date": "2026-04-12",
+        "remembered": true
+      }
+    ],
+    "rot": 1,
+    "tags": [
+      "Police et Justice"
+    ]
   },
   {
     "id": "mnvgfpxgm8zv",
@@ -251,10 +386,18 @@
     "translation2": "a murderer",
     "deckId": "default",
     "createdAt": "2026-04-12",
-    "reviewStage": 0,
-    "nextReview": "2026-04-12",
-    "reviewHistory": [],
-    "rot": 0
+    "reviewStage": 1,
+    "nextReview": "2026-04-13",
+    "reviewHistory": [
+      {
+        "date": "2026-04-12",
+        "remembered": true
+      }
+    ],
+    "rot": 1,
+    "tags": [
+      "Police et Justice"
+    ]
   },
   {
     "id": "mnvgg47pgtlb",
@@ -265,8 +408,16 @@
     "createdAt": "2026-04-12",
     "reviewStage": 0,
     "nextReview": "2026-04-12",
-    "reviewHistory": [],
-    "rot": 0
+    "reviewHistory": [
+      {
+        "date": "2026-04-12",
+        "remembered": false
+      }
+    ],
+    "rot": 1,
+    "tags": [
+      "Police et Justice"
+    ]
   },
   {
     "id": "mnvggzwqjhcq",
@@ -275,10 +426,18 @@
     "translation2": "a corrupt person, corruption",
     "deckId": "default",
     "createdAt": "2026-04-12",
-    "reviewStage": 0,
-    "nextReview": "2026-04-12",
-    "reviewHistory": [],
-    "rot": 0
+    "reviewStage": 1,
+    "nextReview": "2026-04-13",
+    "reviewHistory": [
+      {
+        "date": "2026-04-12",
+        "remembered": true
+      }
+    ],
+    "rot": 1,
+    "tags": [
+      "Police et Justice"
+    ]
   },
   {
     "id": "mnvgjryrl1tn",
@@ -289,8 +448,16 @@
     "createdAt": "2026-04-12",
     "reviewStage": 0,
     "nextReview": "2026-04-12",
-    "reviewHistory": [],
-    "rot": 0
+    "reviewHistory": [
+      {
+        "date": "2026-04-12",
+        "remembered": false
+      }
+    ],
+    "rot": 1,
+    "tags": [
+      "Police et Justice"
+    ]
   },
   {
     "id": "mnvgkclsmn2m",
@@ -301,8 +468,16 @@
     "createdAt": "2026-04-12",
     "reviewStage": 0,
     "nextReview": "2026-04-12",
-    "reviewHistory": [],
-    "rot": 0
+    "reviewHistory": [
+      {
+        "date": "2026-04-12",
+        "remembered": false
+      }
+    ],
+    "rot": 1,
+    "tags": [
+      "Police et Justice"
+    ]
   },
   {
     "id": "mnvglhlmc665",
@@ -313,8 +488,16 @@
     "createdAt": "2026-04-12",
     "reviewStage": 0,
     "nextReview": "2026-04-12",
-    "reviewHistory": [],
-    "rot": 0
+    "reviewHistory": [
+      {
+        "date": "2026-04-12",
+        "remembered": false
+      }
+    ],
+    "rot": 1,
+    "tags": [
+      "Police et Justice"
+    ]
   },
   {
     "id": "mnvglowh2vzz",
@@ -325,8 +508,16 @@
     "createdAt": "2026-04-12",
     "reviewStage": 0,
     "nextReview": "2026-04-12",
-    "reviewHistory": [],
-    "rot": 0
+    "reviewHistory": [
+      {
+        "date": "2026-04-12",
+        "remembered": false
+      }
+    ],
+    "rot": 1,
+    "tags": [
+      "Police et Justice"
+    ]
   },
   {
     "id": "mnvgm81wh57d",
@@ -337,8 +528,16 @@
     "createdAt": "2026-04-12",
     "reviewStage": 0,
     "nextReview": "2026-04-12",
-    "reviewHistory": [],
-    "rot": 0
+    "reviewHistory": [
+      {
+        "date": "2026-04-12",
+        "remembered": false
+      }
+    ],
+    "rot": 1,
+    "tags": [
+      "Police et Justice"
+    ]
   },
   {
     "id": "mnvgnh8s72d2",
@@ -347,10 +546,18 @@
     "translation2": "irresponsibility",
     "deckId": "default",
     "createdAt": "2026-04-12",
-    "reviewStage": 0,
-    "nextReview": "2026-04-12",
-    "reviewHistory": [],
-    "rot": 0
+    "reviewStage": 1,
+    "nextReview": "2026-04-13",
+    "reviewHistory": [
+      {
+        "date": "2026-04-12",
+        "remembered": true
+      }
+    ],
+    "rot": 1,
+    "tags": [
+      "Police et Justice"
+    ]
   },
   {
     "id": "mnvgo503jfbb",
@@ -361,8 +568,16 @@
     "createdAt": "2026-04-12",
     "reviewStage": 0,
     "nextReview": "2026-04-12",
-    "reviewHistory": [],
-    "rot": 0
+    "reviewHistory": [
+      {
+        "date": "2026-04-12",
+        "remembered": false
+      }
+    ],
+    "rot": 1,
+    "tags": [
+      "Police et Justice"
+    ]
   },
   {
     "id": "mnvgowo55dwu",
@@ -373,8 +588,16 @@
     "createdAt": "2026-04-12",
     "reviewStage": 0,
     "nextReview": "2026-04-12",
-    "reviewHistory": [],
-    "rot": 0
+    "reviewHistory": [
+      {
+        "date": "2026-04-12",
+        "remembered": false
+      }
+    ],
+    "rot": 1,
+    "tags": [
+      "Police et Justice"
+    ]
   },
   {
     "id": "mnvgpmiiusbj",
@@ -385,8 +608,16 @@
     "createdAt": "2026-04-12",
     "reviewStage": 0,
     "nextReview": "2026-04-12",
-    "reviewHistory": [],
-    "rot": 0
+    "reviewHistory": [
+      {
+        "date": "2026-04-12",
+        "remembered": false
+      }
+    ],
+    "rot": 1,
+    "tags": [
+      "Police et Justice"
+    ]
   },
   {
     "id": "mnvgpz7cnyqq",
@@ -397,8 +628,16 @@
     "createdAt": "2026-04-12",
     "reviewStage": 0,
     "nextReview": "2026-04-12",
-    "reviewHistory": [],
-    "rot": 0
+    "reviewHistory": [
+      {
+        "date": "2026-04-12",
+        "remembered": false
+      }
+    ],
+    "rot": 1,
+    "tags": [
+      "Police et Justice"
+    ]
   },
   {
     "id": "mnvgqdkyj8lm",
@@ -409,8 +648,16 @@
     "createdAt": "2026-04-12",
     "reviewStage": 0,
     "nextReview": "2026-04-12",
-    "reviewHistory": [],
-    "rot": 0
+    "reviewHistory": [
+      {
+        "date": "2026-04-12",
+        "remembered": false
+      }
+    ],
+    "rot": 1,
+    "tags": [
+      "Police et Justice"
+    ]
   },
   {
     "id": "mnvgqv91gc6r",
@@ -419,10 +666,18 @@
     "translation2": "a premeditated crime, with premeditation",
     "deckId": "default",
     "createdAt": "2026-04-12",
-    "reviewStage": 0,
-    "nextReview": "2026-04-12",
-    "reviewHistory": [],
-    "rot": 0
+    "reviewStage": 1,
+    "nextReview": "2026-04-13",
+    "reviewHistory": [
+      {
+        "date": "2026-04-12",
+        "remembered": true
+      }
+    ],
+    "rot": 1,
+    "tags": [
+      "Police et Justice"
+    ]
   },
   {
     "id": "mnvgrp5z42m7",
@@ -433,8 +688,16 @@
     "createdAt": "2026-04-12",
     "reviewStage": 0,
     "nextReview": "2026-04-12",
-    "reviewHistory": [],
-    "rot": 0
+    "reviewHistory": [
+      {
+        "date": "2026-04-12",
+        "remembered": false
+      }
+    ],
+    "rot": 1,
+    "tags": [
+      "Police et Justice"
+    ]
   },
   {
     "id": "mnvgs4evobmc",
@@ -445,8 +708,16 @@
     "createdAt": "2026-04-12",
     "reviewStage": 0,
     "nextReview": "2026-04-12",
-    "reviewHistory": [],
-    "rot": 0
+    "reviewHistory": [
+      {
+        "date": "2026-04-12",
+        "remembered": false
+      }
+    ],
+    "rot": 1,
+    "tags": [
+      "Police et Justice"
+    ]
   },
   {
     "id": "mnvgst3yy8tc",
@@ -455,10 +726,18 @@
     "translation2": "commit an offense",
     "deckId": "default",
     "createdAt": "2026-04-12",
-    "reviewStage": 0,
-    "nextReview": "2026-04-12",
-    "reviewHistory": [],
-    "rot": 0
+    "reviewStage": 1,
+    "nextReview": "2026-04-13",
+    "reviewHistory": [
+      {
+        "date": "2026-04-12",
+        "remembered": true
+      }
+    ],
+    "rot": 1,
+    "tags": [
+      "Police et Justice"
+    ]
   },
   {
     "id": "mnvgtm424thg",
@@ -467,10 +746,18 @@
     "translation2": "ê in contravention of the law",
     "deckId": "default",
     "createdAt": "2026-04-12",
-    "reviewStage": 0,
-    "nextReview": "2026-04-12",
-    "reviewHistory": [],
-    "rot": 0
+    "reviewStage": 1,
+    "nextReview": "2026-04-13",
+    "reviewHistory": [
+      {
+        "date": "2026-04-12",
+        "remembered": true
+      }
+    ],
+    "rot": 1,
+    "tags": [
+      "Police et Justice"
+    ]
   },
   {
     "id": "mnvgu66347bg",
@@ -481,8 +768,16 @@
     "createdAt": "2026-04-12",
     "reviewStage": 0,
     "nextReview": "2026-04-12",
-    "reviewHistory": [],
-    "rot": 0
+    "reviewHistory": [
+      {
+        "date": "2026-04-12",
+        "remembered": false
+      }
+    ],
+    "rot": 1,
+    "tags": [
+      "Police et Justice"
+    ]
   },
   {
     "id": "mnvgx5k62ixt",
@@ -491,10 +786,18 @@
     "translation2": "?",
     "deckId": "default",
     "createdAt": "2026-04-12",
-    "reviewStage": 0,
-    "nextReview": "2026-04-12",
-    "reviewHistory": [],
-    "rot": 0
+    "reviewStage": 1,
+    "nextReview": "2026-04-13",
+    "reviewHistory": [
+      {
+        "date": "2026-04-12",
+        "remembered": true
+      }
+    ],
+    "rot": 1,
+    "tags": [
+      "Police et Justice"
+    ]
   },
   {
     "id": "mnvh1bc0thct",
@@ -505,8 +808,16 @@
     "createdAt": "2026-04-12",
     "reviewStage": 0,
     "nextReview": "2026-04-12",
-    "reviewHistory": [],
-    "rot": 0
+    "reviewHistory": [
+      {
+        "date": "2026-04-12",
+        "remembered": false
+      }
+    ],
+    "rot": 1,
+    "tags": [
+      "Police et Justice"
+    ]
   },
   {
     "id": "mnvh2cdmivdb",
@@ -517,8 +828,16 @@
     "createdAt": "2026-04-12",
     "reviewStage": 0,
     "nextReview": "2026-04-12",
-    "reviewHistory": [],
-    "rot": 0
+    "reviewHistory": [
+      {
+        "date": "2026-04-12",
+        "remembered": false
+      }
+    ],
+    "rot": 1,
+    "tags": [
+      "Police et Justice"
+    ]
   },
   {
     "id": "mnvh2zrv3jnx",
@@ -527,10 +846,18 @@
     "translation2": "the witness box",
     "deckId": "default",
     "createdAt": "2026-04-12",
-    "reviewStage": 0,
-    "nextReview": "2026-04-12",
-    "reviewHistory": [],
-    "rot": 0
+    "reviewStage": 1,
+    "nextReview": "2026-04-13",
+    "reviewHistory": [
+      {
+        "date": "2026-04-12",
+        "remembered": true
+      }
+    ],
+    "rot": 1,
+    "tags": [
+      "Police et Justice"
+    ]
   },
   {
     "id": "mnvh3przqts9",
@@ -539,22 +866,38 @@
     "translation2": "a police station, a police station, the gendarmerie",
     "deckId": "default",
     "createdAt": "2026-04-12",
-    "reviewStage": 0,
-    "nextReview": "2026-04-12",
-    "reviewHistory": [],
-    "rot": 0
+    "reviewStage": 1,
+    "nextReview": "2026-04-13",
+    "reviewHistory": [
+      {
+        "date": "2026-04-12",
+        "remembered": true
+      }
+    ],
+    "rot": 1,
+    "tags": [
+      "Police et Justice"
+    ]
   },
   {
     "id": "mnvh4boz82hp",
     "word": "une cour de justice, la cour d'assise, la cour d'appel",
-    "translation": "法庭、重���法庭、上诉法庭",
+    "translation": "法院、巡回法院、上诉法院",
     "translation2": "a court of justice, the assize court, the court of appeal",
     "deckId": "default",
     "createdAt": "2026-04-12",
     "reviewStage": 0,
     "nextReview": "2026-04-12",
-    "reviewHistory": [],
-    "rot": 0
+    "reviewHistory": [
+      {
+        "date": "2026-04-12",
+        "remembered": false
+      }
+    ],
+    "rot": 1,
+    "tags": [
+      "Police et Justice"
+    ]
   },
   {
     "id": "mnvh5y9nfwow",
@@ -565,8 +908,16 @@
     "createdAt": "2026-04-12",
     "reviewStage": 0,
     "nextReview": "2026-04-12",
-    "reviewHistory": [],
-    "rot": 0
+    "reviewHistory": [
+      {
+        "date": "2026-04-12",
+        "remembered": false
+      }
+    ],
+    "rot": 1,
+    "tags": [
+      "Police et Justice"
+    ]
   },
   {
     "id": "mnvh8jd6fono",
@@ -577,8 +928,16 @@
     "createdAt": "2026-04-12",
     "reviewStage": 0,
     "nextReview": "2026-04-12",
-    "reviewHistory": [],
-    "rot": 0
+    "reviewHistory": [
+      {
+        "date": "2026-04-12",
+        "remembered": false
+      }
+    ],
+    "rot": 1,
+    "tags": [
+      "Police et Justice"
+    ]
   },
   {
     "id": "mnvh96mhsla5",
@@ -589,8 +948,16 @@
     "createdAt": "2026-04-12",
     "reviewStage": 0,
     "nextReview": "2026-04-12",
-    "reviewHistory": [],
-    "rot": 0
+    "reviewHistory": [
+      {
+        "date": "2026-04-12",
+        "remembered": false
+      }
+    ],
+    "rot": 1,
+    "tags": [
+      "Police et Justice"
+    ]
   },
   {
     "id": "mnvh9bk5skup",
@@ -599,10 +966,18 @@
     "translation2": "question a suspect",
     "deckId": "default",
     "createdAt": "2026-04-12",
-    "reviewStage": 0,
-    "nextReview": "2026-04-12",
-    "reviewHistory": [],
-    "rot": 0
+    "reviewStage": 1,
+    "nextReview": "2026-04-13",
+    "reviewHistory": [
+      {
+        "date": "2026-04-12",
+        "remembered": true
+      }
+    ],
+    "rot": 1,
+    "tags": [
+      "Police et Justice"
+    ]
   },
   {
     "id": "mnvh9om59l6e",
@@ -613,8 +988,16 @@
     "createdAt": "2026-04-12",
     "reviewStage": 0,
     "nextReview": "2026-04-12",
-    "reviewHistory": [],
-    "rot": 0
+    "reviewHistory": [
+      {
+        "date": "2026-04-12",
+        "remembered": false
+      }
+    ],
+    "rot": 1,
+    "tags": [
+      "Police et Justice"
+    ]
   },
   {
     "id": "mnvhagf8nfo7",
@@ -625,8 +1008,16 @@
     "createdAt": "2026-04-12",
     "reviewStage": 0,
     "nextReview": "2026-04-12",
-    "reviewHistory": [],
-    "rot": 0
+    "reviewHistory": [
+      {
+        "date": "2026-04-12",
+        "remembered": false
+      }
+    ],
+    "rot": 1,
+    "tags": [
+      "Police et Justice"
+    ]
   },
   {
     "id": "mnvhaxzj3j3m",
@@ -635,10 +1026,18 @@
     "translation2": "report someone to the police",
     "deckId": "default",
     "createdAt": "2026-04-12",
-    "reviewStage": 0,
-    "nextReview": "2026-04-12",
-    "reviewHistory": [],
-    "rot": 0
+    "reviewStage": 1,
+    "nextReview": "2026-04-13",
+    "reviewHistory": [
+      {
+        "date": "2026-04-12",
+        "remembered": true
+      }
+    ],
+    "rot": 1,
+    "tags": [
+      "Police et Justice"
+    ]
   },
   {
     "id": "mnvhbjso7mr6",
@@ -649,8 +1048,16 @@
     "createdAt": "2026-04-12",
     "reviewStage": 0,
     "nextReview": "2026-04-12",
-    "reviewHistory": [],
-    "rot": 0
+    "reviewHistory": [
+      {
+        "date": "2026-04-12",
+        "remembered": false
+      }
+    ],
+    "rot": 1,
+    "tags": [
+      "Police et Justice"
+    ]
   },
   {
     "id": "mnvhd9fs9o0t",
@@ -661,8 +1068,16 @@
     "createdAt": "2026-04-12",
     "reviewStage": 0,
     "nextReview": "2026-04-12",
-    "reviewHistory": [],
-    "rot": 0
+    "reviewHistory": [
+      {
+        "date": "2026-04-12",
+        "remembered": false
+      }
+    ],
+    "rot": 1,
+    "tags": [
+      "Police et Justice"
+    ]
   },
   {
     "id": "mnvhdqfikk49",
@@ -671,10 +1086,18 @@
     "translation2": "do an identity check",
     "deckId": "default",
     "createdAt": "2026-04-12",
-    "reviewStage": 0,
-    "nextReview": "2026-04-12",
-    "reviewHistory": [],
-    "rot": 0
+    "reviewStage": 1,
+    "nextReview": "2026-04-13",
+    "reviewHistory": [
+      {
+        "date": "2026-04-12",
+        "remembered": true
+      }
+    ],
+    "rot": 1,
+    "tags": [
+      "Police et Justice"
+    ]
   },
   {
     "id": "mnvhe8dt76fp",
@@ -685,8 +1108,16 @@
     "createdAt": "2026-04-12",
     "reviewStage": 0,
     "nextReview": "2026-04-12",
-    "reviewHistory": [],
-    "rot": 0
+    "reviewHistory": [
+      {
+        "date": "2026-04-12",
+        "remembered": false
+      }
+    ],
+    "rot": 1,
+    "tags": [
+      "Police et Justice"
+    ]
   },
   {
     "id": "mnvhf16allbn",
@@ -695,10 +1126,18 @@
     "translation2": "make an arrest, arrest, arrest someone",
     "deckId": "default",
     "createdAt": "2026-04-12",
-    "reviewStage": 0,
-    "nextReview": "2026-04-12",
-    "reviewHistory": [],
-    "rot": 0
+    "reviewStage": 1,
+    "nextReview": "2026-04-13",
+    "reviewHistory": [
+      {
+        "date": "2026-04-12",
+        "remembered": true
+      }
+    ],
+    "rot": 1,
+    "tags": [
+      "Police et Justice"
+    ]
   },
   {
     "id": "mnvhfppy93la",
@@ -709,8 +1148,16 @@
     "createdAt": "2026-04-12",
     "reviewStage": 0,
     "nextReview": "2026-04-12",
-    "reviewHistory": [],
-    "rot": 0
+    "reviewHistory": [
+      {
+        "date": "2026-04-12",
+        "remembered": false
+      }
+    ],
+    "rot": 1,
+    "tags": [
+      "Police et Justice"
+    ]
   },
   {
     "id": "mnvhgj4bfbqy",
@@ -719,10 +1166,18 @@
     "translation2": "accuse vs. defend",
     "deckId": "default",
     "createdAt": "2026-04-12",
-    "reviewStage": 0,
-    "nextReview": "2026-04-12",
-    "reviewHistory": [],
-    "rot": 0
+    "reviewStage": 1,
+    "nextReview": "2026-04-13",
+    "reviewHistory": [
+      {
+        "date": "2026-04-12",
+        "remembered": true
+      }
+    ],
+    "rot": 1,
+    "tags": [
+      "Police et Justice"
+    ]
   },
   {
     "id": "mnvhh9mlom5c",
@@ -733,8 +1188,16 @@
     "createdAt": "2026-04-12",
     "reviewStage": 0,
     "nextReview": "2026-04-12",
-    "reviewHistory": [],
-    "rot": 0
+    "reviewHistory": [
+      {
+        "date": "2026-04-12",
+        "remembered": false
+      }
+    ],
+    "rot": 1,
+    "tags": [
+      "Police et Justice"
+    ]
   },
   {
     "id": "mnvhhu8oa5l5",
@@ -745,8 +1208,16 @@
     "createdAt": "2026-04-12",
     "reviewStage": 0,
     "nextReview": "2026-04-12",
-    "reviewHistory": [],
-    "rot": 0
+    "reviewHistory": [
+      {
+        "date": "2026-04-12",
+        "remembered": false
+      }
+    ],
+    "rot": 1,
+    "tags": [
+      "Police et Justice"
+    ]
   },
   {
     "id": "mnvhi9kh6kkt",
@@ -757,8 +1228,16 @@
     "createdAt": "2026-04-12",
     "reviewStage": 0,
     "nextReview": "2026-04-12",
-    "reviewHistory": [],
-    "rot": 0
+    "reviewHistory": [
+      {
+        "date": "2026-04-12",
+        "remembered": false
+      }
+    ],
+    "rot": 1,
+    "tags": [
+      "Police et Justice"
+    ]
   },
   {
     "id": "mnvltft2guf0",
@@ -769,8 +1248,16 @@
     "createdAt": "2026-04-12",
     "reviewStage": 0,
     "nextReview": "2026-04-12",
-    "reviewHistory": [],
-    "rot": 0
+    "reviewHistory": [
+      {
+        "date": "2026-04-12",
+        "remembered": false
+      }
+    ],
+    "rot": 1,
+    "tags": [
+      "Police et Justice"
+    ]
   },
   {
     "id": "mnvm24ou3lx0",
@@ -781,8 +1268,16 @@
     "createdAt": "2026-04-12",
     "reviewStage": 0,
     "nextReview": "2026-04-12",
-    "reviewHistory": [],
-    "rot": 0
+    "reviewHistory": [
+      {
+        "date": "2026-04-12",
+        "remembered": false
+      }
+    ],
+    "rot": 1,
+    "tags": [
+      "Police et Justice"
+    ]
   },
   {
     "id": "mnvm2q27ozf0",
@@ -793,8 +1288,16 @@
     "createdAt": "2026-04-12",
     "reviewStage": 0,
     "nextReview": "2026-04-12",
-    "reviewHistory": [],
-    "rot": 0
+    "reviewHistory": [
+      {
+        "date": "2026-04-12",
+        "remembered": false
+      }
+    ],
+    "rot": 1,
+    "tags": [
+      "Police et Justice"
+    ]
   },
   {
     "id": "mnvm32atgc46",
@@ -805,20 +1308,36 @@
     "createdAt": "2026-04-12",
     "reviewStage": 0,
     "nextReview": "2026-04-12",
-    "reviewHistory": [],
-    "rot": 0
+    "reviewHistory": [
+      {
+        "date": "2026-04-12",
+        "remembered": false
+      }
+    ],
+    "rot": 1,
+    "tags": [
+      "Police et Justice"
+    ]
   },
   {
     "id": "mnvmbhus49o2",
     "word": "énoncer un jugement",
-    "translation": "做出判断",
+    "translation": "做出宣判",
     "translation2": "make a judgment",
     "deckId": "default",
     "createdAt": "2026-04-12",
     "reviewStage": 0,
     "nextReview": "2026-04-12",
-    "reviewHistory": [],
-    "rot": 0
+    "reviewHistory": [
+      {
+        "date": "2026-04-12",
+        "remembered": false
+      }
+    ],
+    "rot": 1,
+    "tags": [
+      "Police et Justice"
+    ]
   },
   {
     "id": "mnvmd9szds18",
@@ -829,8 +1348,16 @@
     "createdAt": "2026-04-12",
     "reviewStage": 0,
     "nextReview": "2026-04-12",
-    "reviewHistory": [],
-    "rot": 0
+    "reviewHistory": [
+      {
+        "date": "2026-04-12",
+        "remembered": false
+      }
+    ],
+    "rot": 1,
+    "tags": [
+      "Police et Justice"
+    ]
   },
   {
     "id": "mnvme04ox1co",
@@ -841,8 +1368,16 @@
     "createdAt": "2026-04-12",
     "reviewStage": 0,
     "nextReview": "2026-04-12",
-    "reviewHistory": [],
-    "rot": 0
+    "reviewHistory": [
+      {
+        "date": "2026-04-12",
+        "remembered": false
+      }
+    ],
+    "rot": 1,
+    "tags": [
+      "Police et Justice"
+    ]
   },
   {
     "id": "mnvmeryda2ju",
@@ -853,8 +1388,16 @@
     "createdAt": "2026-04-12",
     "reviewStage": 0,
     "nextReview": "2026-04-12",
-    "reviewHistory": [],
-    "rot": 0
+    "reviewHistory": [
+      {
+        "date": "2026-04-12",
+        "remembered": false
+      }
+    ],
+    "rot": 1,
+    "tags": [
+      "Police et Justice"
+    ]
   },
   {
     "id": "mnvmf84ntjd5",
@@ -865,8 +1408,16 @@
     "createdAt": "2026-04-12",
     "reviewStage": 0,
     "nextReview": "2026-04-12",
-    "reviewHistory": [],
-    "rot": 0
+    "reviewHistory": [
+      {
+        "date": "2026-04-12",
+        "remembered": false
+      }
+    ],
+    "rot": 1,
+    "tags": [
+      "Police et Justice"
+    ]
   },
   {
     "id": "mnvmfemvd7zt",
@@ -877,8 +1428,16 @@
     "createdAt": "2026-04-12",
     "reviewStage": 0,
     "nextReview": "2026-04-12",
-    "reviewHistory": [],
-    "rot": 0
+    "reviewHistory": [
+      {
+        "date": "2026-04-12",
+        "remembered": false
+      }
+    ],
+    "rot": 1,
+    "tags": [
+      "Police et Justice"
+    ]
   },
   {
     "id": "mnvmfsxoymne",
@@ -889,8 +1448,16 @@
     "createdAt": "2026-04-12",
     "reviewStage": 0,
     "nextReview": "2026-04-12",
-    "reviewHistory": [],
-    "rot": 0
+    "reviewHistory": [
+      {
+        "date": "2026-04-12",
+        "remembered": false
+      }
+    ],
+    "rot": 1,
+    "tags": [
+      "Police et Justice"
+    ]
   },
   {
     "id": "mnvmgy3juaiy",
@@ -901,8 +1468,16 @@
     "createdAt": "2026-04-12",
     "reviewStage": 0,
     "nextReview": "2026-04-12",
-    "reviewHistory": [],
-    "rot": 0
+    "reviewHistory": [
+      {
+        "date": "2026-04-12",
+        "remembered": false
+      }
+    ],
+    "rot": 1,
+    "tags": [
+      "Police et Justice"
+    ]
   },
   {
     "id": "mnvmhez6bz5z",
@@ -913,8 +1488,16 @@
     "createdAt": "2026-04-12",
     "reviewStage": 0,
     "nextReview": "2026-04-12",
-    "reviewHistory": [],
-    "rot": 0
+    "reviewHistory": [
+      {
+        "date": "2026-04-12",
+        "remembered": false
+      }
+    ],
+    "rot": 1,
+    "tags": [
+      "Police et Justice"
+    ]
   },
   {
     "id": "mnvmv0dfu2ib",
@@ -925,32 +1508,56 @@
     "createdAt": "2026-04-12",
     "reviewStage": 0,
     "nextReview": "2026-04-12",
-    "reviewHistory": [],
-    "rot": 0
+    "reviewHistory": [
+      {
+        "date": "2026-04-12",
+        "remembered": false
+      }
+    ],
+    "rot": 1,
+    "tags": [
+      "Police et Justice"
+    ]
   },
   {
     "id": "mnvmvhe7yqs3",
     "word": "la révision d'un procès",
-    "translation": "审判审查",
+    "translation": "审�����审查",
     "translation2": "review of a trial",
     "deckId": "default",
     "createdAt": "2026-04-12",
     "reviewStage": 0,
     "nextReview": "2026-04-12",
-    "reviewHistory": [],
-    "rot": 0
+    "reviewHistory": [
+      {
+        "date": "2026-04-12",
+        "remembered": false
+      }
+    ],
+    "rot": 1,
+    "tags": [
+      "Police et Justice"
+    ]
   },
   {
     "id": "mnvmw2ilt4rj",
-    "word": "la condamnation, ê condamné",
+    "word": "la condamnation, ���� condamné",
     "translation": "谴责, ê 谴责",
     "translation2": "condemnation, ê condemned",
     "deckId": "default",
     "createdAt": "2026-04-12",
     "reviewStage": 0,
     "nextReview": "2026-04-12",
-    "reviewHistory": [],
-    "rot": 0
+    "reviewHistory": [
+      {
+        "date": "2026-04-12",
+        "remembered": false
+      }
+    ],
+    "rot": 1,
+    "tags": [
+      "Police et Justice"
+    ]
   },
   {
     "id": "mnvmwppa7dga",
@@ -961,7 +1568,455 @@
     "createdAt": "2026-04-12",
     "reviewStage": 0,
     "nextReview": "2026-04-12",
-    "reviewHistory": [],
-    "rot": 0
+    "reviewHistory": [
+      {
+        "date": "2026-04-12",
+        "remembered": false
+      }
+    ],
+    "rot": 1,
+    "tags": [
+      "Police et Justice"
+    ]
+  },
+  {
+    "id": "mnvttrd140ro",
+    "word": "la condamnation à une amande, une peine accessoire",
+    "translation": "罚款、附加处罚",
+    "translation2": "the sentence to a fine, an accessory penalty",
+    "deckId": "default",
+    "createdAt": "2026-04-12",
+    "reviewStage": 0,
+    "nextReview": "2026-04-12",
+    "reviewHistory": [
+      {
+        "date": "2026-04-12",
+        "remembered": false
+      }
+    ],
+    "rot": 1,
+    "tags": [
+      "Police et Justice"
+    ]
+  },
+  {
+    "id": "mnvtvctyeqo6",
+    "word": "un travail d'intérêt général",
+    "translation": "社会工作",
+    "translation2": "?",
+    "deckId": "default",
+    "createdAt": "2026-04-12",
+    "reviewStage": 0,
+    "nextReview": "2026-04-12",
+    "reviewHistory": [
+      {
+        "date": "2026-04-12",
+        "remembered": false
+      }
+    ],
+    "rot": 1,
+    "tags": [
+      "Police et Justice"
+    ]
+  },
+  {
+    "id": "mnvtw8jzco7w",
+    "word": "une peine de prison ferme",
+    "translation": "判处有期徒刑",
+    "translation2": "a firm prison sentence",
+    "deckId": "default",
+    "createdAt": "2026-04-12",
+    "reviewStage": 0,
+    "nextReview": "2026-04-12",
+    "reviewHistory": [
+      {
+        "date": "2026-04-12",
+        "remembered": false
+      }
+    ],
+    "rot": 1,
+    "tags": [
+      "Police et Justice"
+    ]
+  },
+  {
+    "id": "mnvtwq1ddr41",
+    "word": "une peine de prison avec sursis",
+    "translation": "缓刑",
+    "translation2": "a suspended prison sentence",
+    "deckId": "default",
+    "createdAt": "2026-04-12",
+    "reviewStage": 0,
+    "nextReview": "2026-04-12",
+    "reviewHistory": [
+      {
+        "date": "2026-04-12",
+        "remembered": false
+      }
+    ],
+    "rot": 1,
+    "tags": [
+      "Police et Justice"
+    ]
+  },
+  {
+    "id": "mnvtx64r9lzj",
+    "word": "la réclusion à perpétuité",
+    "translation": "无期徒刑",
+    "translation2": "life imprisonment",
+    "deckId": "default",
+    "createdAt": "2026-04-12",
+    "reviewStage": 1,
+    "nextReview": "2026-04-13",
+    "reviewHistory": [
+      {
+        "date": "2026-04-12",
+        "remembered": true
+      }
+    ],
+    "rot": 1,
+    "tags": [
+      "Police et Justice"
+    ]
+  },
+  {
+    "id": "mnvtxmah7rsb",
+    "word": "la peine capital, la peine de mort",
+    "translation": "极刑, 死刑",
+    "translation2": "capital punishment, death penalty",
+    "deckId": "default",
+    "createdAt": "2026-04-12",
+    "reviewStage": 0,
+    "nextReview": "2026-04-12",
+    "reviewHistory": [
+      {
+        "date": "2026-04-12",
+        "remembered": false
+      }
+    ],
+    "rot": 1,
+    "tags": [
+      "Police et Justice"
+    ]
+  },
+  {
+    "id": "mnvtxygsxbmi",
+    "word": "la liberté conditionnelle",
+    "translation": "假释",
+    "translation2": "",
+    "deckId": "default",
+    "createdAt": "2026-04-12",
+    "reviewStage": 1,
+    "nextReview": "2026-04-13",
+    "reviewHistory": [
+      {
+        "date": "2026-04-12",
+        "remembered": true
+      }
+    ],
+    "rot": 1,
+    "tags": [
+      "Police et Justice"
+    ]
+  },
+  {
+    "id": "mnvtyuulfe58",
+    "word": "une mise en demeure de payer",
+    "translation": "正式付款通知",
+    "translation2": "a formal notice to pay",
+    "deckId": "default",
+    "createdAt": "2026-04-12",
+    "reviewStage": 0,
+    "nextReview": "2026-04-12",
+    "reviewHistory": [
+      {
+        "date": "2026-04-12",
+        "remembered": false
+      }
+    ],
+    "rot": 1,
+    "tags": [
+      "Police et Justice"
+    ]
+  },
+  {
+    "id": "mnvtzoz3ib6x",
+    "word": "la prison, la réclusion, ê détenu, un détenu",
+    "translation": "监狱, 隔离, ê 囚犯, 囚犯",
+    "translation2": "prison, seclusion, ê inmate, an inmate",
+    "deckId": "default",
+    "createdAt": "2026-04-12",
+    "reviewStage": 0,
+    "nextReview": "2026-04-12",
+    "reviewHistory": [
+      {
+        "date": "2026-04-12",
+        "remembered": false
+      }
+    ],
+    "rot": 1,
+    "tags": [
+      "Police et Justice"
+    ]
+  },
+  {
+    "id": "mnvu0hba9ndb",
+    "word": "appliquer une peine, une sanction, purger une peine",
+    "translation": "施加刑罚、制裁、服刑",
+    "translation2": "to apply a sentence, a sanction, to serve a sentence",
+    "deckId": "default",
+    "createdAt": "2026-04-12",
+    "reviewStage": 0,
+    "nextReview": "2026-04-12",
+    "reviewHistory": [
+      {
+        "date": "2026-04-12",
+        "remembered": false
+      }
+    ],
+    "rot": 1,
+    "tags": [
+      "Police et Justice"
+    ]
+  },
+  {
+    "id": "mnvu1iqipwqm",
+    "word": "ê décapité, guillotiné, la décapitation, une exécution",
+    "translation": "ê 斩首, 斩首, 斩首, 处决",
+    "translation2": "ê beheaded, guillotined, decapitation, execution",
+    "deckId": "default",
+    "createdAt": "2026-04-12",
+    "reviewStage": 0,
+    "nextReview": "2026-04-12",
+    "reviewHistory": [
+      {
+        "date": "2026-04-12",
+        "remembered": false
+      }
+    ],
+    "rot": 1,
+    "tags": [
+      "Police et Justice"
+    ]
+  },
+  {
+    "id": "mnvu246onatn",
+    "word": "ê interné en hôpital psychiatrique",
+    "translation": "被关在精神病院",
+    "translation2": "ê interned in a psychiatric hospital",
+    "deckId": "default",
+    "createdAt": "2026-04-12",
+    "reviewStage": 0,
+    "nextReview": "2026-04-12",
+    "reviewHistory": [
+      {
+        "date": "2026-04-12",
+        "remembered": false
+      }
+    ],
+    "rot": 1,
+    "tags": [
+      "Police et Justice"
+    ]
+  },
+  {
+    "id": "mnvu3vjxavgk",
+    "word": "ê jugé coupable/innocent",
+    "translation": "ê 被判有罪/无罪",
+    "translation2": "ê found guilty/innocent",
+    "deckId": "default",
+    "createdAt": "2026-04-12",
+    "reviewStage": 0,
+    "nextReview": "2026-04-12",
+    "reviewHistory": [
+      {
+        "date": "2026-04-12",
+        "remembered": false
+      }
+    ],
+    "rot": 1,
+    "tags": [
+      "Police et Justice"
+    ]
+  },
+  {
+    "id": "mnvu4eq1uxu0",
+    "word": "être verbalisé, a un procès-verbal",
+    "translation": "录口供, 笔录",
+    "translation2": "make out a report",
+    "deckId": "default",
+    "createdAt": "2026-04-12",
+    "reviewStage": 0,
+    "nextReview": "2026-04-12",
+    "reviewHistory": [
+      {
+        "date": "2026-04-12",
+        "remembered": false
+      }
+    ],
+    "rot": 1,
+    "tags": [
+      "Police et Justice"
+    ]
+  },
+  {
+    "id": "mnvu4w0vbq16",
+    "word": "avoir un PV",
+    "translation": "有PV",
+    "translation2": "have a PV",
+    "deckId": "default",
+    "createdAt": "2026-04-12",
+    "reviewStage": 0,
+    "nextReview": "2026-04-12",
+    "reviewHistory": [
+      {
+        "date": "2026-04-12",
+        "remembered": false
+      }
+    ],
+    "rot": 1,
+    "tags": [
+      "Police et Justice"
+    ]
+  },
+  {
+    "id": "mnvu8soczrfm",
+    "word": "déposer une plainte, porter plante",
+    "translation": "提出投诉，提出投诉",
+    "translation2": "file a complaint, file a complaint",
+    "deckId": "default",
+    "createdAt": "2026-04-12",
+    "reviewStage": 0,
+    "nextReview": "2026-04-12",
+    "reviewHistory": [
+      {
+        "date": "2026-04-12",
+        "remembered": false
+      }
+    ],
+    "rot": 1,
+    "tags": [
+      "Police et Justice"
+    ]
+  },
+  {
+    "id": "mnvu92169bsi",
+    "word": "désigner un agresseur",
+    "translation": "指定攻击者",
+    "translation2": "designate an attacker",
+    "deckId": "default",
+    "createdAt": "2026-04-12",
+    "reviewStage": 0,
+    "nextReview": "2026-04-12",
+    "reviewHistory": [
+      {
+        "date": "2026-04-12",
+        "remembered": false
+      }
+    ],
+    "rot": 1,
+    "tags": [
+      "Police et Justice"
+    ]
+  },
+  {
+    "id": "mnvux82cfywx",
+    "word": "ê maltraité",
+    "translation": "受到虐待",
+    "translation2": "be mistreated",
+    "deckId": "default",
+    "createdAt": "2026-04-12",
+    "reviewStage": 0,
+    "nextReview": "2026-04-12",
+    "reviewHistory": [
+      {
+        "date": "2026-04-12",
+        "remembered": false
+      }
+    ],
+    "rot": 1,
+    "tags": [
+      "Police et Justice"
+    ]
+  },
+  {
+    "id": "mnvuxebthxqg",
+    "word": "ê menacé, une menace",
+    "translation": "ê 受到威胁，威胁",
+    "translation2": "ê threatened, a threat",
+    "deckId": "default",
+    "createdAt": "2026-04-12",
+    "reviewStage": 0,
+    "nextReview": "2026-04-12",
+    "reviewHistory": [
+      {
+        "date": "2026-04-12",
+        "remembered": false
+      }
+    ],
+    "rot": 1,
+    "tags": [
+      "Police et Justice"
+    ]
+  },
+  {
+    "id": "mnvuxkey31o9",
+    "word": "un plaignant",
+    "translation": "投诉人",
+    "translation2": "a complainant",
+    "deckId": "default",
+    "createdAt": "2026-04-12",
+    "reviewStage": 0,
+    "nextReview": "2026-04-12",
+    "reviewHistory": [
+      {
+        "date": "2026-04-12",
+        "remembered": false
+      }
+    ],
+    "rot": 1,
+    "tags": [
+      "Police et Justice"
+    ]
+  },
+  {
+    "id": "mnvuy3qqhnd6",
+    "word": "poursuivre qqn en justice",
+    "translation": "起诉某人",
+    "translation2": "sue someone",
+    "deckId": "default",
+    "createdAt": "2026-04-12",
+    "reviewStage": 0,
+    "nextReview": "2026-04-12",
+    "reviewHistory": [
+      {
+        "date": "2026-04-12",
+        "remembered": false
+      }
+    ],
+    "rot": 1,
+    "tags": [
+      "Police et Justice"
+    ]
+  },
+  {
+    "id": "mnvuyv3lx5nc",
+    "word": "donner un signalement",
+    "translation": "给出(犯罪描述)",
+    "translation2": "give a report",
+    "deckId": "default",
+    "createdAt": "2026-04-12",
+    "reviewStage": 0,
+    "nextReview": "2026-04-12",
+    "reviewHistory": [
+      {
+        "date": "2026-04-12",
+        "remembered": false
+      }
+    ],
+    "rot": 1,
+    "tags": [
+      "Police et Justice"
+    ]
   }
 ]

@@ -117,6 +117,42 @@ const removeCardFromDay = async (uid, card) => {
   else await api.write(p, arr);
 };
 
+// ─── Batch helpers: group by day file, read once, write once ───
+const batchSaveCards = async (uid, cardList) => {
+  // Group cards by their day file path
+  const byFile = {};
+  for (const card of cardList) {
+    const p = dateToDayPath(uid, card.createdAt);
+    if (!byFile[p]) byFile[p] = [];
+    byFile[p].push(card);
+  }
+  // For each file: read once, apply all updates, write once
+  for (const [p, updates] of Object.entries(byFile)) {
+    let arr = (await api.read(p)) || [];
+    if (!Array.isArray(arr)) arr = [];
+    for (const card of updates) {
+      const idx = arr.findIndex(c => c.id === card.id);
+      if (idx >= 0) arr[idx] = card; else arr.push(card);
+    }
+    await api.write(p, arr);
+  }
+};
+
+const batchRemoveCards = async (uid, cardList) => {
+  const byFile = {};
+  for (const card of cardList) {
+    const p = dateToDayPath(uid, card.createdAt);
+    if (!byFile[p]) byFile[p] = [];
+    byFile[p].push(card.id);
+  }
+  for (const [p, ids] of Object.entries(byFile)) {
+    let arr = (await api.read(p)) || [];
+    arr = arr.filter(c => !ids.includes(c.id));
+    if (arr.length === 0) await api.del(p);
+    else await api.write(p, arr);
+  }
+};
+
 const gTranslate = async (word, sl, tl) => {
   try {
     const r = await fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=${sl}&tl=${tl}&dt=t&dj=1&q=${encodeURIComponent(word)}`);
@@ -145,6 +181,7 @@ const I = {
   ArrowUp: () => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>,
   ArrowDown: () => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/></svg>,
   Flame: () => <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M8.5 14.5A2.5 2.5 0 0011 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 11-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 002.5 2.5z"/></svg>,
+  Tag: () => <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M20.59 13.41l-7.17 7.17a2 2 0 01-2.83 0L2 12V2h10l8.59 8.59a2 2 0 010 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg>,
 };
 
 // Rotation display helper
@@ -206,6 +243,13 @@ export default function App() {
   const [clearTagConfirm, setClearTagConfirm] = useState(false);
   const [batchDateModal, setBatchDateModal] = useState(false);
   const [batchDateVal, setBatchDateVal] = useState(todayStr());
+  // Tags
+  const [addTags, setAddTags] = useState(new Set()); // tags selected when adding word
+  const [newTagInput, setNewTagInput] = useState("");
+  const [batchTagModal, setBatchTagModal] = useState(false);
+  const [batchTagInput, setBatchTagInput] = useState("");
+  // Intensive mode
+  const [intensiveMode, setIntensiveMode] = useState("hard"); // "hard" | "tag:xxx"
   const inputRef = useRef(null);
 
   const uid = () => global?.activeUser || "default";
@@ -306,7 +350,7 @@ export default function App() {
       word: newWord.trim(), translation: t1, translation2: t2,
       deckId: activeDeck, createdAt: addDate,
       reviewStage: 0, nextReview: addDays(addDate, EBB[0]),
-      reviewHistory: [], rot: 0,
+      reviewHistory: [], rot: 0, tags: [...addTags],
     };
     await saveCardToDay(uid(), card);
     await reload();
@@ -324,25 +368,49 @@ export default function App() {
   };
   const batchDelete = async () => {
     if (selected.size === 0) return;
-    for (const c of cards.filter(c => selected.has(c.id))) await removeCardFromDay(uid(), c);
+    const toDelete = cards.filter(c => selected.has(c.id));
+    await batchRemoveCards(uid(), toDelete);
     await reload(); showToast(`Deleted ${selected.size} cards`); setSelected(new Set());
   };
   const batchClearTags = async () => {
     if (selected.size === 0) return;
-    for (const c of cards.filter(c => selected.has(c.id))) {
-      await saveCardToDay(uid(), { ...c, reviewHistory: [], reviewStage: 0, nextReview: addDays(c.createdAt, EBB[0]) });
-    }
+    const updated = cards.filter(c => selected.has(c.id)).map(c => ({
+      ...c, reviewHistory: [], reviewStage: 0, nextReview: addDays(c.createdAt, EBB[0])
+    }));
+    await batchSaveCards(uid(), updated);
     await reload(); showToast(`Cleared tags on ${selected.size} cards`); setSelected(new Set()); setClearTagConfirm(false);
     log("info", "batchClearTags", { count: selected.size });
   };
   const batchChangeDate = async (newDate) => {
     if (selected.size === 0 || !newDate) return;
-    for (const c of cards.filter(c => selected.has(c.id))) {
-      await removeCardFromDay(uid(), c);
-      await saveCardToDay(uid(), { ...c, createdAt: newDate, nextReview: addDays(newDate, EBB[c.reviewStage]) });
-    }
+    const toMove = cards.filter(c => selected.has(c.id));
+    // Remove from old day files
+    await batchRemoveCards(uid(), toMove);
+    // Save to new day files with updated date
+    const updated = toMove.map(c => ({ ...c, createdAt: newDate, nextReview: addDays(newDate, EBB[c.reviewStage]) }));
+    await batchSaveCards(uid(), updated);
     await reload(); showToast(`Changed date on ${selected.size} cards`); setSelected(new Set()); setBatchDateModal(false);
     log("info", "batchChangeDate", { count: selected.size, newDate });
+  };
+  // Tag operations
+  const addTagToCard = async (card, tag) => {
+    const tags = [...new Set([...(card.tags||[]), tag])];
+    await saveCardToDay(uid(), { ...card, tags });
+    await reload();
+  };
+  const removeTagFromCard = async (card, tag) => {
+    const tags = (card.tags||[]).filter(t => t !== tag);
+    await saveCardToDay(uid(), { ...card, tags });
+    await reload();
+  };
+  const batchAddTag = async (tag) => {
+    if (!tag.trim() || selected.size === 0) return;
+    const t = tag.trim();
+    const updated = cards.filter(c => selected.has(c.id)).map(c => ({
+      ...c, tags: [...new Set([...(c.tags||[]), t])]
+    }));
+    await batchSaveCards(uid(), updated);
+    await reload(); showToast(`Added tag "${t}" to ${selected.size} cards`); setBatchTagModal(false); setBatchTagInput("");
   };
   const toggleSelect = id => setSelected(s => { const n = new Set(s); n.has(id)?n.delete(id):n.add(id); return n; });
 
@@ -400,10 +468,18 @@ export default function App() {
   };
 
   // ─── Intensive review: cards with any red (failed) tags ───
-  const getIntensiveCards = () => {
-    const withRed = cards.filter(c => c.deckId === activeDeck && (c.reviewHistory||[]).some(h => !h.remembered));
-    // Sort: most red tags first, then oldest first
-    return withRed.sort((a, b) => {
+  const getIntensiveCards = (mode) => {
+    const m = mode || intensiveMode;
+    let pool;
+    if (m === "hard") {
+      pool = cards.filter(c => c.deckId === activeDeck && (c.reviewHistory||[]).some(h => !h.remembered));
+    } else if (m.startsWith("tag:")) {
+      const tag = m.slice(4);
+      pool = cards.filter(c => c.deckId === activeDeck && (c.tags||[]).includes(tag));
+    } else {
+      pool = [];
+    }
+    return pool.sort((a, b) => {
       const aRed = (a.reviewHistory||[]).filter(h => !h.remembered).length;
       const bRed = (b.reviewHistory||[]).filter(h => !h.remembered).length;
       if (bRed !== aRed) return bRed - aRed;
@@ -411,13 +487,15 @@ export default function App() {
     });
   };
 
-  const startIntensiveSession = () => {
-    const ic = getIntensiveCards();
+  const startIntensiveSession = (mode) => {
+    const m = mode || intensiveMode;
+    setIntensiveMode(m);
+    const ic = getIntensiveCards(m);
     setIntensiveQueue(ic.map(c => c.id));
     setIntensivePos(0);
     setIntensiveRevealed(false);
     setIntensiveSnapshot(null);
-    log("info", "startIntensiveSession", { count: ic.length });
+    log("info", "startIntensiveSession", { mode: m, count: ic.length });
   };
 
   const doIntensiveReview = async (cardId, remembered) => {
@@ -518,6 +596,9 @@ export default function App() {
   const intensiveTotal = intensiveQueue.length;
   const intensiveDone = intensivePos >= intensiveTotal && intensiveTotal > 0;
   const intensiveCount = cards.filter(c => c.deckId === activeDeck && (c.reviewHistory||[]).some(h => !h.remembered)).length;
+
+  // All unique tags across all cards in current deck
+  const allTags = [...new Set(cards.filter(c => c.deckId === activeDeck).flatMap(c => c.tags || []))].sort();
 
   // Auto-play TTS on review card change
   const lastPlayedRef = useRef(null);
@@ -728,6 +809,13 @@ export default function App() {
             await saveCardToDay(uid(), { ...card, rot: ((card.rot || 0) + 1) % 3 });
             await reload(); showToast("Rotated");
           };
+          const batchRotate = async () => {
+            const updated = cards.filter(c => selected.has(c.id)).map(c => ({
+              ...c, rot: ((c.rot || 0) + 1) % 3
+            }));
+            await batchSaveCards(uid(), updated);
+            await reload(); showToast(`Rotated ${updated.length} cards`);
+          };
           return (
           <div style={S.content}>
             {deckCards.length > 0 && (<>
@@ -744,7 +832,8 @@ export default function App() {
                   <button className={`pill${showT2?" on":""}`} onClick={()=>setShowT2(!showT2)}>翻译2</button>
                 </div>
                 <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
-                  {selected.size > 0 && <button className="pill on" style={{borderColor:"#16a34a",color:"#4ade80",background:"#16a34a22"}} onClick={async () => { for (const id of selected) await rotateCard(id); }}><I.Rotate/> Rotate</button>}
+                  {selected.size > 0 && <button className="pill on" style={{borderColor:"#16a34a",color:"#4ade80",background:"#16a34a22"}} onClick={batchRotate}><I.Rotate/> Rotate</button>}
+                  {selected.size > 0 && <button className="pill" style={{borderColor:"#8b5cf6",color:"#a78bfa"}} onClick={() => setBatchTagModal(true)}><I.Tag/> 标签</button>}
                   {selected.size > 0 && <button className="pill" style={{borderColor:"#eab308",color:"#facc15"}} onClick={() => setClearTagConfirm(true)}>清除tag</button>}
                   {selected.size > 0 && <button className="pill" style={{borderColor:"#3b82f6",color:"#60a5fa"}} onClick={() => { setBatchDateVal(todayStr()); setBatchDateModal(true); }}>修改日期</button>}
                   {selected.size > 0 && <button className="pill" style={{borderColor:"#dc2626",color:"#f87171"}} onClick={batchDelete}><I.Trash/> Delete</button>}
@@ -794,11 +883,27 @@ export default function App() {
                             <button style={S.editBtn} onClick={() => startEdit(card)}><I.Edit/></button>
                           </div>
                         )}
-                        <div style={{ textAlign: "left" }}><ScheduleDots card={card}/></div>
+                        {/* Schedule dots + tags in one row */}
+                        <div style={{ display: "flex", alignItems: "center", gap: 6, marginTop: 3 }}>
+                          <div style={{ display: "flex", gap: 3, flexWrap: "wrap" }}><ScheduleDots card={card}/></div>
+                          {(card.tags||[]).length > 0 && <div style={{ marginLeft: "auto", display: "flex", gap: 3, flexWrap: "wrap", flexShrink: 0 }}>
+                            {(card.tags||[]).map(t => (
+                              <span key={t} style={{ fontFamily: mono, fontSize: 9, padding: "1px 6px", borderRadius: 10, background: "#8b5cf622", border: "1px solid #8b5cf644", color: "#a78bfa", cursor: "pointer" }}
+                                onClick={e => { e.stopPropagation(); removeTagFromCard(card, t); }} title={`Remove "${t}"`}>
+                                {t} ✕
+                              </span>
+                            ))}
+                          </div>}
+                        </div>
                       </div>
                       <div style={S.cardItemRight}>
                         <button className="spk" style={{ ...S.speakBtn, padding: 4 }} onClick={e=>{e.stopPropagation();rotateCard(card.id);}} title="Rotate"><I.Rotate/></button>
-                        {(card.reviewHistory||[]).length > 0 && <button className="spk" style={{ ...S.speakBtn, padding: 4, color: "#facc15" }} onClick={async e=>{e.stopPropagation(); await saveCardToDay(uid(), {...card, reviewHistory:[], reviewStage:0, nextReview:addDays(card.createdAt, EBB[0])}); await reload(); showToast("Tags cleared");}} title="Clear tags">✕</button>}
+                        <button className="spk" style={{ ...S.speakBtn, padding: 4, color: "#a78bfa" }} onClick={e => {
+                          e.stopPropagation();
+                          const tag = prompt("Add tag:");
+                          if (tag?.trim()) addTagToCard(card, tag.trim());
+                        }} title="Add tag"><I.Tag/></button>
+                        {(card.reviewHistory||[]).length > 0 && <button className="spk" style={{ ...S.speakBtn, padding: 4, color: "#facc15" }} onClick={async e=>{e.stopPropagation(); await saveCardToDay(uid(), {...card, reviewHistory:[], reviewStage:0, nextReview:addDays(card.createdAt, EBB[0])}); await reload(); showToast("Tags cleared");}} title="Clear review">✕</button>}
                         <DateInput value={card.createdAt} onChange={dd => updateCardDate(card, dd)}/>
                         <button style={S.deleteBtn} onClick={() => deleteCard(card)}><I.Trash/></button>
                       </div>
@@ -841,6 +946,22 @@ export default function App() {
                 <div style={S.modalActions}><button className="ab" style={S.modalCancel} onClick={() => setBatchDateModal(false)}>取消</button><button className="ab" style={S.modalConfirm} onClick={() => batchChangeDate(batchDateVal)}>确认修改</button></div>
               </div></div>
             )}
+            {batchTagModal && (
+              <div style={S.modal} onClick={() => setBatchTagModal(false)}><div style={S.modalContent} onClick={e=>e.stopPropagation()}>
+                <h3 style={S.modalTitle}>添加标签</h3>
+                <p style={{fontFamily:sans,fontSize:14,color:textDim,lineHeight:1.6,marginBottom:12}}>为 {selected.size} 张卡片添加标签</p>
+                {allTags.length > 0 && (
+                  <div style={{ display: "flex", gap: 4, flexWrap: "wrap", marginBottom: 12 }}>
+                    {allTags.map(t => <button key={t} className="pill" style={{borderColor:"#8b5cf6",color:"#a78bfa"}} onClick={() => batchAddTag(t)}>{t}</button>)}
+                  </div>
+                )}
+                <div style={{ display: "flex", gap: 8 }}>
+                  <input style={S.modalInput} placeholder="New tag..." value={batchTagInput} onChange={e => setBatchTagInput(e.target.value)}
+                    onKeyDown={e => e.key === "Enter" && batchAddTag(batchTagInput)} autoFocus/>
+                  <button className="ab" style={S.modalConfirm} onClick={() => batchAddTag(batchTagInput)}>添加</button>
+                </div>
+              </div></div>
+            )}
           </div>
           );
         })()}
@@ -862,8 +983,25 @@ export default function App() {
                   {translating?<span style={{animation:"pulse 1s infinite"}}>翻译中...</span>:<><I.Plus/> Add</>}
                 </button>
               </div>
-              <div style={{ marginBottom: 20 }}>
+              <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 20, alignItems: "center" }}>
                 <button className={`pill${autoPlay?" on":""}`} onClick={() => setAutoPlay(!autoPlay)}><I.Speaker size={12}/> 自动播放</button>
+                {/* Existing tags as toggles */}
+                {allTags.map(t => (
+                  <button key={t} className={`pill${addTags.has(t)?" on":""}`} style={addTags.has(t)?{borderColor:"#8b5cf6",color:"#a78bfa",background:"#8b5cf622"}:{}}
+                    onClick={() => setAddTags(s => { const n = new Set(s); n.has(t)?n.delete(t):n.add(t); return n; })}><I.Tag/> {t}</button>
+                ))}
+                {/* New tag input */}
+                <div style={{ display: "flex", gap: 4, alignItems: "center" }}>
+                  <input style={{ fontFamily: mono, fontSize: 11, background: bg, color: text, border: `1px solid ${border}`, borderRadius: 16, padding: "4px 10px", width: 100 }}
+                    placeholder="+ new tag" value={newTagInput} onChange={e => setNewTagInput(e.target.value)}
+                    onKeyDown={e => {
+                      if (e.key === "Enter" && newTagInput.trim()) {
+                        const t = newTagInput.trim();
+                        setAddTags(s => new Set([...s, t]));
+                        setNewTagInput("");
+                      }
+                    }}/>
+                </div>
               </div>
               <div style={{ marginBottom: 32 }}>
                 <h3 style={S.smallTitle}>Recently Added</h3>
@@ -942,19 +1080,23 @@ export default function App() {
         {/* ═══ INTENSIVE ═══ */}
         {view === "intensive" && (
           <div style={S.content}>
-            <div style={{ display: "flex", alignItems: "center", gap: 12, padding: "12px 0", flexWrap: "wrap" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "12px 0", flexWrap: "wrap" }}>
               <span style={{ fontFamily: serif, fontSize: 18, fontWeight: 600, color: text }}>强化复习</span>
-              <span style={{ fontFamily: mono, fontSize: 12, color: textDim }}>还有红标的词汇</span>
+              {/* Mode selector */}
+              <button className={`pill${intensiveMode==="hard"?" on":""}`} onClick={() => startIntensiveSession("hard")}>🔥 高难度 ({cards.filter(c => c.deckId === activeDeck && (c.reviewHistory||[]).some(h => !h.remembered)).length})</button>
+              {allTags.map(t => {
+                const m = "tag:" + t;
+                const cnt = cards.filter(c => c.deckId === activeDeck && (c.tags||[]).includes(t)).length;
+                return <button key={t} className={`pill${intensiveMode===m?" on":""}`} style={intensiveMode===m?{borderColor:"#8b5cf6",color:"#a78bfa",background:"#8b5cf622"}:{}} onClick={() => startIntensiveSession(m)}><I.Tag/> {t} ({cnt})</button>;
+              })}
               <div style={{ marginLeft: "auto" }}><button className={`pill${reviewAutoPlay?" on":""}`} onClick={() => setReviewAutoPlay(!reviewAutoPlay)}><I.Speaker size={12}/> 自动播放</button></div>
             </div>
             {intensiveTotal === 0 ? (
               <div style={S.empty}><div style={{ fontSize: 48, color: "#4ade80", marginBottom: 8 }}>✓</div>
-                <p style={S.emptyText}>没有需要强化的词汇</p>
-                <button className="ab" style={S.showBtn} onClick={startIntensiveSession}>刷新</button></div>
+                <p style={S.emptyText}>{intensiveMode==="hard"?"没有高难度词汇":"该标签没有词汇"}</p></div>
             ) : intensiveDone ? (
               <div style={S.empty}><div style={{ fontSize: 48, color: "#4ade80", marginBottom: 8 }}>✓</div>
-                <p style={S.emptyText}>强化复习完成！共 {intensiveTotal} 个</p>
-                <button className="ab" style={S.showBtn} onClick={startIntensiveSession}>再来一轮</button></div>
+                <p style={S.emptyText}>强化复习完成！共 {intensiveTotal} 个</p></div>
             ) : (() => {
               const rc = intensiveCurrentCard;
               if (!rc) return <div style={S.empty}><p style={S.emptyText}>Card not found</p></div>;
@@ -968,7 +1110,8 @@ export default function App() {
                       <div style={S.reviewWord}>{d.src}</div>
                       <button className="spk" style={{ ...S.speakBtn, padding: 4 }} onClick={() => speak(d.src, d.srcL)}><I.Speaker size={18}/></button>
                     </div>
-                    <div style={{ fontFamily: mono, fontSize: 11, color: "#f87171", marginBottom: 8 }}>{redCount} failed</div>
+                    {redCount > 0 && <div style={{ fontFamily: mono, fontSize: 11, color: "#f87171", marginBottom: 8 }}>{redCount} failed</div>}
+                    {(rc.tags||[]).length > 0 && <div style={{ display: "flex", gap: 3, justifyContent: "center", marginBottom: 4 }}>{(rc.tags||[]).map(t => <span key={t} style={{fontFamily:mono,fontSize:9,padding:"1px 6px",borderRadius:10,background:"#8b5cf622",border:"1px solid #8b5cf644",color:"#a78bfa"}}>{t}</span>)}</div>}
                     <div style={{ marginTop: 4, marginBottom: 20 }}><ScheduleDots card={rc}/></div>
                     <div style={{ minHeight: 52 }}>
                       {!intensiveRevealed ? (
