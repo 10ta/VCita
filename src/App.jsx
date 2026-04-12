@@ -9,6 +9,8 @@ const INIT_SHOW_T1 = __SHOW_TARGET_1__;
 const INIT_SHOW_T2 = __SHOW_TARGET_2__;
 const PAGE_SIZES = __PAGE_SIZES__;
 const DEFAULT_PAGE_SIZE = __DEFAULT_PAGE_SIZE__;
+const INIT_AUTO_ADD = __AUTO_PLAY_ADD__;
+const INIT_AUTO_REVIEW = __AUTO_PLAY_REVIEW__;
 
 const LANGS = [
   { code: "zh-CN", label: "中文" }, { code: "ja", label: "日本語" }, { code: "ko", label: "한국어" },
@@ -21,16 +23,46 @@ const LN = Object.fromEntries(LANGS.map(l => [l.code, l.label]));
 const todayStr = () => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`; };
 const addDays = (ds, n) => { const d = new Date(ds+"T00:00:00"); d.setDate(d.getDate()+n); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`; };
 const fmtShort = ds => ds.slice(2).replace(/-/g,"");
-// User-scoped path: users/{userId}/YYMM/MMDD.json
-const dateToDayPath = (userId, ds) => {
-  const [y, m, d] = ds.split("-");
-  return `users/${userId}/${y.slice(2)}${m}/${m}${d}.json`;
-};
+const dateToDayPath = (userId, ds) => { const [y, m, d] = ds.split("-"); return `users/${userId}/${y.slice(2)}${m}/${m}${d}.json`; };
 const userMetaPath = uid => `users/${uid}/meta.json`;
+const dayDiff = (dateStr) => { const t = new Date(todayStr()+"T00:00:00"), d = new Date(dateStr+"T00:00:00"); return Math.round((d - t) / 86400000); };
+const getScheduleDates = card => EBB.map(d => addDays(card.createdAt, d));
 
+// ─── Logging ───
+const LOG_KEY = "vf_logs";
+const log = (level, msg, data) => {
+  const entry = { ts: new Date().toISOString(), level, msg, ...(data ? { data } : {}) };
+  try {
+    const logs = JSON.parse(localStorage.getItem(LOG_KEY) || "[]");
+    logs.push(entry);
+    // Keep last 500
+    if (logs.length > 500) logs.splice(0, logs.length - 500);
+    localStorage.setItem(LOG_KEY, JSON.stringify(logs));
+  } catch {}
+  if (level === "error") console.error(`[VF] ${msg}`, data);
+  else console.log(`[VF] ${msg}`, data || "");
+};
+// Export logs for debug
+const exportLogs = () => {
+  const logs = localStorage.getItem(LOG_KEY) || "[]";
+  const blob = new Blob([logs], { type: "application/json" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a"); a.href = url; a.download = `vf-logs-${todayStr()}.json`; a.click();
+  URL.revokeObjectURL(url);
+};
+
+// ─── TTS ───
 const BASE = import.meta.env.BASE_URL;
+const speak = (text, lang) => {
+  if (!text) return;
+  const audio = new Audio(`${BASE}api/tts?q=${encodeURIComponent(text)}&tl=${lang}`);
+  audio.play().catch(e => log("error", "TTS failed", { text, lang, error: e.message }));
+};
+
+// ─── File API ───
 const api = {
   async write(p, data) {
+    log("debug", "api.write", { path: p });
     await fetch(`${BASE}api/write`, { method: "POST", headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ path: p, data: typeof data === "string" ? data : JSON.stringify(data, null, 2) }) });
   },
@@ -42,6 +74,7 @@ const api = {
     try { return JSON.parse(j.data); } catch { return j.data; }
   },
   async del(p) {
+    log("debug", "api.delete", { path: p });
     await fetch(`${BASE}api/delete`, { method: "POST", headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ path: p }) });
   },
@@ -52,28 +85,18 @@ const api = {
   },
 };
 
-// Global config: data/global.json stores user list + active user
 const GLOBAL_KEY = "global.json";
 const loadGlobal = async () => (await api.read(GLOBAL_KEY)) || { users: [{ id: "default", name: "Default" }], activeUser: "default" };
 const saveGlobal = g => api.write(GLOBAL_KEY, g);
-
-// Per-user meta
-const loadUserMeta = async uid => (await api.read(userMetaPath(uid))) || {
-  decks: [{ id: "default", name: "Default", createdAt: Date.now() }],
-  sourceLang: INIT_SRC, targetLang1: INIT_T1, targetLang2: INIT_T2,
-};
+const loadUserMeta = async uid => (await api.read(userMetaPath(uid))) || { decks: [{ id: "default", name: "Default", createdAt: Date.now() }], sourceLang: INIT_SRC, targetLang1: INIT_T1, targetLang2: INIT_T2 };
 const saveUserMeta = (uid, m) => api.write(userMetaPath(uid), m);
 
-// Per-user cards
 const loadUserCards = async uid => {
   const files = await api.list();
   const prefix = `users/${uid}/`;
   const dayFiles = files.filter(f => f.startsWith(prefix) && !f.endsWith("meta.json"));
   const cards = [];
-  for (const f of dayFiles) {
-    const arr = await api.read(f);
-    if (Array.isArray(arr)) cards.push(...arr);
-  }
+  for (const f of dayFiles) { const arr = await api.read(f); if (Array.isArray(arr)) cards.push(...arr); }
   return cards;
 };
 
@@ -99,22 +122,7 @@ const gTranslate = async (word, sl, tl) => {
     const r = await fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=${sl}&tl=${tl}&dt=t&dj=1&q=${encodeURIComponent(word)}`);
     const d = await r.json();
     return d.sentences?.map(s => s.trans).filter(Boolean).join("") || "";
-  } catch { return "翻译失败"; }
-};
-
-const getScheduleDates = card => EBB.map(d => addDays(card.createdAt, d));
-
-// Day diff: positive = future, negative = past, 0 = today
-const dayDiff = (dateStr) => {
-  const t = new Date(todayStr()+"T00:00:00"), d = new Date(dateStr+"T00:00:00");
-  return Math.round((d - t) / 86400000);
-};
-
-// TTS via local proxy (bypasses Google referrer check)
-const speak = (text, lang) => {
-  if (!text) return;
-  const audio = new Audio(`${import.meta.env.BASE_URL}api/tts?q=${encodeURIComponent(text)}&tl=${lang}`);
-  audio.play().catch(() => {});
+  } catch (e) { log("error", "translate failed", { word, sl, tl, error: e.message }); return "翻译失败"; }
 };
 
 const I = {
@@ -127,7 +135,6 @@ const I = {
   Edit: () => <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>,
   User: () => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>,
   ChevronDown: () => <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><polyline points="6 9 12 15 18 9"/></svg>,
-  // Nav icons
   Book: () => <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M4 19.5A2.5 2.5 0 016.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"/></svg>,
   PlusCircle: () => <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>,
   RefreshCw: () => <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/></svg>,
@@ -137,6 +144,15 @@ const I = {
   Rotate: () => <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 102.13-9.36L1 10"/></svg>,
   ArrowUp: () => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>,
   ArrowDown: () => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/></svg>,
+  Flame: () => <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M8.5 14.5A2.5 2.5 0 0011 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 11-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 002.5 2.5z"/></svg>,
+};
+
+// Rotation display helper
+const getCardDisplay = (card, meta) => {
+  const rot = (card.rot || 0) % 3;
+  const texts = [card.word, card.translation, card.translation2];
+  const langs = [meta.sourceLang, meta.targetLang1, meta.targetLang2];
+  return { src: texts[rot], t1: texts[(rot+1)%3], t2: texts[(rot+2)%3], srcL: langs[rot], t1L: langs[(rot+1)%3], t2L: langs[(rot+2)%3] };
 };
 
 export default function App() {
@@ -149,9 +165,14 @@ export default function App() {
   const [newWord, setNewWord] = useState("");
   const [addDate, setAddDate] = useState(todayStr());
   const [translating, setTranslating] = useState(false);
-  const [reviewIndex, setReviewIndex] = useState(0);
+  // Review state — frozen queue approach
+  const [reviewQueue, setReviewQueue] = useState([]); // frozen list of card IDs at session start
+  const [reviewPos, setReviewPos] = useState(0); // current position in queue
   const [reviewRevealed, setReviewRevealed] = useState(false);
+  const [reviewSnapshot, setReviewSnapshot] = useState(null);
   const [reviewDate, setReviewDate] = useState(todayStr());
+  const [reviewAutoPlay, setReviewAutoPlay] = useState(INIT_AUTO_REVIEW);
+  //
   const [newDeckName, setNewDeckName] = useState("");
   const [showDeckModal, setShowDeckModal] = useState(false);
   const [renameDeckId, setRenameDeckId] = useState(null);
@@ -165,20 +186,27 @@ export default function App() {
   const [editT2, setEditT2] = useState("");
   const [dayFiles, setDayFiles] = useState([]);
   const [deckExpanded, setDeckExpanded] = useState(false);
-  // User management
   const [newUserName, setNewUserName] = useState("");
   const [showUserModal, setShowUserModal] = useState(false);
   const [deleteUserConfirm, setDeleteUserConfirm] = useState(null);
   const [exportUsers, setExportUsers] = useState(new Set());
-  const [autoPlay, setAutoPlay] = useState(true);
+  const [autoPlay, setAutoPlay] = useState(INIT_AUTO_ADD);
+  // Intensive review
+  const [intensiveQueue, setIntensiveQueue] = useState([]);
+  const [intensivePos, setIntensivePos] = useState(0);
+  const [intensiveRevealed, setIntensiveRevealed] = useState(false);
+  const [intensiveSnapshot, setIntensiveSnapshot] = useState(null);
   const [showSrc, setShowSrc] = useState(INIT_SHOW_SRC);
   const [showT1, setShowT1] = useState(INIT_SHOW_T1);
   const [showT2, setShowT2] = useState(INIT_SHOW_T2);
   const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE);
   const [page, setPage] = useState(0);
   const [canScroll, setCanScroll] = useState(false);
+  const [filterDate, setFilterDate] = useState(""); // date filter for home
+  const [clearTagConfirm, setClearTagConfirm] = useState(false);
+  const [batchDateModal, setBatchDateModal] = useState(false);
+  const [batchDateVal, setBatchDateVal] = useState(todayStr());
   const inputRef = useRef(null);
-  const deckRowRef = useRef(null);
 
   const uid = () => global?.activeUser || "default";
 
@@ -192,11 +220,10 @@ export default function App() {
     if (!m.targetLang2) m.targetLang2 = INIT_T2;
     setMeta(m); setCards(c);
     setDayFiles(f.filter(x => x.startsWith(`users/${u}/`) && !x.endsWith("meta.json")));
+    log("info", "reload complete", { user: u, cardCount: c.length });
   };
 
   useEffect(() => { reload().then(() => setLoading(false)); }, []);
-
-  // Track if page is scrollable
   useEffect(() => {
     const check = () => setCanScroll(document.documentElement.scrollHeight > window.innerHeight + 50);
     check();
@@ -210,12 +237,30 @@ export default function App() {
   const updateGlobal = async g => { setGlobal(g); await saveGlobal(g); };
   const showToast = msg => { setToast(msg); setTimeout(() => setToast(null), 2200); };
 
+  // ─── isDueOn: check if card has unreviewed schedule dates <= date ───
+  const isDueOn = (card, date) => {
+    const sched = getScheduleDates(card);
+    const history = card.reviewHistory || [];
+    // Card is due if there's any schedule date <= date that hasn't been reviewed yet
+    return sched.some(sd => sd <= date && !history.find(h => h.date === sd));
+  };
+
+  // ─── Start/reset review session: freeze queue ───
+  const startReviewSession = (forDate) => {
+    const due = cards.filter(c => c.deckId === activeDeck && isDueOn(c, forDate));
+    const ids = due.map(c => c.id);
+    log("info", "startReviewSession", { date: forDate, count: ids.length });
+    setReviewQueue(ids);
+    setReviewPos(0);
+    setReviewRevealed(false);
+    setReviewSnapshot(null);
+  };
+
   // Switch user
   const switchUser = async userId => {
     const g = { ...global, activeUser: userId };
     await saveGlobal(g);
     setActiveDeck("default"); setSelected(new Set()); setView("home");
-    // Full reload with new user
     setLoading(true);
     const [m, c, f] = await Promise.all([loadUserMeta(userId), loadUserCards(userId), api.list()]);
     if (!m.sourceLang) m.sourceLang = INIT_SRC;
@@ -224,6 +269,7 @@ export default function App() {
     setGlobal(g); setMeta(m); setCards(c);
     setDayFiles(f.filter(x => x.startsWith(`users/${userId}/`) && !x.endsWith("meta.json")));
     setLoading(false);
+    log("info", "switchUser", { userId });
   };
 
   const createUser = async () => {
@@ -231,7 +277,6 @@ export default function App() {
     const id = Date.now().toString(36);
     const g = { ...global, users: [...global.users, { id, name: newUserName.trim() }] };
     await saveGlobal(g); setGlobal(g);
-    // Init user meta
     await saveUserMeta(id, { decks: [{ id: "default", name: "Default", createdAt: Date.now() }], sourceLang: INIT_SRC, targetLang1: INIT_T1, targetLang2: INIT_T2 });
     setNewUserName(""); setShowUserModal(false);
     showToast(`User "${newUserName.trim()}" created`);
@@ -239,16 +284,13 @@ export default function App() {
 
   const deleteUser = async userId => {
     if (userId === "default") return;
-    // Delete all user files
     const files = await api.list();
-    const prefix = `users/${userId}/`;
-    for (const f of files.filter(f => f.startsWith(prefix))) await api.del(f);
+    for (const f of files.filter(f => f.startsWith(`users/${userId}/`))) await api.del(f);
     const g = { ...global, users: global.users.filter(u => u.id !== userId), activeUser: global.activeUser === userId ? "default" : global.activeUser };
     await saveGlobal(g);
     setDeleteUserConfirm(null);
     if (global.activeUser === userId) await switchUser("default");
     else setGlobal(g);
-    showToast("User deleted");
   };
 
   // ─── Card ops ───
@@ -264,27 +306,46 @@ export default function App() {
       word: newWord.trim(), translation: t1, translation2: t2,
       deckId: activeDeck, createdAt: addDate,
       reviewStage: 0, nextReview: addDays(addDate, EBB[0]),
-      reviewHistory: [],
+      reviewHistory: [], rot: 0,
     };
     await saveCardToDay(uid(), card);
     await reload();
     setNewWord(""); setTranslating(false);
     showToast(`✓ ${card.word} → ${t1} / ${t2}`);
     if (autoPlay) speak(card.word, meta.sourceLang);
-    // Keep focus on input
     setTimeout(() => inputRef.current?.focus(), 50);
+    log("info", "addCard", { word: card.word, id: card.id });
   };
 
   const deleteCard = async card => {
     await removeCardFromDay(uid(), card); await reload();
     setSelected(s => { const n = new Set(s); n.delete(card.id); return n; });
+    log("info", "deleteCard", { id: card.id });
   };
   const batchDelete = async () => {
     if (selected.size === 0) return;
     for (const c of cards.filter(c => selected.has(c.id))) await removeCardFromDay(uid(), c);
     await reload(); showToast(`Deleted ${selected.size} cards`); setSelected(new Set());
   };
+  const batchClearTags = async () => {
+    if (selected.size === 0) return;
+    for (const c of cards.filter(c => selected.has(c.id))) {
+      await saveCardToDay(uid(), { ...c, reviewHistory: [], reviewStage: 0, nextReview: addDays(c.createdAt, EBB[0]) });
+    }
+    await reload(); showToast(`Cleared tags on ${selected.size} cards`); setSelected(new Set()); setClearTagConfirm(false);
+    log("info", "batchClearTags", { count: selected.size });
+  };
+  const batchChangeDate = async (newDate) => {
+    if (selected.size === 0 || !newDate) return;
+    for (const c of cards.filter(c => selected.has(c.id))) {
+      await removeCardFromDay(uid(), c);
+      await saveCardToDay(uid(), { ...c, createdAt: newDate, nextReview: addDays(newDate, EBB[c.reviewStage]) });
+    }
+    await reload(); showToast(`Changed date on ${selected.size} cards`); setSelected(new Set()); setBatchDateModal(false);
+    log("info", "batchChangeDate", { count: selected.size, newDate });
+  };
   const toggleSelect = id => setSelected(s => { const n = new Set(s); n.has(id)?n.delete(id):n.add(id); return n; });
+
   const updateCardTranslation = async (card, t0, t1, t2) => {
     const rot = (card.rot || 0) % 3;
     const fields = ["word", "translation", "translation2"];
@@ -294,21 +355,22 @@ export default function App() {
     updated[fields[(rot+2)%3]] = t2;
     await saveCardToDay(uid(), updated);
     await reload(); setEditingCard(null); showToast("Updated");
+    log("info", "updateCard", { id: card.id });
   };
   const updateCardDate = async (card, newDate) => {
     await removeCardFromDay(uid(), card);
     const updated = { ...card, createdAt: newDate, nextReview: addDays(newDate, EBB[card.reviewStage]) };
     await saveCardToDay(uid(), updated); await reload();
+    log("info", "updateCardDate", { id: card.id, newDate });
   };
 
-  const [reviewSnapshot, setReviewSnapshot] = useState(null); // snapshot of card after review
-
+  // ─── Review ───
   const doReview = async (cardId, remembered) => {
     const card = cards.find(c => c.id === cardId);
-    if (!card) return;
+    if (!card) { log("error", "doReview: card not found", { cardId }); return; }
     const rd = reviewDate;
     const sched = getScheduleDates(card);
-    const newHistory = [...card.reviewHistory];
+    const newHistory = [...(card.reviewHistory || [])];
     sched.forEach(schDate => {
       if (schDate <= rd && !newHistory.find(h => h.date === schDate))
         newHistory.push({ date: schDate, remembered });
@@ -316,12 +378,89 @@ export default function App() {
     let ns = remembered ? Math.min(card.reviewStage + 1, EBB.length - 1) : Math.max(0, card.reviewStage - 1);
     const updated = { ...card, reviewStage: ns, nextReview: addDays(rd, EBB[ns]), reviewHistory: newHistory };
     await saveCardToDay(uid(), updated);
-    // Snapshot the card for display before reload changes dueCards
     setReviewSnapshot(updated);
     setReviewRevealed(true);
     await reload();
+    log("info", "doReview", { cardId, remembered, stage: ns, date: rd });
   };
-  const nextReviewCard = () => { setReviewRevealed(false); setReviewSnapshot(null); setReviewIndex(i => i + 1); };
+
+  const nextReviewCard = () => {
+    setReviewRevealed(false);
+    setReviewSnapshot(null);
+    setReviewPos(p => p + 1);
+  };
+
+  const toggleReviewDot = async (card, schDate) => {
+    const rh = (card.reviewHistory || []).find(h => h.date === schDate);
+    if (!rh) return;
+    const newHistory = card.reviewHistory.map(h => h.date === schDate ? { ...h, remembered: !h.remembered } : h);
+    await saveCardToDay(uid(), { ...card, reviewHistory: newHistory });
+    await reload();
+    log("info", "toggleReviewDot", { cardId: card.id, date: schDate });
+  };
+
+  // ─── Intensive review: cards with any red (failed) tags ───
+  const getIntensiveCards = () => {
+    const withRed = cards.filter(c => c.deckId === activeDeck && (c.reviewHistory||[]).some(h => !h.remembered));
+    // Sort: most red tags first, then oldest first
+    return withRed.sort((a, b) => {
+      const aRed = (a.reviewHistory||[]).filter(h => !h.remembered).length;
+      const bRed = (b.reviewHistory||[]).filter(h => !h.remembered).length;
+      if (bRed !== aRed) return bRed - aRed;
+      return a.createdAt.localeCompare(b.createdAt);
+    });
+  };
+
+  const startIntensiveSession = () => {
+    const ic = getIntensiveCards();
+    setIntensiveQueue(ic.map(c => c.id));
+    setIntensivePos(0);
+    setIntensiveRevealed(false);
+    setIntensiveSnapshot(null);
+    log("info", "startIntensiveSession", { count: ic.length });
+  };
+
+  const doIntensiveReview = async (cardId, remembered) => {
+    const card = cards.find(c => c.id === cardId);
+    if (!card) return;
+    const rd = todayStr();
+    const sched = getScheduleDates(card);
+    const newHistory = [...(card.reviewHistory || [])];
+    sched.forEach(schDate => {
+      if (schDate <= rd && !newHistory.find(h => h.date === schDate))
+        newHistory.push({ date: schDate, remembered });
+    });
+    let ns = remembered ? Math.min(card.reviewStage + 1, EBB.length - 1) : Math.max(0, card.reviewStage - 1);
+    const updated = { ...card, reviewStage: ns, nextReview: addDays(rd, EBB[ns]), reviewHistory: newHistory };
+    await saveCardToDay(uid(), updated);
+    setIntensiveSnapshot(updated);
+    setIntensiveRevealed(true);
+    await reload();
+  };
+
+  const masterCard = async (cardId) => {
+    const card = cards.find(c => c.id === cardId);
+    if (!card) return;
+    const td = todayStr();
+    const sched = getScheduleDates(card);
+    // Only mark schedule dates <= today as remembered, preserve existing history for those dates
+    const newHistory = sched
+      .filter(sd => sd <= td)
+      .map(sd => {
+        const existing = (card.reviewHistory||[]).find(h => h.date === sd);
+        return existing ? { ...existing, remembered: true } : { date: sd, remembered: true };
+      });
+    const updated = { ...card, reviewHistory: newHistory };
+    await saveCardToDay(uid(), updated);
+    await reload();
+    showToast("Mastered!");
+    setIntensiveRevealed(false);
+    setIntensiveSnapshot(null);
+    setIntensivePos(p => p + 1);
+    log("info", "masterCard", { cardId });
+  };
+
+  const nextIntensiveCard = () => { setIntensiveRevealed(false); setIntensiveSnapshot(null); setIntensivePos(p => p + 1); };
 
   // ─── Deck ops ───
   const createDeck = async () => {
@@ -351,13 +490,6 @@ export default function App() {
   // ─── Computed ───
   const td = todayStr();
   const deckCards = cards.filter(c => c.deckId === activeDeck);
-  // A card is due if: nextReview <= reviewDate, OR any unreviewed schedule date <= reviewDate
-  const isDueOn = (card, date) => {
-    if (card.nextReview <= date) return true;
-    const sched = getScheduleDates(card);
-    return sched.some(sd => sd <= date && !card.reviewHistory.find(h => h.date === sd));
-  };
-  const dueCards = cards.filter(c => c.deckId === activeDeck && isDueOn(c, reviewDate));
   const allDueCount = cards.filter(c => isDueOn(c, td)).length;
   const currentDeck = meta?.decks.find(d => d.id === activeDeck);
   const toggleSelectAll = () => {
@@ -365,21 +497,64 @@ export default function App() {
     else setSelected(new Set(deckCards.map(c => c.id)));
   };
 
-  // ─── Export (multi-user) / Import ───
+  // Review queue: get current card from frozen queue
+  const reviewCurrentCard = (() => {
+    if (reviewRevealed && reviewSnapshot) return reviewSnapshot;
+    if (reviewPos < reviewQueue.length) {
+      const id = reviewQueue[reviewPos];
+      return cards.find(c => c.id === id) || null;
+    }
+    return null;
+  })();
+  const reviewTotal = reviewQueue.length;
+  const reviewDone = reviewPos >= reviewTotal && reviewTotal > 0;
+
+  // Intensive review current card
+  const intensiveCurrentCard = (() => {
+    if (intensiveRevealed && intensiveSnapshot) return intensiveSnapshot;
+    if (intensivePos < intensiveQueue.length) return cards.find(c => c.id === intensiveQueue[intensivePos]) || null;
+    return null;
+  })();
+  const intensiveTotal = intensiveQueue.length;
+  const intensiveDone = intensivePos >= intensiveTotal && intensiveTotal > 0;
+  const intensiveCount = cards.filter(c => c.deckId === activeDeck && (c.reviewHistory||[]).some(h => !h.remembered)).length;
+
+  // Auto-play TTS on review card change
+  const lastPlayedRef = useRef(null);
+  useEffect(() => {
+    if (!meta) return;
+    if (view === "review" && reviewAutoPlay && !reviewRevealed && reviewCurrentCard) {
+      const key = "r-" + reviewCurrentCard.id + "-" + reviewPos;
+      if (lastPlayedRef.current !== key) {
+        lastPlayedRef.current = key;
+        const d = getCardDisplay(reviewCurrentCard, meta);
+        speak(d.src, d.srcL);
+      }
+    }
+    if (view === "intensive" && reviewAutoPlay && !intensiveRevealed && intensiveCurrentCard) {
+      const key = "i-" + intensiveCurrentCard.id + "-" + intensivePos;
+      if (lastPlayedRef.current !== key) {
+        lastPlayedRef.current = key;
+        const d = getCardDisplay(intensiveCurrentCard, meta);
+        speak(d.src, d.srcL);
+      }
+    }
+  });
+
+  // ─── Export / Import ───
   const exportAll = async () => {
     const usersToExport = exportUsers.size > 0 ? [...exportUsers] : [uid()];
     const files = {};
     const allFiles = await api.list();
     for (const f of allFiles) {
-      if (f === GLOBAL_KEY || usersToExport.some(u => f.startsWith(`users/${u}/`))) {
+      if (f === GLOBAL_KEY || usersToExport.some(u => f.startsWith(`users/${u}/`)))
         files[f] = await api.read(f);
-      }
     }
     const blob = new Blob([JSON.stringify({ version: 4, exportedAt: new Date().toISOString(), files }, null, 2)], { type: "application/json" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a"); a.href = url; a.download = `vocabforge-${td}.json`; a.click();
     URL.revokeObjectURL(url);
-    showToast(`Exported ${Object.keys(files).length} files (${usersToExport.length} users)`);
+    showToast(`Exported ${Object.keys(files).length} files`);
   };
 
   const importAll = e => {
@@ -407,20 +582,12 @@ export default function App() {
 
   if (loading || !meta || !global) return <div style={S.loadingScreen}><div style={S.loadingPulse}>鍛</div></div>;
 
-  const toggleReviewDot = async (card, schDate) => {
-    const rh = card.reviewHistory.find(h => h.date === schDate);
-    if (!rh) return; // only toggle already-reviewed dots
-    const newHistory = card.reviewHistory.map(h => h.date === schDate ? { ...h, remembered: !h.remembered } : h);
-    await saveCardToDay(uid(), { ...card, reviewHistory: newHistory });
-    await reload();
-  };
-
   const ScheduleDots = ({ card }) => {
     const sched = getScheduleDates(card);
     return (
-      <div style={{ display: "flex", gap: 3, flexWrap: "wrap", alignItems: "center" }}>
+      <div style={{ display: "flex", gap: 3, flexWrap: "wrap", alignItems: "center", justifyContent: "center" }}>
         {sched.map((schDate, i) => {
-          const rh = card.reviewHistory.find(h => h.date === schDate);
+          const rh = (card.reviewHistory||[]).find(h => h.date === schDate);
           const isToday = schDate === td, isPast = schDate < td;
           const diff = dayDiff(schDate);
           let bg = "#333", clr = "#666";
@@ -430,11 +597,9 @@ export default function App() {
           const diffLabel = isToday ? "" : diff > 0 ? `+${diff}` : `${diff}`;
           const clickable = !!rh;
           return (
-            <span key={i} title={`Day ${EBB[i]} → ${schDate}${clickable ? " (click to toggle)" : ""}`}
-              onClick={clickable ? (e) => { e.stopPropagation(); toggleReviewDot(card, schDate); } : undefined}
-              style={{ fontFamily: mono, fontSize: 9, padding: "2px 5px", borderRadius: 3,
-                background: bg, color: clr, lineHeight: 1.2, display: "inline-flex", flexDirection: "column", alignItems: "center", gap: 0,
-                cursor: clickable ? "pointer" : "default" }}>
+            <span key={i} title={`Day ${EBB[i]} → ${schDate}${clickable?" (click to toggle)":""}`}
+              onClick={clickable ? e => { e.stopPropagation(); toggleReviewDot(card, schDate); } : undefined}
+              style={{ fontFamily: mono, fontSize: 9, padding: "2px 5px", borderRadius: 3, background: bg, color: clr, lineHeight: 1.2, display: "inline-flex", flexDirection: "column", alignItems: "center", gap: 0, cursor: clickable?"pointer":"default" }}>
               {diffLabel && <span style={{ fontSize: 7, opacity: 0.7, lineHeight: 1 }}>{diffLabel}</span>}
               {fmtShort(schDate)}
             </span>
@@ -452,6 +617,7 @@ export default function App() {
     setEditT1(texts[(rot+1)%3] || "");
     setEditT2(texts[(rot+2)%3] || "");
   };
+
   const LangSelect = ({ value, onChange }) => <select style={S.langSel} value={value} onChange={e => onChange(e.target.value)}>{LANGS.map(l => <option key={l.code} value={l.code}>{l.label}</option>)}</select>;
   const DateInput = ({ value, onChange, style: sx }) => <input type="date" value={value} onChange={e => e.target.value && onChange(e.target.value)} style={{ ...S.dateInput, ...sx }}/>;
 
@@ -459,7 +625,8 @@ export default function App() {
   const NAV = [
     { id: "home", label: "词库", icon: <I.Book/> },
     { id: "add", label: "添加", icon: <I.PlusCircle/> },
-    { id: "review", label: `复习${dueCards.length?` (${dueCards.length})`:""}`, icon: <I.RefreshCw/> },
+    { id: "review", label: `复习${allDueCount?` (${allDueCount})`:""}`, icon: <I.RefreshCw/> },
+    { id: "intensive", label: `强化${intensiveCount?` (${intensiveCount})`:""}`, icon: <I.Flame/> },
     { id: "decks", label: "牌组", icon: <I.Layers/> },
     { id: "export", label: "备份", icon: <I.Save/> },
     { id: "users", label: "用户", icon: <I.User/> },
@@ -481,10 +648,10 @@ export default function App() {
         .hi:hover{background:#161618!important}
         @media(hover:none){.hi:hover{background:inherit!important}}
         .card-due{border:1px solid #e8440088!important;box-shadow:0 0 8px #e8440022}
-        .card-sel{background:#1a1410!important;border-left:3px solid #e84400!important}.nb:hover:not(.nav-active){background:#1a1a1e!important}
+        .card-sel{background:#1a1410!important;border-left:3px solid #e84400!important}
+        .nb:hover:not(.nav-active){background:#1a1a1e!important}
         .ab:hover{transform:translateY(-1px);filter:brightness(1.1)}.dk:hover{border-color:#e84400!important}
-        .spk:hover{color:#e84400!important}
-        .scb:hover{opacity:1!important;border-color:#e84400!important;color:#e84400!important}
+        .spk:hover{color:#e84400!important}.scb:hover{opacity:1!important;border-color:#e84400!important;color:#e84400!important}
         input::placeholder{color:#444}
         .cb{appearance:none;width:16px;height:16px;border:2px solid #333;border-radius:4px;cursor:pointer;flex-shrink:0;position:relative;background:transparent;outline:none}
         .cb:checked{border-color:#e84400;background:#e84400}.cb:checked::after{content:'✓';position:absolute;top:-2px;left:2px;font-size:11px;color:#fff;font-weight:700}
@@ -499,14 +666,12 @@ export default function App() {
 
       {toast && <div style={S.toast}>{toast}</div>}
 
-      {/* Header */}
       <header style={S.header}>
         <div style={S.logo} onClick={() => { setView("home"); setSelected(new Set()); }}>
-          <span style={S.logoMark}>鍛</span>
-          <span style={S.logoText}>VocabForge</span>
+          <span style={S.logoMark}>鍛</span><span style={S.logoText}>VocabForge</span>
         </div>
         <div style={S.headerRight}>
-          {allDueCount > 0 && <div style={S.dueBadge} onClick={() => { setView("review"); setReviewIndex(0); setReviewRevealed(false); }}>{allDueCount} due</div>}
+          {allDueCount > 0 && <div style={S.dueBadge} onClick={() => { setView("review"); startReviewSession(reviewDate); }}>{allDueCount} due</div>}
           <LangSelect value={meta.sourceLang} onChange={setSourceLang}/>
           <span style={{ color: accent, fontSize: 11, fontFamily: mono }}>→</span>
           <LangSelect value={meta.targetLang1} onChange={setTargetLang1}/>
@@ -515,36 +680,33 @@ export default function App() {
         </div>
       </header>
 
-      {/* Nav — fix: use onClick to set view, no toggling issues */}
       <nav style={S.nav}>
         {NAV.map(t => (
-          <button key={t.id} className={`nb${view === t.id ? " nav-active" : ""}`}
-            style={{ ...S.navBtn, ...(view === t.id ? S.navBtnActive : {}) }}
-            onClick={() => { setView(t.id); setSelected(new Set()); if (t.id==="review") { setReviewIndex(0); setReviewRevealed(false); } }}>
-            {t.icon} {t.label}
-          </button>
+          <button key={t.id} className={`nb${view===t.id?" nav-active":""}`}
+            style={{ ...S.navBtn, ...(view===t.id?S.navBtnActive:{}) }}
+            onClick={() => {
+              setView(t.id); setSelected(new Set());
+              if (t.id==="review") startReviewSession(reviewDate);
+              if (t.id==="intensive") startIntensiveSession();
+            }}>{t.icon} {t.label}</button>
         ))}
-        {/* Active user indicator */}
         <div style={{ marginLeft: "auto", fontFamily: mono, fontSize: 11, color: textDim, display: "flex", alignItems: "center", gap: 4 }}>
           <I.User/> {activeUser?.name}
         </div>
       </nav>
 
-      {/* Deck tabs — inline, one row, expand button */}
-      {(view === "home" || view === "add" || view === "review") && (
+      {(view === "home" || view === "add" || view === "review" || view === "intensive") && (
         <div style={{ display: "flex", alignItems: "center", gap: 6, padding: "8px 0", borderBottom: `1px solid ${border}` }}>
-          <div className={`deck-tabs${deckExpanded ? " expanded" : ""}`} ref={deckRowRef}>
+          <div className={`deck-tabs${deckExpanded?" expanded":""}`}>
             {meta.decks.map(d => (
               <button key={d.id} className={`dtab${activeDeck===d.id?" active":""}`}
-                onClick={() => { setActiveDeck(d.id); setSelected(new Set()); }}>
+                onClick={() => { setActiveDeck(d.id); setSelected(new Set()); if(view==="review") startReviewSession(reviewDate); if(view==="intensive") startIntensiveSession(); }}>
                 {d.name} ({cards.filter(c=>c.deckId===d.id).length})
               </button>
             ))}
           </div>
-          <button style={{ background: "transparent", border: "none", color: textDim, cursor: "pointer", padding: 4, flexShrink: 0, transform: deckExpanded ? "rotate(180deg)" : "none", transition: "transform .2s" }}
-            onClick={() => setDeckExpanded(!deckExpanded)}>
-            <I.ChevronDown/>
-          </button>
+          <button style={{ background: "transparent", border: "none", color: textDim, cursor: "pointer", padding: 4, flexShrink: 0, transform: deckExpanded?"rotate(180deg)":"none", transition: "transform .2s" }}
+            onClick={() => setDeckExpanded(!deckExpanded)}><I.ChevronDown/></button>
         </div>
       )}
 
@@ -552,46 +714,49 @@ export default function App() {
 
         {/* ═══ HOME ═══ */}
         {view === "home" && (() => {
-          const sorted = [...deckCards].sort((a,b) => b.createdAt.localeCompare(a.createdAt) || b.id.localeCompare(a.id));
+          const filtered = filterDate
+            ? deckCards.filter(c => c.createdAt === filterDate)
+            : deckCards;
+          const sorted = [...filtered].sort((a,b) => b.createdAt.localeCompare(a.createdAt) || b.id.localeCompare(a.id));
           const totalPages = Math.max(1, Math.ceil(sorted.length / pageSize));
           const safePage = Math.min(page, totalPages - 1);
           const paged = sorted.slice(safePage * pageSize, (safePage + 1) * pageSize);
-
-          // Rotation helper: get display order for a card
-          const getDisplay = (card) => {
-            const rot = (card.rot || 0) % 3;
-            const texts = [card.word, card.translation, card.translation2];
-            const langs = [meta.sourceLang, meta.targetLang1, meta.targetLang2];
-            return { src: texts[rot], t1: texts[(rot+1)%3], t2: texts[(rot+2)%3],
-                     srcL: langs[rot], t1L: langs[(rot+1)%3], t2L: langs[(rot+2)%3] };
-          };
           const rotateCard = async (cardId) => {
             const card = cards.find(c => c.id === cardId);
             if (!card) return;
-            const updated = { ...card, rot: ((card.rot || 0) + 1) % 3 };
-            await saveCardToDay(uid(), updated);
-            await reload();
-            showToast("Rotated");
+            await saveCardToDay(uid(), { ...card, rot: ((card.rot || 0) + 1) % 3 });
+            await reload(); showToast("Rotated");
           };
-
           return (
           <div style={S.content}>
-            {deckCards.length > 0 && (
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "8px 0", marginBottom: 4, gap: 8, flexWrap: "wrap" }}>
+            {deckCards.length > 0 && (<>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "8px 0", gap: 8, flexWrap: "wrap" }}>
                 <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
-                  <button className={`pill${selected.size===deckCards.length&&deckCards.length>0?" on":""}`} onClick={toggleSelectAll}>
+                  <button className={`pill${selected.size===filtered.length&&filtered.length>0?" on":""}`} onClick={() => {
+                    if (selected.size === filtered.length) setSelected(new Set());
+                    else setSelected(new Set(filtered.map(c => c.id)));
+                  }}>
                     {selected.size>0?`${selected.size} selected`:"Select all"}
                   </button>
                   <button className={`pill${showSrc?" on":""}`} onClick={()=>setShowSrc(!showSrc)}>目标</button>
                   <button className={`pill${showT1?" on":""}`} onClick={()=>setShowT1(!showT1)}>翻译1</button>
                   <button className={`pill${showT2?" on":""}`} onClick={()=>setShowT2(!showT2)}>翻译2</button>
                 </div>
-                <div style={{ display: "flex", gap: 6 }}>
+                <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
                   {selected.size > 0 && <button className="pill on" style={{borderColor:"#16a34a",color:"#4ade80",background:"#16a34a22"}} onClick={async () => { for (const id of selected) await rotateCard(id); }}><I.Rotate/> Rotate</button>}
-                  {selected.size > 0 && <button className="pill on" style={{borderColor:"#dc2626",color:"#f87171",background:"#dc262622"}} onClick={batchDelete}><I.Trash/> Delete</button>}
+                  {selected.size > 0 && <button className="pill" style={{borderColor:"#eab308",color:"#facc15"}} onClick={() => setClearTagConfirm(true)}>清除tag</button>}
+                  {selected.size > 0 && <button className="pill" style={{borderColor:"#3b82f6",color:"#60a5fa"}} onClick={() => { setBatchDateVal(todayStr()); setBatchDateModal(true); }}>修改日期</button>}
+                  {selected.size > 0 && <button className="pill" style={{borderColor:"#dc2626",color:"#f87171"}} onClick={batchDelete}><I.Trash/> Delete</button>}
                 </div>
               </div>
-            )}
+              {/* Date filter */}
+              <div style={{ display: "flex", alignItems: "center", gap: 8, paddingBottom: 8 }}>
+                <span style={{ fontFamily: mono, fontSize: 11, color: textDim }}>日期筛选:</span>
+                <DateInput value={filterDate} onChange={d => { setFilterDate(d); setPage(0); }}/>
+                {filterDate && <button className="pill" onClick={() => { setFilterDate(""); setPage(0); }} style={{ fontSize: 10 }}>✕ 清除</button>}
+                {filterDate && <span style={{ fontFamily: mono, fontSize: 11, color: textDim }}>{filtered.length} cards</span>}
+              </div>
+            </>)}
             {deckCards.length === 0 ? (
               <div style={S.empty}><p style={S.emptyText}>No cards yet</p><button className="ab" style={S.emptyBtn} onClick={() => setView("add")}><I.Plus/> Add word</button></div>
             ) : (<>
@@ -600,20 +765,17 @@ export default function App() {
                   const isEditing = editingCard === card.id;
                   const isDue = isDueOn(card, td);
                   const isSel = selected.has(card.id);
-                  const d = getDisplay(card);
+                  const d = getCardDisplay(card, meta);
                   return (
-                    <div key={card.id} className={`hi${isSel?" card-sel":""}${isDue && !isSel?" card-due":""}`} style={{ ...S.cardItem, animationDelay: `${Math.min(i,20)*25}ms` }}>
-                      <input type="checkbox" className="cb" checked={isSel}
-                        onChange={() => toggleSelect(card.id)} style={{ marginRight: 10, marginTop: 4 }}/>
+                    <div key={card.id} className={`hi${isSel?" card-sel":""}${isDue&&!isSel?" card-due":""}`} style={{ ...S.cardItem, animationDelay: `${Math.min(i,20)*25}ms` }}>
+                      <input type="checkbox" className="cb" checked={isSel} onChange={() => toggleSelect(card.id)} style={{ marginRight: 10, marginTop: 4 }}/>
                       <div style={{ flex: 1, minWidth: 0 }}>
-                        {/* Source line */}
                         {showSrc && (
                           <div style={{ display: "flex", alignItems: "center", gap: 4, marginBottom: 3 }}>
                             <span style={S.cardWord}>{d.src}</span>
                             <button className="spk" style={S.speakBtn} onClick={e => { e.stopPropagation(); speak(d.src, d.srcL); }} title={LN[d.srcL]}><I.Speaker/></button>
                           </div>
                         )}
-                        {/* Target lines */}
                         {isEditing ? (
                           <div style={{ display: "flex", gap: 6, alignItems: "center", marginTop: 4, flexWrap: "wrap" }}>
                             <input style={{ ...S.editInput, fontWeight: 600 }} value={editT0} onChange={e => setEditT0(e.target.value)} placeholder={LN[d.srcL]}/>
@@ -624,16 +786,17 @@ export default function App() {
                           </div>
                         ) : (
                           <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 3, flexWrap: "wrap" }}>
-                            {showT1 && <><span style={S.cardTrans}>{d.t1}</span><button className="spk" style={S.speakBtn} onClick={e => { e.stopPropagation(); speak(d.t1, d.t1L); }} title={LN[d.t1L]}><I.Speaker/></button></>}
+                            {showT1 && <><span style={S.cardTrans}>{d.t1}</span><button className="spk" style={S.speakBtn} onClick={e=>{e.stopPropagation();speak(d.t1,d.t1L);}} title={LN[d.t1L]}><I.Speaker/></button></>}
                             {showT1 && showT2 && <span style={{ color: "#444", fontSize: 11 }}>/</span>}
-                            {showT2 && <><span style={S.cardTrans2}>{d.t2}</span><button className="spk" style={S.speakBtn} onClick={e => { e.stopPropagation(); speak(d.t2, d.t2L); }} title={LN[d.t2L]}><I.Speaker/></button></>}
+                            {showT2 && <><span style={S.cardTrans2}>{d.t2}</span><button className="spk" style={S.speakBtn} onClick={e=>{e.stopPropagation();speak(d.t2,d.t2L);}} title={LN[d.t2L]}><I.Speaker/></button></>}
                             <button style={S.editBtn} onClick={() => startEdit(card)}><I.Edit/></button>
                           </div>
                         )}
-                        <ScheduleDots card={card}/>
+                        <div style={{ textAlign: "left" }}><ScheduleDots card={card}/></div>
                       </div>
                       <div style={S.cardItemRight}>
-                        <button className="spk" style={{ ...S.speakBtn, padding: 4 }} onClick={e => { e.stopPropagation(); rotateCard(card.id); }} title="Rotate languages"><I.Rotate/></button>
+                        <button className="spk" style={{ ...S.speakBtn, padding: 4 }} onClick={e=>{e.stopPropagation();rotateCard(card.id);}} title="Rotate"><I.Rotate/></button>
+                        {(card.reviewHistory||[]).length > 0 && <button className="spk" style={{ ...S.speakBtn, padding: 4, color: "#facc15" }} onClick={async e=>{e.stopPropagation(); await saveCardToDay(uid(), {...card, reviewHistory:[], reviewStage:0, nextReview:addDays(card.createdAt, EBB[0])}); await reload(); showToast("Tags cleared");}} title="Clear tags">✕</button>}
                         <DateInput value={card.createdAt} onChange={dd => updateCardDate(card, dd)}/>
                         <button style={S.deleteBtn} onClick={() => deleteCard(card)}><I.Trash/></button>
                       </div>
@@ -641,7 +804,6 @@ export default function App() {
                   );
                 })}
               </div>
-              {/* Pagination */}
               <div style={{ display: "flex", flexDirection: "column", gap: 8, alignItems: "center", padding: "16px 0" }}>
                 <div style={{ display: "flex", gap: 4 }}>
                   {PAGE_SIZES.map(s => (
@@ -651,16 +813,32 @@ export default function App() {
                 </div>
                 {totalPages > 1 && (
                   <div style={{ display: "flex", gap: 4, flexWrap: "wrap", justifyContent: "center", alignItems: "center" }}>
-                    {safePage > 0 && <button style={S.pageLink} onClick={() => setPage(safePage - 1)}>‹ prev</button>}
+                    {safePage > 0 && <button style={S.pageLink} onClick={() => setPage(safePage-1)}>‹ prev</button>}
                     {Array.from({length:totalPages},(_,i) => (
-                      <button key={i} style={{ ...S.pageLink, ...(safePage===i?{color:accent,fontWeight:700}:{}) }}
-                        onClick={() => setPage(i)}>{i+1}</button>
+                      <button key={i} style={{ ...S.pageLink, ...(safePage===i?{color:accent,fontWeight:700}:{}) }} onClick={() => setPage(i)}>{i+1}</button>
                     ))}
-                    {safePage < totalPages - 1 && <button style={S.pageLink} onClick={() => setPage(safePage + 1)}>next ›</button>}
+                    {safePage < totalPages-1 && <button style={S.pageLink} onClick={() => setPage(safePage+1)}>next ›</button>}
                   </div>
                 )}
               </div>
             </>)}
+            {/* Clear tag confirmation modal */}
+            {clearTagConfirm && (
+              <div style={S.modal} onClick={() => setClearTagConfirm(false)}><div style={S.modalContent} onClick={e=>e.stopPropagation()}>
+                <h3 style={S.modalTitle}>确认清除</h3>
+                <p style={{fontFamily:sans,fontSize:14,color:textDim,lineHeight:1.6,marginBottom:8}}>确定要清除 <strong style={{color:text}}>{selected.size}</strong> 张卡片的所有复习记录吗？</p>
+                <p style={{fontFamily:mono,fontSize:12,color:"#facc15",marginBottom:16}}>复习进度将重置为初始状态，不可撤销。</p>
+                <div style={S.modalActions}><button className="ab" style={S.modalCancel} onClick={() => setClearTagConfirm(false)}>取消</button><button className="ab" style={{...S.deleteConfirmBtn,background:"#ca8a04"}} onClick={batchClearTags}>确认清除</button></div>
+              </div></div>
+            )}
+            {batchDateModal && (
+              <div style={S.modal} onClick={() => setBatchDateModal(false)}><div style={S.modalContent} onClick={e=>e.stopPropagation()}>
+                <h3 style={S.modalTitle}>修改日期</h3>
+                <p style={{fontFamily:sans,fontSize:14,color:textDim,lineHeight:1.6,marginBottom:12}}>将 {selected.size} 张卡片的创建日期修改为：</p>
+                <DateInput value={batchDateVal} onChange={setBatchDateVal} style={{ width: "100%", marginBottom: 12 }}/>
+                <div style={S.modalActions}><button className="ab" style={S.modalCancel} onClick={() => setBatchDateModal(false)}>取消</button><button className="ab" style={S.modalConfirm} onClick={() => batchChangeDate(batchDateVal)}>确认修改</button></div>
+              </div></div>
+            )}
           </div>
           );
         })()}
@@ -682,10 +860,9 @@ export default function App() {
                   {translating?<span style={{animation:"pulse 1s infinite"}}>翻译中...</span>:<><I.Plus/> Add</>}
                 </button>
               </div>
-              <label style={{ display: "flex", alignItems: "center", gap: 8, fontFamily: mono, fontSize: 12, color: textDim, marginBottom: 20, cursor: "pointer" }}>
-                <input type="checkbox" className="cb" checked={autoPlay} onChange={() => setAutoPlay(!autoPlay)}/>
-                <I.Speaker size={14}/> Auto-play pronunciation on add
-              </label>
+              <div style={{ marginBottom: 20 }}>
+                <button className={`pill${autoPlay?" on":""}`} onClick={() => setAutoPlay(!autoPlay)}><I.Speaker size={12}/> 自动播放</button>
+              </div>
               <div style={{ marginBottom: 32 }}>
                 <h3 style={S.smallTitle}>Recently Added</h3>
                 {deckCards.slice(-5).reverse().map(c => (
@@ -706,44 +883,114 @@ export default function App() {
         {/* ═══ REVIEW ═══ */}
         {view === "review" && (
           <div style={S.content}>
-            <div style={{ display: "flex", alignItems: "center", gap: 12, padding: "12px 0" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 12, padding: "12px 0", flexWrap: "wrap" }}>
               <span style={{ fontFamily: mono, fontSize: 12, color: textDim }}>Review date:</span>
-              <DateInput value={reviewDate} onChange={d => { setReviewDate(d); setReviewIndex(0); setReviewRevealed(false); }}/>
-              {reviewDate !== td && <button style={{ fontFamily: mono, fontSize: 11, background: "transparent", border: `1px solid ${border}`, color: textDim, padding: "3px 10px", borderRadius: 6, cursor: "pointer" }} onClick={() => { setReviewDate(todayStr()); setReviewIndex(0); setReviewRevealed(false); }}>Today</button>}
+              <DateInput value={reviewDate} onChange={d => { setReviewDate(d); startReviewSession(d); }}/>
+              {reviewDate !== td && <button style={{ fontFamily: mono, fontSize: 11, background: "transparent", border: `1px solid ${border}`, color: textDim, padding: "3px 10px", borderRadius: 6, cursor: "pointer" }} onClick={() => { setReviewDate(todayStr()); startReviewSession(todayStr()); }}>Today</button>}
+              <div style={{ marginLeft: "auto" }}><button className={`pill${reviewAutoPlay?" on":""}`} onClick={() => setReviewAutoPlay(!reviewAutoPlay)}><I.Speaker size={12}/> 自动播放</button></div>
             </div>
-            {dueCards.length===0||reviewIndex>=dueCards.length ? (
+            {reviewTotal === 0 ? (
               <div style={S.empty}><div style={{ fontSize: 48, color: "#4ade80", marginBottom: 8 }}>✓</div>
-                <p style={S.emptyText}>{dueCards.length===0?`No cards due on ${reviewDate}`:"All done!"}</p></div>
+                <p style={S.emptyText}>No cards due on {reviewDate}</p></div>
+            ) : reviewDone ? (
+              <div style={S.empty}><div style={{ fontSize: 48, color: "#4ade80", marginBottom: 8 }}>✓</div>
+                <p style={S.emptyText}>All {reviewTotal} cards reviewed!</p></div>
             ) : (() => {
-              // When revealed, use the snapshot (the card as it was when reviewed)
-              // When not revealed, use the current dueCards[reviewIndex]
-              const rc = reviewRevealed && reviewSnapshot ? reviewSnapshot : dueCards[reviewIndex];
-              if (!rc) return <div style={S.empty}><div style={{ fontSize: 48, color: "#4ade80", marginBottom: 8 }}>✓</div><p style={S.emptyText}>All done!</p></div>;
-              const rot = (rc.rot || 0) % 3;
-              const texts = [rc.word, rc.translation, rc.translation2];
-              const rSrc = texts[rot], rT1 = texts[(rot+1)%3], rT2 = texts[(rot+2)%3];
+              const rc = reviewCurrentCard;
+              if (!rc) return <div style={S.empty}><p style={S.emptyText}>Card not found</p></div>;
+              const d = getCardDisplay(rc, meta);
               return (
                 <div style={S.reviewArea}>
-                  <div style={S.reviewProgress}>{reviewIndex+1} / {(reviewRevealed ? reviewIndex + 1 + dueCards.length : dueCards.length)}</div>
-                  <div style={S.reviewCard} key={rc.id}>
-                    <div style={S.reviewWord}>{rSrc}</div>
+                  <div style={S.reviewProgress}>{reviewPos+1} / {reviewTotal}</div>
+                  <div style={S.reviewCard} key={rc.id + reviewPos}>
+                    <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8, marginBottom: 4 }}>
+                      <div style={S.reviewWord}>{d.src}</div>
+                      <button className="spk" style={{ ...S.speakBtn, padding: 4 }} onClick={() => speak(d.src, d.srcL)}><I.Speaker size={18}/></button>
+                    </div>
                     <div style={{ marginTop: 8, marginBottom: 24 }}><ScheduleDots card={rc}/></div>
-                    {/* Button area — fixed position, swaps between Wrong/Correct and Next */}
                     <div style={{ minHeight: 52 }}>
                       {!reviewRevealed ? (
                         <div style={S.reviewActions}>
-                          <button className="ab" style={S.forgotBtn} onClick={() => doReview(rc.id,false)}><I.X/> Wrong</button>
-                          <button className="ab" style={S.knewBtn} onClick={() => doReview(rc.id,true)}><I.Check/> Correct</button>
+                          <button className="ab" style={S.forgotBtn} onClick={() => doReview(rc.id,false)}><I.X/> 不记得</button>
+                          <button className="ab" style={S.knewBtn} onClick={() => doReview(rc.id,true)}><I.Check/> 记得</button>
                         </div>
                       ) : (
                         <button className="ab" style={{ ...S.showBtn, width: "100%", justifyContent: "center" }} onClick={nextReviewCard}>Next →</button>
                       )}
                     </div>
-                    {/* Answer revealed below buttons */}
                     {reviewRevealed && (
                       <div style={{ animation: "fadeUp 0.3s ease", marginTop: 20, borderTop: `1px solid ${border}`, paddingTop: 16 }}>
-                        <div style={S.reviewTrans}>{rT1}</div>
-                        <div style={S.reviewTrans2}>{rT2}</div>
+                        <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}>
+                          <div style={S.reviewTrans}>{d.t1}</div>
+                          <button className="spk" style={S.speakBtn} onClick={() => speak(d.t1, d.t1L)}><I.Speaker/></button>
+                        </div>
+                        <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8, marginTop: 6 }}>
+                          <div style={S.reviewTrans2}>{d.t2}</div>
+                          <button className="spk" style={S.speakBtn} onClick={() => speak(d.t2, d.t2L)}><I.Speaker/></button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              );
+            })()}
+          </div>
+        )}
+
+        {/* ═══ INTENSIVE ═══ */}
+        {view === "intensive" && (
+          <div style={S.content}>
+            <div style={{ display: "flex", alignItems: "center", gap: 12, padding: "12px 0", flexWrap: "wrap" }}>
+              <span style={{ fontFamily: serif, fontSize: 18, fontWeight: 600, color: text }}>强化复习</span>
+              <span style={{ fontFamily: mono, fontSize: 12, color: textDim }}>还有红标的词汇</span>
+              <div style={{ marginLeft: "auto" }}><button className={`pill${reviewAutoPlay?" on":""}`} onClick={() => setReviewAutoPlay(!reviewAutoPlay)}><I.Speaker size={12}/> 自动播放</button></div>
+            </div>
+            {intensiveTotal === 0 ? (
+              <div style={S.empty}><div style={{ fontSize: 48, color: "#4ade80", marginBottom: 8 }}>✓</div>
+                <p style={S.emptyText}>没有需要强化的词汇</p>
+                <button className="ab" style={S.showBtn} onClick={startIntensiveSession}>刷新</button></div>
+            ) : intensiveDone ? (
+              <div style={S.empty}><div style={{ fontSize: 48, color: "#4ade80", marginBottom: 8 }}>✓</div>
+                <p style={S.emptyText}>强化复习完成！共 {intensiveTotal} 个</p>
+                <button className="ab" style={S.showBtn} onClick={startIntensiveSession}>再来一轮</button></div>
+            ) : (() => {
+              const rc = intensiveCurrentCard;
+              if (!rc) return <div style={S.empty}><p style={S.emptyText}>Card not found</p></div>;
+              const d = getCardDisplay(rc, meta);
+              const redCount = (rc.reviewHistory||[]).filter(h => !h.remembered).length;
+              return (
+                <div style={S.reviewArea}>
+                  <div style={S.reviewProgress}>{intensivePos+1} / {intensiveTotal}</div>
+                  <div style={S.reviewCard} key={rc.id + intensivePos}>
+                    <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8, marginBottom: 4 }}>
+                      <div style={S.reviewWord}>{d.src}</div>
+                      <button className="spk" style={{ ...S.speakBtn, padding: 4 }} onClick={() => speak(d.src, d.srcL)}><I.Speaker size={18}/></button>
+                    </div>
+                    <div style={{ fontFamily: mono, fontSize: 11, color: "#f87171", marginBottom: 8 }}>{redCount} failed</div>
+                    <div style={{ marginTop: 4, marginBottom: 20 }}><ScheduleDots card={rc}/></div>
+                    <div style={{ minHeight: 52 }}>
+                      {!intensiveRevealed ? (
+                        <div style={S.reviewActions}>
+                          <button className="ab" style={S.forgotBtn} onClick={() => doIntensiveReview(rc.id,false)}><I.X/> 不记得</button>
+                          <button className="ab" style={S.knewBtn} onClick={() => doIntensiveReview(rc.id,true)}><I.Check/> 记得</button>
+                        </div>
+                      ) : (
+                        <div style={{ display: "flex", gap: 8 }}>
+                          <button className="ab" style={{ ...S.showBtn, flex: 1, justifyContent: "center" }} onClick={nextIntensiveCard}>Next →</button>
+                          <button className="ab" style={{ ...S.showBtn, justifyContent: "center", background: "#16a34a22", borderColor: "#16a34a44", color: "#4ade80" }} onClick={() => masterCard(rc.id)}>✓ 已掌握</button>
+                        </div>
+                      )}
+                    </div>
+                    {intensiveRevealed && (
+                      <div style={{ animation: "fadeUp 0.3s ease", marginTop: 20, borderTop: `1px solid ${border}`, paddingTop: 16 }}>
+                        <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}>
+                          <div style={S.reviewTrans}>{d.t1}</div>
+                          <button className="spk" style={S.speakBtn} onClick={() => speak(d.t1, d.t1L)}><I.Speaker/></button>
+                        </div>
+                        <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8, marginTop: 6 }}>
+                          <div style={S.reviewTrans2}>{d.t2}</div>
+                          <button className="spk" style={S.speakBtn} onClick={() => speak(d.t2, d.t2L)}><I.Speaker/></button>
+                        </div>
                       </div>
                     )}
                   </div>
@@ -763,48 +1010,36 @@ export default function App() {
             <div style={S.deckGrid}>
               {meta.decks.map(deck => {
                 const count = cards.filter(c=>c.deckId===deck.id).length;
-                const due = cards.filter(c=>c.deckId===deck.id&&c.nextReview<=td).length;
+                const due = cards.filter(c=>c.deckId===deck.id&&isDueOn(c,td)).length;
                 return (
                   <div key={deck.id} className="dk" style={{ ...S.deckCard, ...(activeDeck===deck.id?{borderColor:accent}:{}) }}
                     onClick={() => { setActiveDeck(deck.id); setView("home"); }}>
                     <div style={S.deckName}>{deck.name}</div>
-                    <div style={S.deckStats}>
-                      <span>{count} cards</span>
-                      {due>0&&<span style={{color:accent,fontWeight:600}}>{due} due</span>}
-                    </div>
+                    <div style={S.deckStats}><span>{count} cards</span>{due>0&&<span style={{color:accent,fontWeight:600}}>{due} due</span>}</div>
                     <div style={{ position: "absolute", top: 8, right: 8, display: "flex", gap: 4 }}>
-                      <button style={S.deckActionBtn} onClick={e => { e.stopPropagation(); setRenameDeckId(deck.id); setRenameDeckVal(deck.name); }} title="Rename"><I.Edit/></button>
-                      {deck.id!=="default"&&<button style={S.deckActionBtn} onClick={e=>{e.stopPropagation();setDeleteDeckConfirm(deck.id);}} title="Delete"><I.Trash/></button>}
+                      <button style={S.deckActionBtn} onClick={e=>{e.stopPropagation();setRenameDeckId(deck.id);setRenameDeckVal(deck.name);}}><I.Edit/></button>
+                      {deck.id!=="default"&&<button style={S.deckActionBtn} onClick={e=>{e.stopPropagation();setDeleteDeckConfirm(deck.id);}}><I.Trash/></button>}
                     </div>
                   </div>
                 );
               })}
             </div>
-            {/* New deck modal */}
-            {showDeckModal&&(
-              <div style={S.modal} onClick={()=>setShowDeckModal(false)}><div style={S.modalContent} onClick={e=>e.stopPropagation()}>
-                <h3 style={S.modalTitle}>New Deck</h3>
-                <input style={S.modalInput} placeholder="Deck name..." value={newDeckName} onChange={e=>setNewDeckName(e.target.value)} onKeyDown={e=>e.key==="Enter"&&createDeck()} autoFocus/>
-                <div style={S.modalActions}><button className="ab" style={S.modalCancel} onClick={()=>setShowDeckModal(false)}>Cancel</button><button className="ab" style={S.modalConfirm} onClick={createDeck}>Create</button></div>
-              </div></div>
-            )}
-            {/* Rename deck modal */}
-            {renameDeckId&&(
-              <div style={S.modal} onClick={()=>setRenameDeckId(null)}><div style={S.modalContent} onClick={e=>e.stopPropagation()}>
-                <h3 style={S.modalTitle}>Rename Deck</h3>
-                <input style={S.modalInput} value={renameDeckVal} onChange={e=>setRenameDeckVal(e.target.value)} onKeyDown={e=>e.key==="Enter"&&renameDeck()} autoFocus/>
-                <div style={S.modalActions}><button className="ab" style={S.modalCancel} onClick={()=>setRenameDeckId(null)}>Cancel</button><button className="ab" style={S.modalConfirm} onClick={renameDeck}>Rename</button></div>
-              </div></div>
-            )}
-            {/* Delete confirm */}
-            {deleteDeckConfirm&&(
-              <div style={S.modal} onClick={()=>setDeleteDeckConfirm(null)}><div style={S.modalContent} onClick={e=>e.stopPropagation()}>
-                <h3 style={S.modalTitle}>确认删除</h3>
-                <p style={{fontFamily:sans,fontSize:14,color:textDim,lineHeight:1.6,marginBottom:8}}>确定要删除 <strong style={{color:text}}>"{meta.decks.find(d=>d.id===deleteDeckConfirm)?.name}"</strong> 吗？</p>
-                <p style={{fontFamily:mono,fontSize:12,color:"#f87171",marginBottom:16}}>将删除 {cards.filter(c=>c.deckId===deleteDeckConfirm).length} 张卡片，不可撤销。</p>
-                <div style={S.modalActions}><button className="ab" style={S.modalCancel} onClick={()=>setDeleteDeckConfirm(null)}>取消</button><button className="ab" style={S.deleteConfirmBtn} onClick={doDeleteDeck}>确认删除</button></div>
-              </div></div>
-            )}
+            {showDeckModal&&<div style={S.modal} onClick={()=>setShowDeckModal(false)}><div style={S.modalContent} onClick={e=>e.stopPropagation()}>
+              <h3 style={S.modalTitle}>New Deck</h3>
+              <input style={S.modalInput} placeholder="Deck name..." value={newDeckName} onChange={e=>setNewDeckName(e.target.value)} onKeyDown={e=>e.key==="Enter"&&createDeck()} autoFocus/>
+              <div style={S.modalActions}><button className="ab" style={S.modalCancel} onClick={()=>setShowDeckModal(false)}>Cancel</button><button className="ab" style={S.modalConfirm} onClick={createDeck}>Create</button></div>
+            </div></div>}
+            {renameDeckId&&<div style={S.modal} onClick={()=>setRenameDeckId(null)}><div style={S.modalContent} onClick={e=>e.stopPropagation()}>
+              <h3 style={S.modalTitle}>Rename Deck</h3>
+              <input style={S.modalInput} value={renameDeckVal} onChange={e=>setRenameDeckVal(e.target.value)} onKeyDown={e=>e.key==="Enter"&&renameDeck()} autoFocus/>
+              <div style={S.modalActions}><button className="ab" style={S.modalCancel} onClick={()=>setRenameDeckId(null)}>Cancel</button><button className="ab" style={S.modalConfirm} onClick={renameDeck}>Rename</button></div>
+            </div></div>}
+            {deleteDeckConfirm&&<div style={S.modal} onClick={()=>setDeleteDeckConfirm(null)}><div style={S.modalContent} onClick={e=>e.stopPropagation()}>
+              <h3 style={S.modalTitle}>确认删除</h3>
+              <p style={{fontFamily:sans,fontSize:14,color:textDim,lineHeight:1.6,marginBottom:8}}>确定要删除 <strong style={{color:text}}>"{meta.decks.find(d=>d.id===deleteDeckConfirm)?.name}"</strong> 吗？</p>
+              <p style={{fontFamily:mono,fontSize:12,color:"#f87171",marginBottom:16}}>将删除 {cards.filter(c=>c.deckId===deleteDeckConfirm).length} 张卡片，不可撤销。</p>
+              <div style={S.modalActions}><button className="ab" style={S.modalCancel} onClick={()=>setDeleteDeckConfirm(null)}>取消</button><button className="ab" style={S.deleteConfirmBtn} onClick={doDeleteDeck}>确认删除</button></div>
+            </div></div>}
           </div>
         )}
 
@@ -819,32 +1054,23 @@ export default function App() {
               {global.users.map(user => (
                 <div key={user.id} className="dk" style={{ ...S.deckCard, ...(global.activeUser===user.id?{borderColor:accent}:{}) }}
                   onClick={() => switchUser(user.id)}>
-                  <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                    <I.User/> <span style={S.deckName}>{user.name}</span>
-                  </div>
+                  <div style={{ display: "flex", alignItems: "center", gap: 6 }}><I.User/> <span style={S.deckName}>{user.name}</span></div>
                   {global.activeUser===user.id && <span style={{ fontFamily: mono, fontSize: 10, color: accent }}>ACTIVE</span>}
-                  {user.id!=="default"&&(
-                    <button style={{ ...S.deckActionBtn, position: "absolute", top: 8, right: 8 }}
-                      onClick={e=>{e.stopPropagation();setDeleteUserConfirm(user.id);}}><I.Trash/></button>
-                  )}
+                  {user.id!=="default"&&<button style={{ ...S.deckActionBtn, position: "absolute", top: 8, right: 8 }} onClick={e=>{e.stopPropagation();setDeleteUserConfirm(user.id);}}><I.Trash/></button>}
                 </div>
               ))}
             </div>
-            {showUserModal&&(
-              <div style={S.modal} onClick={()=>setShowUserModal(false)}><div style={S.modalContent} onClick={e=>e.stopPropagation()}>
-                <h3 style={S.modalTitle}>New User</h3>
-                <input style={S.modalInput} placeholder="User name..." value={newUserName} onChange={e=>setNewUserName(e.target.value)} onKeyDown={e=>e.key==="Enter"&&createUser()} autoFocus/>
-                <div style={S.modalActions}><button className="ab" style={S.modalCancel} onClick={()=>setShowUserModal(false)}>Cancel</button><button className="ab" style={S.modalConfirm} onClick={createUser}>Create</button></div>
-              </div></div>
-            )}
-            {deleteUserConfirm&&(
-              <div style={S.modal} onClick={()=>setDeleteUserConfirm(null)}><div style={S.modalContent} onClick={e=>e.stopPropagation()}>
-                <h3 style={S.modalTitle}>确认删除用户</h3>
-                <p style={{fontFamily:sans,fontSize:14,color:textDim,lineHeight:1.6,marginBottom:8}}>确定要删除用户 <strong style={{color:text}}>"{global.users.find(u=>u.id===deleteUserConfirm)?.name}"</strong> 吗？</p>
-                <p style={{fontFamily:mono,fontSize:12,color:"#f87171",marginBottom:16}}>将删除该用户的所有数据，不可撤销。</p>
-                <div style={S.modalActions}><button className="ab" style={S.modalCancel} onClick={()=>setDeleteUserConfirm(null)}>取消</button><button className="ab" style={S.deleteConfirmBtn} onClick={()=>deleteUser(deleteUserConfirm)}>确认删除</button></div>
-              </div></div>
-            )}
+            {showUserModal&&<div style={S.modal} onClick={()=>setShowUserModal(false)}><div style={S.modalContent} onClick={e=>e.stopPropagation()}>
+              <h3 style={S.modalTitle}>New User</h3>
+              <input style={S.modalInput} placeholder="User name..." value={newUserName} onChange={e=>setNewUserName(e.target.value)} onKeyDown={e=>e.key==="Enter"&&createUser()} autoFocus/>
+              <div style={S.modalActions}><button className="ab" style={S.modalCancel} onClick={()=>setShowUserModal(false)}>Cancel</button><button className="ab" style={S.modalConfirm} onClick={createUser}>Create</button></div>
+            </div></div>}
+            {deleteUserConfirm&&<div style={S.modal} onClick={()=>setDeleteUserConfirm(null)}><div style={S.modalContent} onClick={e=>e.stopPropagation()}>
+              <h3 style={S.modalTitle}>确认删除用户</h3>
+              <p style={{fontFamily:sans,fontSize:14,color:textDim,lineHeight:1.6,marginBottom:8}}>确定要删除用户 <strong style={{color:text}}>"{global.users.find(u=>u.id===deleteUserConfirm)?.name}"</strong> 吗？</p>
+              <p style={{fontFamily:mono,fontSize:12,color:"#f87171",marginBottom:16}}>将删除该用户的所有数据，不可撤销。</p>
+              <div style={S.modalActions}><button className="ab" style={S.modalCancel} onClick={()=>setDeleteUserConfirm(null)}>取消</button><button className="ab" style={S.deleteConfirmBtn} onClick={()=>deleteUser(deleteUserConfirm)}>确认删除</button></div>
+            </div></div>}
           </div>
         )}
 
@@ -854,29 +1080,26 @@ export default function App() {
             <div style={{ padding: "20px 0" }}>
               <h2 style={S.sectionTitle}>Backup & Sync</h2>
               <p style={{fontFamily:mono,fontSize:12,color:textDim,marginTop:4,marginBottom:16}}>data/users/{uid()}/YYMM/MMDD.json</p>
-
-              {/* User selection for export */}
               <div style={{ marginBottom: 20 }}>
                 <h3 style={S.smallTitle}>Export users</h3>
                 <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
                   {global.users.map(u => (
-                    <label key={u.id} style={{ display: "flex", alignItems: "center", gap: 6, cursor: "pointer", fontFamily: mono, fontSize: 12, color: exportUsers.has(u.id) ? text : textDim }}>
-                      <input type="checkbox" className="cb" checked={exportUsers.has(u.id)} onChange={() => toggleExportUser(u.id)}/>
-                      {u.name}
+                    <label key={u.id} style={{ display: "flex", alignItems: "center", gap: 6, cursor: "pointer", fontFamily: mono, fontSize: 12, color: exportUsers.has(u.id)?text:textDim }}>
+                      <input type="checkbox" className="cb" checked={exportUsers.has(u.id)} onChange={() => toggleExportUser(u.id)}/>{u.name}
                     </label>
                   ))}
                 </div>
-                <p style={{ fontFamily: mono, fontSize: 10, color: "#555", marginTop: 6 }}>
-                  {exportUsers.size === 0 ? "No selection = export current user only" : `${exportUsers.size} user(s) selected`}
-                </p>
+                <p style={{ fontFamily: mono, fontSize: 10, color: "#555", marginTop: 6 }}>{exportUsers.size===0?"No selection = current user only":`${exportUsers.size} user(s)`}</p>
               </div>
-
               <div style={S.exportCards}>
                 <div style={S.exportCard} onClick={exportAll}><I.Download/><span style={{fontFamily:mono,fontSize:13,fontWeight:600}}>Export</span><span style={{fontFamily:mono,fontSize:11,color:textDim}}>{dayFiles.length} files</span></div>
                 <label style={S.exportCard}><input type="file" accept=".json" onChange={importAll} style={{display:"none"}}/><I.Plus/><span style={{fontFamily:mono,fontSize:13,fontWeight:600}}>Import</span><span style={{fontFamily:mono,fontSize:11,color:textDim}}>Restore</span></label>
               </div>
               <div style={{ marginBottom: 24 }}><h3 style={{fontFamily:mono,fontSize:13,fontWeight:600,color:text,marginBottom:12}}>Data Files</h3>
                 <div style={S.codeBlock}><code style={S.code}>{dayFiles.length>0?dayFiles.join("\n"):"(empty)"}</code></div></div>
+              <div style={{ marginBottom: 24 }}>
+                <button className="pill" onClick={exportLogs} style={{ fontSize: 12 }}><I.Download/> Export debug logs</button>
+              </div>
               <div style={S.statsGrid}>
                 {[{n:cards.length,l:"Total"},{n:meta.decks.length,l:"Decks"},{n:allDueCount,l:"Due"},{n:cards.filter(c=>c.reviewStage>=EBB.length-1).length,l:"Done"}].map((s,i) => (
                   <div key={i} style={S.statCard}><div style={S.statNum}>{s.n}</div><div style={{fontFamily:mono,fontSize:11,color:textDim,marginTop:4}}>{s.l}</div></div>
@@ -886,11 +1109,11 @@ export default function App() {
           </div>
         )}
       </main>
-      {/* Floating scroll buttons */}
+
       {canScroll && (
         <div style={{ position: "fixed", bottom: 24, right: 20, display: "flex", flexDirection: "column", gap: 6, zIndex: 90 }}>
-          <button className="scb" style={S.scrollBtn} onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}><I.ArrowUp/></button>
-          <button className="scb" style={S.scrollBtn} onClick={() => window.scrollTo({ top: document.documentElement.scrollHeight, behavior: "smooth" })}><I.ArrowDown/></button>
+          <button className="scb" style={S.scrollBtn} onClick={() => window.scrollTo({top:0,behavior:"smooth"})}><I.ArrowUp/></button>
+          <button className="scb" style={S.scrollBtn} onClick={() => window.scrollTo({top:document.documentElement.scrollHeight,behavior:"smooth"})}><I.ArrowDown/></button>
         </div>
       )}
     </div>
@@ -918,10 +1141,6 @@ const S = {
   sectionHeader:{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"10px 0"},
   sectionTitle:{fontFamily:serif,fontSize:22,fontWeight:600,color:text},
   cardCount:{fontFamily:mono,fontSize:12,color:textDim},
-  batchBar:{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"6px 0",marginBottom:4},
-  batchCheck:{display:"flex",alignItems:"center",gap:8,cursor:"pointer"},
-  batchLabel:{fontFamily:mono,fontSize:12,color:textDim},
-  batchDeleteBtn:{display:"flex",alignItems:"center",gap:6,fontFamily:mono,fontSize:12,fontWeight:600,background:"#dc262622",color:"#f87171",border:"1px solid #dc262644",padding:"5px 12px",borderRadius:8,cursor:"pointer"},
   empty:{display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:"60px 0",gap:16},
   emptyText:{fontFamily:serif,fontSize:18,color:textDim},
   emptyBtn:{display:"flex",alignItems:"center",gap:8,fontFamily:mono,fontSize:13,fontWeight:500,background:accent,color:"#fff",border:"none",padding:"10px 20px",borderRadius:8,cursor:"pointer"},
@@ -934,11 +1153,6 @@ const S = {
   deleteBtn:{background:"transparent",border:"none",color:"#444",cursor:"pointer",padding:4,display:"flex"},
   editBtn:{background:"transparent",border:"none",color:"#555",cursor:"pointer",padding:2,display:"flex",marginLeft:4},
   speakBtn:{background:"transparent",border:"none",color:"#666",cursor:"pointer",padding:2,display:"flex",transition:"color .15s"},
-  visToggle:{display:"flex",alignItems:"center",gap:5,cursor:"pointer",fontFamily:mono,fontSize:11},
-  pageBtn:{fontFamily:mono,fontSize:11,background:"transparent",color:textDim,border:`1px solid ${border}`,padding:"4px 12px",borderRadius:6,cursor:"pointer"},
-  pageBtnActive:{background:accent,color:"#fff",borderColor:accent},
-  pageLink:{fontFamily:mono,fontSize:12,background:"transparent",border:"none",color:textDim,cursor:"pointer",padding:"2px 8px"},
-  scrollBtn:{width:36,height:36,borderRadius:"50%",background:`${surface}cc`,border:`1px solid ${border}`,color:textDim,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",backdropFilter:"blur(8px)",transition:"all .15s",opacity:0.6},
   editInput:{fontFamily:sans,fontSize:13,background:bg,color:text,border:`1px solid ${border}`,borderRadius:6,padding:"4px 8px",width:120},
   editSave:{fontFamily:mono,fontSize:14,background:"#16a34a33",color:"#4ade80",border:"none",borderRadius:4,padding:"4px 8px",cursor:"pointer"},
   editCancel:{fontFamily:mono,fontSize:14,background:"#dc262622",color:"#f87171",border:"none",borderRadius:4,padding:"4px 8px",cursor:"pointer"},
@@ -955,14 +1169,14 @@ const S = {
   recentTrans2:{fontFamily:mono,fontSize:13,color:"#666"},
   intervals:{display:"flex",flexWrap:"wrap",gap:5},
   intervalPill:{fontFamily:mono,fontSize:11,color:textDim,background:surface2,padding:"3px 9px",borderRadius:20,border:`1px solid ${border}`},
-  reviewArea:{display:"flex",flexDirection:"column",alignItems:"center",padding:"30px 0"},
-  reviewProgress:{fontFamily:mono,fontSize:12,color:textDim,marginBottom:20},
-  reviewCard:{width:"100%",maxWidth:480,background:surface,borderRadius:16,padding:"36px 28px",textAlign:"center",border:`1px solid ${border}`,animation:"cardFlip 0.4s ease"},
-  reviewWord:{fontFamily:serif,fontSize:34,fontWeight:700,color:text,marginBottom:4},
-  reviewTrans:{fontFamily:sans,fontSize:22,fontWeight:500,color:text,marginTop:20},
-  reviewTrans2:{fontFamily:mono,fontSize:15,color:"#888",marginTop:6},
+  reviewArea:{display:"flex",flexDirection:"column",alignItems:"center",padding:"20px 0"},
+  reviewProgress:{fontFamily:mono,fontSize:12,color:textDim,marginBottom:16},
+  reviewCard:{width:"100%",maxWidth:480,background:surface,borderRadius:16,padding:"32px 24px",textAlign:"center",border:`1px solid ${border}`},
+  reviewWord:{fontFamily:serif,fontSize:32,fontWeight:700,color:text},
+  reviewTrans:{fontFamily:sans,fontSize:20,fontWeight:500,color:text},
+  reviewTrans2:{fontFamily:mono,fontSize:14,color:"#888"},
   showBtn:{display:"inline-flex",alignItems:"center",gap:8,fontFamily:mono,fontSize:13,background:surface2,color:text,border:`1px solid ${border}`,padding:"10px 24px",borderRadius:10,cursor:"pointer"},
-  reviewActions:{display:"flex",gap:12,marginTop:20,justifyContent:"center"},
+  reviewActions:{display:"flex",gap:12,justifyContent:"center"},
   forgotBtn:{display:"flex",alignItems:"center",gap:6,fontFamily:mono,fontSize:13,fontWeight:600,background:"#dc262622",color:"#f87171",border:"1px solid #dc262644",padding:"12px 28px",borderRadius:10,cursor:"pointer"},
   knewBtn:{display:"flex",alignItems:"center",gap:6,fontFamily:mono,fontSize:13,fontWeight:600,background:"#16a34a22",color:"#4ade80",border:"1px solid #16a34a44",padding:"12px 28px",borderRadius:10,cursor:"pointer"},
   deckGrid:{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(170px,1fr))",gap:12,paddingTop:8},
@@ -987,4 +1201,8 @@ const S = {
   statCard:{background:surface,borderRadius:10,padding:"14px 10px",border:`1px solid ${border}`,textAlign:"center"},
   statNum:{fontFamily:mono,fontSize:22,fontWeight:700,color:accent},
   toast:{position:"fixed",bottom:20,left:"50%",transform:"translateX(-50%)",fontFamily:mono,fontSize:13,background:surface2,color:text,padding:"8px 18px",borderRadius:10,border:`1px solid ${border}`,zIndex:200,animation:"toast 2.2s ease both",whiteSpace:"nowrap"},
+  pageBtn:{fontFamily:mono,fontSize:11,background:"transparent",color:textDim,border:`1px solid ${border}`,padding:"4px 12px",borderRadius:6,cursor:"pointer"},
+  pageBtnActive:{background:accent,color:"#fff",borderColor:accent},
+  pageLink:{fontFamily:mono,fontSize:12,background:"transparent",border:"none",color:textDim,cursor:"pointer",padding:"2px 8px"},
+  scrollBtn:{width:36,height:36,borderRadius:"50%",background:`${surface}cc`,border:`1px solid ${border}`,color:textDim,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",backdropFilter:"blur(8px)",transition:"all .15s",opacity:0.6},
 };

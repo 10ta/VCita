@@ -34,6 +34,14 @@ const PAGE_SIZES = [10, 30, 50, 100]
 // 默认每页数量
 const DEFAULT_PAGE_SIZE = 30
 
+// ─── 自动播放默认值 ───
+const AUTO_PLAY_ADD = false
+const AUTO_PLAY_REVIEW = false
+
+// ─── 日志说明 ───
+// 存在浏览器 localStorage key "vf_logs"
+// 备份页面可导出, 或控制台: localStorage.getItem("vf_logs")
+
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 //  以下不用改
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -177,6 +185,8 @@ export default defineConfig({
     __SHOW_TARGET_2__: JSON.stringify(SHOW_TARGET_2),
     __PAGE_SIZES__: JSON.stringify(PAGE_SIZES),
     __DEFAULT_PAGE_SIZE__: JSON.stringify(DEFAULT_PAGE_SIZE),
+    __AUTO_PLAY_ADD__: JSON.stringify(AUTO_PLAY_ADD),
+    __AUTO_PLAY_REVIEW__: JSON.stringify(AUTO_PLAY_REVIEW),
   },
   base: '/vocab-forge/',
   server: {
