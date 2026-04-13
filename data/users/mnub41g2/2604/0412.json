@@ -1382,7 +1382,7 @@
   {
     "id": "mnvmeryda2ju",
     "word": "inculper qqn",
-    "translation": "起诉某人",
+    "translation": "法官正式起诉某人(旧)",
     "translation2": "indict someone",
     "deckId": "default",
     "createdAt": "2026-04-12",
@@ -1402,7 +1402,7 @@
   {
     "id": "mnvmf84ntjd5",
     "word": "une inculpation",
-    "translation": "起诉书",
+    "translation": "起诉书(旧)",
     "translation2": "an indictment",
     "deckId": "default",
     "createdAt": "2026-04-12",
@@ -1421,8 +1421,8 @@
   },
   {
     "id": "mnvmfemvd7zt",
-    "word": "une mis en examen",
-    "translation": "一名被起诉者",
+    "word": "une mise en examen",
+    "translation": "正式受查",
     "translation2": "one indicted",
     "deckId": "default",
     "createdAt": "2026-04-12",
@@ -1482,7 +1482,7 @@
   {
     "id": "mnvmhez6bz5z",
     "word": "le réquisitoire, requérir",
-    "translation": "起诉书、请求书",
+    "translation": "检察官公诉书、请求书",
     "translation2": "the indictment, request",
     "deckId": "default",
     "createdAt": "2026-04-12",
@@ -1902,7 +1902,7 @@
   {
     "id": "mnvu92169bsi",
     "word": "désigner un agresseur",
-    "translation": "指定攻击者",
+    "translation": "指认罪犯",
     "translation2": "designate an attacker",
     "deckId": "default",
     "createdAt": "2026-04-12",
@@ -1982,7 +1982,7 @@
   {
     "id": "mnvuy3qqhnd6",
     "word": "poursuivre qqn en justice",
-    "translation": "起诉某人",
+    "translation": "起诉某人(新)",
     "translation2": "sue someone",
     "deckId": "default",
     "createdAt": "2026-04-12",

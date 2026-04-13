@@ -239,7 +239,8 @@ export default function App() {
   const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE);
   const [page, setPage] = useState(0);
   const [canScroll, setCanScroll] = useState(false);
-  const [filterDate, setFilterDate] = useState(""); // date filter for home
+  const [filterDate, setFilterDate] = useState("");
+  const [filterKeyword, setFilterKeyword] = useState(""); // date filter for home
   const [clearTagConfirm, setClearTagConfirm] = useState(false);
   const [batchDateModal, setBatchDateModal] = useState(false);
   const [batchDateVal, setBatchDateVal] = useState(todayStr());
@@ -796,9 +797,15 @@ export default function App() {
 
         {/* ═══ HOME ═══ */}
         {view === "home" && (() => {
-          const filtered = filterDate
-            ? deckCards.filter(c => c.createdAt === filterDate)
-            : deckCards;
+          const filtered = deckCards.filter(c => {
+            if (filterDate && c.createdAt !== filterDate) return false;
+            if (filterKeyword) {
+              const kw = filterKeyword.toLowerCase();
+              const haystack = [c.word, c.translation, c.translation2].map(s => (s||"").toLowerCase());
+              if (!haystack.some(h => h.includes(kw))) return false;
+            }
+            return true;
+          });
           const sorted = [...filtered].sort((a,b) => b.createdAt.localeCompare(a.createdAt) || b.id.localeCompare(a.id));
           const totalPages = Math.max(1, Math.ceil(sorted.length / pageSize));
           const safePage = Math.min(page, totalPages - 1);
@@ -840,11 +847,15 @@ export default function App() {
                 </div>
               </div>
               {/* Date filter */}
-              <div style={{ display: "flex", alignItems: "center", gap: 8, paddingBottom: 8 }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 8, paddingBottom: 8, flexWrap: "wrap" }}>
                 <span style={{ fontFamily: mono, fontSize: 11, color: textDim }}>日期筛选:</span>
                 <DateInput value={filterDate} onChange={d => { setFilterDate(d); setPage(0); }}/>
-                {filterDate && <button className="pill" onClick={() => { setFilterDate(""); setPage(0); }} style={{ fontSize: 10 }}>✕ 清除</button>}
-                {filterDate && <span style={{ fontFamily: mono, fontSize: 11, color: textDim }}>{filtered.length} cards</span>}
+                {filterDate && <button className="pill" onClick={() => { setFilterDate(""); setPage(0); }} style={{ fontSize: 10 }}>✕</button>}
+                <span style={{ fontFamily: mono, fontSize: 11, color: textDim, marginLeft: 8 }}>关键字:</span>
+                <input style={{ fontFamily: mono, fontSize: 12, background: surface, color: text, border: `1px solid ${border}`, borderRadius: 6, padding: "4px 10px", width: 140 }}
+                  placeholder="搜索..." value={filterKeyword} onChange={e => { setFilterKeyword(e.target.value); setPage(0); }}/>
+                {filterKeyword && <button className="pill" onClick={() => { setFilterKeyword(""); setPage(0); }} style={{ fontSize: 10 }}>✕</button>}
+                {(filterDate || filterKeyword) && <span style={{ fontFamily: mono, fontSize: 11, color: textDim }}>{filtered.length} cards</span>}
               </div>
             </>)}
             {deckCards.length === 0 ? (
