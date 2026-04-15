@@ -7,8 +7,17 @@
     "deckId": "default",
     "createdAt": "2026-04-13",
     "reviewStage": 0,
-    "nextReview": "2026-04-13",
-    "reviewHistory": [],
+    "nextReview": "2026-04-14",
+    "reviewHistory": [
+      {
+        "date": "2026-04-13",
+        "remembered": false
+      },
+      {
+        "date": "2026-04-14",
+        "remembered": false
+      }
+    ],
     "rot": 1,
     "tags": [
       "Police et Justice"
@@ -22,8 +31,17 @@
     "deckId": "default",
     "createdAt": "2026-04-13",
     "reviewStage": 0,
-    "nextReview": "2026-04-13",
-    "reviewHistory": [],
+    "nextReview": "2026-04-14",
+    "reviewHistory": [
+      {
+        "date": "2026-04-13",
+        "remembered": false
+      },
+      {
+        "date": "2026-04-14",
+        "remembered": false
+      }
+    ],
     "rot": 1,
     "tags": [
       "Police et Justice"
@@ -36,9 +54,18 @@
     "translation2": "gang rape on someone",
     "deckId": "default",
     "createdAt": "2026-04-13",
-    "reviewStage": 0,
-    "nextReview": "2026-04-13",
-    "reviewHistory": [],
+    "reviewStage": 1,
+    "nextReview": "2026-04-15",
+    "reviewHistory": [
+      {
+        "date": "2026-04-13",
+        "remembered": true
+      },
+      {
+        "date": "2026-04-14",
+        "remembered": true
+      }
+    ],
     "rot": 1,
     "tags": [
       "Police et Justice"
@@ -52,8 +79,17 @@
     "deckId": "default",
     "createdAt": "2026-04-13",
     "reviewStage": 0,
-    "nextReview": "2026-04-13",
-    "reviewHistory": [],
+    "nextReview": "2026-04-14",
+    "reviewHistory": [
+      {
+        "date": "2026-04-13",
+        "remembered": false
+      },
+      {
+        "date": "2026-04-14",
+        "remembered": false
+      }
+    ],
     "rot": 1,
     "tags": []
   },
@@ -64,9 +100,18 @@
     "translation2": "an act of incrimination that is beyond comprehension",
     "deckId": "default",
     "createdAt": "2026-04-13",
-    "reviewStage": 0,
-    "nextReview": "2026-04-13",
-    "reviewHistory": [],
+    "reviewStage": 1,
+    "nextReview": "2026-04-15",
+    "reviewHistory": [
+      {
+        "date": "2026-04-13",
+        "remembered": true
+      },
+      {
+        "date": "2026-04-14",
+        "remembered": false
+      }
+    ],
     "rot": 1,
     "tags": []
   },
@@ -77,9 +122,18 @@
     "translation2": "tribunal vs court",
     "deckId": "default",
     "createdAt": "2026-04-13",
-    "reviewStage": 0,
-    "nextReview": "2026-04-13",
-    "reviewHistory": [],
+    "reviewStage": 1,
+    "nextReview": "2026-04-15",
+    "reviewHistory": [
+      {
+        "date": "2026-04-13",
+        "remembered": true
+      },
+      {
+        "date": "2026-04-14",
+        "remembered": true
+      }
+    ],
     "rot": 1,
     "tags": []
   },
@@ -90,9 +144,18 @@
     "translation2": "They will say in their words what they experienced.",
     "deckId": "default",
     "createdAt": "2026-04-13",
-    "reviewStage": 0,
-    "nextReview": "2026-04-13",
-    "reviewHistory": [],
+    "reviewStage": 1,
+    "nextReview": "2026-04-15",
+    "reviewHistory": [
+      {
+        "date": "2026-04-13",
+        "remembered": true
+      },
+      {
+        "date": "2026-04-14",
+        "remembered": true
+      }
+    ],
     "rot": 1,
     "tags": []
   },
@@ -103,9 +166,18 @@
     "translation2": "children do not contradict themselves.",
     "deckId": "default",
     "createdAt": "2026-04-13",
-    "reviewStage": 0,
-    "nextReview": "2026-04-13",
-    "reviewHistory": [],
+    "reviewStage": 1,
+    "nextReview": "2026-04-15",
+    "reviewHistory": [
+      {
+        "date": "2026-04-13",
+        "remembered": true
+      },
+      {
+        "date": "2026-04-14",
+        "remembered": true
+      }
+    ],
     "rot": 1,
     "tags": []
   },
@@ -117,8 +189,17 @@
     "deckId": "default",
     "createdAt": "2026-04-13",
     "reviewStage": 0,
-    "nextReview": "2026-04-13",
-    "reviewHistory": [],
+    "nextReview": "2026-04-14",
+    "reviewHistory": [
+      {
+        "date": "2026-04-13",
+        "remembered": false
+      },
+      {
+        "date": "2026-04-14",
+        "remembered": false
+      }
+    ],
     "rot": 1,
     "tags": []
   },
@@ -129,9 +210,18 @@
     "translation2": "the designated person responsible for the legal fiasco in Outreau.",
     "deckId": "default",
     "createdAt": "2026-04-13",
-    "reviewStage": 0,
-    "nextReview": "2026-04-13",
-    "reviewHistory": [],
+    "reviewStage": 1,
+    "nextReview": "2026-04-15",
+    "reviewHistory": [
+      {
+        "date": "2026-04-13",
+        "remembered": true
+      },
+      {
+        "date": "2026-04-14",
+        "remembered": true
+      }
+    ],
     "rot": 1,
     "tags": []
   },
@@ -143,8 +233,17 @@
     "deckId": "default",
     "createdAt": "2026-04-13",
     "reviewStage": 0,
-    "nextReview": "2026-04-13",
-    "reviewHistory": [],
+    "nextReview": "2026-04-14",
+    "reviewHistory": [
+      {
+        "date": "2026-04-13",
+        "remembered": false
+      },
+      {
+        "date": "2026-04-14",
+        "remembered": false
+      }
+    ],
     "rot": 1,
     "tags": []
   },

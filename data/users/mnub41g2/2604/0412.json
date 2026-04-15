@@ -286,8 +286,8 @@
     "translation2": "a clerk",
     "deckId": "default",
     "createdAt": "2026-04-12",
-    "reviewStage": 0,
-    "nextReview": "2026-04-15",
+    "reviewStage": 1,
+    "nextReview": "2026-04-16",
     "reviewHistory": [
       {
         "date": "2026-04-12",
@@ -1160,30 +1160,6 @@
     ]
   },
   {
-    "id": "mnvh8jd6fono",
-    "word": "appréhender un suspect",
-    "translation": "逮捕嫌疑人",
-    "translation2": "apprehend a suspect",
-    "deckId": "default",
-    "createdAt": "2026-04-12",
-    "reviewStage": 1,
-    "nextReview": "2026-04-15",
-    "reviewHistory": [
-      {
-        "date": "2026-04-12",
-        "remembered": false
-      },
-      {
-        "date": "2026-04-13",
-        "remembered": true
-      }
-    ],
-    "rot": 1,
-    "tags": [
-      "Police et Justice"
-    ]
-  },
-  {
     "id": "mnvh96mhsla5",
     "word": "conduire un interrogatoire",
     "translation": "进行讯问",
@@ -1282,7 +1258,7 @@
   {
     "id": "mnvhaxzj3j3m",
     "word": "dénoncer qqn à la police",
-    "translation": "向警方举报某人",
+    "translation": "[案发期] 向警方举报某人",
     "translation2": "report someone to the police",
     "deckId": "default",
     "createdAt": "2026-04-12",
@@ -1334,11 +1310,15 @@
     "translation2": "carry out an investigation, investigate",
     "deckId": "default",
     "createdAt": "2026-04-12",
-    "reviewStage": 0,
-    "nextReview": "2026-04-12",
+    "reviewStage": 1,
+    "nextReview": "2026-04-15",
     "reviewHistory": [
       {
         "date": "2026-04-12",
+        "remembered": false
+      },
+      {
+        "date": "2026-04-13",
         "remembered": false
       }
     ],
@@ -1350,16 +1330,20 @@
   {
     "id": "mnvhdqfikk49",
     "word": "faire un contrôle d'identité",
-    "translation": "进行身份检查",
+    "translation": "进行身�������检查",
     "translation2": "do an identity check",
     "deckId": "default",
     "createdAt": "2026-04-12",
-    "reviewStage": 1,
-    "nextReview": "2026-04-13",
+    "reviewStage": 2,
+    "nextReview": "2026-04-17",
     "reviewHistory": [
       {
         "date": "2026-04-12",
         "remembered": true
+      },
+      {
+        "date": "2026-04-13",
+        "remembered": false
       }
     ],
     "rot": 1,
@@ -1374,31 +1358,15 @@
     "translation2": "intervene, police intervention",
     "deckId": "default",
     "createdAt": "2026-04-12",
-    "reviewStage": 0,
-    "nextReview": "2026-04-12",
+    "reviewStage": 1,
+    "nextReview": "2026-04-15",
     "reviewHistory": [
       {
         "date": "2026-04-12",
         "remembered": false
-      }
-    ],
-    "rot": 1,
-    "tags": [
-      "Police et Justice"
-    ]
-  },
-  {
-    "id": "mnvhf16allbn",
-    "word": "procéder à une arrestation, arrêter, interpeller qqn",
-    "translation": "逮��、逮捕、逮捕某人",
-    "translation2": "make an arrest, arrest, arrest someone",
-    "deckId": "default",
-    "createdAt": "2026-04-12",
-    "reviewStage": 1,
-    "nextReview": "2026-04-13",
-    "reviewHistory": [
+      },
       {
-        "date": "2026-04-12",
+        "date": "2026-04-13",
         "remembered": true
       }
     ],
@@ -1408,17 +1376,45 @@
     ]
   },
   {
-    "id": "mnvhfppy93la",
-    "word": "perquisitionner, perquisition",
-    "translation": "搜索，搜索",
-    "translation2": "search, search",
+    "id": "mnvhf16allbn",
+    "word": "procéder à une arrestation,interpeller/arrêter, appréhender un suspect",
+    "translation": "[处置期] 执行逮捕(正式 新闻报道中)、传讯/盘查、逮捕、抓获(书面)",
+    "translation2": "make an arrest, ?, arrest someone, apprehend a suspect",
     "deckId": "default",
     "createdAt": "2026-04-12",
     "reviewStage": 0,
-    "nextReview": "2026-04-12",
+    "nextReview": "2026-04-14",
     "reviewHistory": [
       {
         "date": "2026-04-12",
+        "remembered": true
+      },
+      {
+        "date": "2026-04-13",
+        "remembered": false
+      }
+    ],
+    "rot": 1,
+    "tags": [
+      "Police et Justice"
+    ]
+  },
+  {
+    "id": "mnvhfppy93la",
+    "word": "perquisitionner, perquisition à domicile",
+    "translation": "[处置期] 入户搜查",
+    "translation2": "?",
+    "deckId": "default",
+    "createdAt": "2026-04-12",
+    "reviewStage": 0,
+    "nextReview": "2026-04-14",
+    "reviewHistory": [
+      {
+        "date": "2026-04-12",
+        "remembered": false
+      },
+      {
+        "date": "2026-04-13",
         "remembered": false
       }
     ],
@@ -1430,15 +1426,19 @@
   {
     "id": "mnvhgj4bfbqy",
     "word": "accuser vs défendre",
-    "translation": "��控与辩护",
+    "translation": "指控与辩护",
     "translation2": "accuse vs. defend",
     "deckId": "default",
     "createdAt": "2026-04-12",
-    "reviewStage": 1,
-    "nextReview": "2026-04-13",
+    "reviewStage": 2,
+    "nextReview": "2026-04-17",
     "reviewHistory": [
       {
         "date": "2026-04-12",
+        "remembered": true
+      },
+      {
+        "date": "2026-04-13",
         "remembered": true
       }
     ],
@@ -1454,11 +1454,15 @@
     "translation2": "has extenuating circumstances",
     "deckId": "default",
     "createdAt": "2026-04-12",
-    "reviewStage": 0,
-    "nextReview": "2026-04-12",
+    "reviewStage": 1,
+    "nextReview": "2026-04-15",
     "reviewHistory": [
       {
         "date": "2026-04-12",
+        "remembered": false
+      },
+      {
+        "date": "2026-04-13",
         "remembered": false
       }
     ],
@@ -1469,16 +1473,20 @@
   },
   {
     "id": "mnvhhu8oa5l5",
-    "word": "avouer, l'aveu, passer aux aveux",
-    "translation": "坦白，坦白，坦白",
-    "translation2": "to confess, to confess, to confess",
+    "word": "avouer(n. l'aveu), passer aux aveux, confession",
+    "translation": "[处置期] 供认/承认(书面or日常都可), 招供(法律正式), 忏悔/告解",
+    "translation2": "?",
     "deckId": "default",
     "createdAt": "2026-04-12",
     "reviewStage": 0,
-    "nextReview": "2026-04-12",
+    "nextReview": "2026-04-14",
     "reviewHistory": [
       {
         "date": "2026-04-12",
+        "remembered": false
+      },
+      {
+        "date": "2026-04-13",
         "remembered": false
       }
     ],
@@ -1490,15 +1498,19 @@
   {
     "id": "mnvhi9kh6kkt",
     "word": "contester, nier",
-    "translation": "异议、��认",
+    "translation": "异议!、否认",
     "translation2": "dispute, deny",
     "deckId": "default",
     "createdAt": "2026-04-12",
     "reviewStage": 0,
-    "nextReview": "2026-04-12",
+    "nextReview": "2026-04-14",
     "reviewHistory": [
       {
         "date": "2026-04-12",
+        "remembered": false
+      },
+      {
+        "date": "2026-04-13",
         "remembered": false
       }
     ],
@@ -1510,15 +1522,19 @@
   {
     "id": "mnvltft2guf0",
     "word": "convoquer qqn au tribunal, une convocation",
-    "translation": "传唤某���出庭，传票",
+    "translation": "传唤某人出庭，传票",
     "translation2": "summon someone to court, a summons",
     "deckId": "default",
     "createdAt": "2026-04-12",
     "reviewStage": 0,
-    "nextReview": "2026-04-12",
+    "nextReview": "2026-04-14",
     "reviewHistory": [
       {
         "date": "2026-04-12",
+        "remembered": false
+      },
+      {
+        "date": "2026-04-13",
         "remembered": false
       }
     ],
@@ -1529,16 +1545,20 @@
   },
   {
     "id": "mnvm24ou3lx0",
-    "word": "classer une affaire, un dossier",
+    "word": "classer une affaire, un dossier, affaire classée",
     "translation": "结案、结案",
     "translation2": "close a case, a file",
     "deckId": "default",
     "createdAt": "2026-04-12",
     "reviewStage": 0,
-    "nextReview": "2026-04-12",
+    "nextReview": "2026-04-14",
     "reviewHistory": [
       {
         "date": "2026-04-12",
+        "remembered": false
+      },
+      {
+        "date": "2026-04-13",
         "remembered": false
       }
     ],
@@ -1550,15 +1570,19 @@
   {
     "id": "mnvm2q27ozf0",
     "word": "délivrer une commission rogatoire, un non-lieu",
-    "translation": "发出调查委托书，驳回案件",
+    "translation": "[处置期] 发出调查委托书，驳回案件",
     "translation2": "issue a letter rogatory, a dismissal of the case",
     "deckId": "default",
     "createdAt": "2026-04-12",
     "reviewStage": 0,
-    "nextReview": "2026-04-12",
+    "nextReview": "2026-04-14",
     "reviewHistory": [
       {
         "date": "2026-04-12",
+        "remembered": false
+      },
+      {
+        "date": "2026-04-13",
         "remembered": false
       }
     ],
@@ -1575,11 +1599,15 @@
     "deckId": "default",
     "createdAt": "2026-04-12",
     "reviewStage": 0,
-    "nextReview": "2026-04-12",
+    "nextReview": "2026-04-14",
     "reviewHistory": [
       {
         "date": "2026-04-12",
         "remembered": false
+      },
+      {
+        "date": "2026-04-13",
+        "remembered": true
       }
     ],
     "rot": 1,
@@ -1595,10 +1623,14 @@
     "deckId": "default",
     "createdAt": "2026-04-12",
     "reviewStage": 0,
-    "nextReview": "2026-04-12",
+    "nextReview": "2026-04-14",
     "reviewHistory": [
       {
         "date": "2026-04-12",
+        "remembered": false
+      },
+      {
+        "date": "2026-04-13",
         "remembered": false
       }
     ],
@@ -1615,10 +1647,14 @@
     "deckId": "default",
     "createdAt": "2026-04-12",
     "reviewStage": 0,
-    "nextReview": "2026-04-12",
+    "nextReview": "2026-04-14",
     "reviewHistory": [
       {
         "date": "2026-04-12",
+        "remembered": false
+      },
+      {
+        "date": "2026-04-13",
         "remembered": false
       }
     ],
@@ -1629,16 +1665,20 @@
   },
   {
     "id": "mnvme04ox1co",
-    "word": "mis en examen, mis/placé en détention provisoire",
-    "translation": "被起诉、置于/审前拘留",
+    "word": "mise en examen, mis/placé en détention provisoire",
+    "translation": "[处置期] 被起诉(新)、审前拘留",
     "translation2": "indicted, placed/placed in pre-trial detention",
     "deckId": "default",
     "createdAt": "2026-04-12",
     "reviewStage": 0,
-    "nextReview": "2026-04-12",
+    "nextReview": "2026-04-14",
     "reviewHistory": [
       {
         "date": "2026-04-12",
+        "remembered": false
+      },
+      {
+        "date": "2026-04-13",
         "remembered": false
       }
     ],
@@ -1654,12 +1694,16 @@
     "translation2": "indict someone",
     "deckId": "default",
     "createdAt": "2026-04-12",
-    "reviewStage": 0,
-    "nextReview": "2026-04-12",
+    "reviewStage": 1,
+    "nextReview": "2026-04-15",
     "reviewHistory": [
       {
         "date": "2026-04-12",
         "remembered": false
+      },
+      {
+        "date": "2026-04-13",
+        "remembered": true
       }
     ],
     "rot": 1,
@@ -1674,12 +1718,16 @@
     "translation2": "an indictment",
     "deckId": "default",
     "createdAt": "2026-04-12",
-    "reviewStage": 0,
-    "nextReview": "2026-04-12",
+    "reviewStage": 1,
+    "nextReview": "2026-04-15",
     "reviewHistory": [
       {
         "date": "2026-04-12",
         "remembered": false
+      },
+      {
+        "date": "2026-04-13",
+        "remembered": true
       }
     ],
     "rot": 1,
@@ -1695,10 +1743,14 @@
     "deckId": "default",
     "createdAt": "2026-04-12",
     "reviewStage": 0,
-    "nextReview": "2026-04-12",
+    "nextReview": "2026-04-14",
     "reviewHistory": [
       {
         "date": "2026-04-12",
+        "remembered": false
+      },
+      {
+        "date": "2026-04-13",
         "remembered": false
       }
     ],
@@ -1714,12 +1766,16 @@
     "translation2": "an injustice, a judicial error",
     "deckId": "default",
     "createdAt": "2026-04-12",
-    "reviewStage": 0,
-    "nextReview": "2026-04-12",
+    "reviewStage": 1,
+    "nextReview": "2026-04-15",
     "reviewHistory": [
       {
         "date": "2026-04-12",
         "remembered": false
+      },
+      {
+        "date": "2026-04-13",
+        "remembered": true
       }
     ],
     "rot": 1,
@@ -1730,15 +1786,19 @@
   {
     "id": "mnvmgy3juaiy",
     "word": "plaider, la plaidoirie",
-    "translation": "恳求，恳求",
+    "translation": "辩护发言",
     "translation2": "to plead, pleading",
     "deckId": "default",
     "createdAt": "2026-04-12",
     "reviewStage": 0,
-    "nextReview": "2026-04-12",
+    "nextReview": "2026-04-14",
     "reviewHistory": [
       {
         "date": "2026-04-12",
+        "remembered": false
+      },
+      {
+        "date": "2026-04-13",
         "remembered": false
       }
     ],
@@ -1754,12 +1814,16 @@
     "translation2": "the indictment, request",
     "deckId": "default",
     "createdAt": "2026-04-12",
-    "reviewStage": 0,
-    "nextReview": "2026-04-12",
+    "reviewStage": 1,
+    "nextReview": "2026-04-15",
     "reviewHistory": [
       {
         "date": "2026-04-12",
         "remembered": false
+      },
+      {
+        "date": "2026-04-13",
+        "remembered": true
       }
     ],
     "rot": 1,
@@ -1770,15 +1834,19 @@
   {
     "id": "mnvmv0dfu2ib",
     "word": "un procès, le verdict",
-    "translation": "审判，判决",
+    "translation": "一场诉讼, 判决阶段",
     "translation2": "a trial, the verdict",
     "deckId": "default",
     "createdAt": "2026-04-12",
     "reviewStage": 0,
-    "nextReview": "2026-04-12",
+    "nextReview": "2026-04-14",
     "reviewHistory": [
       {
         "date": "2026-04-12",
+        "remembered": false
+      },
+      {
+        "date": "2026-04-13",
         "remembered": false
       }
     ],
@@ -1795,10 +1863,14 @@
     "deckId": "default",
     "createdAt": "2026-04-12",
     "reviewStage": 0,
-    "nextReview": "2026-04-12",
+    "nextReview": "2026-04-14",
     "reviewHistory": [
       {
         "date": "2026-04-12",
+        "remembered": false
+      },
+      {
+        "date": "2026-04-13",
         "remembered": false
       }
     ],
@@ -1814,12 +1886,16 @@
     "translation2": "condemnation, ê condemned",
     "deckId": "default",
     "createdAt": "2026-04-12",
-    "reviewStage": 0,
-    "nextReview": "2026-04-12",
+    "reviewStage": 1,
+    "nextReview": "2026-04-15",
     "reviewHistory": [
       {
         "date": "2026-04-12",
         "remembered": false
+      },
+      {
+        "date": "2026-04-13",
+        "remembered": true
       }
     ],
     "rot": 1,
@@ -1834,11 +1910,15 @@
     "translation2": "ê acquitted, acquittal, ê relaxed, relax, relax sb",
     "deckId": "default",
     "createdAt": "2026-04-12",
-    "reviewStage": 0,
-    "nextReview": "2026-04-12",
+    "reviewStage": 1,
+    "nextReview": "2026-04-15",
     "reviewHistory": [
       {
         "date": "2026-04-12",
+        "remembered": false
+      },
+      {
+        "date": "2026-04-13",
         "remembered": false
       }
     ],
@@ -1854,11 +1934,15 @@
     "translation2": "the sentence to a fine, an accessory penalty",
     "deckId": "default",
     "createdAt": "2026-04-12",
-    "reviewStage": 0,
-    "nextReview": "2026-04-12",
+    "reviewStage": 1,
+    "nextReview": "2026-04-15",
     "reviewHistory": [
       {
         "date": "2026-04-12",
+        "remembered": false
+      },
+      {
+        "date": "2026-04-13",
         "remembered": false
       }
     ],
@@ -1869,17 +1953,21 @@
   },
   {
     "id": "mnvtvctyeqo6",
-    "word": "un travail d'intérêt général",
-    "translation": "社会工作",
+    "word": "un travail d'intérêt général (TIG)",
+    "translation": "公益劳动ou社会服务",
     "translation2": "?",
     "deckId": "default",
     "createdAt": "2026-04-12",
-    "reviewStage": 0,
-    "nextReview": "2026-04-12",
+    "reviewStage": 1,
+    "nextReview": "2026-04-15",
     "reviewHistory": [
       {
         "date": "2026-04-12",
         "remembered": false
+      },
+      {
+        "date": "2026-04-13",
+        "remembered": true
       }
     ],
     "rot": 1,
@@ -1890,15 +1978,19 @@
   {
     "id": "mnvtw8jzco7w",
     "word": "une peine de prison ferme",
-    "translation": "判处有期徒刑",
+    "translation": "判���有期徒刑",
     "translation2": "a firm prison sentence",
     "deckId": "default",
     "createdAt": "2026-04-12",
     "reviewStage": 0,
-    "nextReview": "2026-04-12",
+    "nextReview": "2026-04-14",
     "reviewHistory": [
       {
         "date": "2026-04-12",
+        "remembered": false
+      },
+      {
+        "date": "2026-04-13",
         "remembered": false
       }
     ],
@@ -1915,10 +2007,14 @@
     "deckId": "default",
     "createdAt": "2026-04-12",
     "reviewStage": 0,
-    "nextReview": "2026-04-12",
+    "nextReview": "2026-04-14",
     "reviewHistory": [
       {
         "date": "2026-04-12",
+        "remembered": false
+      },
+      {
+        "date": "2026-04-13",
         "remembered": false
       }
     ],
@@ -1934,11 +2030,15 @@
     "translation2": "life imprisonment",
     "deckId": "default",
     "createdAt": "2026-04-12",
-    "reviewStage": 1,
-    "nextReview": "2026-04-13",
+    "reviewStage": 2,
+    "nextReview": "2026-04-17",
     "reviewHistory": [
       {
         "date": "2026-04-12",
+        "remembered": true
+      },
+      {
+        "date": "2026-04-13",
         "remembered": true
       }
     ],
@@ -1954,12 +2054,16 @@
     "translation2": "capital punishment, death penalty",
     "deckId": "default",
     "createdAt": "2026-04-12",
-    "reviewStage": 0,
-    "nextReview": "2026-04-12",
+    "reviewStage": 1,
+    "nextReview": "2026-04-15",
     "reviewHistory": [
       {
         "date": "2026-04-12",
         "remembered": false
+      },
+      {
+        "date": "2026-04-13",
+        "remembered": true
       }
     ],
     "rot": 1,
@@ -1974,11 +2078,15 @@
     "translation2": "",
     "deckId": "default",
     "createdAt": "2026-04-12",
-    "reviewStage": 1,
-    "nextReview": "2026-04-13",
+    "reviewStage": 2,
+    "nextReview": "2026-04-17",
     "reviewHistory": [
       {
         "date": "2026-04-12",
+        "remembered": true
+      },
+      {
+        "date": "2026-04-13",
         "remembered": true
       }
     ],
@@ -1990,15 +2098,19 @@
   {
     "id": "mnvtyuulfe58",
     "word": "une mise en demeure de payer",
-    "translation": "正式付款通知",
+    "translation": "催告函“限期支付正式通知”",
     "translation2": "a formal notice to pay",
     "deckId": "default",
     "createdAt": "2026-04-12",
     "reviewStage": 0,
-    "nextReview": "2026-04-12",
+    "nextReview": "2026-04-14",
     "reviewHistory": [
       {
         "date": "2026-04-12",
+        "remembered": false
+      },
+      {
+        "date": "2026-04-13",
         "remembered": false
       }
     ],
@@ -2010,16 +2122,20 @@
   {
     "id": "mnvtzoz3ib6x",
     "word": "la prison, la réclusion, ê détenu, un détenu",
-    "translation": "监狱, 隔离, ê 囚犯, 囚犯",
+    "translation": "[处置期] 监狱, 隔离, ê 关押, 在押人员",
     "translation2": "prison, seclusion, ê inmate, an inmate",
     "deckId": "default",
     "createdAt": "2026-04-12",
-    "reviewStage": 0,
-    "nextReview": "2026-04-12",
+    "reviewStage": 1,
+    "nextReview": "2026-04-15",
     "reviewHistory": [
       {
         "date": "2026-04-12",
         "remembered": false
+      },
+      {
+        "date": "2026-04-13",
+        "remembered": true
       }
     ],
     "rot": 1,
@@ -2034,12 +2150,16 @@
     "translation2": "to apply a sentence, a sanction, to serve a sentence",
     "deckId": "default",
     "createdAt": "2026-04-12",
-    "reviewStage": 0,
-    "nextReview": "2026-04-12",
+    "reviewStage": 1,
+    "nextReview": "2026-04-15",
     "reviewHistory": [
       {
         "date": "2026-04-12",
         "remembered": false
+      },
+      {
+        "date": "2026-04-13",
+        "remembered": true
       }
     ],
     "rot": 1,
@@ -2050,15 +2170,19 @@
   {
     "id": "mnvu1iqipwqm",
     "word": "ê décapité, guillotiné, la décapitation, une exécution",
-    "translation": "ê 斩首, 斩首, 斩首, 处决",
+    "translation": "ê 斩首, 断头, 斩首, 处决",
     "translation2": "ê beheaded, guillotined, decapitation, execution",
     "deckId": "default",
     "createdAt": "2026-04-12",
     "reviewStage": 0,
-    "nextReview": "2026-04-12",
+    "nextReview": "2026-04-14",
     "reviewHistory": [
       {
         "date": "2026-04-12",
+        "remembered": false
+      },
+      {
+        "date": "2026-04-13",
         "remembered": false
       }
     ],
@@ -2070,15 +2194,19 @@
   {
     "id": "mnvu246onatn",
     "word": "ê interné en hôpital psychiatrique",
-    "translation": "被关在精神病���",
+    "translation": "被关在精神病院",
     "translation2": "ê interned in a psychiatric hospital",
     "deckId": "default",
     "createdAt": "2026-04-12",
     "reviewStage": 0,
-    "nextReview": "2026-04-12",
+    "nextReview": "2026-04-14",
     "reviewHistory": [
       {
         "date": "2026-04-12",
+        "remembered": false
+      },
+      {
+        "date": "2026-04-13",
         "remembered": false
       }
     ],
@@ -2095,10 +2223,14 @@
     "deckId": "default",
     "createdAt": "2026-04-12",
     "reviewStage": 0,
-    "nextReview": "2026-04-12",
+    "nextReview": "2026-04-14",
     "reviewHistory": [
       {
         "date": "2026-04-12",
+        "remembered": false
+      },
+      {
+        "date": "2026-04-13",
         "remembered": false
       }
     ],
@@ -2115,10 +2247,14 @@
     "deckId": "default",
     "createdAt": "2026-04-12",
     "reviewStage": 0,
-    "nextReview": "2026-04-12",
+    "nextReview": "2026-04-14",
     "reviewHistory": [
       {
         "date": "2026-04-12",
+        "remembered": false
+      },
+      {
+        "date": "2026-04-13",
         "remembered": false
       }
     ],
@@ -2134,12 +2270,16 @@
     "translation2": "have a PV",
     "deckId": "default",
     "createdAt": "2026-04-12",
-    "reviewStage": 0,
-    "nextReview": "2026-04-12",
+    "reviewStage": 1,
+    "nextReview": "2026-04-15",
     "reviewHistory": [
       {
         "date": "2026-04-12",
         "remembered": false
+      },
+      {
+        "date": "2026-04-13",
+        "remembered": true
       }
     ],
     "rot": 1,
@@ -2155,10 +2295,14 @@
     "deckId": "default",
     "createdAt": "2026-04-12",
     "reviewStage": 0,
-    "nextReview": "2026-04-12",
+    "nextReview": "2026-04-14",
     "reviewHistory": [
       {
         "date": "2026-04-12",
+        "remembered": false
+      },
+      {
+        "date": "2026-04-13",
         "remembered": false
       }
     ],
@@ -2170,15 +2314,19 @@
   {
     "id": "mnvu92169bsi",
     "word": "désigner un agresseur",
-    "translation": "指认罪犯",
+    "translation": "[案发期] 指认罪犯",
     "translation2": "designate an attacker",
     "deckId": "default",
     "createdAt": "2026-04-12",
     "reviewStage": 0,
-    "nextReview": "2026-04-12",
+    "nextReview": "2026-04-14",
     "reviewHistory": [
       {
         "date": "2026-04-12",
+        "remembered": false
+      },
+      {
+        "date": "2026-04-13",
         "remembered": false
       }
     ],
@@ -2194,12 +2342,16 @@
     "translation2": "be mistreated",
     "deckId": "default",
     "createdAt": "2026-04-12",
-    "reviewStage": 0,
-    "nextReview": "2026-04-12",
+    "reviewStage": 1,
+    "nextReview": "2026-04-15",
     "reviewHistory": [
       {
         "date": "2026-04-12",
         "remembered": false
+      },
+      {
+        "date": "2026-04-13",
+        "remembered": true
       }
     ],
     "rot": 1,
@@ -2215,11 +2367,15 @@
     "deckId": "default",
     "createdAt": "2026-04-12",
     "reviewStage": 0,
-    "nextReview": "2026-04-12",
+    "nextReview": "2026-04-14",
     "reviewHistory": [
       {
         "date": "2026-04-12",
         "remembered": false
+      },
+      {
+        "date": "2026-04-13",
+        "remembered": true
       }
     ],
     "rot": 1,
@@ -2234,12 +2390,16 @@
     "translation2": "a complainant",
     "deckId": "default",
     "createdAt": "2026-04-12",
-    "reviewStage": 0,
-    "nextReview": "2026-04-12",
+    "reviewStage": 1,
+    "nextReview": "2026-04-15",
     "reviewHistory": [
       {
         "date": "2026-04-12",
         "remembered": false
+      },
+      {
+        "date": "2026-04-13",
+        "remembered": true
       }
     ],
     "rot": 1,
@@ -2254,12 +2414,16 @@
     "translation2": "sue someone",
     "deckId": "default",
     "createdAt": "2026-04-12",
-    "reviewStage": 0,
-    "nextReview": "2026-04-12",
+    "reviewStage": 1,
+    "nextReview": "2026-04-15",
     "reviewHistory": [
       {
         "date": "2026-04-12",
         "remembered": false
+      },
+      {
+        "date": "2026-04-13",
+        "remembered": true
       }
     ],
     "rot": 1,
@@ -2270,15 +2434,19 @@
   {
     "id": "mnvuyv3lx5nc",
     "word": "donner un signalement",
-    "translation": "给出(犯罪描述)",
+    "translation": "[案发期] 给出(犯罪描述)",
     "translation2": "give a report",
     "deckId": "default",
     "createdAt": "2026-04-12",
     "reviewStage": 0,
-    "nextReview": "2026-04-12",
+    "nextReview": "2026-04-14",
     "reviewHistory": [
       {
         "date": "2026-04-12",
+        "remembered": false
+      },
+      {
+        "date": "2026-04-13",
         "remembered": false
       }
     ],

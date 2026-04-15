@@ -11,5 +11,31 @@
     "reviewHistory": [],
     "rot": 1,
     "tags": []
+  },
+  {
+    "id": "mo08m0p0beok",
+    "word": "condamnation",
+    "translation": "定罪(刑罚)",
+    "translation2": "conviction",
+    "deckId": "default",
+    "createdAt": "2026-04-15",
+    "reviewStage": 0,
+    "nextReview": "2026-04-15",
+    "reviewHistory": [],
+    "rot": 0,
+    "tags": []
+  },
+  {
+    "id": "mo08m4yplyq6",
+    "word": "peine",
+    "translation": "惩罚(具体的刑罚形式)",
+    "translation2": "penalty",
+    "deckId": "default",
+    "createdAt": "2026-04-15",
+    "reviewStage": 0,
+    "nextReview": "2026-04-15",
+    "reviewHistory": [],
+    "rot": 0,
+    "tags": []
   }
 ]

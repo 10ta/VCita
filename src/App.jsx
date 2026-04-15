@@ -297,11 +297,19 @@ export default function App() {
     return sched.some(sd => sd <= date && !history.find(h => h.date === sd));
   };
 
-  // ─── Start/reset review session: freeze queue with FULL card snapshots ───
-  const startReviewSession = (forDate) => {
-    const due = cards.filter(c => c.deckId === activeDeck && isDueOn(c, forDate));
+  // ─── Start/reset review session: reload first, then freeze queue ───
+  const startReviewSession = async (forDate) => {
+    await reload(); // ensure fresh data
+    // Use a callback to access latest cards after reload
+    const freshCards = await loadUserCards(uid());
+    const freshMeta = await loadUserMeta(uid());
+    const due = freshCards.filter(c => c.deckId === activeDeck && (() => {
+      const sched = getScheduleDates(c);
+      const history = c.reviewHistory || [];
+      return sched.some(sd => sd <= forDate && !history.find(h => h.date === sd));
+    })());
     log("info", "startReviewSession", { date: forDate, count: due.length });
-    setReviewQueue(due.map(c => ({ ...c }))); // deep copy snapshots
+    setReviewQueue(due.map(c => ({ ...c })));
     setReviewPos(0);
     setReviewRevealed(false);
     setReviewSnapshot(null);
@@ -441,7 +449,9 @@ export default function App() {
 
   // ─── Review ───
   const doReview = async (cardId, remembered) => {
-    const card = cards.find(c => c.id === cardId);
+    // Read card from queue snapshot (reliable) or fall back to cards state
+    const queueCard = reviewQueue.find(c => c.id === cardId);
+    const card = queueCard || cards.find(c => c.id === cardId);
     if (!card) { log("error", "doReview: card not found", { cardId }); return; }
     const rd = reviewDate;
     const sched = getScheduleDates(card);
@@ -453,6 +463,8 @@ export default function App() {
     let ns = remembered ? Math.min(card.reviewStage + 1, EBB.length - 1) : Math.max(0, card.reviewStage - 1);
     const updated = { ...card, reviewStage: ns, nextReview: addDays(rd, EBB[ns]), reviewHistory: newHistory };
     await saveCardToDay(uid(), updated);
+    // Update the snapshot in the queue so prev/next shows correct state
+    setReviewQueue(q => q.map(c => c.id === cardId ? updated : c));
     setReviewSnapshot(updated);
     setReviewRevealed(true);
     await reload();
@@ -515,7 +527,8 @@ export default function App() {
   };
 
   const doIntensiveReview = async (cardId, remembered) => {
-    const card = cards.find(c => c.id === cardId);
+    const queueCard = intensiveQueue.find(c => c.id === cardId);
+    const card = queueCard || cards.find(c => c.id === cardId);
     if (!card) return;
     const rd = todayStr();
     const sched = getScheduleDates(card);
@@ -527,13 +540,15 @@ export default function App() {
     let ns = remembered ? Math.min(card.reviewStage + 1, EBB.length - 1) : Math.max(0, card.reviewStage - 1);
     const updated = { ...card, reviewStage: ns, nextReview: addDays(rd, EBB[ns]), reviewHistory: newHistory };
     await saveCardToDay(uid(), updated);
+    setIntensiveQueue(q => q.map(c => c.id === cardId ? updated : c));
     setIntensiveSnapshot(updated);
     setIntensiveRevealed(true);
     await reload();
   };
 
   const masterCard = async (cardId) => {
-    const card = cards.find(c => c.id === cardId);
+    const queueCard = intensiveQueue.find(c => c.id === cardId);
+    const card = queueCard || cards.find(c => c.id === cardId);
     if (!card) return;
     const td = todayStr();
     const sched = getScheduleDates(card);
