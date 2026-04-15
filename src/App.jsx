@@ -203,12 +203,13 @@ export default function App() {
   const [addDate, setAddDate] = useState(todayStr());
   const [translating, setTranslating] = useState(false);
   // Review state — frozen queue approach
-  const [reviewQueue, setReviewQueue] = useState([]); // frozen list of card IDs at session start
+  const [reviewQueue, setReviewQueue] = useState([]); // frozen list of card snapshots at session start
   const [reviewPos, setReviewPos] = useState(0); // current position in queue
   const [reviewRevealed, setReviewRevealed] = useState(false);
   const [reviewSnapshot, setReviewSnapshot] = useState(null);
   const [reviewDate, setReviewDate] = useState(todayStr());
   const [reviewAutoPlay, setReviewAutoPlay] = useState(INIT_AUTO_REVIEW);
+  const [reviewQuizType, setReviewQuizType] = useState(0); // 0=src, 1=t1, 2=t2 — which field to show as question
   //
   const [newDeckName, setNewDeckName] = useState("");
   const [showDeckModal, setShowDeckModal] = useState(false);
@@ -277,6 +278,12 @@ export default function App() {
     observer.observe(document.body, { childList: true, subtree: true });
     return () => { window.removeEventListener("resize", check); observer.disconnect(); };
   }, []);
+  // Re-sync when tab becomes visible (fixes stale state after sleep)
+  useEffect(() => {
+    const onVisible = () => { if (document.visibilityState === "visible") { log("info", "tab visible, reloading"); reload(); } };
+    document.addEventListener("visibilitychange", onVisible);
+    return () => document.removeEventListener("visibilitychange", onVisible);
+  }, []);
 
   const updateMeta = async m => { setMeta(m); await saveUserMeta(uid(), m); };
   const updateGlobal = async g => { setGlobal(g); await saveGlobal(g); };
@@ -290,12 +297,11 @@ export default function App() {
     return sched.some(sd => sd <= date && !history.find(h => h.date === sd));
   };
 
-  // ─── Start/reset review session: freeze queue ───
+  // ─── Start/reset review session: freeze queue with FULL card snapshots ───
   const startReviewSession = (forDate) => {
     const due = cards.filter(c => c.deckId === activeDeck && isDueOn(c, forDate));
-    const ids = due.map(c => c.id);
-    log("info", "startReviewSession", { date: forDate, count: ids.length });
-    setReviewQueue(ids);
+    log("info", "startReviewSession", { date: forDate, count: due.length });
+    setReviewQueue(due.map(c => ({ ...c }))); // deep copy snapshots
     setReviewPos(0);
     setReviewRevealed(false);
     setReviewSnapshot(null);
@@ -456,14 +462,23 @@ export default function App() {
   const nextReviewCard = () => {
     setReviewRevealed(false);
     setReviewSnapshot(null);
-    setReviewPos(p => p + 1);
+    setReviewPos(p => Math.min(p + 1, reviewQueue.length));
+  };
+  const prevReviewCard = () => {
+    setReviewRevealed(false);
+    setReviewSnapshot(null);
+    setReviewPos(p => Math.max(p - 1, 0));
   };
 
   const toggleReviewDot = async (card, schDate) => {
     const rh = (card.reviewHistory || []).find(h => h.date === schDate);
     if (!rh) return;
     const newHistory = card.reviewHistory.map(h => h.date === schDate ? { ...h, remembered: !h.remembered } : h);
-    await saveCardToDay(uid(), { ...card, reviewHistory: newHistory });
+    const updated = { ...card, reviewHistory: newHistory };
+    await saveCardToDay(uid(), updated);
+    // Update snapshots if they reference this card
+    if (reviewSnapshot?.id === card.id) setReviewSnapshot(updated);
+    if (intensiveSnapshot?.id === card.id) setIntensiveSnapshot(updated);
     await reload();
     log("info", "toggleReviewDot", { cardId: card.id, date: schDate });
   };
@@ -492,7 +507,7 @@ export default function App() {
     const m = mode || intensiveMode;
     setIntensiveMode(m);
     const ic = getIntensiveCards(m);
-    setIntensiveQueue(ic.map(c => c.id));
+    setIntensiveQueue(ic.map(c => ({ ...c }))); // deep copy snapshots
     setIntensivePos(0);
     setIntensiveRevealed(false);
     setIntensiveSnapshot(null);
@@ -539,7 +554,8 @@ export default function App() {
     log("info", "masterCard", { cardId });
   };
 
-  const nextIntensiveCard = () => { setIntensiveRevealed(false); setIntensiveSnapshot(null); setIntensivePos(p => p + 1); };
+  const nextIntensiveCard = () => { setIntensiveRevealed(false); setIntensiveSnapshot(null); setIntensivePos(p => Math.min(p + 1, intensiveQueue.length)); };
+  const prevIntensiveCard = () => { setIntensiveRevealed(false); setIntensiveSnapshot(null); setIntensivePos(p => Math.max(p - 1, 0)); };
 
   // ─── Deck ops ───
   const createDeck = async () => {
@@ -576,22 +592,20 @@ export default function App() {
     else setSelected(new Set(deckCards.map(c => c.id)));
   };
 
-  // Review queue: get current card from frozen queue
+  // Review queue: get current card — queue stores full snapshots
   const reviewCurrentCard = (() => {
     if (reviewRevealed && reviewSnapshot) return reviewSnapshot;
-    if (reviewPos < reviewQueue.length) {
-      const id = reviewQueue[reviewPos];
-      return cards.find(c => c.id === id) || null;
-    }
+    if (reviewPos < reviewQueue.length) return reviewQueue[reviewPos];
     return null;
   })();
   const reviewTotal = reviewQueue.length;
   const reviewDone = reviewPos >= reviewTotal && reviewTotal > 0;
 
   // Intensive review current card
+  // Intensive review current card — queue stores full snapshots
   const intensiveCurrentCard = (() => {
     if (intensiveRevealed && intensiveSnapshot) return intensiveSnapshot;
-    if (intensivePos < intensiveQueue.length) return cards.find(c => c.id === intensiveQueue[intensivePos]) || null;
+    if (intensivePos < intensiveQueue.length) return intensiveQueue[intensivePos];
     return null;
   })();
   const intensiveTotal = intensiveQueue.length;
@@ -605,20 +619,26 @@ export default function App() {
   const lastPlayedRef = useRef(null);
   useEffect(() => {
     if (!meta) return;
+    const getQuizQuestion = (card) => {
+      const d = getCardDisplay(card, meta);
+      const allFields = [d.src, d.t1, d.t2];
+      const allLangs = [d.srcL, d.t1L, d.t2L];
+      return { text: allFields[reviewQuizType], lang: allLangs[reviewQuizType] };
+    };
     if (view === "review" && reviewAutoPlay && !reviewRevealed && reviewCurrentCard) {
-      const key = "r-" + reviewCurrentCard.id + "-" + reviewPos;
+      const key = "r-" + reviewCurrentCard.id + "-" + reviewPos + "-" + reviewQuizType;
       if (lastPlayedRef.current !== key) {
         lastPlayedRef.current = key;
-        const d = getCardDisplay(reviewCurrentCard, meta);
-        speak(d.src, d.srcL);
+        const q = getQuizQuestion(reviewCurrentCard);
+        speak(q.text, q.lang);
       }
     }
     if (view === "intensive" && reviewAutoPlay && !intensiveRevealed && intensiveCurrentCard) {
-      const key = "i-" + intensiveCurrentCard.id + "-" + intensivePos;
+      const key = "i-" + intensiveCurrentCard.id + "-" + intensivePos + "-" + reviewQuizType;
       if (lastPlayedRef.current !== key) {
         lastPlayedRef.current = key;
-        const d = getCardDisplay(intensiveCurrentCard, meta);
-        speak(d.src, d.srcL);
+        const q = getQuizQuestion(intensiveCurrentCard);
+        speak(q.text, q.lang);
       }
     }
   });
@@ -1034,10 +1054,13 @@ export default function App() {
         {/* ═══ REVIEW ═══ */}
         {view === "review" && (
           <div style={S.content}>
-            <div style={{ display: "flex", alignItems: "center", gap: 12, padding: "12px 0", flexWrap: "wrap" }}>
-              <span style={{ fontFamily: mono, fontSize: 12, color: textDim }}>Review date:</span>
+            <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "12px 0", flexWrap: "wrap" }}>
+              <span style={{ fontFamily: mono, fontSize: 12, color: textDim }}>Review:</span>
               <DateInput value={reviewDate} onChange={d => { setReviewDate(d); startReviewSession(d); }}/>
-              {reviewDate !== td && <button style={{ fontFamily: mono, fontSize: 11, background: "transparent", border: `1px solid ${border}`, color: textDim, padding: "3px 10px", borderRadius: 6, cursor: "pointer" }} onClick={() => { setReviewDate(todayStr()); startReviewSession(todayStr()); }}>Today</button>}
+              {reviewDate !== td && <button className="pill" onClick={() => { setReviewDate(todayStr()); startReviewSession(todayStr()); }} style={{fontSize:10}}>Today</button>}
+              <button className={`pill${reviewQuizType===0?" on":""}`} onClick={() => setReviewQuizType(0)}>目标</button>
+              <button className={`pill${reviewQuizType===1?" on":""}`} onClick={() => setReviewQuizType(1)}>翻译1</button>
+              <button className={`pill${reviewQuizType===2?" on":""}`} onClick={() => setReviewQuizType(2)}>翻译2</button>
               <div style={{ marginLeft: "auto" }}><button className={`pill${reviewAutoPlay?" on":""}`} onClick={() => setReviewAutoPlay(!reviewAutoPlay)}><I.Speaker size={12}/> 自动播放</button></div>
             </div>
             {reviewTotal === 0 ? (
@@ -1048,15 +1071,27 @@ export default function App() {
                 <p style={S.emptyText}>All {reviewTotal} cards reviewed!</p></div>
             ) : (() => {
               const rc = reviewCurrentCard;
-              if (!rc) return <div style={S.empty}><p style={S.emptyText}>Card not found</p></div>;
+              if (!rc) return <div style={S.empty}><p style={S.emptyText}>Loading...</p></div>;
               const d = getCardDisplay(rc, meta);
+              // Quiz: pick question/answers based on reviewQuizType
+              const allFields = [d.src, d.t1, d.t2];
+              const allLangs = [d.srcL, d.t1L, d.t2L];
+              const qIdx = reviewQuizType;
+              const question = allFields[qIdx];
+              const questionLang = allLangs[qIdx];
+              const ans = allFields.filter((_,i) => i !== qIdx);
+              const ansL = allLangs.filter((_,i) => i !== qIdx);
               return (
                 <div style={S.reviewArea}>
-                  <div style={S.reviewProgress}>{reviewPos+1} / {reviewTotal}</div>
+                  <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 16, marginBottom: 8 }}>
+                    {reviewPos > 0 && <button className="pill" onClick={prevReviewCard} style={{fontSize:11}}>‹ 上一个</button>}
+                    <span style={S.reviewProgress}>{reviewPos+1} / {reviewTotal}</span>
+                    {reviewPos < reviewTotal - 1 && <button className="pill" onClick={nextReviewCard} style={{fontSize:11}}>下一个 ›</button>}
+                  </div>
                   <div style={S.reviewCard} key={rc.id + reviewPos}>
                     <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8, marginBottom: 4 }}>
-                      <div style={S.reviewWord}>{d.src}</div>
-                      <button className="spk" style={{ ...S.speakBtn, padding: 4 }} onClick={() => speak(d.src, d.srcL)}><I.Speaker size={18}/></button>
+                      <div style={S.reviewWord}>{question}</div>
+                      <button className="spk" style={{ ...S.speakBtn, padding: 4 }} onClick={() => speak(question, questionLang)}><I.Speaker size={18}/></button>
                     </div>
                     <div style={{ marginTop: 8, marginBottom: 24 }}><ScheduleDots card={rc}/></div>
                     <div style={{ minHeight: 52 }}>
@@ -1072,12 +1107,12 @@ export default function App() {
                     {reviewRevealed && (
                       <div style={{ animation: "fadeUp 0.3s ease", marginTop: 20, borderTop: `1px solid ${border}`, paddingTop: 16 }}>
                         <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}>
-                          <div style={S.reviewTrans}>{d.t1}</div>
-                          <button className="spk" style={S.speakBtn} onClick={() => speak(d.t1, d.t1L)}><I.Speaker/></button>
+                          <div style={S.reviewTrans}>{ans[0]}</div>
+                          <button className="spk" style={S.speakBtn} onClick={() => speak(ans[0], ansL[0])}><I.Speaker/></button>
                         </div>
                         <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8, marginTop: 6 }}>
-                          <div style={S.reviewTrans2}>{d.t2}</div>
-                          <button className="spk" style={S.speakBtn} onClick={() => speak(d.t2, d.t2L)}><I.Speaker/></button>
+                          <div style={S.reviewTrans2}>{ans[1]}</div>
+                          <button className="spk" style={S.speakBtn} onClick={() => speak(ans[1], ansL[1])}><I.Speaker/></button>
                         </div>
                       </div>
                     )}
@@ -1092,14 +1127,18 @@ export default function App() {
         {view === "intensive" && (
           <div style={S.content}>
             <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "12px 0", flexWrap: "wrap" }}>
-              <span style={{ fontFamily: serif, fontSize: 18, fontWeight: 600, color: text }}>强化复习</span>
-              {/* Mode selector */}
+              <span style={{ fontFamily: serif, fontSize: 16, fontWeight: 600, color: text }}>强化</span>
               <button className={`pill${intensiveMode==="hard"?" on":""}`} onClick={() => startIntensiveSession("hard")}>🔥 高难度 ({cards.filter(c => c.deckId === activeDeck && (c.reviewHistory||[]).some(h => !h.remembered)).length})</button>
               {allTags.map(t => {
                 const m = "tag:" + t;
                 const cnt = cards.filter(c => c.deckId === activeDeck && (c.tags||[]).includes(t)).length;
                 return <button key={t} className={`pill${intensiveMode===m?" on":""}`} style={intensiveMode===m?{borderColor:"#8b5cf6",color:"#a78bfa",background:"#8b5cf622"}:{}} onClick={() => startIntensiveSession(m)}><I.Tag/> {t} ({cnt})</button>;
               })}
+            </div>
+            <div style={{ display: "flex", alignItems: "center", gap: 8, paddingBottom: 8, flexWrap: "wrap" }}>
+              <button className={`pill${reviewQuizType===0?" on":""}`} onClick={() => setReviewQuizType(0)}>目标</button>
+              <button className={`pill${reviewQuizType===1?" on":""}`} onClick={() => setReviewQuizType(1)}>翻译1</button>
+              <button className={`pill${reviewQuizType===2?" on":""}`} onClick={() => setReviewQuizType(2)}>翻译2</button>
               <div style={{ marginLeft: "auto" }}><button className={`pill${reviewAutoPlay?" on":""}`} onClick={() => setReviewAutoPlay(!reviewAutoPlay)}><I.Speaker size={12}/> 自动播放</button></div>
             </div>
             {intensiveTotal === 0 ? (
@@ -1110,16 +1149,26 @@ export default function App() {
                 <p style={S.emptyText}>强化复习完成！共 {intensiveTotal} 个</p></div>
             ) : (() => {
               const rc = intensiveCurrentCard;
-              if (!rc) return <div style={S.empty}><p style={S.emptyText}>Card not found</p></div>;
+              if (!rc) return <div style={S.empty}><p style={S.emptyText}>Loading...</p></div>;
               const d = getCardDisplay(rc, meta);
               const redCount = (rc.reviewHistory||[]).filter(h => !h.remembered).length;
+              const allFields = [d.src, d.t1, d.t2];
+              const allLangs = [d.srcL, d.t1L, d.t2L];
+              const qIdx = reviewQuizType;
+              const question = allFields[qIdx], questionLang = allLangs[qIdx];
+              const ans = allFields.filter((_,i) => i !== qIdx);
+              const ansL = allLangs.filter((_,i) => i !== qIdx);
               return (
                 <div style={S.reviewArea}>
-                  <div style={S.reviewProgress}>{intensivePos+1} / {intensiveTotal}</div>
+                  <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 16, marginBottom: 8 }}>
+                    {intensivePos > 0 && <button className="pill" onClick={prevIntensiveCard} style={{fontSize:11}}>‹ 上一个</button>}
+                    <span style={S.reviewProgress}>{intensivePos+1} / {intensiveTotal}</span>
+                    {intensivePos < intensiveTotal - 1 && <button className="pill" onClick={nextIntensiveCard} style={{fontSize:11}}>下一个 ›</button>}
+                  </div>
                   <div style={S.reviewCard} key={rc.id + intensivePos}>
                     <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8, marginBottom: 4 }}>
-                      <div style={S.reviewWord}>{d.src}</div>
-                      <button className="spk" style={{ ...S.speakBtn, padding: 4 }} onClick={() => speak(d.src, d.srcL)}><I.Speaker size={18}/></button>
+                      <div style={S.reviewWord}>{question}</div>
+                      <button className="spk" style={{ ...S.speakBtn, padding: 4 }} onClick={() => speak(question, questionLang)}><I.Speaker size={18}/></button>
                     </div>
                     {redCount > 0 && <div style={{ fontFamily: mono, fontSize: 11, color: "#f87171", marginBottom: 8 }}>{redCount} failed</div>}
                     {(rc.tags||[]).length > 0 && <div style={{ display: "flex", gap: 3, justifyContent: "center", marginBottom: 4 }}>{(rc.tags||[]).map(t => <span key={t} style={{fontFamily:mono,fontSize:9,padding:"1px 6px",borderRadius:10,background:"#8b5cf622",border:"1px solid #8b5cf644",color:"#a78bfa"}}>{t}</span>)}</div>}
@@ -1140,12 +1189,12 @@ export default function App() {
                     {intensiveRevealed && (
                       <div style={{ animation: "fadeUp 0.3s ease", marginTop: 20, borderTop: `1px solid ${border}`, paddingTop: 16 }}>
                         <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}>
-                          <div style={S.reviewTrans}>{d.t1}</div>
-                          <button className="spk" style={S.speakBtn} onClick={() => speak(d.t1, d.t1L)}><I.Speaker/></button>
+                          <div style={S.reviewTrans}>{ans[0]}</div>
+                          <button className="spk" style={S.speakBtn} onClick={() => speak(ans[0], ansL[0])}><I.Speaker/></button>
                         </div>
                         <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8, marginTop: 6 }}>
-                          <div style={S.reviewTrans2}>{d.t2}</div>
-                          <button className="spk" style={S.speakBtn} onClick={() => speak(d.t2, d.t2L)}><I.Speaker/></button>
+                          <div style={S.reviewTrans2}>{ans[1]}</div>
+                          <button className="spk" style={S.speakBtn} onClick={() => speak(ans[1], ansL[1])}><I.Speaker/></button>
                         </div>
                       </div>
                     )}

@@ -1,0 +1,164 @@
+[
+  {
+    "id": "mnws262ohkmd",
+    "word": "une terrifiante affaire",
+    "translation": "一件可怕的案件",
+    "translation2": "a terrifying affair",
+    "deckId": "default",
+    "createdAt": "2026-04-13",
+    "reviewStage": 0,
+    "nextReview": "2026-04-13",
+    "reviewHistory": [],
+    "rot": 1,
+    "tags": [
+      "Police et Justice"
+    ]
+  },
+  {
+    "id": "mnws4z8crdpm",
+    "word": "comparaître",
+    "translation": "出庭",
+    "translation2": "?",
+    "deckId": "default",
+    "createdAt": "2026-04-13",
+    "reviewStage": 0,
+    "nextReview": "2026-04-13",
+    "reviewHistory": [],
+    "rot": 1,
+    "tags": [
+      "Police et Justice"
+    ]
+  },
+  {
+    "id": "mnws6itv23ny",
+    "word": "viol en réunion sur qqn",
+    "translation": "轮奸某人",
+    "translation2": "gang rape on someone",
+    "deckId": "default",
+    "createdAt": "2026-04-13",
+    "reviewStage": 0,
+    "nextReview": "2026-04-13",
+    "reviewHistory": [],
+    "rot": 1,
+    "tags": [
+      "Police et Justice"
+    ]
+  },
+  {
+    "id": "mnwsg61bw21h",
+    "word": "que la France ait eu à connaître",
+    "translation": "法国有史以来",
+    "translation2": "?",
+    "deckId": "default",
+    "createdAt": "2026-04-13",
+    "reviewStage": 0,
+    "nextReview": "2026-04-13",
+    "reviewHistory": [],
+    "rot": 1,
+    "tags": []
+  },
+  {
+    "id": "mnwsm39zgvy6",
+    "word": "un acte d'acusation qui dépasse l'entendement",
+    "translation": "一份超出认知（令人无法理解/极其离谱）的起诉书",
+    "translation2": "an act of incrimination that is beyond comprehension",
+    "deckId": "default",
+    "createdAt": "2026-04-13",
+    "reviewStage": 0,
+    "nextReview": "2026-04-13",
+    "reviewHistory": [],
+    "rot": 1,
+    "tags": []
+  },
+  {
+    "id": "mnwsp2v1x9iw",
+    "word": "tribunal vs cour",
+    "translation": "初级法院与高级法院(上诉法院)",
+    "translation2": "tribunal vs court",
+    "deckId": "default",
+    "createdAt": "2026-04-13",
+    "reviewStage": 0,
+    "nextReview": "2026-04-13",
+    "reviewHistory": [],
+    "rot": 1,
+    "tags": []
+  },
+  {
+    "id": "mnwt0cjfuxwf",
+    "word": "Ils diront avec leurs mots ce qu'ils ont vécu.",
+    "translation": "他们会用自己的语言讲述自己所经历的事情。",
+    "translation2": "They will say in their words what they experienced.",
+    "deckId": "default",
+    "createdAt": "2026-04-13",
+    "reviewStage": 0,
+    "nextReview": "2026-04-13",
+    "reviewHistory": [],
+    "rot": 1,
+    "tags": []
+  },
+  {
+    "id": "mnwt1opy9hu3",
+    "word": "les enfants ne se contredisent pas.",
+    "translation": "孩子们不会自相矛盾。",
+    "translation2": "children do not contradict themselves.",
+    "deckId": "default",
+    "createdAt": "2026-04-13",
+    "reviewStage": 0,
+    "nextReview": "2026-04-13",
+    "reviewHistory": [],
+    "rot": 1,
+    "tags": []
+  },
+  {
+    "id": "mnwtvpjk8z5d",
+    "word": "baliverne",
+    "translation": "废话",
+    "translation2": "nonsense",
+    "deckId": "default",
+    "createdAt": "2026-04-13",
+    "reviewStage": 0,
+    "nextReview": "2026-04-13",
+    "reviewHistory": [],
+    "rot": 1,
+    "tags": []
+  },
+  {
+    "id": "mnwu0f1bj6pm",
+    "word": "le responsable désigné du fiasco judiciaire d'Outreau.",
+    "translation": "负责 Outreau 法律惨败的指定人员。",
+    "translation2": "the designated person responsible for the legal fiasco in Outreau.",
+    "deckId": "default",
+    "createdAt": "2026-04-13",
+    "reviewStage": 0,
+    "nextReview": "2026-04-13",
+    "reviewHistory": [],
+    "rot": 1,
+    "tags": []
+  },
+  {
+    "id": "mnwu71eo2r9f",
+    "word": "sans aucun parti pris, d'aucune sorte.",
+    "translation": "没有任何形式的偏见。",
+    "translation2": "without any bias of any kind.",
+    "deckId": "default",
+    "createdAt": "2026-04-13",
+    "reviewStage": 0,
+    "nextReview": "2026-04-13",
+    "reviewHistory": [],
+    "rot": 1,
+    "tags": []
+  },
+  {
+    "id": "mnwu91226naa",
+    "word": "c'est quelque chose lourd de conséquences.",
+    "translation": "这是会带来严重后果的事情。",
+    "translation2": "it’s something with serious consequences.",
+    "deckId": "default",
+    "createdAt": "2026-04-13",
+    "reviewStage": 0,
+    "nextReview": "2026-04-13",
+    "reviewHistory": [],
+    "rot": 1,
+    "tags": []
+  }
+]
