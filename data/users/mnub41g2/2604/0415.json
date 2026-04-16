@@ -6,9 +6,18 @@
     "translation2": "I'm about to pig out",
     "deckId": "default",
     "createdAt": "2026-04-15",
-    "reviewStage": 0,
-    "nextReview": "2026-04-15",
-    "reviewHistory": [],
+    "reviewStage": 1,
+    "nextReview": "2026-04-17",
+    "reviewHistory": [
+      {
+        "date": "2026-04-15",
+        "remembered": true
+      },
+      {
+        "date": "2026-04-16",
+        "remembered": false
+      }
+    ],
     "rot": 1,
     "tags": []
   },
@@ -20,8 +29,17 @@
     "deckId": "default",
     "createdAt": "2026-04-15",
     "reviewStage": 0,
-    "nextReview": "2026-04-15",
-    "reviewHistory": [],
+    "nextReview": "2026-04-16",
+    "reviewHistory": [
+      {
+        "date": "2026-04-15",
+        "remembered": false
+      },
+      {
+        "date": "2026-04-16",
+        "remembered": false
+      }
+    ],
     "rot": 1,
     "tags": [
       "Police et Justice"
@@ -35,8 +53,17 @@
     "deckId": "default",
     "createdAt": "2026-04-15",
     "reviewStage": 0,
-    "nextReview": "2026-04-15",
-    "reviewHistory": [],
+    "nextReview": "2026-04-16",
+    "reviewHistory": [
+      {
+        "date": "2026-04-15",
+        "remembered": false
+      },
+      {
+        "date": "2026-04-16",
+        "remembered": false
+      }
+    ],
     "rot": 1,
     "tags": [
       "Police et Justice"

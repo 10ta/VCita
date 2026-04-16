@@ -6,9 +6,106 @@
     "translation2": "contravention",
     "deckId": "default",
     "createdAt": "2026-04-16",
+    "reviewStage": 2,
+    "nextReview": "2026-04-20",
+    "reviewHistory": [
+      {
+        "date": "2026-04-16",
+        "remembered": true
+      },
+      {
+        "date": "2026-04-17",
+        "remembered": true
+      }
+    ],
+    "rot": 0,
+    "tags": []
+  },
+  {
+    "id": "mo1m23wblhee",
+    "word": "infligé aux enfants",
+    "translation": "对儿童造成的",
+    "translation2": "inflicted on children",
+    "deckId": "default",
+    "createdAt": "2026-04-16",
+    "reviewStage": 1,
+    "nextReview": "2026-04-18",
+    "reviewHistory": [
+      {
+        "date": "2026-04-16",
+        "remembered": true
+      },
+      {
+        "date": "2026-04-17",
+        "remembered": true
+      }
+    ],
+    "rot": 0,
+    "tags": []
+  },
+  {
+    "id": "mo1mgpk3vgja",
+    "word": "disséminer",
+    "translation": "传播 分散",
+    "translation2": "disseminate",
+    "deckId": "default",
+    "createdAt": "2026-04-16",
     "reviewStage": 0,
-    "nextReview": "2026-04-16",
-    "reviewHistory": [],
+    "nextReview": "2026-04-17",
+    "reviewHistory": [
+      {
+        "date": "2026-04-16",
+        "remembered": false
+      },
+      {
+        "date": "2026-04-17",
+        "remembered": false
+      }
+    ],
+    "rot": 0,
+    "tags": []
+  },
+  {
+    "id": "mo1mi6wvtu3m",
+    "word": "diluer l'horreur",
+    "translation": "淡化恐怖感",
+    "translation2": "dilute the horror",
+    "deckId": "default",
+    "createdAt": "2026-04-16",
+    "reviewStage": 0,
+    "nextReview": "2026-04-17",
+    "reviewHistory": [
+      {
+        "date": "2026-04-16",
+        "remembered": false
+      },
+      {
+        "date": "2026-04-17",
+        "remembered": false
+      }
+    ],
+    "rot": 0,
+    "tags": []
+  },
+  {
+    "id": "mo1mpr9sccyb",
+    "word": "sordide",
+    "translation": "肮脏的",
+    "translation2": "sordid",
+    "deckId": "default",
+    "createdAt": "2026-04-16",
+    "reviewStage": 0,
+    "nextReview": "2026-04-17",
+    "reviewHistory": [
+      {
+        "date": "2026-04-16",
+        "remembered": false
+      },
+      {
+        "date": "2026-04-17",
+        "remembered": false
+      }
+    ],
     "rot": 0,
     "tags": []
   }

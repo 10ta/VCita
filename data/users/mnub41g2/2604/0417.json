@@ -1,0 +1,20 @@
+[
+  {
+    "id": "mo1oi0pfrfbt",
+    "word": "faits gravissimes",
+    "translation": "极其严重的事实",
+    "translation2": "extremely serious facts",
+    "deckId": "default",
+    "createdAt": "2026-04-17",
+    "reviewStage": 1,
+    "nextReview": "2026-04-18",
+    "reviewHistory": [
+      {
+        "date": "2026-04-17",
+        "remembered": true
+      }
+    ],
+    "rot": 0,
+    "tags": []
+  }
+]
