@@ -113,7 +113,9 @@
       }
     ],
     "rot": 1,
-    "tags": []
+    "tags": [
+      "Police et Justice"
+    ]
   },
   {
     "id": "mnwsp2v1x9iw",
@@ -135,7 +137,9 @@
       }
     ],
     "rot": 1,
-    "tags": []
+    "tags": [
+      "Police et Justice"
+    ]
   },
   {
     "id": "mnwt0cjfuxwf",
@@ -223,7 +227,9 @@
       }
     ],
     "rot": 1,
-    "tags": []
+    "tags": [
+      "Police et Justice"
+    ]
   },
   {
     "id": "mnwu71eo2r9f",
@@ -255,8 +261,17 @@
     "deckId": "default",
     "createdAt": "2026-04-13",
     "reviewStage": 0,
-    "nextReview": "2026-04-13",
-    "reviewHistory": [],
+    "nextReview": "2026-04-14",
+    "reviewHistory": [
+      {
+        "date": "2026-04-13",
+        "remembered": false
+      },
+      {
+        "date": "2026-04-14",
+        "remembered": false
+      }
+    ],
     "rot": 1,
     "tags": []
   }

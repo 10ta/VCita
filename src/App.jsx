@@ -250,6 +250,7 @@ export default function App() {
   const [newTagInput, setNewTagInput] = useState("");
   const [batchTagModal, setBatchTagModal] = useState(false);
   const [batchTagInput, setBatchTagInput] = useState("");
+  const [singleTagCard, setSingleTagCard] = useState(null); // card id for per-card tag modal
   // Intensive mode
   const [intensiveMode, setIntensiveMode] = useState("hard"); // "hard" | "tag:xxx"
   const inputRef = useRef(null);
@@ -449,7 +450,6 @@ export default function App() {
 
   // ─── Review ───
   const doReview = async (cardId, remembered) => {
-    // Read card from queue snapshot (reliable) or fall back to cards state
     const queueCard = reviewQueue.find(c => c.id === cardId);
     const card = queueCard || cards.find(c => c.id === cardId);
     if (!card) { log("error", "doReview: card not found", { cardId }); return; }
@@ -462,12 +462,15 @@ export default function App() {
     });
     let ns = remembered ? Math.min(card.reviewStage + 1, EBB.length - 1) : Math.max(0, card.reviewStage - 1);
     const updated = { ...card, reviewStage: ns, nextReview: addDays(rd, EBB[ns]), reviewHistory: newHistory };
-    await saveCardToDay(uid(), updated);
-    // Update the snapshot in the queue so prev/next shows correct state
+    // Update UI immediately (before disk write)
     setReviewQueue(q => q.map(c => c.id === cardId ? updated : c));
     setReviewSnapshot(updated);
     setReviewRevealed(true);
-    await reload();
+    // Then persist to disk
+    try {
+      await saveCardToDay(uid(), updated);
+      await reload();
+    } catch (e) { log("error", "doReview save failed", { cardId, error: e.message }); }
     log("info", "doReview", { cardId, remembered, stage: ns, date: rd });
   };
 
@@ -487,11 +490,16 @@ export default function App() {
     if (!rh) return;
     const newHistory = card.reviewHistory.map(h => h.date === schDate ? { ...h, remembered: !h.remembered } : h);
     const updated = { ...card, reviewHistory: newHistory };
-    await saveCardToDay(uid(), updated);
-    // Update snapshots if they reference this card
+    // Update UI immediately
     if (reviewSnapshot?.id === card.id) setReviewSnapshot(updated);
     if (intensiveSnapshot?.id === card.id) setIntensiveSnapshot(updated);
-    await reload();
+    setReviewQueue(q => q.map(c => c.id === card.id ? updated : c));
+    setIntensiveQueue(q => q.map(c => c.id === card.id ? updated : c));
+    // Persist to disk
+    try {
+      await saveCardToDay(uid(), updated);
+      await reload();
+    } catch (e) { log("error", "toggleReviewDot failed", { cardId: card.id, error: e.message }); }
     log("info", "toggleReviewDot", { cardId: card.id, date: schDate });
   };
 
@@ -539,11 +547,15 @@ export default function App() {
     });
     let ns = remembered ? Math.min(card.reviewStage + 1, EBB.length - 1) : Math.max(0, card.reviewStage - 1);
     const updated = { ...card, reviewStage: ns, nextReview: addDays(rd, EBB[ns]), reviewHistory: newHistory };
-    await saveCardToDay(uid(), updated);
+    // Update UI immediately
     setIntensiveQueue(q => q.map(c => c.id === cardId ? updated : c));
     setIntensiveSnapshot(updated);
     setIntensiveRevealed(true);
-    await reload();
+    // Persist
+    try {
+      await saveCardToDay(uid(), updated);
+      await reload();
+    } catch (e) { log("error", "doIntensiveReview failed", { cardId, error: e.message }); }
   };
 
   const masterCard = async (cardId) => {
@@ -869,6 +881,7 @@ export default function App() {
                   }}>
                     {selected.size>0?`${selected.size} selected`:"Select all"}
                   </button>
+                  {selected.size > 0 && <button className="pill" onClick={() => setSelected(new Set())} style={{fontSize:10}}>✕</button>}
                   <button className={`pill${showSrc?" on":""}`} onClick={()=>setShowSrc(!showSrc)}>目标</button>
                   <button className={`pill${showT1?" on":""}`} onClick={()=>setShowT1(!showT1)}>翻译1</button>
                   <button className={`pill${showT2?" on":""}`} onClick={()=>setShowT2(!showT2)}>翻译2</button>
@@ -913,13 +926,15 @@ export default function App() {
                           </div>
                         )}
                         {isEditing ? (
-                          <div style={{ display: "flex", gap: 6, alignItems: "center", marginTop: 4, flexWrap: "wrap" }}
-                            onKeyDown={e => { if (e.key === "Enter") updateCardTranslation(card,editT0,editT1,editT2); }}>
-                            <input style={{ ...S.editInput, fontWeight: 600 }} value={editT0} onChange={e => setEditT0(e.target.value)} placeholder={LN[d.srcL]}/>
-                            <input style={S.editInput} value={editT1} onChange={e => setEditT1(e.target.value)} placeholder={LN[d.t1L]}/>
-                            <input style={S.editInput} value={editT2} onChange={e => setEditT2(e.target.value)} placeholder={LN[d.t2L]}/>
-                            <button style={S.editSave} onClick={() => updateCardTranslation(card,editT0,editT1,editT2)}>✓</button>
-                            <button style={S.editCancel} onClick={() => setEditingCard(null)}>✕</button>
+                          <div style={{ display: "flex", flexDirection: "column", gap: 6, marginTop: 4 }}
+                            onKeyDown={e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); updateCardTranslation(card,editT0,editT1,editT2); } }}>
+                            <textarea style={{ ...S.editInput, fontWeight: 600, width: "100%", minHeight: 28, maxHeight: 56, resize: "vertical" }} value={editT0} onChange={e => setEditT0(e.target.value)} placeholder={LN[d.srcL]} rows={1}/>
+                            <textarea style={{ ...S.editInput, width: "100%", minHeight: 28, maxHeight: 56, resize: "vertical" }} value={editT1} onChange={e => setEditT1(e.target.value)} placeholder={LN[d.t1L]} rows={1}/>
+                            <textarea style={{ ...S.editInput, width: "100%", minHeight: 28, maxHeight: 56, resize: "vertical" }} value={editT2} onChange={e => setEditT2(e.target.value)} placeholder={LN[d.t2L]} rows={1}/>
+                            <div style={{ display: "flex", gap: 6 }}>
+                              <button style={S.editSave} onClick={() => updateCardTranslation(card,editT0,editT1,editT2)}>✓</button>
+                              <button style={S.editCancel} onClick={() => setEditingCard(null)}>✕</button>
+                            </div>
                           </div>
                         ) : (
                           <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 3, flexWrap: "wrap" }}>
@@ -946,8 +961,7 @@ export default function App() {
                         <button className="spk" style={{ ...S.speakBtn, padding: 4 }} onClick={e=>{e.stopPropagation();rotateCard(card.id);}} title="Rotate"><I.Rotate/></button>
                         <button className="spk" style={{ ...S.speakBtn, padding: 4, color: "#a78bfa" }} onClick={e => {
                           e.stopPropagation();
-                          const tag = prompt("Add tag:");
-                          if (tag?.trim()) addTagToCard(card, tag.trim());
+                          setSingleTagCard(card.id); setBatchTagInput("");
                         }} title="Add tag"><I.Tag/></button>
                         {(card.reviewHistory||[]).length > 0 && <button className="spk" style={{ ...S.speakBtn, padding: 4, color: "#facc15" }} onClick={async e=>{e.stopPropagation(); await saveCardToDay(uid(), {...card, reviewHistory:[], reviewStage:0, nextReview:addDays(card.createdAt, EBB[0])}); await reload(); showToast("Tags cleared");}} title="Clear review">✕</button>}
                         <DateInput value={card.createdAt} onChange={dd => updateCardDate(card, dd)}/>
@@ -1008,6 +1022,32 @@ export default function App() {
                 </div>
               </div></div>
             )}
+            {singleTagCard && (() => {
+              const stc = cards.find(c => c.id === singleTagCard);
+              if (!stc) return null;
+              const addSingleTag = async (tag) => {
+                if (!tag.trim()) return;
+                await addTagToCard(stc, tag.trim());
+                setSingleTagCard(null); setBatchTagInput("");
+              };
+              return (
+                <div style={S.modal} onClick={() => setSingleTagCard(null)}><div style={S.modalContent} onClick={e=>e.stopPropagation()}>
+                  <h3 style={S.modalTitle}>添加标签</h3>
+                  <p style={{fontFamily:mono,fontSize:12,color:textDim,marginBottom:12}}>{stc.word}</p>
+                  {(stc.tags||[]).length > 0 && <div style={{display:"flex",gap:4,flexWrap:"wrap",marginBottom:8}}>{(stc.tags||[]).map(t => <span key={t} style={{fontFamily:mono,fontSize:10,padding:"2px 8px",borderRadius:10,background:"#8b5cf622",border:"1px solid #8b5cf644",color:"#a78bfa"}}>{t}</span>)}</div>}
+                  {allTags.filter(t => !(stc.tags||[]).includes(t)).length > 0 && (
+                    <div style={{ display: "flex", gap: 4, flexWrap: "wrap", marginBottom: 12 }}>
+                      {allTags.filter(t => !(stc.tags||[]).includes(t)).map(t => <button key={t} className="pill" style={{borderColor:"#8b5cf6",color:"#a78bfa"}} onClick={() => addSingleTag(t)}>{t}</button>)}
+                    </div>
+                  )}
+                  <div style={{ display: "flex", gap: 8 }}>
+                    <input style={S.modalInput} placeholder="New tag..." value={batchTagInput} onChange={e => setBatchTagInput(e.target.value)}
+                      onKeyDown={e => e.key === "Enter" && addSingleTag(batchTagInput)} autoFocus/>
+                    <button className="ab" style={S.modalConfirm} onClick={() => addSingleTag(batchTagInput)}>添加</button>
+                  </div>
+                </div></div>
+              );
+            })()}
           </div>
           );
         })()}
@@ -1373,7 +1413,7 @@ const S = {
   deleteBtn:{background:"transparent",border:"none",color:"#444",cursor:"pointer",padding:4,display:"flex"},
   editBtn:{background:"transparent",border:"none",color:"#555",cursor:"pointer",padding:2,display:"flex",marginLeft:4},
   speakBtn:{background:"transparent",border:"none",color:"#666",cursor:"pointer",padding:2,display:"flex",transition:"color .15s"},
-  editInput:{fontFamily:sans,fontSize:13,background:bg,color:text,border:`1px solid ${border}`,borderRadius:6,padding:"4px 8px",width:120},
+  editInput:{fontFamily:sans,fontSize:13,background:bg,color:text,border:`1px solid ${border}`,borderRadius:6,padding:"6px 8px",lineHeight:1.4},
   editSave:{fontFamily:mono,fontSize:14,background:"#16a34a33",color:"#4ade80",border:"none",borderRadius:4,padding:"4px 8px",cursor:"pointer"},
   editCancel:{fontFamily:mono,fontSize:14,background:"#dc262622",color:"#f87171",border:"none",borderRadius:4,padding:"4px 8px",cursor:"pointer"},
   dateInput:{fontFamily:mono,fontSize:12,background:surface,color:text,border:`1px solid ${border}`,borderRadius:6,padding:"4px 8px",cursor:"pointer",width:130},

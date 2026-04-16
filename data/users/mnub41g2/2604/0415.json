@@ -22,8 +22,10 @@
     "reviewStage": 0,
     "nextReview": "2026-04-15",
     "reviewHistory": [],
-    "rot": 0,
-    "tags": []
+    "rot": 1,
+    "tags": [
+      "Police et Justice"
+    ]
   },
   {
     "id": "mo08m4yplyq6",
@@ -35,7 +37,9 @@
     "reviewStage": 0,
     "nextReview": "2026-04-15",
     "reviewHistory": [],
-    "rot": 0,
-    "tags": []
+    "rot": 1,
+    "tags": [
+      "Police et Justice"
+    ]
   }
 ]

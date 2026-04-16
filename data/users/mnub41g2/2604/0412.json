@@ -63,7 +63,7 @@
     "deckId": "default",
     "createdAt": "2026-04-12",
     "reviewStage": 0,
-    "nextReview": "2026-04-15",
+    "nextReview": "2026-04-16",
     "reviewHistory": [
       {
         "date": "2026-04-12",
@@ -286,20 +286,20 @@
     "translation2": "a clerk",
     "deckId": "default",
     "createdAt": "2026-04-12",
-    "reviewStage": 1,
-    "nextReview": "2026-04-16",
+    "reviewStage": 2,
+    "nextReview": "2026-04-19",
     "reviewHistory": [
       {
         "date": "2026-04-12",
-        "remembered": false
+        "remembered": true
       },
       {
         "date": "2026-04-13",
-        "remembered": false
+        "remembered": true
       },
       {
         "date": "2026-04-15",
-        "remembered": false
+        "remembered": true
       }
     ],
     "rot": 0,
@@ -398,8 +398,8 @@
     "translation2": "a magistrate",
     "deckId": "default",
     "createdAt": "2026-04-12",
-    "reviewStage": 1,
-    "nextReview": "2026-04-15",
+    "reviewStage": 2,
+    "nextReview": "2026-04-18",
     "reviewHistory": [
       {
         "date": "2026-04-12",
@@ -407,6 +407,10 @@
       },
       {
         "date": "2026-04-13",
+        "remembered": true
+      },
+      {
+        "date": "2026-04-15",
         "remembered": true
       }
     ],
@@ -422,8 +426,8 @@
     "translation2": "a prosecutor",
     "deckId": "default",
     "createdAt": "2026-04-12",
-    "reviewStage": 2,
-    "nextReview": "2026-04-17",
+    "reviewStage": 3,
+    "nextReview": "2026-04-22",
     "reviewHistory": [
       {
         "date": "2026-04-12",
@@ -431,6 +435,10 @@
       },
       {
         "date": "2026-04-13",
+        "remembered": true
+      },
+      {
+        "date": "2026-04-15",
         "remembered": true
       }
     ],
@@ -446,8 +454,8 @@
     "translation2": "witness, testify",
     "deckId": "default",
     "createdAt": "2026-04-12",
-    "reviewStage": 2,
-    "nextReview": "2026-04-17",
+    "reviewStage": 3,
+    "nextReview": "2026-04-22",
     "reviewHistory": [
       {
         "date": "2026-04-12",
@@ -455,6 +463,10 @@
       },
       {
         "date": "2026-04-13",
+        "remembered": true
+      },
+      {
+        "date": "2026-04-15",
         "remembered": true
       }
     ],
@@ -466,12 +478,12 @@
   {
     "id": "mnvf6zrg9nhi",
     "word": "un accusé, un prévenu",
-    "translation": "重罪被告人，轻罪被告人",
+    "translation": "(定罪前) 重罪被告人，轻罪被告人",
     "translation2": "an accused, a defendant",
     "deckId": "default",
     "createdAt": "2026-04-12",
-    "reviewStage": 0,
-    "nextReview": "2026-04-14",
+    "reviewStage": 1,
+    "nextReview": "2026-04-16",
     "reviewHistory": [
       {
         "date": "2026-04-12",
@@ -480,6 +492,10 @@
       {
         "date": "2026-04-13",
         "remembered": false
+      },
+      {
+        "date": "2026-04-15",
+        "remembered": true
       }
     ],
     "rot": 1,
@@ -494,8 +510,8 @@
     "translation2": "premeditation",
     "deckId": "default",
     "createdAt": "2026-04-12",
-    "reviewStage": 2,
-    "nextReview": "2026-04-17",
+    "reviewStage": 3,
+    "nextReview": "2026-04-22",
     "reviewHistory": [
       {
         "date": "2026-04-12",
@@ -503,6 +519,10 @@
       },
       {
         "date": "2026-04-13",
+        "remembered": true
+      },
+      {
+        "date": "2026-04-15",
         "remembered": true
       }
     ],
@@ -518,8 +538,8 @@
     "translation2": "a murderer",
     "deckId": "default",
     "createdAt": "2026-04-12",
-    "reviewStage": 3,
-    "nextReview": "2026-04-21",
+    "reviewStage": 4,
+    "nextReview": "2026-04-30",
     "reviewHistory": [
       {
         "date": "2026-04-12",
@@ -527,6 +547,10 @@
       },
       {
         "date": "2026-04-13",
+        "remembered": true
+      },
+      {
+        "date": "2026-04-15",
         "remembered": true
       }
     ],
@@ -542,8 +566,8 @@
     "translation2": "a criminal",
     "deckId": "default",
     "createdAt": "2026-04-12",
-    "reviewStage": 0,
-    "nextReview": "2026-04-14",
+    "reviewStage": 2,
+    "nextReview": "2026-04-19",
     "reviewHistory": [
       {
         "date": "2026-04-12",
@@ -552,6 +576,10 @@
       {
         "date": "2026-04-13",
         "remembered": false
+      },
+      {
+        "date": "2026-04-15",
+        "remembered": true
       }
     ],
     "rot": 1,
@@ -566,8 +594,8 @@
     "translation2": "a corrupt person, corruption",
     "deckId": "default",
     "createdAt": "2026-04-12",
-    "reviewStage": 2,
-    "nextReview": "2026-04-17",
+    "reviewStage": 3,
+    "nextReview": "2026-04-22",
     "reviewHistory": [
       {
         "date": "2026-04-12",
@@ -575,6 +603,10 @@
       },
       {
         "date": "2026-04-13",
+        "remembered": true
+      },
+      {
+        "date": "2026-04-15",
         "remembered": true
       }
     ],
@@ -586,12 +618,12 @@
   {
     "id": "mnvgjryrl1tn",
     "word": "un délinquant = coupable d'un délit, d'un acte délictueux",
-    "translation": "轻罪犯 = 犯有犯罪行为、犯罪行为",
+    "translation": "(定罪后)轻罪犯 = 犯有犯罪行为、犯罪行为",
     "translation2": "a delinquent = guilty of a crime, a criminal act",
     "deckId": "default",
     "createdAt": "2026-04-12",
     "reviewStage": 0,
-    "nextReview": "2026-04-14",
+    "nextReview": "2026-04-15",
     "reviewHistory": [
       {
         "date": "2026-04-12",
@@ -599,6 +631,10 @@
       },
       {
         "date": "2026-04-13",
+        "remembered": false
+      },
+      {
+        "date": "2026-04-15",
         "remembered": false
       }
     ],
@@ -614,7 +650,7 @@
     "translation2": "a crook, to defraud someone",
     "deckId": "default",
     "createdAt": "2026-04-12",
-    "reviewStage": 1,
+    "reviewStage": 0,
     "nextReview": "2026-04-15",
     "reviewHistory": [
       {
@@ -623,6 +659,10 @@
       },
       {
         "date": "2026-04-13",
+        "remembered": false
+      },
+      {
+        "date": "2026-04-15",
         "remembered": false
       }
     ],
@@ -638,8 +678,8 @@
     "translation2": "an arsonist, causes a fire",
     "deckId": "default",
     "createdAt": "2026-04-12",
-    "reviewStage": 1,
-    "nextReview": "2026-04-15",
+    "reviewStage": 2,
+    "nextReview": "2026-04-18",
     "reviewHistory": [
       {
         "date": "2026-04-12",
@@ -647,6 +687,10 @@
       },
       {
         "date": "2026-04-13",
+        "remembered": true
+      },
+      {
+        "date": "2026-04-15",
         "remembered": true
       }
     ],
@@ -662,8 +706,8 @@
     "translation2": "a pickpocket",
     "deckId": "default",
     "createdAt": "2026-04-12",
-    "reviewStage": 1,
-    "nextReview": "2026-04-15",
+    "reviewStage": 2,
+    "nextReview": "2026-04-18",
     "reviewHistory": [
       {
         "date": "2026-04-12",
@@ -671,6 +715,10 @@
       },
       {
         "date": "2026-04-13",
+        "remembered": true
+      },
+      {
+        "date": "2026-04-15",
         "remembered": true
       }
     ],
@@ -687,7 +735,7 @@
     "deckId": "default",
     "createdAt": "2026-04-12",
     "reviewStage": 0,
-    "nextReview": "2026-04-14",
+    "nextReview": "2026-04-15",
     "reviewHistory": [
       {
         "date": "2026-04-12",
@@ -695,6 +743,10 @@
       },
       {
         "date": "2026-04-13",
+        "remembered": false
+      },
+      {
+        "date": "2026-04-15",
         "remembered": false
       }
     ],
@@ -710,8 +762,8 @@
     "translation2": "irresponsibility",
     "deckId": "default",
     "createdAt": "2026-04-12",
-    "reviewStage": 2,
-    "nextReview": "2026-04-17",
+    "reviewStage": 3,
+    "nextReview": "2026-04-22",
     "reviewHistory": [
       {
         "date": "2026-04-12",
@@ -719,6 +771,10 @@
       },
       {
         "date": "2026-04-13",
+        "remembered": true
+      },
+      {
+        "date": "2026-04-15",
         "remembered": true
       }
     ],
@@ -735,7 +791,7 @@
     "deckId": "default",
     "createdAt": "2026-04-12",
     "reviewStage": 0,
-    "nextReview": "2026-04-14",
+    "nextReview": "2026-04-15",
     "reviewHistory": [
       {
         "date": "2026-04-12",
@@ -743,6 +799,10 @@
       },
       {
         "date": "2026-04-13",
+        "remembered": false
+      },
+      {
+        "date": "2026-04-15",
         "remembered": false
       }
     ],
@@ -759,7 +819,7 @@
     "deckId": "default",
     "createdAt": "2026-04-12",
     "reviewStage": 0,
-    "nextReview": "2026-04-14",
+    "nextReview": "2026-04-15",
     "reviewHistory": [
       {
         "date": "2026-04-12",
@@ -767,6 +827,10 @@
       },
       {
         "date": "2026-04-13",
+        "remembered": false
+      },
+      {
+        "date": "2026-04-15",
         "remembered": false
       }
     ],
@@ -782,7 +846,7 @@
     "translation2": "a robbery, a robber",
     "deckId": "default",
     "createdAt": "2026-04-12",
-    "reviewStage": 1,
+    "reviewStage": 0,
     "nextReview": "2026-04-15",
     "reviewHistory": [
       {
@@ -791,6 +855,10 @@
       },
       {
         "date": "2026-04-13",
+        "remembered": false
+      },
+      {
+        "date": "2026-04-15",
         "remembered": false
       }
     ],
@@ -806,8 +874,8 @@
     "translation2": "a burglary, a burglar",
     "deckId": "default",
     "createdAt": "2026-04-12",
-    "reviewStage": 1,
-    "nextReview": "2026-04-15",
+    "reviewStage": 2,
+    "nextReview": "2026-04-18",
     "reviewHistory": [
       {
         "date": "2026-04-12",
@@ -815,6 +883,10 @@
       },
       {
         "date": "2026-04-13",
+        "remembered": false
+      },
+      {
+        "date": "2026-04-15",
         "remembered": true
       }
     ],
@@ -830,8 +902,8 @@
     "translation2": "a crime of passion",
     "deckId": "default",
     "createdAt": "2026-04-12",
-    "reviewStage": 1,
-    "nextReview": "2026-04-15",
+    "reviewStage": 2,
+    "nextReview": "2026-04-18",
     "reviewHistory": [
       {
         "date": "2026-04-12",
@@ -839,6 +911,10 @@
       },
       {
         "date": "2026-04-13",
+        "remembered": true
+      },
+      {
+        "date": "2026-04-15",
         "remembered": true
       }
     ],
@@ -854,8 +930,8 @@
     "translation2": "a premeditated crime, with premeditation",
     "deckId": "default",
     "createdAt": "2026-04-12",
-    "reviewStage": 2,
-    "nextReview": "2026-04-17",
+    "reviewStage": 3,
+    "nextReview": "2026-04-22",
     "reviewHistory": [
       {
         "date": "2026-04-12",
@@ -863,6 +939,10 @@
       },
       {
         "date": "2026-04-13",
+        "remembered": true
+      },
+      {
+        "date": "2026-04-15",
         "remembered": true
       }
     ],
@@ -879,7 +959,7 @@
     "deckId": "default",
     "createdAt": "2026-04-12",
     "reviewStage": 0,
-    "nextReview": "2026-04-14",
+    "nextReview": "2026-04-15",
     "reviewHistory": [
       {
         "date": "2026-04-12",
@@ -887,6 +967,10 @@
       },
       {
         "date": "2026-04-13",
+        "remembered": false
+      },
+      {
+        "date": "2026-04-15",
         "remembered": false
       }
     ],
@@ -902,8 +986,8 @@
     "translation2": "armed robbery",
     "deckId": "default",
     "createdAt": "2026-04-12",
-    "reviewStage": 0,
-    "nextReview": "2026-04-14",
+    "reviewStage": 1,
+    "nextReview": "2026-04-16",
     "reviewHistory": [
       {
         "date": "2026-04-12",
@@ -912,6 +996,10 @@
       {
         "date": "2026-04-13",
         "remembered": false
+      },
+      {
+        "date": "2026-04-15",
+        "remembered": true
       }
     ],
     "rot": 1,
@@ -922,12 +1010,12 @@
   {
     "id": "mnvgst3yy8tc",
     "word": "commettre une infraction",
-    "translation": "犯罪v.",
+    "translation": "实施违法行为(所有违法行为的总称)",
     "translation2": "commit an offense",
     "deckId": "default",
     "createdAt": "2026-04-12",
     "reviewStage": 0,
-    "nextReview": "2026-04-14",
+    "nextReview": "2026-04-15",
     "reviewHistory": [
       {
         "date": "2026-04-12",
@@ -935,6 +1023,10 @@
       },
       {
         "date": "2026-04-13",
+        "remembered": false
+      },
+      {
+        "date": "2026-04-15",
         "remembered": false
       }
     ],
@@ -951,7 +1043,7 @@
     "deckId": "default",
     "createdAt": "2026-04-12",
     "reviewStage": 0,
-    "nextReview": "2026-04-14",
+    "nextReview": "2026-04-15",
     "reviewHistory": [
       {
         "date": "2026-04-12",
@@ -959,6 +1051,10 @@
       },
       {
         "date": "2026-04-13",
+        "remembered": false
+      },
+      {
+        "date": "2026-04-15",
         "remembered": false
       }
     ],
@@ -974,7 +1070,7 @@
     "translation2": "break the law",
     "deckId": "default",
     "createdAt": "2026-04-12",
-    "reviewStage": 1,
+    "reviewStage": 0,
     "nextReview": "2026-04-15",
     "reviewHistory": [
       {
@@ -983,7 +1079,11 @@
       },
       {
         "date": "2026-04-13",
-        "remembered": true
+        "remembered": false
+      },
+      {
+        "date": "2026-04-15",
+        "remembered": false
       }
     ],
     "rot": 1,
@@ -998,8 +1098,8 @@
     "translation2": "?",
     "deckId": "default",
     "createdAt": "2026-04-12",
-    "reviewStage": 0,
-    "nextReview": "2026-04-14",
+    "reviewStage": 1,
+    "nextReview": "2026-04-16",
     "reviewHistory": [
       {
         "date": "2026-04-12",
@@ -1008,6 +1108,10 @@
       {
         "date": "2026-04-13",
         "remembered": false
+      },
+      {
+        "date": "2026-04-15",
+        "remembered": true
       }
     ],
     "rot": 1,
@@ -1022,8 +1126,8 @@
     "translation2": "an affair, a criminal affair",
     "deckId": "default",
     "createdAt": "2026-04-12",
-    "reviewStage": 0,
-    "nextReview": "2026-04-14",
+    "reviewStage": 1,
+    "nextReview": "2026-04-16",
     "reviewHistory": [
       {
         "date": "2026-04-12",
@@ -1032,6 +1136,10 @@
       {
         "date": "2026-04-13",
         "remembered": false
+      },
+      {
+        "date": "2026-04-15",
+        "remembered": true
       }
     ],
     "rot": 1,
@@ -1046,8 +1154,8 @@
     "translation2": "an audience",
     "deckId": "default",
     "createdAt": "2026-04-12",
-    "reviewStage": 0,
-    "nextReview": "2026-04-14",
+    "reviewStage": 1,
+    "nextReview": "2026-04-16",
     "reviewHistory": [
       {
         "date": "2026-04-12",
@@ -1056,6 +1164,10 @@
       {
         "date": "2026-04-13",
         "remembered": false
+      },
+      {
+        "date": "2026-04-15",
+        "remembered": true
       }
     ],
     "rot": 1,
@@ -1070,8 +1182,8 @@
     "translation2": "the witness box",
     "deckId": "default",
     "createdAt": "2026-04-12",
-    "reviewStage": 2,
-    "nextReview": "2026-04-17",
+    "reviewStage": 3,
+    "nextReview": "2026-04-22",
     "reviewHistory": [
       {
         "date": "2026-04-12",
@@ -1079,6 +1191,10 @@
       },
       {
         "date": "2026-04-13",
+        "remembered": true
+      },
+      {
+        "date": "2026-04-15",
         "remembered": true
       }
     ],
@@ -1094,8 +1210,8 @@
     "translation2": "a police station, a police station, the gendarmerie",
     "deckId": "default",
     "createdAt": "2026-04-12",
-    "reviewStage": 2,
-    "nextReview": "2026-04-17",
+    "reviewStage": 3,
+    "nextReview": "2026-04-22",
     "reviewHistory": [
       {
         "date": "2026-04-12",
@@ -1103,6 +1219,10 @@
       },
       {
         "date": "2026-04-13",
+        "remembered": true
+      },
+      {
+        "date": "2026-04-15",
         "remembered": true
       }
     ],
@@ -1118,8 +1238,8 @@
     "translation2": "a court of justice, the assize court, the court of appeal",
     "deckId": "default",
     "createdAt": "2026-04-12",
-    "reviewStage": 1,
-    "nextReview": "2026-04-15",
+    "reviewStage": 2,
+    "nextReview": "2026-04-18",
     "reviewHistory": [
       {
         "date": "2026-04-12",
@@ -1127,6 +1247,10 @@
       },
       {
         "date": "2026-04-13",
+        "remembered": true
+      },
+      {
+        "date": "2026-04-15",
         "remembered": true
       }
     ],
@@ -1142,8 +1266,8 @@
     "translation2": "the courts: the civil court, the police court, the criminal court",
     "deckId": "default",
     "createdAt": "2026-04-12",
-    "reviewStage": 1,
-    "nextReview": "2026-04-15",
+    "reviewStage": 2,
+    "nextReview": "2026-04-18",
     "reviewHistory": [
       {
         "date": "2026-04-12",
@@ -1152,6 +1276,10 @@
       {
         "date": "2026-04-13",
         "remembered": false
+      },
+      {
+        "date": "2026-04-15",
+        "remembered": true
       }
     ],
     "rot": 1,
@@ -1167,7 +1295,7 @@
     "deckId": "default",
     "createdAt": "2026-04-12",
     "reviewStage": 0,
-    "nextReview": "2026-04-14",
+    "nextReview": "2026-04-15",
     "reviewHistory": [
       {
         "date": "2026-04-12",
@@ -1175,6 +1303,10 @@
       },
       {
         "date": "2026-04-13",
+        "remembered": false
+      },
+      {
+        "date": "2026-04-15",
         "remembered": false
       }
     ],
@@ -1190,8 +1322,8 @@
     "translation2": "question a suspect",
     "deckId": "default",
     "createdAt": "2026-04-12",
-    "reviewStage": 2,
-    "nextReview": "2026-04-17",
+    "reviewStage": 3,
+    "nextReview": "2026-04-22",
     "reviewHistory": [
       {
         "date": "2026-04-12",
@@ -1199,6 +1331,10 @@
       },
       {
         "date": "2026-04-13",
+        "remembered": true
+      },
+      {
+        "date": "2026-04-15",
         "remembered": true
       }
     ],
@@ -1214,8 +1350,8 @@
     "translation2": "confront",
     "deckId": "default",
     "createdAt": "2026-04-12",
-    "reviewStage": 1,
-    "nextReview": "2026-04-15",
+    "reviewStage": 2,
+    "nextReview": "2026-04-18",
     "reviewHistory": [
       {
         "date": "2026-04-12",
@@ -1223,6 +1359,10 @@
       },
       {
         "date": "2026-04-13",
+        "remembered": false
+      },
+      {
+        "date": "2026-04-15",
         "remembered": false
       }
     ],
@@ -1238,8 +1378,8 @@
     "translation2": "collect a testimony",
     "deckId": "default",
     "createdAt": "2026-04-12",
-    "reviewStage": 0,
-    "nextReview": "2026-04-14",
+    "reviewStage": 1,
+    "nextReview": "2026-04-17",
     "reviewHistory": [
       {
         "date": "2026-04-12",
@@ -1248,6 +1388,10 @@
       {
         "date": "2026-04-13",
         "remembered": false
+      },
+      {
+        "date": "2026-04-15",
+        "remembered": true
       }
     ],
     "rot": 1,
@@ -1262,8 +1406,8 @@
     "translation2": "report someone to the police",
     "deckId": "default",
     "createdAt": "2026-04-12",
-    "reviewStage": 0,
-    "nextReview": "2026-04-14",
+    "reviewStage": 1,
+    "nextReview": "2026-04-17",
     "reviewHistory": [
       {
         "date": "2026-04-12",
@@ -1272,6 +1416,10 @@
       {
         "date": "2026-04-13",
         "remembered": false
+      },
+      {
+        "date": "2026-04-15",
+        "remembered": true
       }
     ],
     "rot": 1,
@@ -1282,12 +1430,12 @@
   {
     "id": "mnvhbjso7mr6",
     "word": "la dénonciacion, un dénonciateur, une balance",
-    "translation": "举报、举报者、告密者(俗)",
+    "translation": "举报n.、举报者、告密者(俗)",
     "translation2": "denunciation, an informer, ?",
     "deckId": "default",
     "createdAt": "2026-04-12",
-    "reviewStage": 0,
-    "nextReview": "2026-04-14",
+    "reviewStage": 1,
+    "nextReview": "2026-04-17",
     "reviewHistory": [
       {
         "date": "2026-04-12",
@@ -1295,6 +1443,10 @@
       },
       {
         "date": "2026-04-13",
+        "remembered": false
+      },
+      {
+        "date": "2026-04-15",
         "remembered": false
       }
     ],
@@ -1310,8 +1462,8 @@
     "translation2": "carry out an investigation, investigate",
     "deckId": "default",
     "createdAt": "2026-04-12",
-    "reviewStage": 1,
-    "nextReview": "2026-04-15",
+    "reviewStage": 2,
+    "nextReview": "2026-04-19",
     "reviewHistory": [
       {
         "date": "2026-04-12",
@@ -1319,6 +1471,10 @@
       },
       {
         "date": "2026-04-13",
+        "remembered": false
+      },
+      {
+        "date": "2026-04-15",
         "remembered": false
       }
     ],
@@ -1330,11 +1486,11 @@
   {
     "id": "mnvhdqfikk49",
     "word": "faire un contrôle d'identité",
-    "translation": "进行身�������检查",
+    "translation": "进行身份检查",
     "translation2": "do an identity check",
     "deckId": "default",
     "createdAt": "2026-04-12",
-    "reviewStage": 2,
+    "reviewStage": 1,
     "nextReview": "2026-04-17",
     "reviewHistory": [
       {
@@ -1343,6 +1499,10 @@
       },
       {
         "date": "2026-04-13",
+        "remembered": false
+      },
+      {
+        "date": "2026-04-15",
         "remembered": false
       }
     ],
@@ -1358,8 +1518,8 @@
     "translation2": "intervene, police intervention",
     "deckId": "default",
     "createdAt": "2026-04-12",
-    "reviewStage": 1,
-    "nextReview": "2026-04-15",
+    "reviewStage": 2,
+    "nextReview": "2026-04-19",
     "reviewHistory": [
       {
         "date": "2026-04-12",
@@ -1367,6 +1527,10 @@
       },
       {
         "date": "2026-04-13",
+        "remembered": true
+      },
+      {
+        "date": "2026-04-15",
         "remembered": true
       }
     ],
@@ -1858,7 +2022,7 @@
   {
     "id": "mnvmvhe7yqs3",
     "word": "la révision d'un procès",
-    "translation": "案件重审: 级别最高的特殊补救程序; 伪证发现  受害人复活 真凶出现",
+    "translation": "案件重审: 级别最高的特殊补���程序; 伪证发现  受害人复活 真凶出现",
     "translation2": "review of a trial",
     "deckId": "default",
     "createdAt": "2026-04-12",
@@ -1881,7 +2045,7 @@
   },
   {
     "id": "mnvmw2ilt4rj",
-    "word": "la condamnation, ���� condamné",
+    "word": "la condamnation, ����� condamné",
     "translation": "谴责, ê 谴责",
     "translation2": "condemnation, ê condemned",
     "deckId": "default",
@@ -2218,7 +2382,7 @@
   {
     "id": "mnvu3vjxavgk",
     "word": "ê jugé coupable/innocent",
-    "translation": "ê 被判有��/无罪",
+    "translation": "ê 被判有罪/无罪",
     "translation2": "ê found guilty/innocent",
     "deckId": "default",
     "createdAt": "2026-04-12",
