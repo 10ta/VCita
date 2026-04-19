@@ -485,22 +485,29 @@ export default function App() {
     setReviewPos(p => Math.max(p - 1, 0));
   };
 
-  const toggleReviewDot = async (card, schDate) => {
-    const rh = (card.reviewHistory || []).find(h => h.date === schDate);
+  const toggleReviewDot = async (cardArg, schDate) => {
+    // Use the most up-to-date card data from queue or snapshot
+    const latest = reviewSnapshot?.id === cardArg.id ? reviewSnapshot
+                 : intensiveSnapshot?.id === cardArg.id ? intensiveSnapshot
+                 : reviewQueue.find(c => c.id === cardArg.id)
+                 || intensiveQueue.find(c => c.id === cardArg.id)
+                 || cards.find(c => c.id === cardArg.id)
+                 || cardArg;
+    const rh = (latest.reviewHistory || []).find(h => h.date === schDate);
     if (!rh) return;
-    const newHistory = card.reviewHistory.map(h => h.date === schDate ? { ...h, remembered: !h.remembered } : h);
-    const updated = { ...card, reviewHistory: newHistory };
-    // Update UI immediately
-    if (reviewSnapshot?.id === card.id) setReviewSnapshot(updated);
-    if (intensiveSnapshot?.id === card.id) setIntensiveSnapshot(updated);
-    setReviewQueue(q => q.map(c => c.id === card.id ? updated : c));
-    setIntensiveQueue(q => q.map(c => c.id === card.id ? updated : c));
-    // Persist to disk
+    const newHistory = latest.reviewHistory.map(h => h.date === schDate ? { ...h, remembered: !h.remembered } : h);
+    const updated = { ...latest, reviewHistory: newHistory };
+    // Update UI state: queues AND snapshots
+    setReviewQueue(q => q.map(c => c.id === latest.id ? updated : c));
+    setIntensiveQueue(q => q.map(c => c.id === latest.id ? updated : c));
+    if (reviewSnapshot?.id === latest.id) setReviewSnapshot(updated);
+    if (intensiveSnapshot?.id === latest.id) setIntensiveSnapshot(updated);
+    // Persist
     try {
       await saveCardToDay(uid(), updated);
       await reload();
-    } catch (e) { log("error", "toggleReviewDot failed", { cardId: card.id, error: e.message }); }
-    log("info", "toggleReviewDot", { cardId: card.id, date: schDate });
+    } catch (e) { log("error", "toggleReviewDot failed", { cardId: latest.id, error: e.message }); }
+    log("info", "toggleReviewDot", { cardId: latest.id, date: schDate, newRemembered: !rh.remembered });
   };
 
   // ─── Intensive review: cards with any red (failed) tags ───
@@ -559,26 +566,31 @@ export default function App() {
   };
 
   const masterCard = async (cardId) => {
+    // Get latest card from queue (includes doIntensiveReview's updates)
     const queueCard = intensiveQueue.find(c => c.id === cardId);
     const card = queueCard || cards.find(c => c.id === cardId);
     if (!card) return;
-    const td = todayStr();
+    const today = todayStr();
     const sched = getScheduleDates(card);
-    // Only mark schedule dates <= today as remembered, preserve existing history for those dates
-    const newHistory = sched
-      .filter(sd => sd <= td)
-      .map(sd => {
-        const existing = (card.reviewHistory||[]).find(h => h.date === sd);
-        return existing ? { ...existing, remembered: true } : { date: sd, remembered: true };
-      });
-    const updated = { ...card, reviewHistory: newHistory };
-    await saveCardToDay(uid(), updated);
-    await reload();
-    showToast("Mastered!");
+    // Build new history: all schedule dates <= today become green, keep future untouched
+    const pastDates = sched.filter(sd => sd <= today);
+    const newHistory = pastDates.map(sd => ({ date: sd, remembered: true }));
+    // Also keep any existing history entries for future dates (shouldn't normally exist but be safe)
+    const futureEntries = (card.reviewHistory || []).filter(h => h.date > today);
+    const finalHistory = [...newHistory, ...futureEntries];
+    const updated = { ...card, reviewHistory: finalHistory };
+    // Update UI immediately
+    setIntensiveQueue(q => q.map(c => c.id === cardId ? updated : c));
     setIntensiveRevealed(false);
     setIntensiveSnapshot(null);
     setIntensivePos(p => p + 1);
-    log("info", "masterCard", { cardId });
+    showToast("Mastered!");
+    // Persist
+    try {
+      await saveCardToDay(uid(), updated);
+      await reload();
+    } catch (e) { log("error", "masterCard failed", { cardId, error: e.message }); }
+    log("info", "masterCard", { cardId, greenDates: pastDates.length });
   };
 
   const nextIntensiveCard = () => { setIntensiveRevealed(false); setIntensiveSnapshot(null); setIntensivePos(p => Math.min(p + 1, intensiveQueue.length)); };

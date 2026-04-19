@@ -6,8 +6,8 @@
     "translation2": "I'm about to pig out",
     "deckId": "default",
     "createdAt": "2026-04-15",
-    "reviewStage": 1,
-    "nextReview": "2026-04-17",
+    "reviewStage": 0,
+    "nextReview": "2026-04-18",
     "reviewHistory": [
       {
         "date": "2026-04-15",
@@ -16,34 +16,14 @@
       {
         "date": "2026-04-16",
         "remembered": false
+      },
+      {
+        "date": "2026-04-18",
+        "remembered": false
       }
     ],
     "rot": 1,
     "tags": []
-  },
-  {
-    "id": "mo08m0p0beok",
-    "word": "condamnation",
-    "translation": "定罪(刑罚)",
-    "translation2": "conviction",
-    "deckId": "default",
-    "createdAt": "2026-04-15",
-    "reviewStage": 0,
-    "nextReview": "2026-04-16",
-    "reviewHistory": [
-      {
-        "date": "2026-04-15",
-        "remembered": false
-      },
-      {
-        "date": "2026-04-16",
-        "remembered": false
-      }
-    ],
-    "rot": 1,
-    "tags": [
-      "Police et Justice"
-    ]
   },
   {
     "id": "mo08m4yplyq6",
@@ -52,8 +32,8 @@
     "translation2": "penalty",
     "deckId": "default",
     "createdAt": "2026-04-15",
-    "reviewStage": 0,
-    "nextReview": "2026-04-16",
+    "reviewStage": 1,
+    "nextReview": "2026-04-19",
     "reviewHistory": [
       {
         "date": "2026-04-15",
@@ -62,6 +42,10 @@
       {
         "date": "2026-04-16",
         "remembered": false
+      },
+      {
+        "date": "2026-04-18",
+        "remembered": true
       }
     ],
     "rot": 1,

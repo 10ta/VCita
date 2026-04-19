@@ -1,0 +1,206 @@
+[
+  {
+    "id": "mo35ldh9dcjg",
+    "word": "se remettre en question",
+    "translation": "反思自己",
+    "translation2": "question oneself",
+    "deckId": "default",
+    "createdAt": "2026-04-18",
+    "reviewStage": 0,
+    "nextReview": "2026-04-18",
+    "reviewHistory": [],
+    "rot": 1,
+    "tags": []
+  },
+  {
+    "id": "mo35mcv85jbz",
+    "word": "approfondir les choses",
+    "translation": "深入挖掘事物",
+    "translation2": "dig deeper into things",
+    "deckId": "default",
+    "createdAt": "2026-04-18",
+    "reviewStage": 0,
+    "nextReview": "2026-04-18",
+    "reviewHistory": [],
+    "rot": 1,
+    "tags": []
+  },
+  {
+    "id": "mo3y2n7u2n6x",
+    "word": "人神同型同性论",
+    "translation": "Anthroposophie",
+    "translation2": "Anthroposophy",
+    "deckId": "default",
+    "createdAt": "2026-04-18",
+    "reviewStage": 0,
+    "nextReview": "2026-04-18",
+    "reviewHistory": [
+      {
+        "date": "2026-04-18",
+        "remembered": false
+      }
+    ],
+    "rot": 0,
+    "tags": []
+  },
+  {
+    "id": "mo3y6wjtouma",
+    "word": "双手惯用的",
+    "translation": "Ambidextre",
+    "translation2": "Ambidextrous",
+    "deckId": "default",
+    "createdAt": "2026-04-18",
+    "reviewStage": 0,
+    "nextReview": "2026-04-18",
+    "reviewHistory": [],
+    "rot": 0,
+    "tags": []
+  },
+  {
+    "id": "mo3y7cw3otmh",
+    "word": "双脚惯用的",
+    "translation": "Bilatéral",
+    "translation2": "Bilateral",
+    "deckId": "default",
+    "createdAt": "2026-04-18",
+    "reviewStage": 0,
+    "nextReview": "2026-04-18",
+    "reviewHistory": [],
+    "rot": 0,
+    "tags": []
+  },
+  {
+    "id": "mo4hjnnf4mhg",
+    "word": "révélation",
+    "translation": "启示/揭露/披露",
+    "translation2": "revelation",
+    "deckId": "default",
+    "createdAt": "2026-04-18",
+    "reviewStage": 0,
+    "nextReview": "2026-04-18",
+    "reviewHistory": [],
+    "rot": 0,
+    "tags": []
+  },
+  {
+    "id": "mo4iil55rpkf",
+    "word": "réticence à parler",
+    "translation": "抗拒说话",
+    "translation2": "reluctance to speak",
+    "deckId": "default",
+    "createdAt": "2026-04-18",
+    "reviewStage": 0,
+    "nextReview": "2026-04-18",
+    "reviewHistory": [],
+    "rot": 0,
+    "tags": [
+      "Police et Justice"
+    ]
+  },
+  {
+    "id": "mo4imuv2s27u",
+    "word": "On sentait qu'il y avait derrière",
+    "translation": "我们感觉背后有情况",
+    "translation2": "We felt that there was behind",
+    "deckId": "default",
+    "createdAt": "2026-04-18",
+    "reviewStage": 0,
+    "nextReview": "2026-04-18",
+    "reviewHistory": [],
+    "rot": 0,
+    "tags": []
+  },
+  {
+    "id": "mo4k2m0c9szm",
+    "word": "construction psychologique",
+    "translation": "心理建构",
+    "translation2": "psychological construction",
+    "deckId": "default",
+    "createdAt": "2026-04-18",
+    "reviewStage": 0,
+    "nextReview": "2026-04-18",
+    "reviewHistory": [],
+    "rot": 0,
+    "tags": []
+  },
+  {
+    "id": "mo4k76fr5eou",
+    "word": "diligenter",
+    "translation": "积极处理",
+    "translation2": "to diligently",
+    "deckId": "default",
+    "createdAt": "2026-04-18",
+    "reviewStage": 0,
+    "nextReview": "2026-04-18",
+    "reviewHistory": [],
+    "rot": 0,
+    "tags": []
+  },
+  {
+    "id": "mo4kavjk5q6r",
+    "word": "expertise",
+    "translation": "专业知识",
+    "translation2": "expertise",
+    "deckId": "default",
+    "createdAt": "2026-04-18",
+    "reviewStage": 0,
+    "nextReview": "2026-04-18",
+    "reviewHistory": [],
+    "rot": 0,
+    "tags": []
+  },
+  {
+    "id": "mo4ki81zb158",
+    "word": "mythomane",
+    "translation": "谎话连篇的",
+    "translation2": "mythomaniac",
+    "deckId": "default",
+    "createdAt": "2026-04-18",
+    "reviewStage": 0,
+    "nextReview": "2026-04-18",
+    "reviewHistory": [],
+    "rot": 0,
+    "tags": []
+  },
+  {
+    "id": "mo4kj5gug4zv",
+    "word": "trait de personnalité",
+    "translation": "人格特质",
+    "translation2": "personality trait",
+    "deckId": "default",
+    "createdAt": "2026-04-18",
+    "reviewStage": 0,
+    "nextReview": "2026-04-18",
+    "reviewHistory": [],
+    "rot": 0,
+    "tags": []
+  },
+  {
+    "id": "mo4kkdzlvgle",
+    "word": "perception de la réalité",
+    "translation": "对现实的感知",
+    "translation2": "perception of reality",
+    "deckId": "default",
+    "createdAt": "2026-04-18",
+    "reviewStage": 0,
+    "nextReview": "2026-04-18",
+    "reviewHistory": [],
+    "rot": 0,
+    "tags": []
+  },
+  {
+    "id": "mo4kmmz3nedw",
+    "word": "tendance pathologique",
+    "translation": "病理倾向",
+    "translation2": "pathological tendency",
+    "deckId": "default",
+    "createdAt": "2026-04-18",
+    "reviewStage": 0,
+    "nextReview": "2026-04-18",
+    "reviewHistory": [],
+    "rot": 0,
+    "tags": [
+      "Police et Justice"
+    ]
+  }
+]
