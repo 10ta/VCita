@@ -6,8 +6,8 @@
     "translation2": "I'm about to pig out",
     "deckId": "default",
     "createdAt": "2026-04-15",
-    "reviewStage": 0,
-    "nextReview": "2026-04-18",
+    "reviewStage": 1,
+    "nextReview": "2026-04-21",
     "reviewHistory": [
       {
         "date": "2026-04-15",
@@ -32,8 +32,8 @@
     "translation2": "penalty",
     "deckId": "default",
     "createdAt": "2026-04-15",
-    "reviewStage": 1,
-    "nextReview": "2026-04-19",
+    "reviewStage": 0,
+    "nextReview": "2026-04-20",
     "reviewHistory": [
       {
         "date": "2026-04-15",

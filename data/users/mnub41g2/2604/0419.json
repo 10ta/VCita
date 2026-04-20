@@ -6,10 +6,19 @@
     "translation2": "?",
     "deckId": "default",
     "createdAt": "2026-04-19",
-    "reviewStage": 0,
-    "nextReview": "2026-04-19",
-    "reviewHistory": [],
-    "rot": 0,
+    "reviewStage": 2,
+    "nextReview": "2026-04-23",
+    "reviewHistory": [
+      {
+        "date": "2026-04-19",
+        "remembered": true
+      },
+      {
+        "date": "2026-04-20",
+        "remembered": true
+      }
+    ],
+    "rot": 1,
     "tags": []
   },
   {
@@ -20,9 +29,18 @@
     "deckId": "default",
     "createdAt": "2026-04-19",
     "reviewStage": 0,
-    "nextReview": "2026-04-19",
-    "reviewHistory": [],
-    "rot": 0,
+    "nextReview": "2026-04-20",
+    "reviewHistory": [
+      {
+        "date": "2026-04-19",
+        "remembered": false
+      },
+      {
+        "date": "2026-04-20",
+        "remembered": false
+      }
+    ],
+    "rot": 1,
     "tags": []
   },
   {
@@ -33,24 +51,42 @@
     "deckId": "default",
     "createdAt": "2026-04-19",
     "reviewStage": 0,
-    "nextReview": "2026-04-19",
-    "reviewHistory": [],
-    "rot": 0,
+    "nextReview": "2026-04-20",
+    "reviewHistory": [
+      {
+        "date": "2026-04-19",
+        "remembered": false
+      },
+      {
+        "date": "2026-04-20",
+        "remembered": false
+      }
+    ],
+    "rot": 1,
     "tags": [
       "Police et Justice"
     ]
   },
   {
     "id": "mo5gtozuauqv",
-    "word": "Est-ce qu'il a vécu ce qu'il a dit avoir vécu ?",
+    "word": "Est-ce qu'il a bien vécu ce qu'il dit avoir vécu ?",
     "translation": "他经历过他声称的吗？",
     "translation2": "Did he experience what he said he experienced?",
     "deckId": "default",
     "createdAt": "2026-04-19",
-    "reviewStage": 0,
-    "nextReview": "2026-04-19",
-    "reviewHistory": [],
-    "rot": 0,
+    "reviewStage": 1,
+    "nextReview": "2026-04-21",
+    "reviewHistory": [
+      {
+        "date": "2026-04-19",
+        "remembered": true
+      },
+      {
+        "date": "2026-04-20",
+        "remembered": true
+      }
+    ],
+    "rot": 1,
     "tags": []
   },
   {
@@ -61,9 +97,18 @@
     "deckId": "default",
     "createdAt": "2026-04-19",
     "reviewStage": 0,
-    "nextReview": "2026-04-19",
-    "reviewHistory": [],
-    "rot": 0,
+    "nextReview": "2026-04-20",
+    "reviewHistory": [
+      {
+        "date": "2026-04-19",
+        "remembered": false
+      },
+      {
+        "date": "2026-04-20",
+        "remembered": false
+      }
+    ],
+    "rot": 1,
     "tags": []
   },
   {
@@ -74,9 +119,18 @@
     "deckId": "default",
     "createdAt": "2026-04-19",
     "reviewStage": 0,
-    "nextReview": "2026-04-19",
-    "reviewHistory": [],
-    "rot": 0,
+    "nextReview": "2026-04-20",
+    "reviewHistory": [
+      {
+        "date": "2026-04-19",
+        "remembered": false
+      },
+      {
+        "date": "2026-04-20",
+        "remembered": false
+      }
+    ],
+    "rot": 1,
     "tags": [
       "Police et Justice"
     ]
@@ -89,9 +143,18 @@
     "deckId": "default",
     "createdAt": "2026-04-19",
     "reviewStage": 0,
-    "nextReview": "2026-04-19",
-    "reviewHistory": [],
-    "rot": 0,
+    "nextReview": "2026-04-20",
+    "reviewHistory": [
+      {
+        "date": "2026-04-19",
+        "remembered": false
+      },
+      {
+        "date": "2026-04-20",
+        "remembered": false
+      }
+    ],
+    "rot": 1,
     "tags": []
   },
   {
@@ -101,10 +164,19 @@
     "translation2": "briefcase",
     "deckId": "default",
     "createdAt": "2026-04-19",
-    "reviewStage": 0,
-    "nextReview": "2026-04-19",
-    "reviewHistory": [],
-    "rot": 0,
+    "reviewStage": 1,
+    "nextReview": "2026-04-21",
+    "reviewHistory": [
+      {
+        "date": "2026-04-19",
+        "remembered": true
+      },
+      {
+        "date": "2026-04-20",
+        "remembered": true
+      }
+    ],
+    "rot": 1,
     "tags": []
   },
   {
@@ -115,9 +187,18 @@
     "deckId": "default",
     "createdAt": "2026-04-19",
     "reviewStage": 0,
-    "nextReview": "2026-04-19",
-    "reviewHistory": [],
-    "rot": 0,
+    "nextReview": "2026-04-20",
+    "reviewHistory": [
+      {
+        "date": "2026-04-19",
+        "remembered": false
+      },
+      {
+        "date": "2026-04-20",
+        "remembered": false
+      }
+    ],
+    "rot": 1,
     "tags": [
       "Police et Justice"
     ]
@@ -130,9 +211,18 @@
     "deckId": "default",
     "createdAt": "2026-04-19",
     "reviewStage": 0,
-    "nextReview": "2026-04-19",
-    "reviewHistory": [],
-    "rot": 0,
+    "nextReview": "2026-04-20",
+    "reviewHistory": [
+      {
+        "date": "2026-04-19",
+        "remembered": false
+      },
+      {
+        "date": "2026-04-20",
+        "remembered": false
+      }
+    ],
+    "rot": 1,
     "tags": [
       "Police et Justice"
     ]
@@ -140,27 +230,45 @@
   {
     "id": "mo5h5pc2y76t",
     "word": "une cassette sur laquelle on voit",
-    "translation": "我们看到的磁带",
+    "translation": "一盘磁带我们在其中看到...",
     "translation2": "a cassette on which we see",
     "deckId": "default",
     "createdAt": "2026-04-19",
-    "reviewStage": 0,
-    "nextReview": "2026-04-19",
-    "reviewHistory": [],
-    "rot": 0,
+    "reviewStage": 1,
+    "nextReview": "2026-04-21",
+    "reviewHistory": [
+      {
+        "date": "2026-04-19",
+        "remembered": true
+      },
+      {
+        "date": "2026-04-20",
+        "remembered": true
+      }
+    ],
+    "rot": 1,
     "tags": []
   },
   {
     "id": "mo5h6ta16sbi",
     "word": "dénégation",
-    "translation": "拒绝",
+    "translation": "(否认)法律语境",
     "translation2": "denial",
     "deckId": "default",
     "createdAt": "2026-04-19",
-    "reviewStage": 0,
-    "nextReview": "2026-04-19",
-    "reviewHistory": [],
-    "rot": 0,
+    "reviewStage": 1,
+    "nextReview": "2026-04-21",
+    "reviewHistory": [
+      {
+        "date": "2026-04-19",
+        "remembered": true
+      },
+      {
+        "date": "2026-04-20",
+        "remembered": true
+      }
+    ],
+    "rot": 1,
     "tags": []
   },
   {
@@ -171,9 +279,18 @@
     "deckId": "default",
     "createdAt": "2026-04-19",
     "reviewStage": 0,
-    "nextReview": "2026-04-19",
-    "reviewHistory": [],
-    "rot": 0,
+    "nextReview": "2026-04-20",
+    "reviewHistory": [
+      {
+        "date": "2026-04-19",
+        "remembered": false
+      },
+      {
+        "date": "2026-04-20",
+        "remembered": false
+      }
+    ],
+    "rot": 1,
     "tags": [
       "Police et Justice"
     ]
@@ -186,22 +303,40 @@
     "deckId": "default",
     "createdAt": "2026-04-19",
     "reviewStage": 0,
-    "nextReview": "2026-04-19",
-    "reviewHistory": [],
-    "rot": 0,
+    "nextReview": "2026-04-20",
+    "reviewHistory": [
+      {
+        "date": "2026-04-19",
+        "remembered": false
+      },
+      {
+        "date": "2026-04-20",
+        "remembered": false
+      }
+    ],
+    "rot": 1,
     "tags": []
   },
   {
     "id": "mo5hdsnwqgm3",
     "word": "ils ont dû subir ce qu'ils dénoncent",
-    "translation": "他们一定忍受了他们所指控的事情",
+    "translation": "孩子们一定忍受了他们所指控的事情",
     "translation2": "they surely endured what they denounce",
     "deckId": "default",
     "createdAt": "2026-04-19",
     "reviewStage": 0,
-    "nextReview": "2026-04-19",
-    "reviewHistory": [],
-    "rot": 0,
+    "nextReview": "2026-04-20",
+    "reviewHistory": [
+      {
+        "date": "2026-04-19",
+        "remembered": false
+      },
+      {
+        "date": "2026-04-20",
+        "remembered": false
+      }
+    ],
+    "rot": 1,
     "tags": []
   },
   {
@@ -211,23 +346,41 @@
     "translation2": "it drives you crazy",
     "deckId": "default",
     "createdAt": "2026-04-19",
-    "reviewStage": 0,
-    "nextReview": "2026-04-19",
-    "reviewHistory": [],
-    "rot": 0,
+    "reviewStage": 1,
+    "nextReview": "2026-04-21",
+    "reviewHistory": [
+      {
+        "date": "2026-04-19",
+        "remembered": true
+      },
+      {
+        "date": "2026-04-20",
+        "remembered": true
+      }
+    ],
+    "rot": 1,
     "tags": []
   },
   {
     "id": "mo5k1suwbl2m",
     "word": "déferré",
-    "translation": "不穿鞋的",
-    "translation2": "unshod",
+    "translation": "被移交v.",
+    "translation2": "?",
     "deckId": "default",
     "createdAt": "2026-04-19",
     "reviewStage": 0,
-    "nextReview": "2026-04-19",
-    "reviewHistory": [],
-    "rot": 0,
+    "nextReview": "2026-04-20",
+    "reviewHistory": [
+      {
+        "date": "2026-04-19",
+        "remembered": false
+      },
+      {
+        "date": "2026-04-20",
+        "remembered": false
+      }
+    ],
+    "rot": 1,
     "tags": []
   },
   {
@@ -237,11 +390,22 @@
     "translation2": "§",
     "deckId": "default",
     "createdAt": "2026-04-19",
-    "reviewStage": 0,
-    "nextReview": "2026-04-19",
-    "reviewHistory": [],
-    "rot": 0,
-    "tags": []
+    "reviewStage": 1,
+    "nextReview": "2026-04-21",
+    "reviewHistory": [
+      {
+        "date": "2026-04-19",
+        "remembered": false
+      },
+      {
+        "date": "2026-04-20",
+        "remembered": false
+      }
+    ],
+    "rot": 1,
+    "tags": [
+      "Police et Justice"
+    ]
   },
   {
     "id": "mo5kgs0ihozw",
@@ -251,9 +415,18 @@
     "deckId": "default",
     "createdAt": "2026-04-19",
     "reviewStage": 0,
-    "nextReview": "2026-04-19",
-    "reviewHistory": [],
-    "rot": 0,
+    "nextReview": "2026-04-20",
+    "reviewHistory": [
+      {
+        "date": "2026-04-19",
+        "remembered": false
+      },
+      {
+        "date": "2026-04-20",
+        "remembered": false
+      }
+    ],
+    "rot": 1,
     "tags": []
   },
   {
@@ -264,9 +437,18 @@
     "deckId": "default",
     "createdAt": "2026-04-19",
     "reviewStage": 0,
-    "nextReview": "2026-04-19",
-    "reviewHistory": [],
-    "rot": 0,
+    "nextReview": "2026-04-20",
+    "reviewHistory": [
+      {
+        "date": "2026-04-19",
+        "remembered": false
+      },
+      {
+        "date": "2026-04-20",
+        "remembered": false
+      }
+    ],
+    "rot": 1,
     "tags": []
   },
   {
@@ -277,9 +459,18 @@
     "deckId": "default",
     "createdAt": "2026-04-19",
     "reviewStage": 0,
-    "nextReview": "2026-04-19",
-    "reviewHistory": [],
-    "rot": 0,
+    "nextReview": "2026-04-20",
+    "reviewHistory": [
+      {
+        "date": "2026-04-19",
+        "remembered": false
+      },
+      {
+        "date": "2026-04-20",
+        "remembered": false
+      }
+    ],
+    "rot": 1,
     "tags": []
   },
   {
@@ -290,9 +481,18 @@
     "deckId": "default",
     "createdAt": "2026-04-19",
     "reviewStage": 0,
-    "nextReview": "2026-04-19",
-    "reviewHistory": [],
-    "rot": 0,
+    "nextReview": "2026-04-20",
+    "reviewHistory": [
+      {
+        "date": "2026-04-19",
+        "remembered": false
+      },
+      {
+        "date": "2026-04-20",
+        "remembered": false
+      }
+    ],
+    "rot": 1,
     "tags": []
   },
   {
@@ -303,9 +503,18 @@
     "deckId": "default",
     "createdAt": "2026-04-19",
     "reviewStage": 0,
-    "nextReview": "2026-04-19",
-    "reviewHistory": [],
-    "rot": 0,
+    "nextReview": "2026-04-20",
+    "reviewHistory": [
+      {
+        "date": "2026-04-19",
+        "remembered": false
+      },
+      {
+        "date": "2026-04-20",
+        "remembered": false
+      }
+    ],
+    "rot": 1,
     "tags": []
   },
   {
@@ -316,9 +525,18 @@
     "deckId": "default",
     "createdAt": "2026-04-19",
     "reviewStage": 0,
-    "nextReview": "2026-04-19",
-    "reviewHistory": [],
-    "rot": 0,
+    "nextReview": "2026-04-20",
+    "reviewHistory": [
+      {
+        "date": "2026-04-19",
+        "remembered": false
+      },
+      {
+        "date": "2026-04-20",
+        "remembered": false
+      }
+    ],
+    "rot": 1,
     "tags": []
   },
   {
@@ -328,10 +546,19 @@
     "translation2": "getting blowjobs",
     "deckId": "default",
     "createdAt": "2026-04-19",
-    "reviewStage": 0,
-    "nextReview": "2026-04-19",
-    "reviewHistory": [],
-    "rot": 0,
+    "reviewStage": 1,
+    "nextReview": "2026-04-21",
+    "reviewHistory": [
+      {
+        "date": "2026-04-19",
+        "remembered": true
+      },
+      {
+        "date": "2026-04-20",
+        "remembered": true
+      }
+    ],
+    "rot": 1,
     "tags": []
   },
   {
@@ -342,22 +569,40 @@
     "deckId": "default",
     "createdAt": "2026-04-19",
     "reviewStage": 0,
-    "nextReview": "2026-04-19",
-    "reviewHistory": [],
-    "rot": 0,
+    "nextReview": "2026-04-20",
+    "reviewHistory": [
+      {
+        "date": "2026-04-19",
+        "remembered": false
+      },
+      {
+        "date": "2026-04-20",
+        "remembered": false
+      }
+    ],
+    "rot": 1,
     "tags": []
   },
   {
     "id": "mo5l0vam8qce",
     "word": "écœuré",
-    "translation": "作呕, 恶心, 倒胃口",
+    "translation": "作呕的/恶心的/倒胃口的",
     "translation2": "sicken",
     "deckId": "default",
     "createdAt": "2026-04-19",
     "reviewStage": 0,
-    "nextReview": "2026-04-19",
-    "reviewHistory": [],
-    "rot": 0,
+    "nextReview": "2026-04-20",
+    "reviewHistory": [
+      {
+        "date": "2026-04-19",
+        "remembered": false
+      },
+      {
+        "date": "2026-04-20",
+        "remembered": false
+      }
+    ],
+    "rot": 1,
     "tags": []
   },
   {
@@ -368,9 +613,18 @@
     "deckId": "default",
     "createdAt": "2026-04-19",
     "reviewStage": 0,
-    "nextReview": "2026-04-19",
-    "reviewHistory": [],
-    "rot": 0,
+    "nextReview": "2026-04-20",
+    "reviewHistory": [
+      {
+        "date": "2026-04-19",
+        "remembered": false
+      },
+      {
+        "date": "2026-04-20",
+        "remembered": false
+      }
+    ],
+    "rot": 1,
     "tags": []
   },
   {
@@ -381,23 +635,43 @@
     "deckId": "default",
     "createdAt": "2026-04-19",
     "reviewStage": 0,
-    "nextReview": "2026-04-19",
-    "reviewHistory": [],
-    "rot": 0,
+    "nextReview": "2026-04-20",
+    "reviewHistory": [
+      {
+        "date": "2026-04-19",
+        "remembered": false
+      },
+      {
+        "date": "2026-04-20",
+        "remembered": false
+      }
+    ],
+    "rot": 1,
     "tags": []
   },
   {
     "id": "mo5l7uhtojms",
     "word": "faisceau d'indices",
-    "translation": "一系列线索",
-    "translation2": "bundle of clues",
+    "translation": "補強法則",
+    "translation2": "corroborating evidence",
     "deckId": "default",
     "createdAt": "2026-04-19",
     "reviewStage": 0,
-    "nextReview": "2026-04-19",
-    "reviewHistory": [],
-    "rot": 0,
-    "tags": []
+    "nextReview": "2026-04-20",
+    "reviewHistory": [
+      {
+        "date": "2026-04-19",
+        "remembered": false
+      },
+      {
+        "date": "2026-04-20",
+        "remembered": false
+      }
+    ],
+    "rot": 1,
+    "tags": [
+      "Police et Justice"
+    ]
   },
   {
     "id": "mo5l9w4qi4xt",
@@ -407,9 +681,18 @@
     "deckId": "default",
     "createdAt": "2026-04-19",
     "reviewStage": 0,
-    "nextReview": "2026-04-19",
-    "reviewHistory": [],
-    "rot": 0,
+    "nextReview": "2026-04-20",
+    "reviewHistory": [
+      {
+        "date": "2026-04-19",
+        "remembered": false
+      },
+      {
+        "date": "2026-04-20",
+        "remembered": false
+      }
+    ],
+    "rot": 1,
     "tags": []
   },
   {
@@ -419,36 +702,63 @@
     "translation2": "an ink stain",
     "deckId": "default",
     "createdAt": "2026-04-19",
-    "reviewStage": 0,
-    "nextReview": "2026-04-19",
-    "reviewHistory": [],
-    "rot": 0,
+    "reviewStage": 1,
+    "nextReview": "2026-04-21",
+    "reviewHistory": [
+      {
+        "date": "2026-04-19",
+        "remembered": true
+      },
+      {
+        "date": "2026-04-20",
+        "remembered": true
+      }
+    ],
+    "rot": 1,
     "tags": []
   },
   {
     "id": "mo5ne4edj6tw",
     "word": "démêler",
-    "translation": "捋清细节",
+    "translation": "梳理v.",
     "translation2": "",
     "deckId": "default",
     "createdAt": "2026-04-19",
     "reviewStage": 0,
-    "nextReview": "2026-04-19",
-    "reviewHistory": [],
-    "rot": 0,
+    "nextReview": "2026-04-20",
+    "reviewHistory": [
+      {
+        "date": "2026-04-19",
+        "remembered": false
+      },
+      {
+        "date": "2026-04-20",
+        "remembered": false
+      }
+    ],
+    "rot": 1,
     "tags": []
   },
   {
     "id": "mo5ngcox2wjn",
-    "word": "ça prend de l'ampleur",
-    "translation": "(异译, 范围越来越大了/ 影响越来越强了",
+    "word": "ça prend de l'ampleur considérable",
+    "translation": "这个影响相当大",
     "translation2": "?",
     "deckId": "default",
     "createdAt": "2026-04-19",
-    "reviewStage": 0,
-    "nextReview": "2026-04-19",
-    "reviewHistory": [],
-    "rot": 0,
+    "reviewStage": 1,
+    "nextReview": "2026-04-21",
+    "reviewHistory": [
+      {
+        "date": "2026-04-19",
+        "remembered": false
+      },
+      {
+        "date": "2026-04-20",
+        "remembered": false
+      }
+    ],
+    "rot": 1,
     "tags": []
   },
   {
@@ -458,10 +768,19 @@
     "translation2": "knock",
     "deckId": "default",
     "createdAt": "2026-04-19",
-    "reviewStage": 0,
-    "nextReview": "2026-04-19",
-    "reviewHistory": [],
-    "rot": 0,
+    "reviewStage": 1,
+    "nextReview": "2026-04-21",
+    "reviewHistory": [
+      {
+        "date": "2026-04-19",
+        "remembered": true
+      },
+      {
+        "date": "2026-04-20",
+        "remembered": true
+      }
+    ],
+    "rot": 1,
     "tags": []
   },
   {
@@ -471,10 +790,19 @@
     "translation2": "people we knew a few years ago, who we would have said ...",
     "deckId": "default",
     "createdAt": "2026-04-19",
-    "reviewStage": 0,
-    "nextReview": "2026-04-19",
-    "reviewHistory": [],
-    "rot": 0,
+    "reviewStage": 1,
+    "nextReview": "2026-04-21",
+    "reviewHistory": [
+      {
+        "date": "2026-04-19",
+        "remembered": true
+      },
+      {
+        "date": "2026-04-20",
+        "remembered": true
+      }
+    ],
+    "rot": 1,
     "tags": []
   },
   {
@@ -484,10 +812,19 @@
     "translation2": "slut",
     "deckId": "default",
     "createdAt": "2026-04-19",
-    "reviewStage": 0,
-    "nextReview": "2026-04-19",
-    "reviewHistory": [],
-    "rot": 0,
+    "reviewStage": 1,
+    "nextReview": "2026-04-21",
+    "reviewHistory": [
+      {
+        "date": "2026-04-19",
+        "remembered": true
+      },
+      {
+        "date": "2026-04-20",
+        "remembered": true
+      }
+    ],
+    "rot": 1,
     "tags": []
   },
   {
@@ -498,22 +835,40 @@
     "deckId": "default",
     "createdAt": "2026-04-19",
     "reviewStage": 0,
-    "nextReview": "2026-04-19",
-    "reviewHistory": [],
-    "rot": 0,
+    "nextReview": "2026-04-20",
+    "reviewHistory": [
+      {
+        "date": "2026-04-19",
+        "remembered": false
+      },
+      {
+        "date": "2026-04-20",
+        "remembered": false
+      }
+    ],
+    "rot": 1,
     "tags": []
   },
   {
     "id": "mo5o9l1q445i",
     "word": "médusé",
-    "translation": "(verb) 使惊呆, 使发愣, 使目瞪口呆, 使不知所措\n(adj.) 惊呆的, 发愣的, 目瞪口",
+    "translation": "(verb) 使惊呆, 使发愣, 使目瞪口呆, 使不知所措\n(adj.) 惊呆的, 发愣, 目瞪口",
     "translation2": "§",
     "deckId": "default",
     "createdAt": "2026-04-19",
     "reviewStage": 0,
-    "nextReview": "2026-04-19",
-    "reviewHistory": [],
-    "rot": 0,
+    "nextReview": "2026-04-20",
+    "reviewHistory": [
+      {
+        "date": "2026-04-19",
+        "remembered": false
+      },
+      {
+        "date": "2026-04-20",
+        "remembered": false
+      }
+    ],
+    "rot": 1,
     "tags": []
   },
   {
@@ -524,9 +879,18 @@
     "deckId": "default",
     "createdAt": "2026-04-19",
     "reviewStage": 0,
-    "nextReview": "2026-04-19",
-    "reviewHistory": [],
-    "rot": 0,
+    "nextReview": "2026-04-20",
+    "reviewHistory": [
+      {
+        "date": "2026-04-19",
+        "remembered": false
+      },
+      {
+        "date": "2026-04-20",
+        "remembered": false
+      }
+    ],
+    "rot": 1,
     "tags": []
   },
   {
@@ -537,9 +901,334 @@
     "deckId": "default",
     "createdAt": "2026-04-19",
     "reviewStage": 0,
-    "nextReview": "2026-04-19",
-    "reviewHistory": [],
-    "rot": 0,
+    "nextReview": "2026-04-20",
+    "reviewHistory": [
+      {
+        "date": "2026-04-19",
+        "remembered": false
+      },
+      {
+        "date": "2026-04-20",
+        "remembered": false
+      }
+    ],
+    "rot": 1,
+    "tags": []
+  },
+  {
+    "id": "mo5pfl0cwq9g",
+    "word": "elle soulève le coeur",
+    "translation": "这件事令人心痛",
+    "translation2": "it hurts the heart",
+    "deckId": "default",
+    "createdAt": "2026-04-19",
+    "reviewStage": 1,
+    "nextReview": "2026-04-21",
+    "reviewHistory": [
+      {
+        "date": "2026-04-19",
+        "remembered": true
+      },
+      {
+        "date": "2026-04-20",
+        "remembered": true
+      }
+    ],
+    "rot": 1,
+    "tags": []
+  },
+  {
+    "id": "mo5px4aa3r06",
+    "word": "Trois reconnaissent leur implication",
+    "translation": "三人承认他们的参与",
+    "translation2": "Three acknowledge their involvement",
+    "deckId": "default",
+    "createdAt": "2026-04-19",
+    "reviewStage": 0,
+    "nextReview": "2026-04-20",
+    "reviewHistory": [
+      {
+        "date": "2026-04-19",
+        "remembered": false
+      },
+      {
+        "date": "2026-04-20",
+        "remembered": false
+      }
+    ],
+    "rot": 1,
+    "tags": [
+      "Police et Justice"
+    ]
+  },
+  {
+    "id": "mo5pxen5ehdj",
+    "word": "nier en bloc",
+    "translation": "断然否认",
+    "translation2": "deny outright",
+    "deckId": "default",
+    "createdAt": "2026-04-19",
+    "reviewStage": 1,
+    "nextReview": "2026-04-21",
+    "reviewHistory": [
+      {
+        "date": "2026-04-19",
+        "remembered": true
+      },
+      {
+        "date": "2026-04-20",
+        "remembered": true
+      }
+    ],
+    "rot": 1,
+    "tags": []
+  },
+  {
+    "id": "mo5r8ly28dt1",
+    "word": "s'emparer",
+    "translation": "插手/夺取/控制",
+    "translation2": "",
+    "deckId": "default",
+    "createdAt": "2026-04-19",
+    "reviewStage": 1,
+    "nextReview": "2026-04-21",
+    "reviewHistory": [
+      {
+        "date": "2026-04-19",
+        "remembered": false
+      },
+      {
+        "date": "2026-04-20",
+        "remembered": false
+      }
+    ],
+    "rot": 1,
+    "tags": []
+  },
+  {
+    "id": "mo5r9xlskav2",
+    "word": "de manière farouche",
+    "translation": "猛烈地",
+    "translation2": "fiercely",
+    "deckId": "default",
+    "createdAt": "2026-04-19",
+    "reviewStage": 0,
+    "nextReview": "2026-04-20",
+    "reviewHistory": [
+      {
+        "date": "2026-04-19",
+        "remembered": false
+      },
+      {
+        "date": "2026-04-20",
+        "remembered": false
+      }
+    ],
+    "rot": 1,
+    "tags": []
+  },
+  {
+    "id": "mo5rdwkusyjo",
+    "word": "il n'y a aucun élément matériel, de qq nature que ce soit",
+    "translation": "不存在任何实质证据, 无论什么性质",
+    "translation2": "there is no material element, of any nature whatsoever",
+    "deckId": "default",
+    "createdAt": "2026-04-19",
+    "reviewStage": 0,
+    "nextReview": "2026-04-20",
+    "reviewHistory": [
+      {
+        "date": "2026-04-19",
+        "remembered": false
+      },
+      {
+        "date": "2026-04-20",
+        "remembered": false
+      }
+    ],
+    "rot": 1,
+    "tags": [
+      "Police et Justice"
+    ]
+  },
+  {
+    "id": "mo5rfw2xrbls",
+    "word": "les témoignages sont confus, contradictoires",
+    "translation": "证词混乱、矛盾",
+    "translation2": "the testimonies are confused, contradictory",
+    "deckId": "default",
+    "createdAt": "2026-04-19",
+    "reviewStage": 0,
+    "nextReview": "2026-04-20",
+    "reviewHistory": [
+      {
+        "date": "2026-04-19",
+        "remembered": false
+      },
+      {
+        "date": "2026-04-20",
+        "remembered": false
+      }
+    ],
+    "rot": 1,
+    "tags": [
+      "Police et Justice"
+    ]
+  },
+  {
+    "id": "mo5risfv6ah7",
+    "word": "une femme n'est pas apprêtée",
+    "translation": "一个女人蓬头垢面",
+    "translation2": "",
+    "deckId": "default",
+    "createdAt": "2026-04-19",
+    "reviewStage": 1,
+    "nextReview": "2026-04-21",
+    "reviewHistory": [
+      {
+        "date": "2026-04-19",
+        "remembered": true
+      },
+      {
+        "date": "2026-04-20",
+        "remembered": true
+      }
+    ],
+    "rot": 1,
+    "tags": []
+  },
+  {
+    "id": "mo5rjyiu0g4b",
+    "word": "je m'en souviendrai toute ma vie",
+    "translation": "我会铭记一生",
+    "translation2": "I will remember it all my life",
+    "deckId": "default",
+    "createdAt": "2026-04-19",
+    "reviewStage": 1,
+    "nextReview": "2026-04-21",
+    "reviewHistory": [
+      {
+        "date": "2026-04-19",
+        "remembered": true
+      },
+      {
+        "date": "2026-04-20",
+        "remembered": true
+      }
+    ],
+    "rot": 1,
+    "tags": []
+  },
+  {
+    "id": "mo5rpvrr31b5",
+    "word": "déposition",
+    "translation": "(noun) 陈述, 证词, 陈述书, 作证, 宣誓作证",
+    "translation2": "deposition",
+    "deckId": "default",
+    "createdAt": "2026-04-19",
+    "reviewStage": 0,
+    "nextReview": "2026-04-20",
+    "reviewHistory": [
+      {
+        "date": "2026-04-19",
+        "remembered": false
+      },
+      {
+        "date": "2026-04-20",
+        "remembered": false
+      }
+    ],
+    "rot": 1,
+    "tags": [
+      "Police et Justice"
+    ]
+  },
+  {
+    "id": "mo5s21rktpm8",
+    "word": "surendettement",
+    "translation": "(noun) 过度负债",
+    "translation2": "overindebtedness",
+    "deckId": "default",
+    "createdAt": "2026-04-19",
+    "reviewStage": 0,
+    "nextReview": "2026-04-20",
+    "reviewHistory": [
+      {
+        "date": "2026-04-19",
+        "remembered": false
+      },
+      {
+        "date": "2026-04-20",
+        "remembered": false
+      }
+    ],
+    "rot": 1,
+    "tags": []
+  },
+  {
+    "id": "mo5s557z2t1q",
+    "word": "une affaire où cohabitent deux milieux très différents",
+    "translation": "两种截然不同的环境共存的情况",
+    "translation2": "a case where two very different environments coexist",
+    "deckId": "default",
+    "createdAt": "2026-04-19",
+    "reviewStage": 0,
+    "nextReview": "2026-04-20",
+    "reviewHistory": [
+      {
+        "date": "2026-04-19",
+        "remembered": false
+      },
+      {
+        "date": "2026-04-20",
+        "remembered": false
+      }
+    ],
+    "rot": 1,
+    "tags": []
+  },
+  {
+    "id": "mo5s6raiarc3",
+    "word": "une personne bien installée",
+    "translation": "一个有地位的人",
+    "translation2": "a well-established person",
+    "deckId": "default",
+    "createdAt": "2026-04-19",
+    "reviewStage": 1,
+    "nextReview": "2026-04-21",
+    "reviewHistory": [
+      {
+        "date": "2026-04-19",
+        "remembered": true
+      },
+      {
+        "date": "2026-04-20",
+        "remembered": true
+      }
+    ],
+    "rot": 1,
+    "tags": []
+  },
+  {
+    "id": "mo5ug444y6k7",
+    "word": "lettre de mise en demeure",
+    "translation": "最后通牒(信)",
+    "translation2": "letter of formal notice",
+    "deckId": "default",
+    "createdAt": "2026-04-19",
+    "reviewStage": 0,
+    "nextReview": "2026-04-20",
+    "reviewHistory": [
+      {
+        "date": "2026-04-19",
+        "remembered": false
+      },
+      {
+        "date": "2026-04-20",
+        "remembered": false
+      }
+    ],
+    "rot": 1,
     "tags": []
   }
 ]

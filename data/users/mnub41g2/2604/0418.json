@@ -6,9 +6,18 @@
     "translation2": "question oneself",
     "deckId": "default",
     "createdAt": "2026-04-18",
-    "reviewStage": 0,
-    "nextReview": "2026-04-18",
-    "reviewHistory": [],
+    "reviewStage": 1,
+    "nextReview": "2026-04-20",
+    "reviewHistory": [
+      {
+        "date": "2026-04-18",
+        "remembered": true
+      },
+      {
+        "date": "2026-04-19",
+        "remembered": true
+      }
+    ],
     "rot": 1,
     "tags": []
   },
@@ -20,8 +29,17 @@
     "deckId": "default",
     "createdAt": "2026-04-18",
     "reviewStage": 0,
-    "nextReview": "2026-04-18",
-    "reviewHistory": [],
+    "nextReview": "2026-04-19",
+    "reviewHistory": [
+      {
+        "date": "2026-04-18",
+        "remembered": false
+      },
+      {
+        "date": "2026-04-19",
+        "remembered": false
+      }
+    ],
     "rot": 1,
     "tags": []
   },
@@ -32,12 +50,16 @@
     "translation2": "Anthroposophy",
     "deckId": "default",
     "createdAt": "2026-04-18",
-    "reviewStage": 0,
-    "nextReview": "2026-04-18",
+    "reviewStage": 1,
+    "nextReview": "2026-04-20",
     "reviewHistory": [
       {
         "date": "2026-04-18",
         "remembered": false
+      },
+      {
+        "date": "2026-04-19",
+        "remembered": true
       }
     ],
     "rot": 0,
@@ -45,14 +67,23 @@
   },
   {
     "id": "mo3y6wjtouma",
-    "word": "双手惯用的",
-    "translation": "Ambidextre",
+    "word": "Ambidextre",
+    "translation": "双手惯用的",
     "translation2": "Ambidextrous",
     "deckId": "default",
     "createdAt": "2026-04-18",
     "reviewStage": 0,
-    "nextReview": "2026-04-18",
-    "reviewHistory": [],
+    "nextReview": "2026-04-19",
+    "reviewHistory": [
+      {
+        "date": "2026-04-18",
+        "remembered": false
+      },
+      {
+        "date": "2026-04-19",
+        "remembered": false
+      }
+    ],
     "rot": 0,
     "tags": []
   },
@@ -63,9 +94,18 @@
     "translation2": "Bilateral",
     "deckId": "default",
     "createdAt": "2026-04-18",
-    "reviewStage": 0,
-    "nextReview": "2026-04-18",
-    "reviewHistory": [],
+    "reviewStage": 1,
+    "nextReview": "2026-04-20",
+    "reviewHistory": [
+      {
+        "date": "2026-04-18",
+        "remembered": true
+      },
+      {
+        "date": "2026-04-19",
+        "remembered": true
+      }
+    ],
     "rot": 0,
     "tags": []
   },
@@ -76,9 +116,18 @@
     "translation2": "revelation",
     "deckId": "default",
     "createdAt": "2026-04-18",
-    "reviewStage": 0,
-    "nextReview": "2026-04-18",
-    "reviewHistory": [],
+    "reviewStage": 1,
+    "nextReview": "2026-04-20",
+    "reviewHistory": [
+      {
+        "date": "2026-04-18",
+        "remembered": true
+      },
+      {
+        "date": "2026-04-19",
+        "remembered": true
+      }
+    ],
     "rot": 0,
     "tags": []
   },
@@ -90,9 +139,18 @@
     "deckId": "default",
     "createdAt": "2026-04-18",
     "reviewStage": 0,
-    "nextReview": "2026-04-18",
-    "reviewHistory": [],
-    "rot": 0,
+    "nextReview": "2026-04-19",
+    "reviewHistory": [
+      {
+        "date": "2026-04-18",
+        "remembered": false
+      },
+      {
+        "date": "2026-04-19",
+        "remembered": false
+      }
+    ],
+    "rot": 1,
     "tags": [
       "Police et Justice"
     ]
@@ -104,10 +162,19 @@
     "translation2": "We felt that there was behind",
     "deckId": "default",
     "createdAt": "2026-04-18",
-    "reviewStage": 0,
-    "nextReview": "2026-04-18",
-    "reviewHistory": [],
-    "rot": 0,
+    "reviewStage": 1,
+    "nextReview": "2026-04-20",
+    "reviewHistory": [
+      {
+        "date": "2026-04-18",
+        "remembered": true
+      },
+      {
+        "date": "2026-04-19",
+        "remembered": true
+      }
+    ],
+    "rot": 1,
     "tags": []
   },
   {
@@ -118,35 +185,62 @@
     "deckId": "default",
     "createdAt": "2026-04-18",
     "reviewStage": 0,
-    "nextReview": "2026-04-18",
-    "reviewHistory": [],
-    "rot": 0,
+    "nextReview": "2026-04-19",
+    "reviewHistory": [
+      {
+        "date": "2026-04-18",
+        "remembered": false
+      },
+      {
+        "date": "2026-04-19",
+        "remembered": false
+      }
+    ],
+    "rot": 1,
     "tags": []
   },
   {
     "id": "mo4k76fr5eou",
     "word": "diligenter",
-    "translation": "积极处理",
+    "translation": "展开/进行/积极处理",
     "translation2": "to diligently",
     "deckId": "default",
     "createdAt": "2026-04-18",
     "reviewStage": 0,
-    "nextReview": "2026-04-18",
-    "reviewHistory": [],
-    "rot": 0,
+    "nextReview": "2026-04-19",
+    "reviewHistory": [
+      {
+        "date": "2026-04-18",
+        "remembered": false
+      },
+      {
+        "date": "2026-04-19",
+        "remembered": false
+      }
+    ],
+    "rot": 1,
     "tags": []
   },
   {
     "id": "mo4kavjk5q6r",
     "word": "expertise",
-    "translation": "专业知识",
+    "translation": "坚定n.",
     "translation2": "expertise",
     "deckId": "default",
     "createdAt": "2026-04-18",
     "reviewStage": 0,
-    "nextReview": "2026-04-18",
-    "reviewHistory": [],
-    "rot": 0,
+    "nextReview": "2026-04-19",
+    "reviewHistory": [
+      {
+        "date": "2026-04-18",
+        "remembered": false
+      },
+      {
+        "date": "2026-04-19",
+        "remembered": false
+      }
+    ],
+    "rot": 1,
     "tags": []
   },
   {
@@ -157,22 +251,40 @@
     "deckId": "default",
     "createdAt": "2026-04-18",
     "reviewStage": 0,
-    "nextReview": "2026-04-18",
-    "reviewHistory": [],
-    "rot": 0,
+    "nextReview": "2026-04-19",
+    "reviewHistory": [
+      {
+        "date": "2026-04-18",
+        "remembered": false
+      },
+      {
+        "date": "2026-04-19",
+        "remembered": false
+      }
+    ],
+    "rot": 1,
     "tags": []
   },
   {
     "id": "mo4kj5gug4zv",
     "word": "trait de personnalité",
-    "translation": "人格特质",
+    "translation": "人格特质/性格特征",
     "translation2": "personality trait",
     "deckId": "default",
     "createdAt": "2026-04-18",
     "reviewStage": 0,
-    "nextReview": "2026-04-18",
-    "reviewHistory": [],
-    "rot": 0,
+    "nextReview": "2026-04-19",
+    "reviewHistory": [
+      {
+        "date": "2026-04-18",
+        "remembered": false
+      },
+      {
+        "date": "2026-04-19",
+        "remembered": false
+      }
+    ],
+    "rot": 1,
     "tags": []
   },
   {
@@ -182,10 +294,19 @@
     "translation2": "perception of reality",
     "deckId": "default",
     "createdAt": "2026-04-18",
-    "reviewStage": 0,
-    "nextReview": "2026-04-18",
-    "reviewHistory": [],
-    "rot": 0,
+    "reviewStage": 2,
+    "nextReview": "2026-04-22",
+    "reviewHistory": [
+      {
+        "date": "2026-04-18",
+        "remembered": false
+      },
+      {
+        "date": "2026-04-19",
+        "remembered": false
+      }
+    ],
+    "rot": 1,
     "tags": []
   },
   {
@@ -196,9 +317,18 @@
     "deckId": "default",
     "createdAt": "2026-04-18",
     "reviewStage": 0,
-    "nextReview": "2026-04-18",
-    "reviewHistory": [],
-    "rot": 0,
+    "nextReview": "2026-04-19",
+    "reviewHistory": [
+      {
+        "date": "2026-04-18",
+        "remembered": false
+      },
+      {
+        "date": "2026-04-19",
+        "remembered": false
+      }
+    ],
+    "rot": 1,
     "tags": [
       "Police et Justice"
     ]
