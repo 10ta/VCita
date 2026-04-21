@@ -6,10 +6,15 @@
     "translation2": "pejorative",
     "deckId": "default",
     "createdAt": "2026-04-21",
-    "reviewStage": 0,
-    "nextReview": "2026-04-21",
-    "reviewHistory": [],
-    "rot": 0,
+    "reviewStage": 1,
+    "nextReview": "2026-04-22",
+    "reviewHistory": [
+      {
+        "date": "2026-04-21",
+        "remembered": true
+      }
+    ],
+    "rot": 1,
     "tags": []
   },
   {
@@ -19,10 +24,15 @@
     "translation2": "you're not going to come back",
     "deckId": "default",
     "createdAt": "2026-04-21",
-    "reviewStage": 0,
-    "nextReview": "2026-04-21",
-    "reviewHistory": [],
-    "rot": 0,
+    "reviewStage": 1,
+    "nextReview": "2026-04-22",
+    "reviewHistory": [
+      {
+        "date": "2026-04-21",
+        "remembered": true
+      }
+    ],
+    "rot": 1,
     "tags": []
   },
   {
@@ -35,7 +45,7 @@
     "reviewStage": 0,
     "nextReview": "2026-04-21",
     "reviewHistory": [],
-    "rot": 0,
+    "rot": 1,
     "tags": []
   },
   {
@@ -48,7 +58,150 @@
     "reviewStage": 0,
     "nextReview": "2026-04-21",
     "reviewHistory": [],
-    "rot": 0,
+    "rot": 1,
+    "tags": []
+  },
+  {
+    "id": "mo8nt4ncin6c",
+    "word": "gérant",
+    "translation": "经理",
+    "translation2": "manager",
+    "deckId": "default",
+    "createdAt": "2026-04-21",
+    "reviewStage": 0,
+    "nextReview": "2026-04-21",
+    "reviewHistory": [],
+    "rot": 1,
+    "tags": []
+  },
+  {
+    "id": "mo8o0cmtxvqv",
+    "word": "appartenant",
+    "translation": "(verb) 属于, 归属, 属于某人, 属于某物",
+    "translation2": "belonging",
+    "deckId": "default",
+    "createdAt": "2026-04-21",
+    "reviewStage": 0,
+    "nextReview": "2026-04-21",
+    "reviewHistory": [],
+    "rot": 1,
+    "tags": []
+  },
+  {
+    "id": "mo8o5l34amvr",
+    "word": "rideau",
+    "translation": "窗帘",
+    "translation2": "curtain",
+    "deckId": "default",
+    "createdAt": "2026-04-21",
+    "reviewStage": 0,
+    "nextReview": "2026-04-21",
+    "reviewHistory": [],
+    "rot": 1,
+    "tags": []
+  },
+  {
+    "id": "mo8pctwttskq",
+    "word": "bétail",
+    "translation": "牲畜/牛马",
+    "translation2": "cattle",
+    "deckId": "default",
+    "createdAt": "2026-04-21",
+    "reviewStage": 0,
+    "nextReview": "2026-04-21",
+    "reviewHistory": [],
+    "rot": 1,
+    "tags": []
+  },
+  {
+    "id": "mo8ph2jxhszp",
+    "word": "Mise en liberté",
+    "translation": "释放",
+    "translation2": "Release",
+    "deckId": "default",
+    "createdAt": "2026-04-21",
+    "reviewStage": 0,
+    "nextReview": "2026-04-21",
+    "reviewHistory": [],
+    "rot": 1,
+    "tags": []
+  },
+  {
+    "id": "mo8pp83l349p",
+    "word": "se reprocher",
+    "translation": "责怪自己",
+    "translation2": "blame oneself",
+    "deckId": "default",
+    "createdAt": "2026-04-21",
+    "reviewStage": 0,
+    "nextReview": "2026-04-21",
+    "reviewHistory": [],
+    "rot": 1,
+    "tags": []
+  },
+  {
+    "id": "mo8pxo6sjpcq",
+    "word": "dentelle",
+    "translation": "蕾丝",
+    "translation2": "lace",
+    "deckId": "default",
+    "createdAt": "2026-04-21",
+    "reviewStage": 0,
+    "nextReview": "2026-04-21",
+    "reviewHistory": [],
+    "rot": 1,
+    "tags": []
+  },
+  {
+    "id": "mo8qm5736upi",
+    "word": "sursaute",
+    "translation": "(verb) 吓一跳, 跳起来, 惊跳, 猛地一惊, 浑身一颤",
+    "translation2": "startle",
+    "deckId": "default",
+    "createdAt": "2026-04-21",
+    "reviewStage": 0,
+    "nextReview": "2026-04-21",
+    "reviewHistory": [],
+    "rot": 1,
+    "tags": []
+  },
+  {
+    "id": "mo8t8thpz9gv",
+    "word": "rebondissement",
+    "translation": "(noun) 反弹, 回弹, 反作用, 回旋, 曲折",
+    "translation2": "twist",
+    "deckId": "default",
+    "createdAt": "2026-04-21",
+    "reviewStage": 0,
+    "nextReview": "2026-04-21",
+    "reviewHistory": [],
+    "rot": 1,
+    "tags": []
+  },
+  {
+    "id": "mo8tsgeqru1f",
+    "word": "endosser",
+    "translation": "赞同v.",
+    "translation2": "endorse",
+    "deckId": "default",
+    "createdAt": "2026-04-21",
+    "reviewStage": 0,
+    "nextReview": "2026-04-21",
+    "reviewHistory": [],
+    "rot": 1,
+    "tags": []
+  },
+  {
+    "id": "mo8ttammfmtj",
+    "word": "\"Je n'endosserai pas la mort d'une fillette, je n'ai été que témoin.\"",
+    "translation": "“我不会为一个小女孩的死亡承担责任，我只是一个目击者。”",
+    "translation2": "“I will not take responsibility for the death of a little girl, I was only a witness.”",
+    "deckId": "default",
+    "createdAt": "2026-04-21",
+    "reviewStage": 0,
+    "nextReview": "2026-04-21",
+    "reviewHistory": [],
+    "rot": 1,
     "tags": []
   }
 ]
