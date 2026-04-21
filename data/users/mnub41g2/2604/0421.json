@@ -1,0 +1,54 @@
+[
+  {
+    "id": "mo8gvfi17knq",
+    "word": "péjoratif",
+    "translation": "(adj.) 贬义的, 轻蔑的, 侮辱性的",
+    "translation2": "pejorative",
+    "deckId": "default",
+    "createdAt": "2026-04-21",
+    "reviewStage": 0,
+    "nextReview": "2026-04-21",
+    "reviewHistory": [],
+    "rot": 0,
+    "tags": []
+  },
+  {
+    "id": "mo8gx6gjc8rt",
+    "word": "vous n'allez pas en revenir",
+    "translation": "“你们不会从中回来”，但实际上表达的是**“你们会非常震惊/难以置信，一时无法接受/反应过来”**",
+    "translation2": "you're not going to come back",
+    "deckId": "default",
+    "createdAt": "2026-04-21",
+    "reviewStage": 0,
+    "nextReview": "2026-04-21",
+    "reviewHistory": [],
+    "rot": 0,
+    "tags": []
+  },
+  {
+    "id": "mo8gyqlgj10u",
+    "word": "croyance dans",
+    "translation": "相信",
+    "translation2": "belief in",
+    "deckId": "default",
+    "createdAt": "2026-04-21",
+    "reviewStage": 0,
+    "nextReview": "2026-04-21",
+    "reviewHistory": [],
+    "rot": 0,
+    "tags": []
+  },
+  {
+    "id": "mo8h0r769g8i",
+    "word": "\"Vous nous faites parler en promettant des promesses pas tenues.",
+    "translation": "“你通过许诺未兑现的承诺来让我们说话。",
+    "translation2": "“You make us talk by promising unfulfilled promises.",
+    "deckId": "default",
+    "createdAt": "2026-04-21",
+    "reviewStage": 0,
+    "nextReview": "2026-04-21",
+    "reviewHistory": [],
+    "rot": 0,
+    "tags": []
+  }
+]

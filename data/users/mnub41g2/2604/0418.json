@@ -6,8 +6,8 @@
     "translation2": "question oneself",
     "deckId": "default",
     "createdAt": "2026-04-18",
-    "reviewStage": 1,
-    "nextReview": "2026-04-20",
+    "reviewStage": 2,
+    "nextReview": "2026-04-24",
     "reviewHistory": [
       {
         "date": "2026-04-18",
@@ -15,6 +15,10 @@
       },
       {
         "date": "2026-04-19",
+        "remembered": true
+      },
+      {
+        "date": "2026-04-21",
         "remembered": true
       }
     ],
@@ -28,8 +32,8 @@
     "translation2": "dig deeper into things",
     "deckId": "default",
     "createdAt": "2026-04-18",
-    "reviewStage": 0,
-    "nextReview": "2026-04-19",
+    "reviewStage": 1,
+    "nextReview": "2026-04-22",
     "reviewHistory": [
       {
         "date": "2026-04-18",
@@ -38,6 +42,10 @@
       {
         "date": "2026-04-19",
         "remembered": false
+      },
+      {
+        "date": "2026-04-21",
+        "remembered": true
       }
     ],
     "rot": 1,
@@ -45,13 +53,13 @@
   },
   {
     "id": "mo3y2n7u2n6x",
-    "word": "人神同型同性论",
-    "translation": "Anthroposophie",
+    "word": "Anthroposophie",
+    "translation": "人神同型同性论",
     "translation2": "Anthroposophy",
     "deckId": "default",
     "createdAt": "2026-04-18",
-    "reviewStage": 1,
-    "nextReview": "2026-04-20",
+    "reviewStage": 2,
+    "nextReview": "2026-04-24",
     "reviewHistory": [
       {
         "date": "2026-04-18",
@@ -60,9 +68,13 @@
       {
         "date": "2026-04-19",
         "remembered": true
+      },
+      {
+        "date": "2026-04-21",
+        "remembered": true
       }
     ],
-    "rot": 0,
+    "rot": 1,
     "tags": []
   },
   {
@@ -72,8 +84,8 @@
     "translation2": "Ambidextrous",
     "deckId": "default",
     "createdAt": "2026-04-18",
-    "reviewStage": 0,
-    "nextReview": "2026-04-19",
+    "reviewStage": 1,
+    "nextReview": "2026-04-22",
     "reviewHistory": [
       {
         "date": "2026-04-18",
@@ -82,6 +94,10 @@
       {
         "date": "2026-04-19",
         "remembered": false
+      },
+      {
+        "date": "2026-04-21",
+        "remembered": true
       }
     ],
     "rot": 0,
@@ -94,8 +110,8 @@
     "translation2": "Bilateral",
     "deckId": "default",
     "createdAt": "2026-04-18",
-    "reviewStage": 1,
-    "nextReview": "2026-04-20",
+    "reviewStage": 2,
+    "nextReview": "2026-04-24",
     "reviewHistory": [
       {
         "date": "2026-04-18",
@@ -103,6 +119,10 @@
       },
       {
         "date": "2026-04-19",
+        "remembered": true
+      },
+      {
+        "date": "2026-04-21",
         "remembered": true
       }
     ],
@@ -116,8 +136,8 @@
     "translation2": "revelation",
     "deckId": "default",
     "createdAt": "2026-04-18",
-    "reviewStage": 1,
-    "nextReview": "2026-04-20",
+    "reviewStage": 2,
+    "nextReview": "2026-04-24",
     "reviewHistory": [
       {
         "date": "2026-04-18",
@@ -125,6 +145,10 @@
       },
       {
         "date": "2026-04-19",
+        "remembered": true
+      },
+      {
+        "date": "2026-04-21",
         "remembered": true
       }
     ],
@@ -139,7 +163,7 @@
     "deckId": "default",
     "createdAt": "2026-04-18",
     "reviewStage": 0,
-    "nextReview": "2026-04-19",
+    "nextReview": "2026-04-21",
     "reviewHistory": [
       {
         "date": "2026-04-18",
@@ -147,6 +171,10 @@
       },
       {
         "date": "2026-04-19",
+        "remembered": false
+      },
+      {
+        "date": "2026-04-21",
         "remembered": false
       }
     ],
@@ -162,8 +190,8 @@
     "translation2": "We felt that there was behind",
     "deckId": "default",
     "createdAt": "2026-04-18",
-    "reviewStage": 1,
-    "nextReview": "2026-04-20",
+    "reviewStage": 2,
+    "nextReview": "2026-04-24",
     "reviewHistory": [
       {
         "date": "2026-04-18",
@@ -171,6 +199,10 @@
       },
       {
         "date": "2026-04-19",
+        "remembered": true
+      },
+      {
+        "date": "2026-04-21",
         "remembered": true
       }
     ],
@@ -184,8 +216,8 @@
     "translation2": "psychological construction",
     "deckId": "default",
     "createdAt": "2026-04-18",
-    "reviewStage": 0,
-    "nextReview": "2026-04-19",
+    "reviewStage": 1,
+    "nextReview": "2026-04-22",
     "reviewHistory": [
       {
         "date": "2026-04-18",
@@ -194,6 +226,10 @@
       {
         "date": "2026-04-19",
         "remembered": false
+      },
+      {
+        "date": "2026-04-21",
+        "remembered": true
       }
     ],
     "rot": 1,
@@ -206,8 +242,8 @@
     "translation2": "to diligently",
     "deckId": "default",
     "createdAt": "2026-04-18",
-    "reviewStage": 0,
-    "nextReview": "2026-04-19",
+    "reviewStage": 1,
+    "nextReview": "2026-04-22",
     "reviewHistory": [
       {
         "date": "2026-04-18",
@@ -216,6 +252,10 @@
       {
         "date": "2026-04-19",
         "remembered": false
+      },
+      {
+        "date": "2026-04-21",
+        "remembered": true
       }
     ],
     "rot": 1,
@@ -229,7 +269,7 @@
     "deckId": "default",
     "createdAt": "2026-04-18",
     "reviewStage": 0,
-    "nextReview": "2026-04-19",
+    "nextReview": "2026-04-21",
     "reviewHistory": [
       {
         "date": "2026-04-18",
@@ -237,6 +277,10 @@
       },
       {
         "date": "2026-04-19",
+        "remembered": false
+      },
+      {
+        "date": "2026-04-21",
         "remembered": false
       }
     ],
@@ -250,8 +294,8 @@
     "translation2": "mythomaniac",
     "deckId": "default",
     "createdAt": "2026-04-18",
-    "reviewStage": 0,
-    "nextReview": "2026-04-19",
+    "reviewStage": 1,
+    "nextReview": "2026-04-22",
     "reviewHistory": [
       {
         "date": "2026-04-18",
@@ -260,6 +304,10 @@
       {
         "date": "2026-04-19",
         "remembered": false
+      },
+      {
+        "date": "2026-04-21",
+        "remembered": true
       }
     ],
     "rot": 1,
@@ -272,8 +320,8 @@
     "translation2": "personality trait",
     "deckId": "default",
     "createdAt": "2026-04-18",
-    "reviewStage": 0,
-    "nextReview": "2026-04-19",
+    "reviewStage": 1,
+    "nextReview": "2026-04-22",
     "reviewHistory": [
       {
         "date": "2026-04-18",
@@ -282,6 +330,10 @@
       {
         "date": "2026-04-19",
         "remembered": false
+      },
+      {
+        "date": "2026-04-21",
+        "remembered": true
       }
     ],
     "rot": 1,
@@ -294,8 +346,8 @@
     "translation2": "perception of reality",
     "deckId": "default",
     "createdAt": "2026-04-18",
-    "reviewStage": 2,
-    "nextReview": "2026-04-22",
+    "reviewStage": 3,
+    "nextReview": "2026-04-28",
     "reviewHistory": [
       {
         "date": "2026-04-18",
@@ -304,6 +356,10 @@
       {
         "date": "2026-04-19",
         "remembered": false
+      },
+      {
+        "date": "2026-04-21",
+        "remembered": true
       }
     ],
     "rot": 1,
@@ -317,7 +373,7 @@
     "deckId": "default",
     "createdAt": "2026-04-18",
     "reviewStage": 0,
-    "nextReview": "2026-04-19",
+    "nextReview": "2026-04-21",
     "reviewHistory": [
       {
         "date": "2026-04-18",
@@ -326,6 +382,10 @@
       {
         "date": "2026-04-19",
         "remembered": false
+      },
+      {
+        "date": "2026-04-21",
+        "remembered": true
       }
     ],
     "rot": 1,

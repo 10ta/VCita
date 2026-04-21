@@ -6,9 +6,18 @@
     "translation2": "scream in the house",
     "deckId": "default",
     "createdAt": "2026-04-20",
-    "reviewStage": 0,
-    "nextReview": "2026-04-20",
-    "reviewHistory": [],
+    "reviewStage": 2,
+    "nextReview": "2026-04-24",
+    "reviewHistory": [
+      {
+        "date": "2026-04-20",
+        "remembered": true
+      },
+      {
+        "date": "2026-04-21",
+        "remembered": true
+      }
+    ],
     "rot": 1,
     "tags": []
   },
@@ -19,9 +28,18 @@
     "translation2": "nail",
     "deckId": "default",
     "createdAt": "2026-04-20",
-    "reviewStage": 0,
-    "nextReview": "2026-04-20",
-    "reviewHistory": [],
+    "reviewStage": 1,
+    "nextReview": "2026-04-22",
+    "reviewHistory": [
+      {
+        "date": "2026-04-20",
+        "remembered": true
+      },
+      {
+        "date": "2026-04-21",
+        "remembered": true
+      }
+    ],
     "rot": 1,
     "tags": []
   },
@@ -32,9 +50,18 @@
     "translation2": "clothing",
     "deckId": "default",
     "createdAt": "2026-04-20",
-    "reviewStage": 0,
-    "nextReview": "2026-04-20",
-    "reviewHistory": [],
+    "reviewStage": 1,
+    "nextReview": "2026-04-22",
+    "reviewHistory": [
+      {
+        "date": "2026-04-20",
+        "remembered": true
+      },
+      {
+        "date": "2026-04-21",
+        "remembered": true
+      }
+    ],
     "rot": 1,
     "tags": []
   },
@@ -46,8 +73,17 @@
     "deckId": "default",
     "createdAt": "2026-04-20",
     "reviewStage": 0,
-    "nextReview": "2026-04-20",
-    "reviewHistory": [],
+    "nextReview": "2026-04-21",
+    "reviewHistory": [
+      {
+        "date": "2026-04-20",
+        "remembered": false
+      },
+      {
+        "date": "2026-04-21",
+        "remembered": false
+      }
+    ],
     "rot": 1,
     "tags": []
   },
@@ -59,8 +95,17 @@
     "deckId": "default",
     "createdAt": "2026-04-20",
     "reviewStage": 0,
-    "nextReview": "2026-04-20",
-    "reviewHistory": [],
+    "nextReview": "2026-04-21",
+    "reviewHistory": [
+      {
+        "date": "2026-04-20",
+        "remembered": true
+      },
+      {
+        "date": "2026-04-21",
+        "remembered": true
+      }
+    ],
     "rot": 1,
     "tags": []
   },
@@ -71,9 +116,18 @@
     "translation2": "confirm or refute",
     "deckId": "default",
     "createdAt": "2026-04-20",
-    "reviewStage": 0,
-    "nextReview": "2026-04-20",
-    "reviewHistory": [],
+    "reviewStage": 1,
+    "nextReview": "2026-04-22",
+    "reviewHistory": [
+      {
+        "date": "2026-04-20",
+        "remembered": true
+      },
+      {
+        "date": "2026-04-21",
+        "remembered": true
+      }
+    ],
     "rot": 1,
     "tags": []
   },
@@ -85,8 +139,17 @@
     "deckId": "default",
     "createdAt": "2026-04-20",
     "reviewStage": 0,
-    "nextReview": "2026-04-20",
-    "reviewHistory": [],
+    "nextReview": "2026-04-21",
+    "reviewHistory": [
+      {
+        "date": "2026-04-20",
+        "remembered": true
+      },
+      {
+        "date": "2026-04-21",
+        "remembered": true
+      }
+    ],
     "rot": 1,
     "tags": []
   },
@@ -97,9 +160,18 @@
     "translation2": "",
     "deckId": "default",
     "createdAt": "2026-04-20",
-    "reviewStage": 0,
-    "nextReview": "2026-04-20",
-    "reviewHistory": [],
+    "reviewStage": 1,
+    "nextReview": "2026-04-22",
+    "reviewHistory": [
+      {
+        "date": "2026-04-20",
+        "remembered": true
+      },
+      {
+        "date": "2026-04-21",
+        "remembered": true
+      }
+    ],
     "rot": 1,
     "tags": [
       "Police et Justice"
@@ -112,9 +184,18 @@
     "translation2": "aboard several police cars",
     "deckId": "default",
     "createdAt": "2026-04-20",
-    "reviewStage": 0,
-    "nextReview": "2026-04-20",
-    "reviewHistory": [],
+    "reviewStage": 1,
+    "nextReview": "2026-04-22",
+    "reviewHistory": [
+      {
+        "date": "2026-04-20",
+        "remembered": true
+      },
+      {
+        "date": "2026-04-21",
+        "remembered": true
+      }
+    ],
     "rot": 1,
     "tags": []
   },
@@ -125,22 +206,40 @@
     "translation2": "And as Aurélie says what Myriam says, what Myriam says is true.",
     "deckId": "default",
     "createdAt": "2026-04-20",
-    "reviewStage": 0,
-    "nextReview": "2026-04-20",
-    "reviewHistory": [],
+    "reviewStage": 1,
+    "nextReview": "2026-04-22",
+    "reviewHistory": [
+      {
+        "date": "2026-04-20",
+        "remembered": true
+      },
+      {
+        "date": "2026-04-21",
+        "remembered": true
+      }
+    ],
     "rot": 1,
     "tags": []
   },
   {
     "id": "mo7asnw50gjz",
     "word": "Thierry faisait participer les enfants",
-    "translation": "蒂埃里让孩子们参与其中",
+    "translation": "Thierry 让孩子们参与其中",
     "translation2": "Thierry involved the children",
     "deckId": "default",
     "createdAt": "2026-04-20",
-    "reviewStage": 0,
-    "nextReview": "2026-04-20",
-    "reviewHistory": [],
+    "reviewStage": 1,
+    "nextReview": "2026-04-22",
+    "reviewHistory": [
+      {
+        "date": "2026-04-20",
+        "remembered": true
+      },
+      {
+        "date": "2026-04-21",
+        "remembered": true
+      }
+    ],
     "rot": 1,
     "tags": []
   },
@@ -151,9 +250,18 @@
     "translation2": "sometimes by amusing them, other times by forcing them",
     "deckId": "default",
     "createdAt": "2026-04-20",
-    "reviewStage": 0,
-    "nextReview": "2026-04-20",
-    "reviewHistory": [],
+    "reviewStage": 1,
+    "nextReview": "2026-04-22",
+    "reviewHistory": [
+      {
+        "date": "2026-04-20",
+        "remembered": true
+      },
+      {
+        "date": "2026-04-21",
+        "remembered": true
+      }
+    ],
     "rot": 1,
     "tags": []
   },
@@ -164,9 +272,18 @@
     "translation2": "mistreatment",
     "deckId": "default",
     "createdAt": "2026-04-20",
-    "reviewStage": 0,
-    "nextReview": "2026-04-20",
-    "reviewHistory": [],
+    "reviewStage": 1,
+    "nextReview": "2026-04-22",
+    "reviewHistory": [
+      {
+        "date": "2026-04-20",
+        "remembered": false
+      },
+      {
+        "date": "2026-04-21",
+        "remembered": false
+      }
+    ],
     "rot": 1,
     "tags": []
   },
@@ -177,9 +294,18 @@
     "translation2": "several elements which could be held against him”",
     "deckId": "default",
     "createdAt": "2026-04-20",
-    "reviewStage": 0,
-    "nextReview": "2026-04-20",
-    "reviewHistory": [],
+    "reviewStage": 1,
+    "nextReview": "2026-04-22",
+    "reviewHistory": [
+      {
+        "date": "2026-04-20",
+        "remembered": true
+      },
+      {
+        "date": "2026-04-21",
+        "remembered": true
+      }
+    ],
     "rot": 1,
     "tags": [
       "Police et Justice"
@@ -192,9 +318,18 @@
     "translation2": "",
     "deckId": "default",
     "createdAt": "2026-04-20",
-    "reviewStage": 0,
-    "nextReview": "2026-04-20",
-    "reviewHistory": [],
+    "reviewStage": 1,
+    "nextReview": "2026-04-22",
+    "reviewHistory": [
+      {
+        "date": "2026-04-20",
+        "remembered": true
+      },
+      {
+        "date": "2026-04-21",
+        "remembered": true
+      }
+    ],
     "rot": 1,
     "tags": []
   },
@@ -205,9 +340,18 @@
     "translation2": "vague",
     "deckId": "default",
     "createdAt": "2026-04-20",
-    "reviewStage": 0,
-    "nextReview": "2026-04-20",
-    "reviewHistory": [],
+    "reviewStage": 1,
+    "nextReview": "2026-04-22",
+    "reviewHistory": [
+      {
+        "date": "2026-04-20",
+        "remembered": true
+      },
+      {
+        "date": "2026-04-21",
+        "remembered": true
+      }
+    ],
     "rot": 1,
     "tags": []
   },
@@ -218,9 +362,18 @@
     "translation2": "we wanted to see the inside so as not to have preconceived ideas",
     "deckId": "default",
     "createdAt": "2026-04-20",
-    "reviewStage": 0,
-    "nextReview": "2026-04-20",
-    "reviewHistory": [],
+    "reviewStage": 1,
+    "nextReview": "2026-04-22",
+    "reviewHistory": [
+      {
+        "date": "2026-04-20",
+        "remembered": true
+      },
+      {
+        "date": "2026-04-21",
+        "remembered": true
+      }
+    ],
     "rot": 1,
     "tags": []
   },
@@ -231,9 +384,18 @@
     "translation2": "everyone knows and everyone is silent",
     "deckId": "default",
     "createdAt": "2026-04-20",
-    "reviewStage": 0,
-    "nextReview": "2026-04-20",
-    "reviewHistory": [],
+    "reviewStage": 1,
+    "nextReview": "2026-04-22",
+    "reviewHistory": [
+      {
+        "date": "2026-04-20",
+        "remembered": true
+      },
+      {
+        "date": "2026-04-21",
+        "remembered": true
+      }
+    ],
     "rot": 1,
     "tags": []
   },
@@ -244,9 +406,18 @@
     "translation2": "It really goes in all directions",
     "deckId": "default",
     "createdAt": "2026-04-20",
-    "reviewStage": 0,
-    "nextReview": "2026-04-20",
-    "reviewHistory": [],
+    "reviewStage": 1,
+    "nextReview": "2026-04-22",
+    "reviewHistory": [
+      {
+        "date": "2026-04-20",
+        "remembered": true
+      },
+      {
+        "date": "2026-04-21",
+        "remembered": true
+      }
+    ],
     "rot": 1,
     "tags": []
   },
@@ -257,9 +428,18 @@
     "translation2": "a taxi driver",
     "deckId": "default",
     "createdAt": "2026-04-20",
-    "reviewStage": 0,
-    "nextReview": "2026-04-20",
-    "reviewHistory": [],
+    "reviewStage": 1,
+    "nextReview": "2026-04-22",
+    "reviewHistory": [
+      {
+        "date": "2026-04-20",
+        "remembered": true
+      },
+      {
+        "date": "2026-04-21",
+        "remembered": true
+      }
+    ],
     "rot": 1,
     "tags": []
   },
@@ -270,9 +450,18 @@
     "translation2": "hidden under the covers",
     "deckId": "default",
     "createdAt": "2026-04-20",
-    "reviewStage": 0,
-    "nextReview": "2026-04-20",
-    "reviewHistory": [],
+    "reviewStage": 1,
+    "nextReview": "2026-04-22",
+    "reviewHistory": [
+      {
+        "date": "2026-04-20",
+        "remembered": true
+      },
+      {
+        "date": "2026-04-21",
+        "remembered": true
+      }
+    ],
     "rot": 1,
     "tags": []
   },
@@ -283,9 +472,18 @@
     "translation2": "I have known him well and for a long time already back then.",
     "deckId": "default",
     "createdAt": "2026-04-20",
-    "reviewStage": 0,
-    "nextReview": "2026-04-20",
-    "reviewHistory": [],
+    "reviewStage": 1,
+    "nextReview": "2026-04-22",
+    "reviewHistory": [
+      {
+        "date": "2026-04-20",
+        "remembered": true
+      },
+      {
+        "date": "2026-04-21",
+        "remembered": true
+      }
+    ],
     "rot": 1,
     "tags": []
   },
@@ -296,9 +494,18 @@
     "translation2": "go wake them up",
     "deckId": "default",
     "createdAt": "2026-04-20",
-    "reviewStage": 0,
-    "nextReview": "2026-04-20",
-    "reviewHistory": [],
+    "reviewStage": 1,
+    "nextReview": "2026-04-22",
+    "reviewHistory": [
+      {
+        "date": "2026-04-20",
+        "remembered": true
+      },
+      {
+        "date": "2026-04-21",
+        "remembered": true
+      }
+    ],
     "rot": 1,
     "tags": []
   },
@@ -309,9 +516,18 @@
     "translation2": "to be present at the time of the search.",
     "deckId": "default",
     "createdAt": "2026-04-20",
-    "reviewStage": 0,
-    "nextReview": "2026-04-20",
-    "reviewHistory": [],
+    "reviewStage": 1,
+    "nextReview": "2026-04-22",
+    "reviewHistory": [
+      {
+        "date": "2026-04-20",
+        "remembered": true
+      },
+      {
+        "date": "2026-04-21",
+        "remembered": true
+      }
+    ],
     "rot": 1,
     "tags": []
   },
@@ -323,8 +539,17 @@
     "deckId": "default",
     "createdAt": "2026-04-20",
     "reviewStage": 0,
-    "nextReview": "2026-04-20",
-    "reviewHistory": [],
+    "nextReview": "2026-04-21",
+    "reviewHistory": [
+      {
+        "date": "2026-04-20",
+        "remembered": false
+      },
+      {
+        "date": "2026-04-21",
+        "remembered": false
+      }
+    ],
     "rot": 1,
     "tags": []
   },
@@ -335,9 +560,18 @@
     "translation2": "no objective element",
     "deckId": "default",
     "createdAt": "2026-04-20",
-    "reviewStage": 0,
-    "nextReview": "2026-04-20",
-    "reviewHistory": [],
+    "reviewStage": 1,
+    "nextReview": "2026-04-22",
+    "reviewHistory": [
+      {
+        "date": "2026-04-20",
+        "remembered": false
+      },
+      {
+        "date": "2026-04-21",
+        "remembered": false
+      }
+    ],
     "rot": 1,
     "tags": [
       "Police et Justice"
@@ -350,9 +584,18 @@
     "translation2": "no proof",
     "deckId": "default",
     "createdAt": "2026-04-20",
-    "reviewStage": 0,
-    "nextReview": "2026-04-20",
-    "reviewHistory": [],
+    "reviewStage": 1,
+    "nextReview": "2026-04-22",
+    "reviewHistory": [
+      {
+        "date": "2026-04-20",
+        "remembered": true
+      },
+      {
+        "date": "2026-04-21",
+        "remembered": true
+      }
+    ],
     "rot": 1,
     "tags": []
   },
@@ -363,9 +606,18 @@
     "translation2": "cataclysm",
     "deckId": "default",
     "createdAt": "2026-04-20",
-    "reviewStage": 0,
-    "nextReview": "2026-04-20",
-    "reviewHistory": [],
+    "reviewStage": 1,
+    "nextReview": "2026-04-22",
+    "reviewHistory": [
+      {
+        "date": "2026-04-20",
+        "remembered": true
+      },
+      {
+        "date": "2026-04-21",
+        "remembered": true
+      }
+    ],
     "rot": 1,
     "tags": []
   },
@@ -377,8 +629,17 @@
     "deckId": "default",
     "createdAt": "2026-04-20",
     "reviewStage": 0,
-    "nextReview": "2026-04-20",
-    "reviewHistory": [],
+    "nextReview": "2026-04-21",
+    "reviewHistory": [
+      {
+        "date": "2026-04-20",
+        "remembered": false
+      },
+      {
+        "date": "2026-04-21",
+        "remembered": false
+      }
+    ],
     "rot": 1,
     "tags": []
   },
@@ -389,9 +650,18 @@
     "translation2": "we reach degree zero of humanity",
     "deckId": "default",
     "createdAt": "2026-04-20",
-    "reviewStage": 0,
-    "nextReview": "2026-04-20",
-    "reviewHistory": [],
+    "reviewStage": 1,
+    "nextReview": "2026-04-22",
+    "reviewHistory": [
+      {
+        "date": "2026-04-20",
+        "remembered": true
+      },
+      {
+        "date": "2026-04-21",
+        "remembered": true
+      }
+    ],
     "rot": 1,
     "tags": []
   },
@@ -403,8 +673,17 @@
     "deckId": "default",
     "createdAt": "2026-04-20",
     "reviewStage": 0,
-    "nextReview": "2026-04-20",
-    "reviewHistory": [],
+    "nextReview": "2026-04-21",
+    "reviewHistory": [
+      {
+        "date": "2026-04-20",
+        "remembered": false
+      },
+      {
+        "date": "2026-04-21",
+        "remembered": false
+      }
+    ],
     "rot": 1,
     "tags": []
   },
@@ -415,9 +694,18 @@
     "translation2": "constantly",
     "deckId": "default",
     "createdAt": "2026-04-20",
-    "reviewStage": 0,
-    "nextReview": "2026-04-20",
-    "reviewHistory": [],
+    "reviewStage": 1,
+    "nextReview": "2026-04-22",
+    "reviewHistory": [
+      {
+        "date": "2026-04-20",
+        "remembered": true
+      },
+      {
+        "date": "2026-04-21",
+        "remembered": true
+      }
+    ],
     "rot": 1,
     "tags": []
   },
@@ -428,9 +716,18 @@
     "translation2": "?",
     "deckId": "default",
     "createdAt": "2026-04-20",
-    "reviewStage": 0,
-    "nextReview": "2026-04-20",
-    "reviewHistory": [],
+    "reviewStage": 1,
+    "nextReview": "2026-04-22",
+    "reviewHistory": [
+      {
+        "date": "2026-04-20",
+        "remembered": true
+      },
+      {
+        "date": "2026-04-21",
+        "remembered": true
+      }
+    ],
     "rot": 1,
     "tags": []
   },
@@ -441,9 +738,18 @@
     "translation2": "psychological expertise",
     "deckId": "default",
     "createdAt": "2026-04-20",
-    "reviewStage": 0,
-    "nextReview": "2026-04-20",
-    "reviewHistory": [],
+    "reviewStage": 1,
+    "nextReview": "2026-04-22",
+    "reviewHistory": [
+      {
+        "date": "2026-04-20",
+        "remembered": true
+      },
+      {
+        "date": "2026-04-21",
+        "remembered": true
+      }
+    ],
     "rot": 1,
     "tags": []
   },
@@ -454,9 +760,18 @@
     "translation2": "A large part of the case rests on the words of the children.",
     "deckId": "default",
     "createdAt": "2026-04-20",
-    "reviewStage": 0,
-    "nextReview": "2026-04-20",
-    "reviewHistory": [],
+    "reviewStage": 1,
+    "nextReview": "2026-04-22",
+    "reviewHistory": [
+      {
+        "date": "2026-04-20",
+        "remembered": true
+      },
+      {
+        "date": "2026-04-21",
+        "remembered": true
+      }
+    ],
     "rot": 1,
     "tags": []
   },
@@ -467,9 +782,18 @@
     "translation2": "we move forward cautiously",
     "deckId": "default",
     "createdAt": "2026-04-20",
-    "reviewStage": 0,
-    "nextReview": "2026-04-20",
-    "reviewHistory": [],
+    "reviewStage": 1,
+    "nextReview": "2026-04-22",
+    "reviewHistory": [
+      {
+        "date": "2026-04-20",
+        "remembered": true
+      },
+      {
+        "date": "2026-04-21",
+        "remembered": true
+      }
+    ],
     "rot": 1,
     "tags": []
   },
@@ -480,9 +804,18 @@
     "translation2": "We need certainty",
     "deckId": "default",
     "createdAt": "2026-04-20",
-    "reviewStage": 0,
-    "nextReview": "2026-04-20",
-    "reviewHistory": [],
+    "reviewStage": 1,
+    "nextReview": "2026-04-22",
+    "reviewHistory": [
+      {
+        "date": "2026-04-20",
+        "remembered": true
+      },
+      {
+        "date": "2026-04-21",
+        "remembered": true
+      }
+    ],
     "rot": 1,
     "tags": []
   },
@@ -493,9 +826,18 @@
     "translation2": "a flood of accusations",
     "deckId": "default",
     "createdAt": "2026-04-20",
-    "reviewStage": 0,
-    "nextReview": "2026-04-20",
-    "reviewHistory": [],
+    "reviewStage": 1,
+    "nextReview": "2026-04-22",
+    "reviewHistory": [
+      {
+        "date": "2026-04-20",
+        "remembered": true
+      },
+      {
+        "date": "2026-04-21",
+        "remembered": true
+      }
+    ],
     "rot": 1,
     "tags": []
   },
@@ -506,9 +848,18 @@
     "translation2": "denounced by the other half",
     "deckId": "default",
     "createdAt": "2026-04-20",
-    "reviewStage": 0,
-    "nextReview": "2026-04-20",
-    "reviewHistory": [],
+    "reviewStage": 1,
+    "nextReview": "2026-04-22",
+    "reviewHistory": [
+      {
+        "date": "2026-04-20",
+        "remembered": true
+      },
+      {
+        "date": "2026-04-21",
+        "remembered": true
+      }
+    ],
     "rot": 1,
     "tags": []
   },
@@ -520,8 +871,17 @@
     "deckId": "default",
     "createdAt": "2026-04-20",
     "reviewStage": 0,
-    "nextReview": "2026-04-20",
-    "reviewHistory": [],
+    "nextReview": "2026-04-21",
+    "reviewHistory": [
+      {
+        "date": "2026-04-20",
+        "remembered": false
+      },
+      {
+        "date": "2026-04-21",
+        "remembered": false
+      }
+    ],
     "rot": 1,
     "tags": []
   },
@@ -532,9 +892,18 @@
     "translation2": "sexual connotation",
     "deckId": "default",
     "createdAt": "2026-04-20",
-    "reviewStage": 0,
-    "nextReview": "2026-04-20",
-    "reviewHistory": [],
+    "reviewStage": 1,
+    "nextReview": "2026-04-22",
+    "reviewHistory": [
+      {
+        "date": "2026-04-20",
+        "remembered": true
+      },
+      {
+        "date": "2026-04-21",
+        "remembered": true
+      }
+    ],
     "rot": 1,
     "tags": []
   },
@@ -546,8 +915,17 @@
     "deckId": "default",
     "createdAt": "2026-04-20",
     "reviewStage": 0,
-    "nextReview": "2026-04-20",
-    "reviewHistory": [],
+    "nextReview": "2026-04-21",
+    "reviewHistory": [
+      {
+        "date": "2026-04-20",
+        "remembered": false
+      },
+      {
+        "date": "2026-04-21",
+        "remembered": false
+      }
+    ],
     "rot": 1,
     "tags": []
   },
@@ -559,8 +937,17 @@
     "deckId": "default",
     "createdAt": "2026-04-20",
     "reviewStage": 0,
-    "nextReview": "2026-04-20",
-    "reviewHistory": [],
+    "nextReview": "2026-04-21",
+    "reviewHistory": [
+      {
+        "date": "2026-04-20",
+        "remembered": false
+      },
+      {
+        "date": "2026-04-21",
+        "remembered": false
+      }
+    ],
     "rot": 1,
     "tags": []
   },
@@ -571,9 +958,18 @@
     "translation2": "incestuous Incest is rare for a mother.",
     "deckId": "default",
     "createdAt": "2026-04-20",
-    "reviewStage": 0,
-    "nextReview": "2026-04-20",
-    "reviewHistory": [],
+    "reviewStage": 1,
+    "nextReview": "2026-04-22",
+    "reviewHistory": [
+      {
+        "date": "2026-04-20",
+        "remembered": true
+      },
+      {
+        "date": "2026-04-21",
+        "remembered": true
+      }
+    ],
     "rot": 1,
     "tags": []
   },
@@ -585,8 +981,17 @@
     "deckId": "default",
     "createdAt": "2026-04-20",
     "reviewStage": 0,
-    "nextReview": "2026-04-20",
-    "reviewHistory": [],
+    "nextReview": "2026-04-21",
+    "reviewHistory": [
+      {
+        "date": "2026-04-20",
+        "remembered": false
+      },
+      {
+        "date": "2026-04-21",
+        "remembered": false
+      }
+    ],
     "rot": 1,
     "tags": []
   },
@@ -597,9 +1002,18 @@
     "translation2": "Delarue and Frank Berton were quite offensive, quite present, they occupied the field a lot.",
     "deckId": "default",
     "createdAt": "2026-04-20",
-    "reviewStage": 0,
-    "nextReview": "2026-04-20",
-    "reviewHistory": [],
+    "reviewStage": 2,
+    "nextReview": "2026-04-24",
+    "reviewHistory": [
+      {
+        "date": "2026-04-20",
+        "remembered": false
+      },
+      {
+        "date": "2026-04-21",
+        "remembered": false
+      }
+    ],
     "rot": 1,
     "tags": []
   },
@@ -610,9 +1024,18 @@
     "translation2": "First a priori that comes, He is convinced that he has got his hands on the file of the century.",
     "deckId": "default",
     "createdAt": "2026-04-20",
-    "reviewStage": 0,
-    "nextReview": "2026-04-20",
-    "reviewHistory": [],
+    "reviewStage": 2,
+    "nextReview": "2026-04-24",
+    "reviewHistory": [
+      {
+        "date": "2026-04-20",
+        "remembered": true
+      },
+      {
+        "date": "2026-04-21",
+        "remembered": true
+      }
+    ],
     "rot": 1,
     "tags": []
   },
@@ -624,8 +1047,17 @@
     "deckId": "default",
     "createdAt": "2026-04-20",
     "reviewStage": 0,
-    "nextReview": "2026-04-20",
-    "reviewHistory": [],
+    "nextReview": "2026-04-21",
+    "reviewHistory": [
+      {
+        "date": "2026-04-20",
+        "remembered": false
+      },
+      {
+        "date": "2026-04-21",
+        "remembered": false
+      }
+    ],
     "rot": 1,
     "tags": []
   },
@@ -637,8 +1069,17 @@
     "deckId": "default",
     "createdAt": "2026-04-20",
     "reviewStage": 0,
-    "nextReview": "2026-04-20",
-    "reviewHistory": [],
+    "nextReview": "2026-04-21",
+    "reviewHistory": [
+      {
+        "date": "2026-04-20",
+        "remembered": false
+      },
+      {
+        "date": "2026-04-21",
+        "remembered": false
+      }
+    ],
     "rot": 1,
     "tags": []
   }
