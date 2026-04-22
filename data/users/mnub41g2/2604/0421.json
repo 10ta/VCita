@@ -6,12 +6,16 @@
     "translation2": "pejorative",
     "deckId": "default",
     "createdAt": "2026-04-21",
-    "reviewStage": 1,
-    "nextReview": "2026-04-22",
+    "reviewStage": 2,
+    "nextReview": "2026-04-25",
     "reviewHistory": [
       {
         "date": "2026-04-21",
         "remembered": true
+      },
+      {
+        "date": "2026-04-22",
+        "remembered": false
       }
     ],
     "rot": 1,
@@ -24,11 +28,15 @@
     "translation2": "you're not going to come back",
     "deckId": "default",
     "createdAt": "2026-04-21",
-    "reviewStage": 1,
-    "nextReview": "2026-04-22",
+    "reviewStage": 2,
+    "nextReview": "2026-04-25",
     "reviewHistory": [
       {
         "date": "2026-04-21",
+        "remembered": true
+      },
+      {
+        "date": "2026-04-22",
         "remembered": true
       }
     ],
@@ -38,13 +46,22 @@
   {
     "id": "mo8gyqlgj10u",
     "word": "croyance dans",
-    "translation": "相信",
+    "translation": "相信(特别强烈的)",
     "translation2": "belief in",
     "deckId": "default",
     "createdAt": "2026-04-21",
-    "reviewStage": 0,
-    "nextReview": "2026-04-21",
-    "reviewHistory": [],
+    "reviewStage": 1,
+    "nextReview": "2026-04-23",
+    "reviewHistory": [
+      {
+        "date": "2026-04-21",
+        "remembered": true
+      },
+      {
+        "date": "2026-04-22",
+        "remembered": true
+      }
+    ],
     "rot": 1,
     "tags": []
   },
@@ -56,8 +73,17 @@
     "deckId": "default",
     "createdAt": "2026-04-21",
     "reviewStage": 0,
-    "nextReview": "2026-04-21",
-    "reviewHistory": [],
+    "nextReview": "2026-04-22",
+    "reviewHistory": [
+      {
+        "date": "2026-04-21",
+        "remembered": false
+      },
+      {
+        "date": "2026-04-22",
+        "remembered": false
+      }
+    ],
     "rot": 1,
     "tags": []
   },
@@ -69,8 +95,17 @@
     "deckId": "default",
     "createdAt": "2026-04-21",
     "reviewStage": 0,
-    "nextReview": "2026-04-21",
-    "reviewHistory": [],
+    "nextReview": "2026-04-22",
+    "reviewHistory": [
+      {
+        "date": "2026-04-21",
+        "remembered": false
+      },
+      {
+        "date": "2026-04-22",
+        "remembered": false
+      }
+    ],
     "rot": 1,
     "tags": []
   },
@@ -82,8 +117,17 @@
     "deckId": "default",
     "createdAt": "2026-04-21",
     "reviewStage": 0,
-    "nextReview": "2026-04-21",
-    "reviewHistory": [],
+    "nextReview": "2026-04-22",
+    "reviewHistory": [
+      {
+        "date": "2026-04-21",
+        "remembered": false
+      },
+      {
+        "date": "2026-04-22",
+        "remembered": false
+      }
+    ],
     "rot": 1,
     "tags": []
   },
@@ -95,8 +139,17 @@
     "deckId": "default",
     "createdAt": "2026-04-21",
     "reviewStage": 0,
-    "nextReview": "2026-04-21",
-    "reviewHistory": [],
+    "nextReview": "2026-04-22",
+    "reviewHistory": [
+      {
+        "date": "2026-04-21",
+        "remembered": false
+      },
+      {
+        "date": "2026-04-22",
+        "remembered": false
+      }
+    ],
     "rot": 1,
     "tags": []
   },
@@ -108,21 +161,39 @@
     "deckId": "default",
     "createdAt": "2026-04-21",
     "reviewStage": 0,
-    "nextReview": "2026-04-21",
-    "reviewHistory": [],
+    "nextReview": "2026-04-22",
+    "reviewHistory": [
+      {
+        "date": "2026-04-21",
+        "remembered": false
+      },
+      {
+        "date": "2026-04-22",
+        "remembered": false
+      }
+    ],
     "rot": 1,
     "tags": []
   },
   {
     "id": "mo8ph2jxhszp",
     "word": "Mise en liberté",
-    "translation": "释放",
+    "translation": "释放(mettre+",
     "translation2": "Release",
     "deckId": "default",
     "createdAt": "2026-04-21",
     "reviewStage": 0,
-    "nextReview": "2026-04-21",
-    "reviewHistory": [],
+    "nextReview": "2026-04-22",
+    "reviewHistory": [
+      {
+        "date": "2026-04-21",
+        "remembered": false
+      },
+      {
+        "date": "2026-04-22",
+        "remembered": false
+      }
+    ],
     "rot": 1,
     "tags": []
   },
@@ -133,9 +204,18 @@
     "translation2": "blame oneself",
     "deckId": "default",
     "createdAt": "2026-04-21",
-    "reviewStage": 0,
-    "nextReview": "2026-04-21",
-    "reviewHistory": [],
+    "reviewStage": 1,
+    "nextReview": "2026-04-23",
+    "reviewHistory": [
+      {
+        "date": "2026-04-21",
+        "remembered": true
+      },
+      {
+        "date": "2026-04-22",
+        "remembered": true
+      }
+    ],
     "rot": 1,
     "tags": []
   },
@@ -146,9 +226,18 @@
     "translation2": "lace",
     "deckId": "default",
     "createdAt": "2026-04-21",
-    "reviewStage": 0,
-    "nextReview": "2026-04-21",
-    "reviewHistory": [],
+    "reviewStage": 1,
+    "nextReview": "2026-04-23",
+    "reviewHistory": [
+      {
+        "date": "2026-04-21",
+        "remembered": false
+      },
+      {
+        "date": "2026-04-22",
+        "remembered": false
+      }
+    ],
     "rot": 1,
     "tags": []
   },
@@ -160,8 +249,17 @@
     "deckId": "default",
     "createdAt": "2026-04-21",
     "reviewStage": 0,
-    "nextReview": "2026-04-21",
-    "reviewHistory": [],
+    "nextReview": "2026-04-22",
+    "reviewHistory": [
+      {
+        "date": "2026-04-21",
+        "remembered": false
+      },
+      {
+        "date": "2026-04-22",
+        "remembered": false
+      }
+    ],
     "rot": 1,
     "tags": []
   },
@@ -173,21 +271,17 @@
     "deckId": "default",
     "createdAt": "2026-04-21",
     "reviewStage": 0,
-    "nextReview": "2026-04-21",
-    "reviewHistory": [],
-    "rot": 1,
-    "tags": []
-  },
-  {
-    "id": "mo8tsgeqru1f",
-    "word": "endosser",
-    "translation": "赞同v.",
-    "translation2": "endorse",
-    "deckId": "default",
-    "createdAt": "2026-04-21",
-    "reviewStage": 0,
-    "nextReview": "2026-04-21",
-    "reviewHistory": [],
+    "nextReview": "2026-04-22",
+    "reviewHistory": [
+      {
+        "date": "2026-04-21",
+        "remembered": false
+      },
+      {
+        "date": "2026-04-22",
+        "remembered": false
+      }
+    ],
     "rot": 1,
     "tags": []
   },
@@ -198,9 +292,18 @@
     "translation2": "“I will not take responsibility for the death of a little girl, I was only a witness.”",
     "deckId": "default",
     "createdAt": "2026-04-21",
-    "reviewStage": 0,
-    "nextReview": "2026-04-21",
-    "reviewHistory": [],
+    "reviewStage": 1,
+    "nextReview": "2026-04-23",
+    "reviewHistory": [
+      {
+        "date": "2026-04-21",
+        "remembered": true
+      },
+      {
+        "date": "2026-04-22",
+        "remembered": true
+      }
+    ],
     "rot": 1,
     "tags": []
   }

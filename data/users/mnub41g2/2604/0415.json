@@ -6,8 +6,8 @@
     "translation2": "I'm about to pig out",
     "deckId": "default",
     "createdAt": "2026-04-15",
-    "reviewStage": 1,
-    "nextReview": "2026-04-21",
+    "reviewStage": 0,
+    "nextReview": "2026-04-22",
     "reviewHistory": [
       {
         "date": "2026-04-15",
@@ -19,6 +19,10 @@
       },
       {
         "date": "2026-04-18",
+        "remembered": false
+      },
+      {
+        "date": "2026-04-22",
         "remembered": false
       }
     ],
@@ -32,8 +36,8 @@
     "translation2": "penalty",
     "deckId": "default",
     "createdAt": "2026-04-15",
-    "reviewStage": 0,
-    "nextReview": "2026-04-20",
+    "reviewStage": 1,
+    "nextReview": "2026-04-23",
     "reviewHistory": [
       {
         "date": "2026-04-15",
@@ -45,6 +49,10 @@
       },
       {
         "date": "2026-04-18",
+        "remembered": true
+      },
+      {
+        "date": "2026-04-22",
         "remembered": true
       }
     ],

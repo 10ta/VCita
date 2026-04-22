@@ -1410,7 +1410,7 @@
   {
     "id": "mnvh4boz82hp",
     "word": "une cour de justice, la cour d'assise, la cour d'appel",
-    "translation": "法院、重罪法庭、上��法院",
+    "translation": "法院、重罪法庭、上������法院",
     "translation2": "a court of justice, the assize court, the court of appeal",
     "deckId": "default",
     "createdAt": "2026-04-12",
@@ -2114,7 +2114,7 @@
   {
     "id": "mnvmd9szds18",
     "word": "ê écroué, incarcéré mis en garde à vue",
-    "translation": "ê 被监禁，被警方拘留",
+    "translation": "ê 被监禁，被警方拘留(mettre+",
     "translation2": "ê imprisoned, incarcerated placed in police custody",
     "deckId": "default",
     "createdAt": "2026-04-12",
@@ -2146,7 +2146,7 @@
   {
     "id": "mnvme04ox1co",
     "word": "mis en examen, mis/placé en détention provisoire",
-    "translation": "[处置期] 起诉(新)、审前拘留",
+    "translation": "[处置期] 起诉(新)(mettre+、审前拘留",
     "translation2": "indicted, placed/placed in pre-trial detention",
     "deckId": "default",
     "createdAt": "2026-04-12",
@@ -2242,7 +2242,7 @@
   {
     "id": "mnvmfemvd7zt",
     "word": "une mise en examen",
-    "translation": "被正式调查",
+    "translation": "被正式调查(mettre+",
     "translation2": "one indicted",
     "deckId": "default",
     "createdAt": "2026-04-12",
@@ -2722,7 +2722,7 @@
   {
     "id": "mnvtyuulfe58",
     "word": "une mise en demeure de payer",
-    "translation": "催告函“限期支付正式通知”",
+    "translation": "催告函“限期支付正式通知”(mettre+",
     "translation2": "a formal notice to pay",
     "deckId": "default",
     "createdAt": "2026-04-12",
