@@ -9,46 +9,7 @@
     "reviewStage": 0,
     "nextReview": "2026-04-26",
     "reviewHistory": [],
-    "rot": 0,
-    "tags": []
-  },
-  {
-    "id": "mofg8dryzfzb",
-    "word": "raccrocher",
-    "translation": "翻译失败",
-    "translation2": "翻译失败",
-    "deckId": "default",
-    "createdAt": "2026-04-26",
-    "reviewStage": 0,
-    "nextReview": "2026-04-26",
-    "reviewHistory": [],
-    "rot": 0,
-    "tags": []
-  },
-  {
-    "id": "mofgiigvybwv",
-    "word": "il présentait ses excuses, les deux genoux à terre",
-    "translation": "翻译失败",
-    "translation2": "翻译失败",
-    "deckId": "default",
-    "createdAt": "2026-04-26",
-    "reviewStage": 0,
-    "nextReview": "2026-04-26",
-    "reviewHistory": [],
-    "rot": 0,
-    "tags": []
-  },
-  {
-    "id": "mofhtkdhkbvh",
-    "word": "faillite",
-    "translation": "翻译失败",
-    "translation2": "翻译失败",
-    "deckId": "default",
-    "createdAt": "2026-04-26",
-    "reviewStage": 0,
-    "nextReview": "2026-04-26",
-    "reviewHistory": [],
-    "rot": 0,
+    "rot": 1,
     "tags": []
   },
   {
@@ -61,7 +22,46 @@
     "reviewStage": 0,
     "nextReview": "2026-04-26",
     "reviewHistory": [],
-    "rot": 0,
+    "rot": 1,
+    "tags": []
+  },
+  {
+    "id": "mofkv3ind2ql",
+    "word": "faillite",
+    "translation": "破产",
+    "translation2": "bankruptcy",
+    "deckId": "default",
+    "createdAt": "2026-04-26",
+    "reviewStage": 0,
+    "nextReview": "2026-04-26",
+    "reviewHistory": [],
+    "rot": 1,
+    "tags": []
+  },
+  {
+    "id": "mofkxglkxn3k",
+    "word": "il présentait ses excuses, les deux genoux à terre",
+    "translation": "他道歉，双膝跪在地上",
+    "translation2": "he apologized, both knees on the ground",
+    "deckId": "default",
+    "createdAt": "2026-04-26",
+    "reviewStage": 0,
+    "nextReview": "2026-04-26",
+    "reviewHistory": [],
+    "rot": 1,
+    "tags": []
+  },
+  {
+    "id": "mofl3l3sviu5",
+    "word": "raccrocher",
+    "translation": "挂断电话",
+    "translation2": "to hang up",
+    "deckId": "default",
+    "createdAt": "2026-04-26",
+    "reviewStage": 0,
+    "nextReview": "2026-04-26",
+    "reviewHistory": [],
+    "rot": 1,
     "tags": []
   }
 ]

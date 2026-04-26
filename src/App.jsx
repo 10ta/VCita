@@ -20,12 +20,12 @@ const LANGS = [
 ];
 const LN = Object.fromEntries(LANGS.map(l => [l.code, l.label]));
 
-const todayStr = () => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`; };
-const addDays = (ds, n) => { const d = new Date(ds+"T00:00:00"); d.setDate(d.getDate()+n); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`; };
-const fmtShort = ds => ds.slice(2).replace(/-/g,"");
+const todayStr = () => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`; };
+const addDays = (ds, n) => { const d = new Date(ds + "T00:00:00"); d.setDate(d.getDate() + n); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`; };
+const fmtShort = ds => ds.slice(2).replace(/-/g, "");
 const dateToDayPath = (userId, ds) => { const [y, m, d] = ds.split("-"); return `users/${userId}/${y.slice(2)}${m}/${m}${d}.json`; };
 const userMetaPath = uid => `users/${uid}/meta.json`;
-const dayDiff = (dateStr) => { const t = new Date(todayStr()+"T00:00:00"), d = new Date(dateStr+"T00:00:00"); return Math.round((d - t) / 86400000); };
+const dayDiff = (dateStr) => { const t = new Date(todayStr() + "T00:00:00"), d = new Date(dateStr + "T00:00:00"); return Math.round((d - t) / 86400000); };
 const getScheduleDates = card => EBB.map(d => addDays(card.createdAt, d));
 
 // ─── Logging ───
@@ -38,7 +38,7 @@ const log = (level, msg, data) => {
     // Keep last 500
     if (logs.length > 500) logs.splice(0, logs.length - 500);
     localStorage.setItem(LOG_KEY, JSON.stringify(logs));
-  } catch {}
+  } catch { }
   if (level === "error") console.error(`[VF] ${msg}`, data);
   else console.log(`[VF] ${msg}`, data || "");
 };
@@ -63,20 +63,26 @@ const speak = (text, lang) => {
 const api = {
   async write(p, data) {
     log("debug", "api.write", { path: p });
-    await fetch(`${BASE}api/write`, { method: "POST", headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ path: p, data: typeof data === "string" ? data : JSON.stringify(data, null, 2) }) });
+    await fetch(`${BASE}api/write`, {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ path: p, data: typeof data === "string" ? data : JSON.stringify(data, null, 2) })
+    });
   },
   async read(p) {
-    const r = await fetch(`${BASE}api/read`, { method: "POST", headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ path: p }) });
+    const r = await fetch(`${BASE}api/read`, {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ path: p })
+    });
     const j = await r.json();
     if (!j.exists) return null;
     try { return JSON.parse(j.data); } catch { return j.data; }
   },
   async del(p) {
     log("debug", "api.delete", { path: p });
-    await fetch(`${BASE}api/delete`, { method: "POST", headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ path: p }) });
+    await fetch(`${BASE}api/delete`, {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ path: p })
+    });
   },
   async list() {
     const r = await fetch(`${BASE}api/list`);
@@ -155,33 +161,43 @@ const batchRemoveCards = async (uid, cardList) => {
 
 const gTranslate = async (word, sl, tl) => {
   try {
-    const r = await fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=${sl}&tl=${tl}&dt=t&dj=1&q=${encodeURIComponent(word)}`);
+    const r = await fetch(`https://translate.googleapis.com/translate_a/single?client=dict-chrome-ex&sl=${sl}&tl=${tl}&dt=t&dj=1&q=${encodeURIComponent(word)}`);
     const d = await r.json();
     return d.sentences?.map(s => s.trans).filter(Boolean).join("") || "";
-  } catch (e) { log("error", "translate failed", { word, sl, tl, error: e.message }); return "翻译失败"; }
+  } catch (e) {
+    // 在 Node.js 中，fetch 的错误详情通常在 e.cause 里
+    console.error("Full Error:", e);
+    console.error("Error Cause:", e.cause);
+    log("error", "translate failed", {
+      message: e.message,
+      stack: e.stack,
+      cause: e.cause // 这一行最重要
+    });
+    return "翻译失败: " + e.message + e.stack + e.cause;
+  }
 };
 
 const I = {
-  Plus: () => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>,
-  Check: () => <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><polyline points="20 6 9 17 4 12"/></svg>,
-  X: () => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>,
-  Download: () => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>,
-  Trash: () => <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 011-1h4a1 1 0 011 1v2"/></svg>,
-  Folder: () => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z"/></svg>,
-  Edit: () => <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>,
-  User: () => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>,
-  ChevronDown: () => <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><polyline points="6 9 12 15 18 9"/></svg>,
-  Book: () => <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M4 19.5A2.5 2.5 0 016.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"/></svg>,
-  PlusCircle: () => <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>,
-  RefreshCw: () => <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/></svg>,
-  Layers: () => <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg>,
-  Save: () => <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>,
-  Speaker: ({size=13}) => <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M19.07 4.93a10 10 0 010 14.14"/><path d="M15.54 8.46a5 5 0 010 7.07"/></svg>,
-  Rotate: () => <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 102.13-9.36L1 10"/></svg>,
-  ArrowUp: () => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>,
-  ArrowDown: () => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/></svg>,
-  Flame: () => <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M8.5 14.5A2.5 2.5 0 0011 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 11-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 002.5 2.5z"/></svg>,
-  Tag: () => <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M20.59 13.41l-7.17 7.17a2 2 0 01-2.83 0L2 12V2h10l8.59 8.59a2 2 0 010 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg>,
+  Plus: () => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" /></svg>,
+  Check: () => <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><polyline points="20 6 9 17 4 12" /></svg>,
+  X: () => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg>,
+  Download: () => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" /><polyline points="7 10 12 15 17 10" /><line x1="12" y1="15" x2="12" y2="3" /></svg>,
+  Trash: () => <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><polyline points="3 6 5 6 21 6" /><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6" /><path d="M10 11v6" /><path d="M14 11v6" /><path d="M9 6V4a1 1 0 011-1h4a1 1 0 011 1v2" /></svg>,
+  Folder: () => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z" /></svg>,
+  Edit: () => <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7" /><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z" /></svg>,
+  User: () => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2" /><circle cx="12" cy="7" r="4" /></svg>,
+  ChevronDown: () => <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><polyline points="6 9 12 15 18 9" /></svg>,
+  Book: () => <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M4 19.5A2.5 2.5 0 016.5 17H20" /><path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z" /></svg>,
+  PlusCircle: () => <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="16" /><line x1="8" y1="12" x2="16" y2="12" /></svg>,
+  RefreshCw: () => <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><polyline points="23 4 23 10 17 10" /><polyline points="1 20 1 14 7 14" /><path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15" /></svg>,
+  Layers: () => <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><polygon points="12 2 2 7 12 12 22 7 12 2" /><polyline points="2 17 12 22 22 17" /><polyline points="2 12 12 17 22 12" /></svg>,
+  Save: () => <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z" /><polyline points="17 21 17 13 7 13 7 21" /><polyline points="7 3 7 8 15 8" /></svg>,
+  Speaker: ({ size = 13 }) => <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" /><path d="M19.07 4.93a10 10 0 010 14.14" /><path d="M15.54 8.46a5 5 0 010 7.07" /></svg>,
+  Rotate: () => <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><polyline points="1 4 1 10 7 10" /><path d="M3.51 15a9 9 0 102.13-9.36L1 10" /></svg>,
+  ArrowUp: () => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><line x1="12" y1="19" x2="12" y2="5" /><polyline points="5 12 12 5 19 12" /></svg>,
+  ArrowDown: () => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><line x1="12" y1="5" x2="12" y2="19" /><polyline points="19 12 12 19 5 12" /></svg>,
+  Flame: () => <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M8.5 14.5A2.5 2.5 0 0011 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 11-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 002.5 2.5z" /></svg>,
+  Tag: () => <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M20.59 13.41l-7.17 7.17a2 2 0 01-2.83 0L2 12V2h10l8.59 8.59a2 2 0 010 2.82z" /><line x1="7" y1="7" x2="7.01" y2="7" /></svg>,
 };
 
 // Rotation display helper
@@ -189,7 +205,7 @@ const getCardDisplay = (card, meta) => {
   const rot = (card.rot || 0) % 3;
   const texts = [card.word, card.translation, card.translation2];
   const langs = [meta.sourceLang, meta.targetLang1, meta.targetLang2];
-  return { src: texts[rot], t1: texts[(rot+1)%3], t2: texts[(rot+2)%3], srcL: langs[rot], t1L: langs[(rot+1)%3], t2L: langs[(rot+2)%3] };
+  return { src: texts[rot], t1: texts[(rot + 1) % 3], t2: texts[(rot + 2) % 3], srcL: langs[rot], t1L: langs[(rot + 1) % 3], t2L: langs[(rot + 2) % 3] };
 };
 
 export default function App() {
@@ -410,12 +426,12 @@ export default function App() {
   };
   // Tag operations
   const addTagToCard = async (card, tag) => {
-    const tags = [...new Set([...(card.tags||[]), tag])];
+    const tags = [...new Set([...(card.tags || []), tag])];
     await saveCardToDay(uid(), { ...card, tags });
     await reload();
   };
   const removeTagFromCard = async (card, tag) => {
-    const tags = (card.tags||[]).filter(t => t !== tag);
+    const tags = (card.tags || []).filter(t => t !== tag);
     await saveCardToDay(uid(), { ...card, tags });
     await reload();
   };
@@ -423,20 +439,20 @@ export default function App() {
     if (!tag.trim() || selected.size === 0) return;
     const t = tag.trim();
     const updated = cards.filter(c => selected.has(c.id)).map(c => ({
-      ...c, tags: [...new Set([...(c.tags||[]), t])]
+      ...c, tags: [...new Set([...(c.tags || []), t])]
     }));
     await batchSaveCards(uid(), updated);
     await reload(); showToast(`Added tag "${t}" to ${selected.size} cards`); setBatchTagModal(false); setBatchTagInput("");
   };
-  const toggleSelect = id => setSelected(s => { const n = new Set(s); n.has(id)?n.delete(id):n.add(id); return n; });
+  const toggleSelect = id => setSelected(s => { const n = new Set(s); n.has(id) ? n.delete(id) : n.add(id); return n; });
 
   const updateCardTranslation = async (card, t0, t1, t2) => {
     const rot = (card.rot || 0) % 3;
     const fields = ["word", "translation", "translation2"];
     const updated = { ...card };
     updated[fields[rot]] = t0;
-    updated[fields[(rot+1)%3]] = t1;
-    updated[fields[(rot+2)%3]] = t2;
+    updated[fields[(rot + 1) % 3]] = t1;
+    updated[fields[(rot + 2) % 3]] = t2;
     await saveCardToDay(uid(), updated);
     await reload(); setEditingCard(null); showToast("Updated");
     log("info", "updateCard", { id: card.id });
@@ -488,11 +504,11 @@ export default function App() {
   const toggleReviewDot = async (cardArg, schDate) => {
     // Use the most up-to-date card data from queue or snapshot
     const latest = reviewSnapshot?.id === cardArg.id ? reviewSnapshot
-                 : intensiveSnapshot?.id === cardArg.id ? intensiveSnapshot
-                 : reviewQueue.find(c => c.id === cardArg.id)
-                 || intensiveQueue.find(c => c.id === cardArg.id)
-                 || cards.find(c => c.id === cardArg.id)
-                 || cardArg;
+      : intensiveSnapshot?.id === cardArg.id ? intensiveSnapshot
+        : reviewQueue.find(c => c.id === cardArg.id)
+        || intensiveQueue.find(c => c.id === cardArg.id)
+        || cards.find(c => c.id === cardArg.id)
+        || cardArg;
     const rh = (latest.reviewHistory || []).find(h => h.date === schDate);
     if (!rh) return;
     const newHistory = latest.reviewHistory.map(h => h.date === schDate ? { ...h, remembered: !h.remembered } : h);
@@ -515,16 +531,16 @@ export default function App() {
     const m = mode || intensiveMode;
     let pool;
     if (m === "hard") {
-      pool = cards.filter(c => c.deckId === activeDeck && (c.reviewHistory||[]).some(h => !h.remembered));
+      pool = cards.filter(c => c.deckId === activeDeck && (c.reviewHistory || []).some(h => !h.remembered));
     } else if (m.startsWith("tag:")) {
       const tag = m.slice(4);
-      pool = cards.filter(c => c.deckId === activeDeck && (c.tags||[]).includes(tag));
+      pool = cards.filter(c => c.deckId === activeDeck && (c.tags || []).includes(tag));
     } else {
       pool = [];
     }
     return pool.sort((a, b) => {
-      const aRed = (a.reviewHistory||[]).filter(h => !h.remembered).length;
-      const bRed = (b.reviewHistory||[]).filter(h => !h.remembered).length;
+      const aRed = (a.reviewHistory || []).filter(h => !h.remembered).length;
+      const bRed = (b.reviewHistory || []).filter(h => !h.remembered).length;
       if (bRed !== aRed) return bRed - aRed;
       return a.createdAt.localeCompare(b.createdAt);
     });
@@ -649,7 +665,7 @@ export default function App() {
   })();
   const intensiveTotal = intensiveQueue.length;
   const intensiveDone = intensivePos >= intensiveTotal && intensiveTotal > 0;
-  const intensiveCount = cards.filter(c => c.deckId === activeDeck && (c.reviewHistory||[]).some(h => !h.remembered)).length;
+  const intensiveCount = cards.filter(c => c.deckId === activeDeck && (c.reviewHistory || []).some(h => !h.remembered)).length;
 
   // All unique tags across all cards in current deck
   const allTags = [...new Set(cards.filter(c => c.deckId === activeDeck).flatMap(c => c.tags || []))].sort();
@@ -728,7 +744,7 @@ export default function App() {
     return (
       <div style={{ display: "flex", gap: 3, flexWrap: "wrap", alignItems: "center", justifyContent: "center" }}>
         {sched.map((schDate, i) => {
-          const rh = (card.reviewHistory||[]).find(h => h.date === schDate);
+          const rh = (card.reviewHistory || []).find(h => h.date === schDate);
           const isToday = schDate === td, isPast = schDate < td;
           const diff = dayDiff(schDate);
           let bg = "#333", clr = "#666";
@@ -738,9 +754,9 @@ export default function App() {
           const diffLabel = isToday ? "" : diff > 0 ? `+${diff}` : `${diff}`;
           const clickable = !!rh;
           return (
-            <span key={i} title={`Day ${EBB[i]} → ${schDate}${clickable?" (click to toggle)":""}`}
+            <span key={i} title={`Day ${EBB[i]} → ${schDate}${clickable ? " (click to toggle)" : ""}`}
               onClick={clickable ? e => { e.stopPropagation(); toggleReviewDot(card, schDate); } : undefined}
-              style={{ fontFamily: mono, fontSize: 9, padding: "2px 5px", borderRadius: 3, background: bg, color: clr, lineHeight: 1.2, display: "inline-flex", flexDirection: "column", alignItems: "center", gap: 0, cursor: clickable?"pointer":"default" }}>
+              style={{ fontFamily: mono, fontSize: 9, padding: "2px 5px", borderRadius: 3, background: bg, color: clr, lineHeight: 1.2, display: "inline-flex", flexDirection: "column", alignItems: "center", gap: 0, cursor: clickable ? "pointer" : "default" }}>
               {diffLabel && <span style={{ fontSize: 7, opacity: 0.7, lineHeight: 1 }}>{diffLabel}</span>}
               {fmtShort(schDate)}
             </span>
@@ -755,25 +771,25 @@ export default function App() {
     const texts = [card.word, card.translation, card.translation2];
     setEditingCard(card.id);
     setEditT0(texts[rot] || "");
-    setEditT1(texts[(rot+1)%3] || "");
-    setEditT2(texts[(rot+2)%3] || "");
+    setEditT1(texts[(rot + 1) % 3] || "");
+    setEditT2(texts[(rot + 2) % 3] || "");
   };
 
   const LangSelect = ({ value, onChange }) => <select style={S.langSel} value={value} onChange={e => onChange(e.target.value)}>{LANGS.map(l => <option key={l.code} value={l.code}>{l.label}</option>)}</select>;
-  const DateInput = ({ value, onChange, style: sx }) => <input type="date" value={value} onChange={e => e.target.value && onChange(e.target.value)} style={{ ...S.dateInput, ...sx }}/>;
+  const DateInput = ({ value, onChange, style: sx }) => <input type="date" value={value} onChange={e => e.target.value && onChange(e.target.value)} style={{ ...S.dateInput, ...sx }} />;
 
   const activeUser = global.users.find(u => u.id === global.activeUser) || global.users[0];
   const NAV = [
-    { id: "home", label: "词库", icon: <I.Book/> },
-    { id: "add", label: "添加", icon: <I.PlusCircle/> },
-    { id: "review", label: `复习${allDueCount?` (${allDueCount})`:""}`, icon: <I.RefreshCw/> },
-    { id: "intensive", label: `强化${intensiveCount?` (${intensiveCount})`:""}`, icon: <I.Flame/> },
-    { id: "decks", label: "牌组", icon: <I.Layers/> },
-    { id: "export", label: "备份", icon: <I.Save/> },
-    { id: "users", label: "用户", icon: <I.User/> },
+    { id: "home", label: "词库", icon: <I.Book /> },
+    { id: "add", label: "添加", icon: <I.PlusCircle /> },
+    { id: "review", label: `复习${allDueCount ? ` (${allDueCount})` : ""}`, icon: <I.RefreshCw /> },
+    { id: "intensive", label: `强化${intensiveCount ? ` (${intensiveCount})` : ""}`, icon: <I.Flame /> },
+    { id: "decks", label: "牌组", icon: <I.Layers /> },
+    { id: "export", label: "备份", icon: <I.Save /> },
+    { id: "users", label: "用户", icon: <I.User /> },
   ];
 
-  const toggleExportUser = uid => setExportUsers(s => { const n = new Set(s); n.has(uid)?n.delete(uid):n.add(uid); return n; });
+  const toggleExportUser = uid => setExportUsers(s => { const n = new Set(s); n.has(uid) ? n.delete(uid) : n.add(uid); return n; });
 
   return (
     <div style={S.root}>
@@ -815,40 +831,40 @@ export default function App() {
         </div>
         <div style={S.headerRight}>
           {allDueCount > 0 && <div style={S.dueBadge} onClick={() => { setView("review"); startReviewSession(reviewDate); }}>{allDueCount} due</div>}
-          <LangSelect value={meta.sourceLang} onChange={setSourceLang}/>
+          <LangSelect value={meta.sourceLang} onChange={setSourceLang} />
           <span style={{ color: accent, fontSize: 11, fontFamily: mono }}>→</span>
-          <LangSelect value={meta.targetLang1} onChange={setTargetLang1}/>
+          <LangSelect value={meta.targetLang1} onChange={setTargetLang1} />
           <span style={{ color: "#555", fontSize: 10, fontFamily: mono }}>/</span>
-          <LangSelect value={meta.targetLang2} onChange={setTargetLang2}/>
+          <LangSelect value={meta.targetLang2} onChange={setTargetLang2} />
         </div>
       </header>
 
       <nav style={S.nav}>
         {NAV.map(t => (
-          <button key={t.id} className={`nb${view===t.id?" nav-active":""}`}
+          <button key={t.id} className={`nb${view === t.id ? " nav-active" : ""}`}
             onClick={() => {
               setView(t.id); setSelected(new Set());
-              if (t.id==="review") startReviewSession(reviewDate);
-              if (t.id==="intensive") startIntensiveSession();
+              if (t.id === "review") startReviewSession(reviewDate);
+              if (t.id === "intensive") startIntensiveSession();
             }}>{t.icon} {t.label}</button>
         ))}
         <div style={{ marginLeft: "auto", fontFamily: mono, fontSize: 11, color: textDim, display: "flex", alignItems: "center", gap: 4 }}>
-          <I.User/> {activeUser?.name}
+          <I.User /> {activeUser?.name}
         </div>
       </nav>
 
       {(view === "home" || view === "add" || view === "review" || view === "intensive") && (
         <div style={{ display: "flex", alignItems: "center", gap: 6, padding: "8px 0", borderBottom: `1px solid ${border}` }}>
-          <div className={`deck-tabs${deckExpanded?" expanded":""}`}>
+          <div className={`deck-tabs${deckExpanded ? " expanded" : ""}`}>
             {meta.decks.map(d => (
-              <button key={d.id} className={`dtab${activeDeck===d.id?" active":""}`}
-                onClick={() => { setActiveDeck(d.id); setSelected(new Set()); if(view==="review") startReviewSession(reviewDate); if(view==="intensive") startIntensiveSession(); }}>
-                {d.name} ({cards.filter(c=>c.deckId===d.id).length})
+              <button key={d.id} className={`dtab${activeDeck === d.id ? " active" : ""}`}
+                onClick={() => { setActiveDeck(d.id); setSelected(new Set()); if (view === "review") startReviewSession(reviewDate); if (view === "intensive") startIntensiveSession(); }}>
+                {d.name} ({cards.filter(c => c.deckId === d.id).length})
               </button>
             ))}
           </div>
-          <button style={{ background: "transparent", border: "none", color: textDim, cursor: "pointer", padding: 4, flexShrink: 0, transform: deckExpanded?"rotate(180deg)":"none", transition: "transform .2s" }}
-            onClick={() => setDeckExpanded(!deckExpanded)}><I.ChevronDown/></button>
+          <button style={{ background: "transparent", border: "none", color: textDim, cursor: "pointer", padding: 4, flexShrink: 0, transform: deckExpanded ? "rotate(180deg)" : "none", transition: "transform .2s" }}
+            onClick={() => setDeckExpanded(!deckExpanded)}><I.ChevronDown /></button>
         </div>
       )}
 
@@ -860,12 +876,12 @@ export default function App() {
             if (filterDate && c.createdAt !== filterDate) return false;
             if (filterKeyword) {
               const kw = filterKeyword.toLowerCase();
-              const haystack = [c.word, c.translation, c.translation2].map(s => (s||"").toLowerCase());
+              const haystack = [c.word, c.translation, c.translation2].map(s => (s || "").toLowerCase());
               if (!haystack.some(h => h.includes(kw))) return false;
             }
             return true;
           });
-          const sorted = [...filtered].sort((a,b) => b.createdAt.localeCompare(a.createdAt) || b.id.localeCompare(a.id));
+          const sorted = [...filtered].sort((a, b) => b.createdAt.localeCompare(a.createdAt) || b.id.localeCompare(a.id));
           const totalPages = Math.max(1, Math.ceil(sorted.length / pageSize));
           const safePage = Math.min(page, totalPages - 1);
           const paged = sorted.slice(safePage * pageSize, (safePage + 1) * pageSize);
@@ -883,184 +899,184 @@ export default function App() {
             await reload(); showToast(`Rotated ${updated.length} cards`);
           };
           return (
-          <div style={S.content}>
-            {deckCards.length > 0 && (<>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "8px 0", gap: 8, flexWrap: "wrap" }}>
-                <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
-                  <button className={`pill${selected.size===filtered.length&&filtered.length>0?" on":""}`} onClick={() => {
-                    if (selected.size === filtered.length) setSelected(new Set());
-                    else setSelected(new Set(filtered.map(c => c.id)));
-                  }}>
-                    {selected.size>0?`${selected.size} selected`:"Select all"}
-                  </button>
-                  {selected.size > 0 && <button className="pill" onClick={() => setSelected(new Set())} style={{fontSize:10}}>✕</button>}
-                  <button className={`pill${showSrc?" on":""}`} onClick={()=>setShowSrc(!showSrc)}>目标</button>
-                  <button className={`pill${showT1?" on":""}`} onClick={()=>setShowT1(!showT1)}>翻译1</button>
-                  <button className={`pill${showT2?" on":""}`} onClick={()=>setShowT2(!showT2)}>翻译2</button>
+            <div style={S.content}>
+              {deckCards.length > 0 && (<>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "8px 0", gap: 8, flexWrap: "wrap" }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
+                    <button className={`pill${selected.size === filtered.length && filtered.length > 0 ? " on" : ""}`} onClick={() => {
+                      if (selected.size === filtered.length) setSelected(new Set());
+                      else setSelected(new Set(filtered.map(c => c.id)));
+                    }}>
+                      {selected.size > 0 ? `${selected.size} selected` : "Select all"}
+                    </button>
+                    {selected.size > 0 && <button className="pill" onClick={() => setSelected(new Set())} style={{ fontSize: 10 }}>✕</button>}
+                    <button className={`pill${showSrc ? " on" : ""}`} onClick={() => setShowSrc(!showSrc)}>目标</button>
+                    <button className={`pill${showT1 ? " on" : ""}`} onClick={() => setShowT1(!showT1)}>翻译1</button>
+                    <button className={`pill${showT2 ? " on" : ""}`} onClick={() => setShowT2(!showT2)}>翻译2</button>
+                  </div>
+                  <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+                    {selected.size > 0 && <button className="pill on" style={{ borderColor: "#16a34a", color: "#4ade80", background: "#16a34a22" }} onClick={batchRotate}><I.Rotate /> Rotate</button>}
+                    {selected.size > 0 && <button className="pill" style={{ borderColor: "#8b5cf6", color: "#a78bfa" }} onClick={() => setBatchTagModal(true)}><I.Tag /> 标签</button>}
+                    {selected.size > 0 && <button className="pill" style={{ borderColor: "#eab308", color: "#facc15" }} onClick={() => setClearTagConfirm(true)}>清除tag</button>}
+                    {selected.size > 0 && <button className="pill" style={{ borderColor: "#3b82f6", color: "#60a5fa" }} onClick={() => { setBatchDateVal(todayStr()); setBatchDateModal(true); }}>修改日期</button>}
+                    {selected.size > 0 && <button className="pill" style={{ borderColor: "#dc2626", color: "#f87171" }} onClick={batchDelete}><I.Trash /> Delete</button>}
+                  </div>
                 </div>
-                <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
-                  {selected.size > 0 && <button className="pill on" style={{borderColor:"#16a34a",color:"#4ade80",background:"#16a34a22"}} onClick={batchRotate}><I.Rotate/> Rotate</button>}
-                  {selected.size > 0 && <button className="pill" style={{borderColor:"#8b5cf6",color:"#a78bfa"}} onClick={() => setBatchTagModal(true)}><I.Tag/> 标签</button>}
-                  {selected.size > 0 && <button className="pill" style={{borderColor:"#eab308",color:"#facc15"}} onClick={() => setClearTagConfirm(true)}>清除tag</button>}
-                  {selected.size > 0 && <button className="pill" style={{borderColor:"#3b82f6",color:"#60a5fa"}} onClick={() => { setBatchDateVal(todayStr()); setBatchDateModal(true); }}>修改日期</button>}
-                  {selected.size > 0 && <button className="pill" style={{borderColor:"#dc2626",color:"#f87171"}} onClick={batchDelete}><I.Trash/> Delete</button>}
+                {/* Date filter */}
+                <div style={{ display: "flex", alignItems: "center", gap: 8, paddingBottom: 8, flexWrap: "wrap" }}>
+                  <span style={{ fontFamily: mono, fontSize: 11, color: textDim }}>日期筛选:</span>
+                  <DateInput value={filterDate} onChange={d => { setFilterDate(d); setPage(0); }} />
+                  {filterDate && <button className="pill" onClick={() => { setFilterDate(""); setPage(0); }} style={{ fontSize: 10 }}>✕</button>}
+                  <span style={{ fontFamily: mono, fontSize: 11, color: textDim, marginLeft: 8 }}>关键字:</span>
+                  <input style={{ fontFamily: mono, fontSize: 12, background: surface, color: text, border: `1px solid ${border}`, borderRadius: 6, padding: "4px 10px", width: 140 }}
+                    placeholder="搜索..." value={filterKeyword} onChange={e => { setFilterKeyword(e.target.value); setPage(0); }} />
+                  {filterKeyword && <button className="pill" onClick={() => { setFilterKeyword(""); setPage(0); }} style={{ fontSize: 10 }}>✕</button>}
+                  {(filterDate || filterKeyword) && <span style={{ fontFamily: mono, fontSize: 11, color: textDim }}>{filtered.length} cards</span>}
                 </div>
-              </div>
-              {/* Date filter */}
-              <div style={{ display: "flex", alignItems: "center", gap: 8, paddingBottom: 8, flexWrap: "wrap" }}>
-                <span style={{ fontFamily: mono, fontSize: 11, color: textDim }}>日期筛选:</span>
-                <DateInput value={filterDate} onChange={d => { setFilterDate(d); setPage(0); }}/>
-                {filterDate && <button className="pill" onClick={() => { setFilterDate(""); setPage(0); }} style={{ fontSize: 10 }}>✕</button>}
-                <span style={{ fontFamily: mono, fontSize: 11, color: textDim, marginLeft: 8 }}>关键字:</span>
-                <input style={{ fontFamily: mono, fontSize: 12, background: surface, color: text, border: `1px solid ${border}`, borderRadius: 6, padding: "4px 10px", width: 140 }}
-                  placeholder="搜索..." value={filterKeyword} onChange={e => { setFilterKeyword(e.target.value); setPage(0); }}/>
-                {filterKeyword && <button className="pill" onClick={() => { setFilterKeyword(""); setPage(0); }} style={{ fontSize: 10 }}>✕</button>}
-                {(filterDate || filterKeyword) && <span style={{ fontFamily: mono, fontSize: 11, color: textDim }}>{filtered.length} cards</span>}
-              </div>
-            </>)}
-            {deckCards.length === 0 ? (
-              <div style={S.empty}><p style={S.emptyText}>No cards yet</p><button className="ab" style={S.emptyBtn} onClick={() => setView("add")}><I.Plus/> Add word</button></div>
-            ) : (<>
-              <div style={S.cardList}>
-                {paged.map((card, i) => {
-                  const isEditing = editingCard === card.id;
-                  const isDue = isDueOn(card, td);
-                  const isSel = selected.has(card.id);
-                  const d = getCardDisplay(card, meta);
-                  return (
-                    <div key={card.id} className={`hi${isSel?" card-sel":""}${isDue&&!isSel?" card-due":""}`} style={{ ...S.cardItem, animationDelay: `${Math.min(i,20)*25}ms` }}>
-                      <input type="checkbox" className="cb" checked={isSel} onChange={() => toggleSelect(card.id)} style={{ marginRight: 10, marginTop: 4 }}/>
-                      <div style={{ flex: 1, minWidth: 0 }}>
-                        {showSrc && (
-                          <div style={{ display: "flex", alignItems: "center", gap: 4, marginBottom: 3 }}>
-                            <span style={S.cardWord}>{d.src}</span>
-                            <button className="spk" style={S.speakBtn} onClick={e => { e.stopPropagation(); speak(d.src, d.srcL); }} title={LN[d.srcL]}><I.Speaker/></button>
-                          </div>
-                        )}
-                        {isEditing ? (
-                          <div style={{ display: "flex", flexDirection: "column", gap: 6, marginTop: 4 }}
-                            onKeyDown={e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); updateCardTranslation(card,editT0,editT1,editT2); } }}>
-                            <textarea style={{ ...S.editInput, fontWeight: 600, width: "100%", minHeight: 28, maxHeight: 56, resize: "vertical" }} value={editT0} onChange={e => setEditT0(e.target.value)} placeholder={LN[d.srcL]} rows={1}/>
-                            <textarea style={{ ...S.editInput, width: "100%", minHeight: 28, maxHeight: 56, resize: "vertical" }} value={editT1} onChange={e => setEditT1(e.target.value)} placeholder={LN[d.t1L]} rows={1}/>
-                            <textarea style={{ ...S.editInput, width: "100%", minHeight: 28, maxHeight: 56, resize: "vertical" }} value={editT2} onChange={e => setEditT2(e.target.value)} placeholder={LN[d.t2L]} rows={1}/>
-                            <div style={{ display: "flex", gap: 6 }}>
-                              <button style={S.editSave} onClick={() => updateCardTranslation(card,editT0,editT1,editT2)}>✓</button>
-                              <button style={S.editCancel} onClick={() => setEditingCard(null)}>✕</button>
+              </>)}
+              {deckCards.length === 0 ? (
+                <div style={S.empty}><p style={S.emptyText}>No cards yet</p><button className="ab" style={S.emptyBtn} onClick={() => setView("add")}><I.Plus /> Add word</button></div>
+              ) : (<>
+                <div style={S.cardList}>
+                  {paged.map((card, i) => {
+                    const isEditing = editingCard === card.id;
+                    const isDue = isDueOn(card, td);
+                    const isSel = selected.has(card.id);
+                    const d = getCardDisplay(card, meta);
+                    return (
+                      <div key={card.id} className={`hi${isSel ? " card-sel" : ""}${isDue && !isSel ? " card-due" : ""}`} style={{ ...S.cardItem, animationDelay: `${Math.min(i, 20) * 25}ms` }}>
+                        <input type="checkbox" className="cb" checked={isSel} onChange={() => toggleSelect(card.id)} style={{ marginRight: 10, marginTop: 4 }} />
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          {showSrc && (
+                            <div style={{ display: "flex", alignItems: "center", gap: 4, marginBottom: 3 }}>
+                              <span style={S.cardWord}>{d.src}</span>
+                              <button className="spk" style={S.speakBtn} onClick={e => { e.stopPropagation(); speak(d.src, d.srcL); }} title={LN[d.srcL]}><I.Speaker /></button>
                             </div>
+                          )}
+                          {isEditing ? (
+                            <div style={{ display: "flex", flexDirection: "column", gap: 6, marginTop: 4 }}
+                              onKeyDown={e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); updateCardTranslation(card, editT0, editT1, editT2); } }}>
+                              <textarea style={{ ...S.editInput, fontWeight: 600, width: "100%", minHeight: 28, maxHeight: 56, resize: "vertical" }} value={editT0} onChange={e => setEditT0(e.target.value)} placeholder={LN[d.srcL]} rows={1} />
+                              <textarea style={{ ...S.editInput, width: "100%", minHeight: 28, maxHeight: 56, resize: "vertical" }} value={editT1} onChange={e => setEditT1(e.target.value)} placeholder={LN[d.t1L]} rows={1} />
+                              <textarea style={{ ...S.editInput, width: "100%", minHeight: 28, maxHeight: 56, resize: "vertical" }} value={editT2} onChange={e => setEditT2(e.target.value)} placeholder={LN[d.t2L]} rows={1} />
+                              <div style={{ display: "flex", gap: 6 }}>
+                                <button style={S.editSave} onClick={() => updateCardTranslation(card, editT0, editT1, editT2)}>✓</button>
+                                <button style={S.editCancel} onClick={() => setEditingCard(null)}>✕</button>
+                              </div>
+                            </div>
+                          ) : (
+                            <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 3, flexWrap: "wrap" }}>
+                              {showT1 && <><span style={S.cardTrans}>{d.t1}</span><button className="spk" style={S.speakBtn} onClick={e => { e.stopPropagation(); speak(d.t1, d.t1L); }} title={LN[d.t1L]}><I.Speaker /></button></>}
+                              {showT1 && showT2 && <span style={{ color: "#444", fontSize: 11 }}>/</span>}
+                              {showT2 && <><span style={S.cardTrans2}>{d.t2}</span><button className="spk" style={S.speakBtn} onClick={e => { e.stopPropagation(); speak(d.t2, d.t2L); }} title={LN[d.t2L]}><I.Speaker /></button></>}
+                              <button style={S.editBtn} onClick={() => startEdit(card)}><I.Edit /></button>
+                            </div>
+                          )}
+                          {/* Schedule dots + tags in one row */}
+                          <div style={{ display: "flex", alignItems: "center", gap: 6, marginTop: 3 }}>
+                            <div style={{ display: "flex", gap: 3, flexWrap: "wrap" }}><ScheduleDots card={card} /></div>
+                            {(card.tags || []).length > 0 && <div style={{ marginLeft: "auto", display: "flex", gap: 3, flexWrap: "wrap", flexShrink: 0 }}>
+                              {(card.tags || []).map(t => (
+                                <span key={t} style={{ fontFamily: mono, fontSize: 9, padding: "1px 6px", borderRadius: 10, background: "#8b5cf622", border: "1px solid #8b5cf644", color: "#a78bfa", cursor: "pointer" }}
+                                  onClick={e => { e.stopPropagation(); removeTagFromCard(card, t); }} title={`Remove "${t}"`}>
+                                  {t} ✕
+                                </span>
+                              ))}
+                            </div>}
                           </div>
-                        ) : (
-                          <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 3, flexWrap: "wrap" }}>
-                            {showT1 && <><span style={S.cardTrans}>{d.t1}</span><button className="spk" style={S.speakBtn} onClick={e=>{e.stopPropagation();speak(d.t1,d.t1L);}} title={LN[d.t1L]}><I.Speaker/></button></>}
-                            {showT1 && showT2 && <span style={{ color: "#444", fontSize: 11 }}>/</span>}
-                            {showT2 && <><span style={S.cardTrans2}>{d.t2}</span><button className="spk" style={S.speakBtn} onClick={e=>{e.stopPropagation();speak(d.t2,d.t2L);}} title={LN[d.t2L]}><I.Speaker/></button></>}
-                            <button style={S.editBtn} onClick={() => startEdit(card)}><I.Edit/></button>
-                          </div>
-                        )}
-                        {/* Schedule dots + tags in one row */}
-                        <div style={{ display: "flex", alignItems: "center", gap: 6, marginTop: 3 }}>
-                          <div style={{ display: "flex", gap: 3, flexWrap: "wrap" }}><ScheduleDots card={card}/></div>
-                          {(card.tags||[]).length > 0 && <div style={{ marginLeft: "auto", display: "flex", gap: 3, flexWrap: "wrap", flexShrink: 0 }}>
-                            {(card.tags||[]).map(t => (
-                              <span key={t} style={{ fontFamily: mono, fontSize: 9, padding: "1px 6px", borderRadius: 10, background: "#8b5cf622", border: "1px solid #8b5cf644", color: "#a78bfa", cursor: "pointer" }}
-                                onClick={e => { e.stopPropagation(); removeTagFromCard(card, t); }} title={`Remove "${t}"`}>
-                                {t} ✕
-                              </span>
-                            ))}
-                          </div>}
+                        </div>
+                        <div style={S.cardItemRight}>
+                          <button className="spk" style={{ ...S.speakBtn, padding: 4 }} onClick={e => { e.stopPropagation(); rotateCard(card.id); }} title="Rotate"><I.Rotate /></button>
+                          <button className="spk" style={{ ...S.speakBtn, padding: 4, color: "#a78bfa" }} onClick={e => {
+                            e.stopPropagation();
+                            setSingleTagCard(card.id); setBatchTagInput("");
+                          }} title="Add tag"><I.Tag /></button>
+                          {(card.reviewHistory || []).length > 0 && <button className="spk" style={{ ...S.speakBtn, padding: 4, color: "#facc15" }} onClick={async e => { e.stopPropagation(); await saveCardToDay(uid(), { ...card, reviewHistory: [], reviewStage: 0, nextReview: addDays(card.createdAt, EBB[0]) }); await reload(); showToast("Tags cleared"); }} title="Clear review">✕</button>}
+                          <DateInput value={card.createdAt} onChange={dd => updateCardDate(card, dd)} />
+                          <button style={S.deleteBtn} onClick={() => deleteCard(card)}><I.Trash /></button>
                         </div>
                       </div>
-                      <div style={S.cardItemRight}>
-                        <button className="spk" style={{ ...S.speakBtn, padding: 4 }} onClick={e=>{e.stopPropagation();rotateCard(card.id);}} title="Rotate"><I.Rotate/></button>
-                        <button className="spk" style={{ ...S.speakBtn, padding: 4, color: "#a78bfa" }} onClick={e => {
-                          e.stopPropagation();
-                          setSingleTagCard(card.id); setBatchTagInput("");
-                        }} title="Add tag"><I.Tag/></button>
-                        {(card.reviewHistory||[]).length > 0 && <button className="spk" style={{ ...S.speakBtn, padding: 4, color: "#facc15" }} onClick={async e=>{e.stopPropagation(); await saveCardToDay(uid(), {...card, reviewHistory:[], reviewStage:0, nextReview:addDays(card.createdAt, EBB[0])}); await reload(); showToast("Tags cleared");}} title="Clear review">✕</button>}
-                        <DateInput value={card.createdAt} onChange={dd => updateCardDate(card, dd)}/>
-                        <button style={S.deleteBtn} onClick={() => deleteCard(card)}><I.Trash/></button>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-              <div style={{ display: "flex", flexDirection: "column", gap: 8, alignItems: "center", padding: "16px 0" }}>
-                <div style={{ display: "flex", gap: 4 }}>
-                  {PAGE_SIZES.map(s => (
-                    <button key={s} className="nb" style={{ ...S.pageBtn, ...(pageSize===s?S.pageBtnActive:{}) }}
-                      onClick={() => { setPageSize(s); setPage(0); }}>{s}</button>
-                  ))}
+                    );
+                  })}
                 </div>
-                {totalPages > 1 && (
-                  <div style={{ display: "flex", gap: 4, flexWrap: "wrap", justifyContent: "center", alignItems: "center" }}>
-                    {safePage > 0 && <button style={S.pageLink} onClick={() => setPage(safePage-1)}>‹ prev</button>}
-                    {Array.from({length:totalPages},(_,i) => (
-                      <button key={i} style={{ ...S.pageLink, ...(safePage===i?{color:accent,fontWeight:700}:{}) }} onClick={() => setPage(i)}>{i+1}</button>
+                <div style={{ display: "flex", flexDirection: "column", gap: 8, alignItems: "center", padding: "16px 0" }}>
+                  <div style={{ display: "flex", gap: 4 }}>
+                    {PAGE_SIZES.map(s => (
+                      <button key={s} className="nb" style={{ ...S.pageBtn, ...(pageSize === s ? S.pageBtnActive : {}) }}
+                        onClick={() => { setPageSize(s); setPage(0); }}>{s}</button>
                     ))}
-                    {safePage < totalPages-1 && <button style={S.pageLink} onClick={() => setPage(safePage+1)}>next ›</button>}
                   </div>
-                )}
-              </div>
-            </>)}
-            {/* Clear tag confirmation modal */}
-            {clearTagConfirm && (
-              <div style={S.modal} onClick={() => setClearTagConfirm(false)}><div style={S.modalContent} onClick={e=>e.stopPropagation()}>
-                <h3 style={S.modalTitle}>确认清除</h3>
-                <p style={{fontFamily:sans,fontSize:14,color:textDim,lineHeight:1.6,marginBottom:8}}>确定要清除 <strong style={{color:text}}>{selected.size}</strong> 张卡片的所有复习记录吗？</p>
-                <p style={{fontFamily:mono,fontSize:12,color:"#facc15",marginBottom:16}}>复习进度将重置为初始状态，不可撤销。</p>
-                <div style={S.modalActions}><button className="ab" style={S.modalCancel} onClick={() => setClearTagConfirm(false)}>取消</button><button className="ab" style={{...S.deleteConfirmBtn,background:"#ca8a04"}} onClick={batchClearTags}>确认清除</button></div>
-              </div></div>
-            )}
-            {batchDateModal && (
-              <div style={S.modal} onClick={() => setBatchDateModal(false)}><div style={S.modalContent} onClick={e=>e.stopPropagation()}>
-                <h3 style={S.modalTitle}>修改日期</h3>
-                <p style={{fontFamily:sans,fontSize:14,color:textDim,lineHeight:1.6,marginBottom:12}}>将 {selected.size} 张卡片的创建日期修改为：</p>
-                <DateInput value={batchDateVal} onChange={setBatchDateVal} style={{ width: "100%", marginBottom: 12 }}/>
-                <div style={S.modalActions}><button className="ab" style={S.modalCancel} onClick={() => setBatchDateModal(false)}>取消</button><button className="ab" style={S.modalConfirm} onClick={() => batchChangeDate(batchDateVal)}>确认修改</button></div>
-              </div></div>
-            )}
-            {batchTagModal && (
-              <div style={S.modal} onClick={() => setBatchTagModal(false)}><div style={S.modalContent} onClick={e=>e.stopPropagation()}>
-                <h3 style={S.modalTitle}>添加标签</h3>
-                <p style={{fontFamily:sans,fontSize:14,color:textDim,lineHeight:1.6,marginBottom:12}}>为 {selected.size} 张卡片添加标签</p>
-                {allTags.length > 0 && (
-                  <div style={{ display: "flex", gap: 4, flexWrap: "wrap", marginBottom: 12 }}>
-                    {allTags.map(t => <button key={t} className="pill" style={{borderColor:"#8b5cf6",color:"#a78bfa"}} onClick={() => batchAddTag(t)}>{t}</button>)}
-                  </div>
-                )}
-                <div style={{ display: "flex", gap: 8 }}>
-                  <input style={S.modalInput} placeholder="New tag..." value={batchTagInput} onChange={e => setBatchTagInput(e.target.value)}
-                    onKeyDown={e => e.key === "Enter" && batchAddTag(batchTagInput)} autoFocus/>
-                  <button className="ab" style={S.modalConfirm} onClick={() => batchAddTag(batchTagInput)}>添加</button>
+                  {totalPages > 1 && (
+                    <div style={{ display: "flex", gap: 4, flexWrap: "wrap", justifyContent: "center", alignItems: "center" }}>
+                      {safePage > 0 && <button style={S.pageLink} onClick={() => setPage(safePage - 1)}>‹ prev</button>}
+                      {Array.from({ length: totalPages }, (_, i) => (
+                        <button key={i} style={{ ...S.pageLink, ...(safePage === i ? { color: accent, fontWeight: 700 } : {}) }} onClick={() => setPage(i)}>{i + 1}</button>
+                      ))}
+                      {safePage < totalPages - 1 && <button style={S.pageLink} onClick={() => setPage(safePage + 1)}>next ›</button>}
+                    </div>
+                  )}
                 </div>
-              </div></div>
-            )}
-            {singleTagCard && (() => {
-              const stc = cards.find(c => c.id === singleTagCard);
-              if (!stc) return null;
-              const addSingleTag = async (tag) => {
-                if (!tag.trim()) return;
-                await addTagToCard(stc, tag.trim());
-                setSingleTagCard(null); setBatchTagInput("");
-              };
-              return (
-                <div style={S.modal} onClick={() => setSingleTagCard(null)}><div style={S.modalContent} onClick={e=>e.stopPropagation()}>
+              </>)}
+              {/* Clear tag confirmation modal */}
+              {clearTagConfirm && (
+                <div style={S.modal} onClick={() => setClearTagConfirm(false)}><div style={S.modalContent} onClick={e => e.stopPropagation()}>
+                  <h3 style={S.modalTitle}>确认清除</h3>
+                  <p style={{ fontFamily: sans, fontSize: 14, color: textDim, lineHeight: 1.6, marginBottom: 8 }}>确定要清除 <strong style={{ color: text }}>{selected.size}</strong> 张卡片的所有复习记录吗？</p>
+                  <p style={{ fontFamily: mono, fontSize: 12, color: "#facc15", marginBottom: 16 }}>复习进度将重置为初始状态，不可撤销。</p>
+                  <div style={S.modalActions}><button className="ab" style={S.modalCancel} onClick={() => setClearTagConfirm(false)}>取消</button><button className="ab" style={{ ...S.deleteConfirmBtn, background: "#ca8a04" }} onClick={batchClearTags}>确认清除</button></div>
+                </div></div>
+              )}
+              {batchDateModal && (
+                <div style={S.modal} onClick={() => setBatchDateModal(false)}><div style={S.modalContent} onClick={e => e.stopPropagation()}>
+                  <h3 style={S.modalTitle}>修改日期</h3>
+                  <p style={{ fontFamily: sans, fontSize: 14, color: textDim, lineHeight: 1.6, marginBottom: 12 }}>将 {selected.size} 张卡片的创建日期修改为：</p>
+                  <DateInput value={batchDateVal} onChange={setBatchDateVal} style={{ width: "100%", marginBottom: 12 }} />
+                  <div style={S.modalActions}><button className="ab" style={S.modalCancel} onClick={() => setBatchDateModal(false)}>取消</button><button className="ab" style={S.modalConfirm} onClick={() => batchChangeDate(batchDateVal)}>确认修改</button></div>
+                </div></div>
+              )}
+              {batchTagModal && (
+                <div style={S.modal} onClick={() => setBatchTagModal(false)}><div style={S.modalContent} onClick={e => e.stopPropagation()}>
                   <h3 style={S.modalTitle}>添加标签</h3>
-                  <p style={{fontFamily:mono,fontSize:12,color:textDim,marginBottom:12}}>{stc.word}</p>
-                  {(stc.tags||[]).length > 0 && <div style={{display:"flex",gap:4,flexWrap:"wrap",marginBottom:8}}>{(stc.tags||[]).map(t => <span key={t} style={{fontFamily:mono,fontSize:10,padding:"2px 8px",borderRadius:10,background:"#8b5cf622",border:"1px solid #8b5cf644",color:"#a78bfa"}}>{t}</span>)}</div>}
-                  {allTags.filter(t => !(stc.tags||[]).includes(t)).length > 0 && (
+                  <p style={{ fontFamily: sans, fontSize: 14, color: textDim, lineHeight: 1.6, marginBottom: 12 }}>为 {selected.size} 张卡片添加标签</p>
+                  {allTags.length > 0 && (
                     <div style={{ display: "flex", gap: 4, flexWrap: "wrap", marginBottom: 12 }}>
-                      {allTags.filter(t => !(stc.tags||[]).includes(t)).map(t => <button key={t} className="pill" style={{borderColor:"#8b5cf6",color:"#a78bfa"}} onClick={() => addSingleTag(t)}>{t}</button>)}
+                      {allTags.map(t => <button key={t} className="pill" style={{ borderColor: "#8b5cf6", color: "#a78bfa" }} onClick={() => batchAddTag(t)}>{t}</button>)}
                     </div>
                   )}
                   <div style={{ display: "flex", gap: 8 }}>
                     <input style={S.modalInput} placeholder="New tag..." value={batchTagInput} onChange={e => setBatchTagInput(e.target.value)}
-                      onKeyDown={e => e.key === "Enter" && addSingleTag(batchTagInput)} autoFocus/>
-                    <button className="ab" style={S.modalConfirm} onClick={() => addSingleTag(batchTagInput)}>添加</button>
+                      onKeyDown={e => e.key === "Enter" && batchAddTag(batchTagInput)} autoFocus />
+                    <button className="ab" style={S.modalConfirm} onClick={() => batchAddTag(batchTagInput)}>添加</button>
                   </div>
                 </div></div>
-              );
-            })()}
-          </div>
+              )}
+              {singleTagCard && (() => {
+                const stc = cards.find(c => c.id === singleTagCard);
+                if (!stc) return null;
+                const addSingleTag = async (tag) => {
+                  if (!tag.trim()) return;
+                  await addTagToCard(stc, tag.trim());
+                  setSingleTagCard(null); setBatchTagInput("");
+                };
+                return (
+                  <div style={S.modal} onClick={() => setSingleTagCard(null)}><div style={S.modalContent} onClick={e => e.stopPropagation()}>
+                    <h3 style={S.modalTitle}>添加标签</h3>
+                    <p style={{ fontFamily: mono, fontSize: 12, color: textDim, marginBottom: 12 }}>{stc.word}</p>
+                    {(stc.tags || []).length > 0 && <div style={{ display: "flex", gap: 4, flexWrap: "wrap", marginBottom: 8 }}>{(stc.tags || []).map(t => <span key={t} style={{ fontFamily: mono, fontSize: 10, padding: "2px 8px", borderRadius: 10, background: "#8b5cf622", border: "1px solid #8b5cf644", color: "#a78bfa" }}>{t}</span>)}</div>}
+                    {allTags.filter(t => !(stc.tags || []).includes(t)).length > 0 && (
+                      <div style={{ display: "flex", gap: 4, flexWrap: "wrap", marginBottom: 12 }}>
+                        {allTags.filter(t => !(stc.tags || []).includes(t)).map(t => <button key={t} className="pill" style={{ borderColor: "#8b5cf6", color: "#a78bfa" }} onClick={() => addSingleTag(t)}>{t}</button>)}
+                      </div>
+                    )}
+                    <div style={{ display: "flex", gap: 8 }}>
+                      <input style={S.modalInput} placeholder="New tag..." value={batchTagInput} onChange={e => setBatchTagInput(e.target.value)}
+                        onKeyDown={e => e.key === "Enter" && addSingleTag(batchTagInput)} autoFocus />
+                      <button className="ab" style={S.modalConfirm} onClick={() => addSingleTag(batchTagInput)}>添加</button>
+                    </div>
+                  </div></div>
+                );
+              })()}
+            </div>
           );
         })()}
 
@@ -1072,21 +1088,21 @@ export default function App() {
               <p style={S.addSub}>{LN[meta.sourceLang]} → {LN[meta.targetLang1]} + {LN[meta.targetLang2]}</p>
               <div style={S.inputRow}>
                 <input ref={inputRef} style={S.wordInput}
-                  placeholder={`Enter a ${LN[meta.sourceLang]||meta.sourceLang} word...`}
+                  placeholder={`Enter a ${LN[meta.sourceLang] || meta.sourceLang} word...`}
                   value={newWord} onChange={e => setNewWord(e.target.value)}
-                  onKeyDown={e => e.key==="Enter"&&addCard()} autoFocus disabled={translating}/>
-                <DateInput value={addDate} onChange={setAddDate}/>
-                <button className="ab" style={{ ...S.addBtn, opacity:translating?.5:1 }}
-                  onClick={addCard} disabled={translating||!newWord.trim()}>
-                  {translating?<span style={{animation:"pulse 1s infinite"}}>翻译中...</span>:<><I.Plus/> Add</>}
+                  onKeyDown={e => e.key === "Enter" && addCard()} autoFocus disabled={translating} />
+                <DateInput value={addDate} onChange={setAddDate} />
+                <button className="ab" style={{ ...S.addBtn, opacity: translating ? .5 : 1 }}
+                  onClick={addCard} disabled={translating || !newWord.trim()}>
+                  {translating ? <span style={{ animation: "pulse 1s infinite" }}>翻译中...</span> : <><I.Plus /> Add</>}
                 </button>
               </div>
               <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 20, alignItems: "center" }}>
-                <button className={`pill${autoPlay?" on":""}`} onClick={() => setAutoPlay(!autoPlay)}><I.Speaker size={12}/> 自动播放</button>
+                <button className={`pill${autoPlay ? " on" : ""}`} onClick={() => setAutoPlay(!autoPlay)}><I.Speaker size={12} /> 自动播放</button>
                 {/* Existing tags as toggles */}
                 {allTags.map(t => (
-                  <button key={t} className={`pill${addTags.has(t)?" on":""}`} style={addTags.has(t)?{borderColor:"#8b5cf6",color:"#a78bfa",background:"#8b5cf622"}:{}}
-                    onClick={() => setAddTags(s => { const n = new Set(s); n.has(t)?n.delete(t):n.add(t); return n; })}><I.Tag/> {t}</button>
+                  <button key={t} className={`pill${addTags.has(t) ? " on" : ""}`} style={addTags.has(t) ? { borderColor: "#8b5cf6", color: "#a78bfa", background: "#8b5cf622" } : {}}
+                    onClick={() => setAddTags(s => { const n = new Set(s); n.has(t) ? n.delete(t) : n.add(t); return n; })}><I.Tag /> {t}</button>
                 ))}
                 {/* New tag input */}
                 <div style={{ display: "flex", gap: 4, alignItems: "center" }}>
@@ -1098,7 +1114,7 @@ export default function App() {
                         setAddTags(s => new Set([...s, t]));
                         setNewTagInput("");
                       }
-                    }}/>
+                    }} />
                 </div>
               </div>
               <div style={{ marginBottom: 32 }}>
@@ -1113,7 +1129,7 @@ export default function App() {
                   </div>
                 ))}
               </div>
-              <div><h3 style={S.smallTitle}>Ebbinghaus Schedule</h3><div style={S.intervals}>{EBB.map((d,i) => <div key={i} style={S.intervalPill}>Day {d}</div>)}</div></div>
+              <div><h3 style={S.smallTitle}>Ebbinghaus Schedule</h3><div style={S.intervals}>{EBB.map((d, i) => <div key={i} style={S.intervalPill}>Day {d}</div>)}</div></div>
             </div>
           </div>
         )}
@@ -1123,12 +1139,12 @@ export default function App() {
           <div style={S.content}>
             <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "12px 0", flexWrap: "wrap" }}>
               <span style={{ fontFamily: mono, fontSize: 12, color: textDim }}>Review:</span>
-              <DateInput value={reviewDate} onChange={d => { setReviewDate(d); startReviewSession(d); }}/>
-              {reviewDate !== td && <button className="pill" onClick={() => { setReviewDate(todayStr()); startReviewSession(todayStr()); }} style={{fontSize:10}}>Today</button>}
-              <button className={`pill${reviewQuizType===0?" on":""}`} onClick={() => setReviewQuizType(0)}>目标</button>
-              <button className={`pill${reviewQuizType===1?" on":""}`} onClick={() => setReviewQuizType(1)}>翻译1</button>
-              <button className={`pill${reviewQuizType===2?" on":""}`} onClick={() => setReviewQuizType(2)}>翻译2</button>
-              <div style={{ marginLeft: "auto" }}><button className={`pill${reviewAutoPlay?" on":""}`} onClick={() => setReviewAutoPlay(!reviewAutoPlay)}><I.Speaker size={12}/> 自动播放</button></div>
+              <DateInput value={reviewDate} onChange={d => { setReviewDate(d); startReviewSession(d); }} />
+              {reviewDate !== td && <button className="pill" onClick={() => { setReviewDate(todayStr()); startReviewSession(todayStr()); }} style={{ fontSize: 10 }}>Today</button>}
+              <button className={`pill${reviewQuizType === 0 ? " on" : ""}`} onClick={() => setReviewQuizType(0)}>目标</button>
+              <button className={`pill${reviewQuizType === 1 ? " on" : ""}`} onClick={() => setReviewQuizType(1)}>翻译1</button>
+              <button className={`pill${reviewQuizType === 2 ? " on" : ""}`} onClick={() => setReviewQuizType(2)}>翻译2</button>
+              <div style={{ marginLeft: "auto" }}><button className={`pill${reviewAutoPlay ? " on" : ""}`} onClick={() => setReviewAutoPlay(!reviewAutoPlay)}><I.Speaker size={12} /> 自动播放</button></div>
             </div>
             {reviewTotal === 0 ? (
               <div style={S.empty}><div style={{ fontSize: 48, color: "#4ade80", marginBottom: 8 }}>✓</div>
@@ -1146,26 +1162,26 @@ export default function App() {
               const qIdx = reviewQuizType;
               const question = allFields[qIdx];
               const questionLang = allLangs[qIdx];
-              const ans = allFields.filter((_,i) => i !== qIdx);
-              const ansL = allLangs.filter((_,i) => i !== qIdx);
+              const ans = allFields.filter((_, i) => i !== qIdx);
+              const ansL = allLangs.filter((_, i) => i !== qIdx);
               return (
                 <div style={S.reviewArea}>
                   <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 16, marginBottom: 8 }}>
-                    {reviewPos > 0 && <button className="pill" onClick={prevReviewCard} style={{fontSize:11}}>‹ 上一个</button>}
-                    <span style={S.reviewProgress}>{reviewPos+1} / {reviewTotal}</span>
-                    {reviewPos < reviewTotal - 1 && <button className="pill" onClick={nextReviewCard} style={{fontSize:11}}>下一个 ›</button>}
+                    {reviewPos > 0 && <button className="pill" onClick={prevReviewCard} style={{ fontSize: 11 }}>‹ 上一个</button>}
+                    <span style={S.reviewProgress}>{reviewPos + 1} / {reviewTotal}</span>
+                    {reviewPos < reviewTotal - 1 && <button className="pill" onClick={nextReviewCard} style={{ fontSize: 11 }}>下一个 ›</button>}
                   </div>
                   <div style={S.reviewCard} key={rc.id + reviewPos}>
                     <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8, marginBottom: 4 }}>
                       <div style={S.reviewWord}>{question}</div>
-                      <button className="spk" style={{ ...S.speakBtn, padding: 4 }} onClick={() => speak(question, questionLang)}><I.Speaker size={18}/></button>
+                      <button className="spk" style={{ ...S.speakBtn, padding: 4 }} onClick={() => speak(question, questionLang)}><I.Speaker size={18} /></button>
                     </div>
-                    <div style={{ marginTop: 8, marginBottom: 24 }}><ScheduleDots card={rc}/></div>
+                    <div style={{ marginTop: 8, marginBottom: 24 }}><ScheduleDots card={rc} /></div>
                     <div style={{ minHeight: 52 }}>
                       {!reviewRevealed ? (
                         <div style={S.reviewActions}>
-                          <button className="ab" style={S.forgotBtn} onClick={() => doReview(rc.id,false)}><I.X/> 不记得</button>
-                          <button className="ab" style={S.knewBtn} onClick={() => doReview(rc.id,true)}><I.Check/> 记得</button>
+                          <button className="ab" style={S.forgotBtn} onClick={() => doReview(rc.id, false)}><I.X /> 不记得</button>
+                          <button className="ab" style={S.knewBtn} onClick={() => doReview(rc.id, true)}><I.Check /> 记得</button>
                         </div>
                       ) : (
                         <button className="ab" style={{ ...S.showBtn, width: "100%", justifyContent: "center" }} onClick={nextReviewCard}>Next →</button>
@@ -1175,11 +1191,11 @@ export default function App() {
                       <div style={{ animation: "fadeUp 0.3s ease", marginTop: 20, borderTop: `1px solid ${border}`, paddingTop: 16 }}>
                         <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}>
                           <div style={S.reviewTrans}>{ans[0]}</div>
-                          <button className="spk" style={S.speakBtn} onClick={() => speak(ans[0], ansL[0])}><I.Speaker/></button>
+                          <button className="spk" style={S.speakBtn} onClick={() => speak(ans[0], ansL[0])}><I.Speaker /></button>
                         </div>
                         <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8, marginTop: 6 }}>
                           <div style={S.reviewTrans2}>{ans[1]}</div>
-                          <button className="spk" style={S.speakBtn} onClick={() => speak(ans[1], ansL[1])}><I.Speaker/></button>
+                          <button className="spk" style={S.speakBtn} onClick={() => speak(ans[1], ansL[1])}><I.Speaker /></button>
                         </div>
                       </div>
                     )}
@@ -1195,22 +1211,22 @@ export default function App() {
           <div style={S.content}>
             <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "12px 0", flexWrap: "wrap" }}>
               <span style={{ fontFamily: serif, fontSize: 16, fontWeight: 600, color: text }}>强化</span>
-              <button className={`pill${intensiveMode==="hard"?" on":""}`} onClick={() => startIntensiveSession("hard")}>🔥 高难度 ({cards.filter(c => c.deckId === activeDeck && (c.reviewHistory||[]).some(h => !h.remembered)).length})</button>
+              <button className={`pill${intensiveMode === "hard" ? " on" : ""}`} onClick={() => startIntensiveSession("hard")}>🔥 高难度 ({cards.filter(c => c.deckId === activeDeck && (c.reviewHistory || []).some(h => !h.remembered)).length})</button>
               {allTags.map(t => {
                 const m = "tag:" + t;
-                const cnt = cards.filter(c => c.deckId === activeDeck && (c.tags||[]).includes(t)).length;
-                return <button key={t} className={`pill${intensiveMode===m?" on":""}`} style={intensiveMode===m?{borderColor:"#8b5cf6",color:"#a78bfa",background:"#8b5cf622"}:{}} onClick={() => startIntensiveSession(m)}><I.Tag/> {t} ({cnt})</button>;
+                const cnt = cards.filter(c => c.deckId === activeDeck && (c.tags || []).includes(t)).length;
+                return <button key={t} className={`pill${intensiveMode === m ? " on" : ""}`} style={intensiveMode === m ? { borderColor: "#8b5cf6", color: "#a78bfa", background: "#8b5cf622" } : {}} onClick={() => startIntensiveSession(m)}><I.Tag /> {t} ({cnt})</button>;
               })}
             </div>
             <div style={{ display: "flex", alignItems: "center", gap: 8, paddingBottom: 8, flexWrap: "wrap" }}>
-              <button className={`pill${reviewQuizType===0?" on":""}`} onClick={() => setReviewQuizType(0)}>目标</button>
-              <button className={`pill${reviewQuizType===1?" on":""}`} onClick={() => setReviewQuizType(1)}>翻译1</button>
-              <button className={`pill${reviewQuizType===2?" on":""}`} onClick={() => setReviewQuizType(2)}>翻译2</button>
-              <div style={{ marginLeft: "auto" }}><button className={`pill${reviewAutoPlay?" on":""}`} onClick={() => setReviewAutoPlay(!reviewAutoPlay)}><I.Speaker size={12}/> 自动播放</button></div>
+              <button className={`pill${reviewQuizType === 0 ? " on" : ""}`} onClick={() => setReviewQuizType(0)}>目标</button>
+              <button className={`pill${reviewQuizType === 1 ? " on" : ""}`} onClick={() => setReviewQuizType(1)}>翻译1</button>
+              <button className={`pill${reviewQuizType === 2 ? " on" : ""}`} onClick={() => setReviewQuizType(2)}>翻译2</button>
+              <div style={{ marginLeft: "auto" }}><button className={`pill${reviewAutoPlay ? " on" : ""}`} onClick={() => setReviewAutoPlay(!reviewAutoPlay)}><I.Speaker size={12} /> 自动播放</button></div>
             </div>
             {intensiveTotal === 0 ? (
               <div style={S.empty}><div style={{ fontSize: 48, color: "#4ade80", marginBottom: 8 }}>✓</div>
-                <p style={S.emptyText}>{intensiveMode==="hard"?"没有高难度词汇":"该标签没有词汇"}</p></div>
+                <p style={S.emptyText}>{intensiveMode === "hard" ? "没有高难度词汇" : "该标签没有词汇"}</p></div>
             ) : intensiveDone ? (
               <div style={S.empty}><div style={{ fontSize: 48, color: "#4ade80", marginBottom: 8 }}>✓</div>
                 <p style={S.emptyText}>强化复习完成！共 {intensiveTotal} 个</p></div>
@@ -1218,33 +1234,33 @@ export default function App() {
               const rc = intensiveCurrentCard;
               if (!rc) return <div style={S.empty}><p style={S.emptyText}>Loading...</p></div>;
               const d = getCardDisplay(rc, meta);
-              const redCount = (rc.reviewHistory||[]).filter(h => !h.remembered).length;
+              const redCount = (rc.reviewHistory || []).filter(h => !h.remembered).length;
               const allFields = [d.src, d.t1, d.t2];
               const allLangs = [d.srcL, d.t1L, d.t2L];
               const qIdx = reviewQuizType;
               const question = allFields[qIdx], questionLang = allLangs[qIdx];
-              const ans = allFields.filter((_,i) => i !== qIdx);
-              const ansL = allLangs.filter((_,i) => i !== qIdx);
+              const ans = allFields.filter((_, i) => i !== qIdx);
+              const ansL = allLangs.filter((_, i) => i !== qIdx);
               return (
                 <div style={S.reviewArea}>
                   <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 16, marginBottom: 8 }}>
-                    {intensivePos > 0 && <button className="pill" onClick={prevIntensiveCard} style={{fontSize:11}}>‹ 上一个</button>}
-                    <span style={S.reviewProgress}>{intensivePos+1} / {intensiveTotal}</span>
-                    {intensivePos < intensiveTotal - 1 && <button className="pill" onClick={nextIntensiveCard} style={{fontSize:11}}>下一个 ›</button>}
+                    {intensivePos > 0 && <button className="pill" onClick={prevIntensiveCard} style={{ fontSize: 11 }}>‹ 上一个</button>}
+                    <span style={S.reviewProgress}>{intensivePos + 1} / {intensiveTotal}</span>
+                    {intensivePos < intensiveTotal - 1 && <button className="pill" onClick={nextIntensiveCard} style={{ fontSize: 11 }}>下一个 ›</button>}
                   </div>
                   <div style={S.reviewCard} key={rc.id + intensivePos}>
                     <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8, marginBottom: 4 }}>
                       <div style={S.reviewWord}>{question}</div>
-                      <button className="spk" style={{ ...S.speakBtn, padding: 4 }} onClick={() => speak(question, questionLang)}><I.Speaker size={18}/></button>
+                      <button className="spk" style={{ ...S.speakBtn, padding: 4 }} onClick={() => speak(question, questionLang)}><I.Speaker size={18} /></button>
                     </div>
                     {redCount > 0 && <div style={{ fontFamily: mono, fontSize: 11, color: "#f87171", marginBottom: 8 }}>{redCount} failed</div>}
-                    {(rc.tags||[]).length > 0 && <div style={{ display: "flex", gap: 3, justifyContent: "center", marginBottom: 4 }}>{(rc.tags||[]).map(t => <span key={t} style={{fontFamily:mono,fontSize:9,padding:"1px 6px",borderRadius:10,background:"#8b5cf622",border:"1px solid #8b5cf644",color:"#a78bfa"}}>{t}</span>)}</div>}
-                    <div style={{ marginTop: 4, marginBottom: 20 }}><ScheduleDots card={rc}/></div>
+                    {(rc.tags || []).length > 0 && <div style={{ display: "flex", gap: 3, justifyContent: "center", marginBottom: 4 }}>{(rc.tags || []).map(t => <span key={t} style={{ fontFamily: mono, fontSize: 9, padding: "1px 6px", borderRadius: 10, background: "#8b5cf622", border: "1px solid #8b5cf644", color: "#a78bfa" }}>{t}</span>)}</div>}
+                    <div style={{ marginTop: 4, marginBottom: 20 }}><ScheduleDots card={rc} /></div>
                     <div style={{ minHeight: 52 }}>
                       {!intensiveRevealed ? (
                         <div style={S.reviewActions}>
-                          <button className="ab" style={S.forgotBtn} onClick={() => doIntensiveReview(rc.id,false)}><I.X/> 不记得</button>
-                          <button className="ab" style={S.knewBtn} onClick={() => doIntensiveReview(rc.id,true)}><I.Check/> 记得</button>
+                          <button className="ab" style={S.forgotBtn} onClick={() => doIntensiveReview(rc.id, false)}><I.X /> 不记得</button>
+                          <button className="ab" style={S.knewBtn} onClick={() => doIntensiveReview(rc.id, true)}><I.Check /> 记得</button>
                         </div>
                       ) : (
                         <div style={{ display: "flex", gap: 8 }}>
@@ -1257,11 +1273,11 @@ export default function App() {
                       <div style={{ animation: "fadeUp 0.3s ease", marginTop: 20, borderTop: `1px solid ${border}`, paddingTop: 16 }}>
                         <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}>
                           <div style={S.reviewTrans}>{ans[0]}</div>
-                          <button className="spk" style={S.speakBtn} onClick={() => speak(ans[0], ansL[0])}><I.Speaker/></button>
+                          <button className="spk" style={S.speakBtn} onClick={() => speak(ans[0], ansL[0])}><I.Speaker /></button>
                         </div>
                         <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8, marginTop: 6 }}>
                           <div style={S.reviewTrans2}>{ans[1]}</div>
-                          <button className="spk" style={S.speakBtn} onClick={() => speak(ans[1], ansL[1])}><I.Speaker/></button>
+                          <button className="spk" style={S.speakBtn} onClick={() => speak(ans[1], ansL[1])}><I.Speaker /></button>
                         </div>
                       </div>
                     )}
@@ -1277,40 +1293,40 @@ export default function App() {
           <div style={S.content}>
             <div style={S.sectionHeader}>
               <h2 style={S.sectionTitle}>Decks</h2>
-              <button className="ab" style={S.newDeckBtn} onClick={() => setShowDeckModal(true)}><I.Plus/> New Deck</button>
+              <button className="ab" style={S.newDeckBtn} onClick={() => setShowDeckModal(true)}><I.Plus /> New Deck</button>
             </div>
             <div style={S.deckGrid}>
               {meta.decks.map(deck => {
-                const count = cards.filter(c=>c.deckId===deck.id).length;
-                const due = cards.filter(c=>c.deckId===deck.id&&isDueOn(c,td)).length;
+                const count = cards.filter(c => c.deckId === deck.id).length;
+                const due = cards.filter(c => c.deckId === deck.id && isDueOn(c, td)).length;
                 return (
-                  <div key={deck.id} className="dk" style={{ ...S.deckCard, ...(activeDeck===deck.id?{borderColor:accent}:{}) }}
+                  <div key={deck.id} className="dk" style={{ ...S.deckCard, ...(activeDeck === deck.id ? { borderColor: accent } : {}) }}
                     onClick={() => { setActiveDeck(deck.id); setView("home"); }}>
                     <div style={S.deckName}>{deck.name}</div>
-                    <div style={S.deckStats}><span>{count} cards</span>{due>0&&<span style={{color:accent,fontWeight:600}}>{due} due</span>}</div>
+                    <div style={S.deckStats}><span>{count} cards</span>{due > 0 && <span style={{ color: accent, fontWeight: 600 }}>{due} due</span>}</div>
                     <div style={{ position: "absolute", top: 8, right: 8, display: "flex", gap: 4 }}>
-                      <button style={S.deckActionBtn} onClick={e=>{e.stopPropagation();setRenameDeckId(deck.id);setRenameDeckVal(deck.name);}}><I.Edit/></button>
-                      {deck.id!=="default"&&<button style={S.deckActionBtn} onClick={e=>{e.stopPropagation();setDeleteDeckConfirm(deck.id);}}><I.Trash/></button>}
+                      <button style={S.deckActionBtn} onClick={e => { e.stopPropagation(); setRenameDeckId(deck.id); setRenameDeckVal(deck.name); }}><I.Edit /></button>
+                      {deck.id !== "default" && <button style={S.deckActionBtn} onClick={e => { e.stopPropagation(); setDeleteDeckConfirm(deck.id); }}><I.Trash /></button>}
                     </div>
                   </div>
                 );
               })}
             </div>
-            {showDeckModal&&<div style={S.modal} onClick={()=>setShowDeckModal(false)}><div style={S.modalContent} onClick={e=>e.stopPropagation()}>
+            {showDeckModal && <div style={S.modal} onClick={() => setShowDeckModal(false)}><div style={S.modalContent} onClick={e => e.stopPropagation()}>
               <h3 style={S.modalTitle}>New Deck</h3>
-              <input style={S.modalInput} placeholder="Deck name..." value={newDeckName} onChange={e=>setNewDeckName(e.target.value)} onKeyDown={e=>e.key==="Enter"&&createDeck()} autoFocus/>
-              <div style={S.modalActions}><button className="ab" style={S.modalCancel} onClick={()=>setShowDeckModal(false)}>Cancel</button><button className="ab" style={S.modalConfirm} onClick={createDeck}>Create</button></div>
+              <input style={S.modalInput} placeholder="Deck name..." value={newDeckName} onChange={e => setNewDeckName(e.target.value)} onKeyDown={e => e.key === "Enter" && createDeck()} autoFocus />
+              <div style={S.modalActions}><button className="ab" style={S.modalCancel} onClick={() => setShowDeckModal(false)}>Cancel</button><button className="ab" style={S.modalConfirm} onClick={createDeck}>Create</button></div>
             </div></div>}
-            {renameDeckId&&<div style={S.modal} onClick={()=>setRenameDeckId(null)}><div style={S.modalContent} onClick={e=>e.stopPropagation()}>
+            {renameDeckId && <div style={S.modal} onClick={() => setRenameDeckId(null)}><div style={S.modalContent} onClick={e => e.stopPropagation()}>
               <h3 style={S.modalTitle}>Rename Deck</h3>
-              <input style={S.modalInput} value={renameDeckVal} onChange={e=>setRenameDeckVal(e.target.value)} onKeyDown={e=>e.key==="Enter"&&renameDeck()} autoFocus/>
-              <div style={S.modalActions}><button className="ab" style={S.modalCancel} onClick={()=>setRenameDeckId(null)}>Cancel</button><button className="ab" style={S.modalConfirm} onClick={renameDeck}>Rename</button></div>
+              <input style={S.modalInput} value={renameDeckVal} onChange={e => setRenameDeckVal(e.target.value)} onKeyDown={e => e.key === "Enter" && renameDeck()} autoFocus />
+              <div style={S.modalActions}><button className="ab" style={S.modalCancel} onClick={() => setRenameDeckId(null)}>Cancel</button><button className="ab" style={S.modalConfirm} onClick={renameDeck}>Rename</button></div>
             </div></div>}
-            {deleteDeckConfirm&&<div style={S.modal} onClick={()=>setDeleteDeckConfirm(null)}><div style={S.modalContent} onClick={e=>e.stopPropagation()}>
+            {deleteDeckConfirm && <div style={S.modal} onClick={() => setDeleteDeckConfirm(null)}><div style={S.modalContent} onClick={e => e.stopPropagation()}>
               <h3 style={S.modalTitle}>确认删除</h3>
-              <p style={{fontFamily:sans,fontSize:14,color:textDim,lineHeight:1.6,marginBottom:8}}>确定要删除 <strong style={{color:text}}>"{meta.decks.find(d=>d.id===deleteDeckConfirm)?.name}"</strong> 吗？</p>
-              <p style={{fontFamily:mono,fontSize:12,color:"#f87171",marginBottom:16}}>将删除 {cards.filter(c=>c.deckId===deleteDeckConfirm).length} 张卡片，不可撤销。</p>
-              <div style={S.modalActions}><button className="ab" style={S.modalCancel} onClick={()=>setDeleteDeckConfirm(null)}>取消</button><button className="ab" style={S.deleteConfirmBtn} onClick={doDeleteDeck}>确认删除</button></div>
+              <p style={{ fontFamily: sans, fontSize: 14, color: textDim, lineHeight: 1.6, marginBottom: 8 }}>确定要删除 <strong style={{ color: text }}>"{meta.decks.find(d => d.id === deleteDeckConfirm)?.name}"</strong> 吗？</p>
+              <p style={{ fontFamily: mono, fontSize: 12, color: "#f87171", marginBottom: 16 }}>将删除 {cards.filter(c => c.deckId === deleteDeckConfirm).length} 张卡片，不可撤销。</p>
+              <div style={S.modalActions}><button className="ab" style={S.modalCancel} onClick={() => setDeleteDeckConfirm(null)}>取消</button><button className="ab" style={S.deleteConfirmBtn} onClick={doDeleteDeck}>确认删除</button></div>
             </div></div>}
           </div>
         )}
@@ -1320,28 +1336,28 @@ export default function App() {
           <div style={S.content}>
             <div style={S.sectionHeader}>
               <h2 style={S.sectionTitle}>Users</h2>
-              <button className="ab" style={S.newDeckBtn} onClick={() => setShowUserModal(true)}><I.Plus/> New User</button>
+              <button className="ab" style={S.newDeckBtn} onClick={() => setShowUserModal(true)}><I.Plus /> New User</button>
             </div>
             <div style={S.deckGrid}>
               {global.users.map(user => (
-                <div key={user.id} className="dk" style={{ ...S.deckCard, ...(global.activeUser===user.id?{borderColor:accent}:{}) }}
+                <div key={user.id} className="dk" style={{ ...S.deckCard, ...(global.activeUser === user.id ? { borderColor: accent } : {}) }}
                   onClick={() => switchUser(user.id)}>
-                  <div style={{ display: "flex", alignItems: "center", gap: 6 }}><I.User/> <span style={S.deckName}>{user.name}</span></div>
-                  {global.activeUser===user.id && <span style={{ fontFamily: mono, fontSize: 10, color: accent }}>ACTIVE</span>}
-                  {user.id!=="default"&&<button style={{ ...S.deckActionBtn, position: "absolute", top: 8, right: 8 }} onClick={e=>{e.stopPropagation();setDeleteUserConfirm(user.id);}}><I.Trash/></button>}
+                  <div style={{ display: "flex", alignItems: "center", gap: 6 }}><I.User /> <span style={S.deckName}>{user.name}</span></div>
+                  {global.activeUser === user.id && <span style={{ fontFamily: mono, fontSize: 10, color: accent }}>ACTIVE</span>}
+                  {user.id !== "default" && <button style={{ ...S.deckActionBtn, position: "absolute", top: 8, right: 8 }} onClick={e => { e.stopPropagation(); setDeleteUserConfirm(user.id); }}><I.Trash /></button>}
                 </div>
               ))}
             </div>
-            {showUserModal&&<div style={S.modal} onClick={()=>setShowUserModal(false)}><div style={S.modalContent} onClick={e=>e.stopPropagation()}>
+            {showUserModal && <div style={S.modal} onClick={() => setShowUserModal(false)}><div style={S.modalContent} onClick={e => e.stopPropagation()}>
               <h3 style={S.modalTitle}>New User</h3>
-              <input style={S.modalInput} placeholder="User name..." value={newUserName} onChange={e=>setNewUserName(e.target.value)} onKeyDown={e=>e.key==="Enter"&&createUser()} autoFocus/>
-              <div style={S.modalActions}><button className="ab" style={S.modalCancel} onClick={()=>setShowUserModal(false)}>Cancel</button><button className="ab" style={S.modalConfirm} onClick={createUser}>Create</button></div>
+              <input style={S.modalInput} placeholder="User name..." value={newUserName} onChange={e => setNewUserName(e.target.value)} onKeyDown={e => e.key === "Enter" && createUser()} autoFocus />
+              <div style={S.modalActions}><button className="ab" style={S.modalCancel} onClick={() => setShowUserModal(false)}>Cancel</button><button className="ab" style={S.modalConfirm} onClick={createUser}>Create</button></div>
             </div></div>}
-            {deleteUserConfirm&&<div style={S.modal} onClick={()=>setDeleteUserConfirm(null)}><div style={S.modalContent} onClick={e=>e.stopPropagation()}>
+            {deleteUserConfirm && <div style={S.modal} onClick={() => setDeleteUserConfirm(null)}><div style={S.modalContent} onClick={e => e.stopPropagation()}>
               <h3 style={S.modalTitle}>确认删除用户</h3>
-              <p style={{fontFamily:sans,fontSize:14,color:textDim,lineHeight:1.6,marginBottom:8}}>确定要删除用户 <strong style={{color:text}}>"{global.users.find(u=>u.id===deleteUserConfirm)?.name}"</strong> 吗？</p>
-              <p style={{fontFamily:mono,fontSize:12,color:"#f87171",marginBottom:16}}>将删除该用户的所有数据，不可撤销。</p>
-              <div style={S.modalActions}><button className="ab" style={S.modalCancel} onClick={()=>setDeleteUserConfirm(null)}>取消</button><button className="ab" style={S.deleteConfirmBtn} onClick={()=>deleteUser(deleteUserConfirm)}>确认删除</button></div>
+              <p style={{ fontFamily: sans, fontSize: 14, color: textDim, lineHeight: 1.6, marginBottom: 8 }}>确定要删除用户 <strong style={{ color: text }}>"{global.users.find(u => u.id === deleteUserConfirm)?.name}"</strong> 吗？</p>
+              <p style={{ fontFamily: mono, fontSize: 12, color: "#f87171", marginBottom: 16 }}>将删除该用户的所有数据，不可撤销。</p>
+              <div style={S.modalActions}><button className="ab" style={S.modalCancel} onClick={() => setDeleteUserConfirm(null)}>取消</button><button className="ab" style={S.deleteConfirmBtn} onClick={() => deleteUser(deleteUserConfirm)}>确认删除</button></div>
             </div></div>}
           </div>
         )}
@@ -1351,30 +1367,30 @@ export default function App() {
           <div style={S.content}>
             <div style={{ padding: "20px 0" }}>
               <h2 style={S.sectionTitle}>Backup & Sync</h2>
-              <p style={{fontFamily:mono,fontSize:12,color:textDim,marginTop:4,marginBottom:16}}>data/users/{uid()}/YYMM/MMDD.json</p>
+              <p style={{ fontFamily: mono, fontSize: 12, color: textDim, marginTop: 4, marginBottom: 16 }}>data/users/{uid()}/YYMM/MMDD.json</p>
               <div style={{ marginBottom: 20 }}>
                 <h3 style={S.smallTitle}>Export users</h3>
                 <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
                   {global.users.map(u => (
-                    <label key={u.id} style={{ display: "flex", alignItems: "center", gap: 6, cursor: "pointer", fontFamily: mono, fontSize: 12, color: exportUsers.has(u.id)?text:textDim }}>
-                      <input type="checkbox" className="cb" checked={exportUsers.has(u.id)} onChange={() => toggleExportUser(u.id)}/>{u.name}
+                    <label key={u.id} style={{ display: "flex", alignItems: "center", gap: 6, cursor: "pointer", fontFamily: mono, fontSize: 12, color: exportUsers.has(u.id) ? text : textDim }}>
+                      <input type="checkbox" className="cb" checked={exportUsers.has(u.id)} onChange={() => toggleExportUser(u.id)} />{u.name}
                     </label>
                   ))}
                 </div>
-                <p style={{ fontFamily: mono, fontSize: 10, color: "#555", marginTop: 6 }}>{exportUsers.size===0?"No selection = current user only":`${exportUsers.size} user(s)`}</p>
+                <p style={{ fontFamily: mono, fontSize: 10, color: "#555", marginTop: 6 }}>{exportUsers.size === 0 ? "No selection = current user only" : `${exportUsers.size} user(s)`}</p>
               </div>
               <div style={S.exportCards}>
-                <div style={S.exportCard} onClick={exportAll}><I.Download/><span style={{fontFamily:mono,fontSize:13,fontWeight:600}}>Export</span><span style={{fontFamily:mono,fontSize:11,color:textDim}}>{dayFiles.length} files</span></div>
-                <label style={S.exportCard}><input type="file" accept=".json" onChange={importAll} style={{display:"none"}}/><I.Plus/><span style={{fontFamily:mono,fontSize:13,fontWeight:600}}>Import</span><span style={{fontFamily:mono,fontSize:11,color:textDim}}>Restore</span></label>
+                <div style={S.exportCard} onClick={exportAll}><I.Download /><span style={{ fontFamily: mono, fontSize: 13, fontWeight: 600 }}>Export</span><span style={{ fontFamily: mono, fontSize: 11, color: textDim }}>{dayFiles.length} files</span></div>
+                <label style={S.exportCard}><input type="file" accept=".json" onChange={importAll} style={{ display: "none" }} /><I.Plus /><span style={{ fontFamily: mono, fontSize: 13, fontWeight: 600 }}>Import</span><span style={{ fontFamily: mono, fontSize: 11, color: textDim }}>Restore</span></label>
               </div>
-              <div style={{ marginBottom: 24 }}><h3 style={{fontFamily:mono,fontSize:13,fontWeight:600,color:text,marginBottom:12}}>Data Files</h3>
-                <div style={S.codeBlock}><code style={S.code}>{dayFiles.length>0?dayFiles.join("\n"):"(empty)"}</code></div></div>
+              <div style={{ marginBottom: 24 }}><h3 style={{ fontFamily: mono, fontSize: 13, fontWeight: 600, color: text, marginBottom: 12 }}>Data Files</h3>
+                <div style={S.codeBlock}><code style={S.code}>{dayFiles.length > 0 ? dayFiles.join("\n") : "(empty)"}</code></div></div>
               <div style={{ marginBottom: 24 }}>
-                <button className="pill" onClick={exportLogs} style={{ fontSize: 12 }}><I.Download/> Export debug logs</button>
+                <button className="pill" onClick={exportLogs} style={{ fontSize: 12 }}><I.Download /> Export debug logs</button>
               </div>
               <div style={S.statsGrid}>
-                {[{n:cards.length,l:"Total"},{n:meta.decks.length,l:"Decks"},{n:allDueCount,l:"Due"},{n:cards.filter(c=>c.reviewStage>=EBB.length-1).length,l:"Done"}].map((s,i) => (
-                  <div key={i} style={S.statCard}><div style={S.statNum}>{s.n}</div><div style={{fontFamily:mono,fontSize:11,color:textDim,marginTop:4}}>{s.l}</div></div>
+                {[{ n: cards.length, l: "Total" }, { n: meta.decks.length, l: "Decks" }, { n: allDueCount, l: "Due" }, { n: cards.filter(c => c.reviewStage >= EBB.length - 1).length, l: "Done" }].map((s, i) => (
+                  <div key={i} style={S.statCard}><div style={S.statNum}>{s.n}</div><div style={{ fontFamily: mono, fontSize: 11, color: textDim, marginTop: 4 }}>{s.l}</div></div>
                 ))}
               </div>
             </div>
@@ -1384,97 +1400,97 @@ export default function App() {
 
       {canScroll && (
         <div style={{ position: "fixed", bottom: 24, right: 20, display: "flex", flexDirection: "column", gap: 6, zIndex: 90 }}>
-          <button className="scb" style={S.scrollBtn} onClick={() => window.scrollTo({top:0,behavior:"smooth"})}><I.ArrowUp/></button>
-          <button className="scb" style={S.scrollBtn} onClick={() => window.scrollTo({top:document.documentElement.scrollHeight,behavior:"smooth"})}><I.ArrowDown/></button>
+          <button className="scb" style={S.scrollBtn} onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}><I.ArrowUp /></button>
+          <button className="scb" style={S.scrollBtn} onClick={() => window.scrollTo({ top: document.documentElement.scrollHeight, behavior: "smooth" })}><I.ArrowDown /></button>
         </div>
       )}
     </div>
   );
 }
 
-const accent="#e84400",accentDim="#e8440033",bg="#0a0a0b",surface="#111113",surface2="#1a1a1e",border="#222226",text="#e8e6e3",textDim="#777";
-const mono="'JetBrains Mono',monospace",serif="'Crimson Pro',serif",sans="'Noto Sans SC',system-ui,sans-serif";
+const accent = "#e84400", accentDim = "#e8440033", bg = "#0a0a0b", surface = "#111113", surface2 = "#1a1a1e", border = "#222226", text = "#e8e6e3", textDim = "#777";
+const mono = "'JetBrains Mono',monospace", serif = "'Crimson Pro',serif", sans = "'Noto Sans SC',system-ui,sans-serif";
 const S = {
-  root:{background:bg,minHeight:"100vh",color:text,fontFamily:sans,maxWidth:720,margin:"0 auto",padding:"0 16px",paddingBottom:60},
-  loadingScreen:{display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",height:"100vh",background:bg},
-  loadingPulse:{fontSize:48,color:accent,animation:"pulse 1.5s infinite"},
-  header:{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"14px 0 10px",borderBottom:`1px solid ${border}`,flexWrap:"wrap",gap:6},
-  headerRight:{display:"flex",alignItems:"center",gap:4,flexWrap:"wrap"},
-  logo:{display:"flex",alignItems:"center",gap:8,cursor:"pointer"},
-  logoMark:{fontSize:22,fontWeight:700,color:accent},
-  logoText:{fontFamily:mono,fontSize:15,fontWeight:600,color:text,letterSpacing:"-0.5px"},
-  dueBadge:{fontFamily:mono,fontSize:11,fontWeight:600,background:accentDim,color:accent,padding:"3px 9px",borderRadius:20,cursor:"pointer"},
-  langSel:{fontFamily:mono,fontSize:11,background:surface,color:text,border:`1px solid ${border}`,borderRadius:4,padding:"3px 4px",cursor:"pointer"},
-  nav:{display:"flex",gap:2,padding:"10px 0",borderBottom:`1px solid ${border}`,alignItems:"center",flexWrap:"wrap"},
-  navBtn:{fontFamily:mono,fontSize:12,fontWeight:500,background:"transparent",color:textDim,border:"1px solid transparent",padding:"4px 11px",borderRadius:6,cursor:"pointer",transition:"all .15s",display:"flex",alignItems:"center",gap:4},
-  navBtnActive:{background:surface2,color:text,borderColor:accent},
-  main:{paddingTop:6},
-  content:{animation:"fadeUp 0.3s ease"},
-  sectionHeader:{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"10px 0"},
-  sectionTitle:{fontFamily:serif,fontSize:22,fontWeight:600,color:text},
-  cardCount:{fontFamily:mono,fontSize:12,color:textDim},
-  empty:{display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:"60px 0",gap:16},
-  emptyText:{fontFamily:serif,fontSize:18,color:textDim},
-  emptyBtn:{display:"flex",alignItems:"center",gap:8,fontFamily:mono,fontSize:13,fontWeight:500,background:accent,color:"#fff",border:"none",padding:"10px 20px",borderRadius:8,cursor:"pointer"},
-  cardList:{display:"flex",flexDirection:"column",gap:3},
-  cardItem:{display:"flex",alignItems:"flex-start",padding:"10px 12px",borderRadius:8,background:surface,transition:"all .15s",animation:"fadeUp 0.3s ease both",borderLeft:"3px solid transparent"},
-  cardWord:{fontFamily:serif,fontSize:16,fontWeight:600,color:text},
-  cardTrans:{fontFamily:sans,fontSize:13,color:textDim},
-  cardTrans2:{fontFamily:mono,fontSize:12,color:"#666"},
-  cardItemRight:{display:"flex",alignItems:"center",gap:6,marginLeft:8,flexShrink:0,paddingTop:2},
-  deleteBtn:{background:"transparent",border:"none",color:"#444",cursor:"pointer",padding:4,display:"flex"},
-  editBtn:{background:"transparent",border:"none",color:"#555",cursor:"pointer",padding:2,display:"flex",marginLeft:4},
-  speakBtn:{background:"transparent",border:"none",color:"#666",cursor:"pointer",padding:2,display:"flex",transition:"color .15s"},
-  editInput:{fontFamily:sans,fontSize:13,background:bg,color:text,border:`1px solid ${border}`,borderRadius:6,padding:"6px 8px",lineHeight:1.4},
-  editSave:{fontFamily:mono,fontSize:14,background:"#16a34a33",color:"#4ade80",border:"none",borderRadius:4,padding:"4px 8px",cursor:"pointer"},
-  editCancel:{fontFamily:mono,fontSize:14,background:"#dc262622",color:"#f87171",border:"none",borderRadius:4,padding:"4px 8px",cursor:"pointer"},
-  dateInput:{fontFamily:mono,fontSize:12,background:surface,color:text,border:`1px solid ${border}`,borderRadius:6,padding:"4px 8px",cursor:"pointer",width:130},
-  addTitle:{fontFamily:serif,fontSize:26,fontWeight:700,color:text,marginBottom:4},
-  addSub:{fontFamily:mono,fontSize:12,color:textDim,marginBottom:20},
-  inputRow:{display:"flex",gap:8,marginBottom:28,alignItems:"center",flexWrap:"wrap"},
-  wordInput:{flex:1,minWidth:200,fontFamily:sans,fontSize:15,background:surface,color:text,border:`2px solid ${border}`,borderRadius:10,padding:"12px 14px"},
-  addBtn:{display:"flex",alignItems:"center",gap:6,fontFamily:mono,fontSize:13,fontWeight:600,background:accent,color:"#fff",border:"none",padding:"12px 20px",borderRadius:10,cursor:"pointer",whiteSpace:"nowrap"},
-  smallTitle:{fontFamily:mono,fontSize:11,fontWeight:600,color:textDim,textTransform:"uppercase",letterSpacing:"1px",marginBottom:10},
-  recentItem:{display:"flex",alignItems:"center",gap:8,padding:"7px 0",borderBottom:`1px solid ${border}`,animation:"slideIn 0.3s ease",flexWrap:"wrap"},
-  recentWord:{fontFamily:serif,fontSize:15,fontWeight:600,color:text},
-  recentTrans:{fontFamily:sans,fontSize:14,color:textDim},
-  recentTrans2:{fontFamily:mono,fontSize:13,color:"#666"},
-  intervals:{display:"flex",flexWrap:"wrap",gap:5},
-  intervalPill:{fontFamily:mono,fontSize:11,color:textDim,background:surface2,padding:"3px 9px",borderRadius:20,border:`1px solid ${border}`},
-  reviewArea:{display:"flex",flexDirection:"column",alignItems:"center",padding:"20px 0"},
-  reviewProgress:{fontFamily:mono,fontSize:12,color:textDim,marginBottom:16},
-  reviewCard:{width:"100%",maxWidth:480,background:surface,borderRadius:16,padding:"32px 24px",textAlign:"center",border:`1px solid ${border}`},
-  reviewWord:{fontFamily:serif,fontSize:32,fontWeight:700,color:text},
-  reviewTrans:{fontFamily:sans,fontSize:20,fontWeight:500,color:text},
-  reviewTrans2:{fontFamily:mono,fontSize:14,color:"#888"},
-  showBtn:{display:"inline-flex",alignItems:"center",gap:8,fontFamily:mono,fontSize:13,background:surface2,color:text,border:`1px solid ${border}`,padding:"10px 24px",borderRadius:10,cursor:"pointer"},
-  reviewActions:{display:"flex",gap:12,justifyContent:"center"},
-  forgotBtn:{display:"flex",alignItems:"center",gap:6,fontFamily:mono,fontSize:13,fontWeight:600,background:"#dc262622",color:"#f87171",border:"1px solid #dc262644",padding:"12px 28px",borderRadius:10,cursor:"pointer"},
-  knewBtn:{display:"flex",alignItems:"center",gap:6,fontFamily:mono,fontSize:13,fontWeight:600,background:"#16a34a22",color:"#4ade80",border:"1px solid #16a34a44",padding:"12px 28px",borderRadius:10,cursor:"pointer"},
-  deckGrid:{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(170px,1fr))",gap:12,paddingTop:8},
-  deckCard:{background:surface,borderRadius:12,padding:"18px 14px",border:`1px solid ${border}`,cursor:"pointer",transition:"all .2s",position:"relative"},
-  deckName:{fontFamily:serif,fontSize:16,fontWeight:600,color:text,marginBottom:6},
-  deckStats:{fontFamily:mono,fontSize:11,color:textDim,display:"flex",gap:8},
-  deckActionBtn:{background:"transparent",border:"none",color:"#555",cursor:"pointer",padding:3,display:"flex"},
-  newDeckBtn:{display:"flex",alignItems:"center",gap:6,fontFamily:mono,fontSize:12,fontWeight:500,background:surface2,color:text,border:`1px solid ${border}`,padding:"5px 12px",borderRadius:8,cursor:"pointer"},
-  modal:{position:"fixed",inset:0,background:"rgba(0,0,0,0.7)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:100},
-  modalContent:{background:surface,borderRadius:16,padding:24,width:"90%",maxWidth:360,border:`1px solid ${border}`},
-  modalTitle:{fontFamily:serif,fontSize:20,fontWeight:600,color:text,marginBottom:14},
-  modalInput:{width:"100%",fontFamily:mono,fontSize:14,background:bg,color:text,border:`2px solid ${border}`,borderRadius:8,padding:"10px 12px",marginBottom:10},
-  modalActions:{display:"flex",gap:8,justifyContent:"flex-end",marginTop:8},
-  modalCancel:{fontFamily:mono,fontSize:12,background:"transparent",color:textDim,border:`1px solid ${border}`,padding:"7px 14px",borderRadius:8,cursor:"pointer"},
-  modalConfirm:{fontFamily:mono,fontSize:12,background:accent,color:"#fff",border:"none",padding:"7px 14px",borderRadius:8,cursor:"pointer"},
-  deleteConfirmBtn:{fontFamily:mono,fontSize:12,background:"#dc2626",color:"#fff",border:"none",padding:"7px 14px",borderRadius:8,cursor:"pointer"},
-  exportCards:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginBottom:28},
-  exportCard:{display:"flex",flexDirection:"column",alignItems:"center",gap:8,padding:"24px 14px",background:surface,borderRadius:12,border:`1px solid ${border}`,cursor:"pointer",color:text},
-  codeBlock:{background:surface,borderRadius:10,padding:14,border:`1px solid ${border}`,overflowX:"auto"},
-  code:{fontFamily:mono,fontSize:11,color:"#a8b1c0",lineHeight:1.7,whiteSpace:"pre"},
-  statsGrid:{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:10},
-  statCard:{background:surface,borderRadius:10,padding:"14px 10px",border:`1px solid ${border}`,textAlign:"center"},
-  statNum:{fontFamily:mono,fontSize:22,fontWeight:700,color:accent},
-  toast:{position:"fixed",bottom:20,left:"50%",transform:"translateX(-50%)",fontFamily:mono,fontSize:13,background:surface2,color:text,padding:"8px 18px",borderRadius:10,border:`1px solid ${border}`,zIndex:200,animation:"toast 2.2s ease both",whiteSpace:"nowrap"},
-  pageBtn:{fontFamily:mono,fontSize:11,background:"transparent",color:textDim,border:`1px solid ${border}`,padding:"4px 12px",borderRadius:6,cursor:"pointer"},
-  pageBtnActive:{background:accent,color:"#fff",borderColor:accent},
-  pageLink:{fontFamily:mono,fontSize:12,background:"transparent",border:"none",color:textDim,cursor:"pointer",padding:"2px 8px"},
-  scrollBtn:{width:36,height:36,borderRadius:"50%",background:`${surface}cc`,border:`1px solid ${border}`,color:textDim,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",backdropFilter:"blur(8px)",transition:"all .15s",opacity:0.6},
+  root: { background: bg, minHeight: "100vh", color: text, fontFamily: sans, maxWidth: 720, margin: "0 auto", padding: "0 16px", paddingBottom: 60 },
+  loadingScreen: { display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", height: "100vh", background: bg },
+  loadingPulse: { fontSize: 48, color: accent, animation: "pulse 1.5s infinite" },
+  header: { display: "flex", justifyContent: "space-between", alignItems: "center", padding: "14px 0 10px", borderBottom: `1px solid ${border}`, flexWrap: "wrap", gap: 6 },
+  headerRight: { display: "flex", alignItems: "center", gap: 4, flexWrap: "wrap" },
+  logo: { display: "flex", alignItems: "center", gap: 8, cursor: "pointer" },
+  logoMark: { fontSize: 22, fontWeight: 700, color: accent },
+  logoText: { fontFamily: mono, fontSize: 15, fontWeight: 600, color: text, letterSpacing: "-0.5px" },
+  dueBadge: { fontFamily: mono, fontSize: 11, fontWeight: 600, background: accentDim, color: accent, padding: "3px 9px", borderRadius: 20, cursor: "pointer" },
+  langSel: { fontFamily: mono, fontSize: 11, background: surface, color: text, border: `1px solid ${border}`, borderRadius: 4, padding: "3px 4px", cursor: "pointer" },
+  nav: { display: "flex", gap: 2, padding: "10px 0", borderBottom: `1px solid ${border}`, alignItems: "center", flexWrap: "wrap" },
+  navBtn: { fontFamily: mono, fontSize: 12, fontWeight: 500, background: "transparent", color: textDim, border: "1px solid transparent", padding: "4px 11px", borderRadius: 6, cursor: "pointer", transition: "all .15s", display: "flex", alignItems: "center", gap: 4 },
+  navBtnActive: { background: surface2, color: text, borderColor: accent },
+  main: { paddingTop: 6 },
+  content: { animation: "fadeUp 0.3s ease" },
+  sectionHeader: { display: "flex", justifyContent: "space-between", alignItems: "center", padding: "10px 0" },
+  sectionTitle: { fontFamily: serif, fontSize: 22, fontWeight: 600, color: text },
+  cardCount: { fontFamily: mono, fontSize: 12, color: textDim },
+  empty: { display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "60px 0", gap: 16 },
+  emptyText: { fontFamily: serif, fontSize: 18, color: textDim },
+  emptyBtn: { display: "flex", alignItems: "center", gap: 8, fontFamily: mono, fontSize: 13, fontWeight: 500, background: accent, color: "#fff", border: "none", padding: "10px 20px", borderRadius: 8, cursor: "pointer" },
+  cardList: { display: "flex", flexDirection: "column", gap: 3 },
+  cardItem: { display: "flex", alignItems: "flex-start", padding: "10px 12px", borderRadius: 8, background: surface, transition: "all .15s", animation: "fadeUp 0.3s ease both", borderLeft: "3px solid transparent" },
+  cardWord: { fontFamily: serif, fontSize: 16, fontWeight: 600, color: text },
+  cardTrans: { fontFamily: sans, fontSize: 13, color: textDim },
+  cardTrans2: { fontFamily: mono, fontSize: 12, color: "#666" },
+  cardItemRight: { display: "flex", alignItems: "center", gap: 6, marginLeft: 8, flexShrink: 0, paddingTop: 2 },
+  deleteBtn: { background: "transparent", border: "none", color: "#444", cursor: "pointer", padding: 4, display: "flex" },
+  editBtn: { background: "transparent", border: "none", color: "#555", cursor: "pointer", padding: 2, display: "flex", marginLeft: 4 },
+  speakBtn: { background: "transparent", border: "none", color: "#666", cursor: "pointer", padding: 2, display: "flex", transition: "color .15s" },
+  editInput: { fontFamily: sans, fontSize: 13, background: bg, color: text, border: `1px solid ${border}`, borderRadius: 6, padding: "6px 8px", lineHeight: 1.4 },
+  editSave: { fontFamily: mono, fontSize: 14, background: "#16a34a33", color: "#4ade80", border: "none", borderRadius: 4, padding: "4px 8px", cursor: "pointer" },
+  editCancel: { fontFamily: mono, fontSize: 14, background: "#dc262622", color: "#f87171", border: "none", borderRadius: 4, padding: "4px 8px", cursor: "pointer" },
+  dateInput: { fontFamily: mono, fontSize: 12, background: surface, color: text, border: `1px solid ${border}`, borderRadius: 6, padding: "4px 8px", cursor: "pointer", width: 130 },
+  addTitle: { fontFamily: serif, fontSize: 26, fontWeight: 700, color: text, marginBottom: 4 },
+  addSub: { fontFamily: mono, fontSize: 12, color: textDim, marginBottom: 20 },
+  inputRow: { display: "flex", gap: 8, marginBottom: 28, alignItems: "center", flexWrap: "wrap" },
+  wordInput: { flex: 1, minWidth: 200, fontFamily: sans, fontSize: 15, background: surface, color: text, border: `2px solid ${border}`, borderRadius: 10, padding: "12px 14px" },
+  addBtn: { display: "flex", alignItems: "center", gap: 6, fontFamily: mono, fontSize: 13, fontWeight: 600, background: accent, color: "#fff", border: "none", padding: "12px 20px", borderRadius: 10, cursor: "pointer", whiteSpace: "nowrap" },
+  smallTitle: { fontFamily: mono, fontSize: 11, fontWeight: 600, color: textDim, textTransform: "uppercase", letterSpacing: "1px", marginBottom: 10 },
+  recentItem: { display: "flex", alignItems: "center", gap: 8, padding: "7px 0", borderBottom: `1px solid ${border}`, animation: "slideIn 0.3s ease", flexWrap: "wrap" },
+  recentWord: { fontFamily: serif, fontSize: 15, fontWeight: 600, color: text },
+  recentTrans: { fontFamily: sans, fontSize: 14, color: textDim },
+  recentTrans2: { fontFamily: mono, fontSize: 13, color: "#666" },
+  intervals: { display: "flex", flexWrap: "wrap", gap: 5 },
+  intervalPill: { fontFamily: mono, fontSize: 11, color: textDim, background: surface2, padding: "3px 9px", borderRadius: 20, border: `1px solid ${border}` },
+  reviewArea: { display: "flex", flexDirection: "column", alignItems: "center", padding: "20px 0" },
+  reviewProgress: { fontFamily: mono, fontSize: 12, color: textDim, marginBottom: 16 },
+  reviewCard: { width: "100%", maxWidth: 480, background: surface, borderRadius: 16, padding: "32px 24px", textAlign: "center", border: `1px solid ${border}` },
+  reviewWord: { fontFamily: serif, fontSize: 32, fontWeight: 700, color: text },
+  reviewTrans: { fontFamily: sans, fontSize: 20, fontWeight: 500, color: text },
+  reviewTrans2: { fontFamily: mono, fontSize: 14, color: "#888" },
+  showBtn: { display: "inline-flex", alignItems: "center", gap: 8, fontFamily: mono, fontSize: 13, background: surface2, color: text, border: `1px solid ${border}`, padding: "10px 24px", borderRadius: 10, cursor: "pointer" },
+  reviewActions: { display: "flex", gap: 12, justifyContent: "center" },
+  forgotBtn: { display: "flex", alignItems: "center", gap: 6, fontFamily: mono, fontSize: 13, fontWeight: 600, background: "#dc262622", color: "#f87171", border: "1px solid #dc262644", padding: "12px 28px", borderRadius: 10, cursor: "pointer" },
+  knewBtn: { display: "flex", alignItems: "center", gap: 6, fontFamily: mono, fontSize: 13, fontWeight: 600, background: "#16a34a22", color: "#4ade80", border: "1px solid #16a34a44", padding: "12px 28px", borderRadius: 10, cursor: "pointer" },
+  deckGrid: { display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(170px,1fr))", gap: 12, paddingTop: 8 },
+  deckCard: { background: surface, borderRadius: 12, padding: "18px 14px", border: `1px solid ${border}`, cursor: "pointer", transition: "all .2s", position: "relative" },
+  deckName: { fontFamily: serif, fontSize: 16, fontWeight: 600, color: text, marginBottom: 6 },
+  deckStats: { fontFamily: mono, fontSize: 11, color: textDim, display: "flex", gap: 8 },
+  deckActionBtn: { background: "transparent", border: "none", color: "#555", cursor: "pointer", padding: 3, display: "flex" },
+  newDeckBtn: { display: "flex", alignItems: "center", gap: 6, fontFamily: mono, fontSize: 12, fontWeight: 500, background: surface2, color: text, border: `1px solid ${border}`, padding: "5px 12px", borderRadius: 8, cursor: "pointer" },
+  modal: { position: "fixed", inset: 0, background: "rgba(0,0,0,0.7)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 100 },
+  modalContent: { background: surface, borderRadius: 16, padding: 24, width: "90%", maxWidth: 360, border: `1px solid ${border}` },
+  modalTitle: { fontFamily: serif, fontSize: 20, fontWeight: 600, color: text, marginBottom: 14 },
+  modalInput: { width: "100%", fontFamily: mono, fontSize: 14, background: bg, color: text, border: `2px solid ${border}`, borderRadius: 8, padding: "10px 12px", marginBottom: 10 },
+  modalActions: { display: "flex", gap: 8, justifyContent: "flex-end", marginTop: 8 },
+  modalCancel: { fontFamily: mono, fontSize: 12, background: "transparent", color: textDim, border: `1px solid ${border}`, padding: "7px 14px", borderRadius: 8, cursor: "pointer" },
+  modalConfirm: { fontFamily: mono, fontSize: 12, background: accent, color: "#fff", border: "none", padding: "7px 14px", borderRadius: 8, cursor: "pointer" },
+  deleteConfirmBtn: { fontFamily: mono, fontSize: 12, background: "#dc2626", color: "#fff", border: "none", padding: "7px 14px", borderRadius: 8, cursor: "pointer" },
+  exportCards: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 28 },
+  exportCard: { display: "flex", flexDirection: "column", alignItems: "center", gap: 8, padding: "24px 14px", background: surface, borderRadius: 12, border: `1px solid ${border}`, cursor: "pointer", color: text },
+  codeBlock: { background: surface, borderRadius: 10, padding: 14, border: `1px solid ${border}`, overflowX: "auto" },
+  code: { fontFamily: mono, fontSize: 11, color: "#a8b1c0", lineHeight: 1.7, whiteSpace: "pre" },
+  statsGrid: { display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: 10 },
+  statCard: { background: surface, borderRadius: 10, padding: "14px 10px", border: `1px solid ${border}`, textAlign: "center" },
+  statNum: { fontFamily: mono, fontSize: 22, fontWeight: 700, color: accent },
+  toast: { position: "fixed", bottom: 20, left: "50%", transform: "translateX(-50%)", fontFamily: mono, fontSize: 13, background: surface2, color: text, padding: "8px 18px", borderRadius: 10, border: `1px solid ${border}`, zIndex: 200, animation: "toast 2.2s ease both", whiteSpace: "nowrap" },
+  pageBtn: { fontFamily: mono, fontSize: 11, background: "transparent", color: textDim, border: `1px solid ${border}`, padding: "4px 12px", borderRadius: 6, cursor: "pointer" },
+  pageBtnActive: { background: accent, color: "#fff", borderColor: accent },
+  pageLink: { fontFamily: mono, fontSize: 12, background: "transparent", border: "none", color: textDim, cursor: "pointer", padding: "2px 8px" },
+  scrollBtn: { width: 36, height: 36, borderRadius: "50%", background: `${surface}cc`, border: `1px solid ${border}`, color: textDim, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", backdropFilter: "blur(8px)", transition: "all .15s", opacity: 0.6 },
 };
