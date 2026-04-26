@@ -6,8 +6,8 @@
     "translation2": "question oneself",
     "deckId": "default",
     "createdAt": "2026-04-18",
-    "reviewStage": 2,
-    "nextReview": "2026-04-24",
+    "reviewStage": 3,
+    "nextReview": "2026-05-02",
     "reviewHistory": [
       {
         "date": "2026-04-18",
@@ -19,6 +19,10 @@
       },
       {
         "date": "2026-04-21",
+        "remembered": true
+      },
+      {
+        "date": "2026-04-25",
         "remembered": true
       }
     ],
@@ -32,8 +36,8 @@
     "translation2": "dig deeper into things",
     "deckId": "default",
     "createdAt": "2026-04-18",
-    "reviewStage": 1,
-    "nextReview": "2026-04-22",
+    "reviewStage": 2,
+    "nextReview": "2026-04-28",
     "reviewHistory": [
       {
         "date": "2026-04-18",
@@ -45,6 +49,10 @@
       },
       {
         "date": "2026-04-21",
+        "remembered": true
+      },
+      {
+        "date": "2026-04-25",
         "remembered": true
       }
     ],
@@ -58,8 +66,8 @@
     "translation2": "Anthroposophy",
     "deckId": "default",
     "createdAt": "2026-04-18",
-    "reviewStage": 2,
-    "nextReview": "2026-04-24",
+    "reviewStage": 3,
+    "nextReview": "2026-05-02",
     "reviewHistory": [
       {
         "date": "2026-04-18",
@@ -71,6 +79,10 @@
       },
       {
         "date": "2026-04-21",
+        "remembered": true
+      },
+      {
+        "date": "2026-04-25",
         "remembered": true
       }
     ],
@@ -84,8 +96,8 @@
     "translation2": "Ambidextrous",
     "deckId": "default",
     "createdAt": "2026-04-18",
-    "reviewStage": 1,
-    "nextReview": "2026-04-22",
+    "reviewStage": 0,
+    "nextReview": "2026-04-25",
     "reviewHistory": [
       {
         "date": "2026-04-18",
@@ -98,9 +110,13 @@
       {
         "date": "2026-04-21",
         "remembered": true
+      },
+      {
+        "date": "2026-04-25",
+        "remembered": false
       }
     ],
-    "rot": 0,
+    "rot": 1,
     "tags": []
   },
   {
@@ -110,8 +126,8 @@
     "translation2": "Bilateral",
     "deckId": "default",
     "createdAt": "2026-04-18",
-    "reviewStage": 2,
-    "nextReview": "2026-04-24",
+    "reviewStage": 3,
+    "nextReview": "2026-05-02",
     "reviewHistory": [
       {
         "date": "2026-04-18",
@@ -123,6 +139,10 @@
       },
       {
         "date": "2026-04-21",
+        "remembered": true
+      },
+      {
+        "date": "2026-04-25",
         "remembered": true
       }
     ],
@@ -136,8 +156,8 @@
     "translation2": "revelation",
     "deckId": "default",
     "createdAt": "2026-04-18",
-    "reviewStage": 2,
-    "nextReview": "2026-04-24",
+    "reviewStage": 3,
+    "nextReview": "2026-05-02",
     "reviewHistory": [
       {
         "date": "2026-04-18",
@@ -150,9 +170,13 @@
       {
         "date": "2026-04-21",
         "remembered": true
+      },
+      {
+        "date": "2026-04-25",
+        "remembered": true
       }
     ],
-    "rot": 0,
+    "rot": 1,
     "tags": []
   },
   {
@@ -163,7 +187,7 @@
     "deckId": "default",
     "createdAt": "2026-04-18",
     "reviewStage": 0,
-    "nextReview": "2026-04-21",
+    "nextReview": "2026-04-25",
     "reviewHistory": [
       {
         "date": "2026-04-18",
@@ -175,6 +199,10 @@
       },
       {
         "date": "2026-04-21",
+        "remembered": false
+      },
+      {
+        "date": "2026-04-25",
         "remembered": false
       }
     ],
@@ -190,8 +218,8 @@
     "translation2": "We felt that there was behind",
     "deckId": "default",
     "createdAt": "2026-04-18",
-    "reviewStage": 2,
-    "nextReview": "2026-04-24",
+    "reviewStage": 3,
+    "nextReview": "2026-05-02",
     "reviewHistory": [
       {
         "date": "2026-04-18",
@@ -203,6 +231,10 @@
       },
       {
         "date": "2026-04-21",
+        "remembered": true
+      },
+      {
+        "date": "2026-04-25",
         "remembered": true
       }
     ],
@@ -216,137 +248,7 @@
     "translation2": "psychological construction",
     "deckId": "default",
     "createdAt": "2026-04-18",
-    "reviewStage": 1,
-    "nextReview": "2026-04-22",
-    "reviewHistory": [
-      {
-        "date": "2026-04-18",
-        "remembered": false
-      },
-      {
-        "date": "2026-04-19",
-        "remembered": false
-      },
-      {
-        "date": "2026-04-21",
-        "remembered": true
-      }
-    ],
-    "rot": 1,
-    "tags": []
-  },
-  {
-    "id": "mo4k76fr5eou",
-    "word": "diligenter",
-    "translation": "展开/进行/积极处理",
-    "translation2": "to diligently",
-    "deckId": "default",
-    "createdAt": "2026-04-18",
-    "reviewStage": 1,
-    "nextReview": "2026-04-22",
-    "reviewHistory": [
-      {
-        "date": "2026-04-18",
-        "remembered": false
-      },
-      {
-        "date": "2026-04-19",
-        "remembered": false
-      },
-      {
-        "date": "2026-04-21",
-        "remembered": true
-      }
-    ],
-    "rot": 1,
-    "tags": []
-  },
-  {
-    "id": "mo4kavjk5q6r",
-    "word": "expertise",
-    "translation": "坚定n.",
-    "translation2": "expertise",
-    "deckId": "default",
-    "createdAt": "2026-04-18",
-    "reviewStage": 0,
-    "nextReview": "2026-04-21",
-    "reviewHistory": [
-      {
-        "date": "2026-04-18",
-        "remembered": false
-      },
-      {
-        "date": "2026-04-19",
-        "remembered": false
-      },
-      {
-        "date": "2026-04-21",
-        "remembered": false
-      }
-    ],
-    "rot": 1,
-    "tags": []
-  },
-  {
-    "id": "mo4ki81zb158",
-    "word": "mythomane",
-    "translation": "谎话连篇的",
-    "translation2": "mythomaniac",
-    "deckId": "default",
-    "createdAt": "2026-04-18",
-    "reviewStage": 1,
-    "nextReview": "2026-04-22",
-    "reviewHistory": [
-      {
-        "date": "2026-04-18",
-        "remembered": false
-      },
-      {
-        "date": "2026-04-19",
-        "remembered": false
-      },
-      {
-        "date": "2026-04-21",
-        "remembered": true
-      }
-    ],
-    "rot": 1,
-    "tags": []
-  },
-  {
-    "id": "mo4kj5gug4zv",
-    "word": "trait de personnalité",
-    "translation": "人格特质/性格特征",
-    "translation2": "personality trait",
-    "deckId": "default",
-    "createdAt": "2026-04-18",
-    "reviewStage": 1,
-    "nextReview": "2026-04-22",
-    "reviewHistory": [
-      {
-        "date": "2026-04-18",
-        "remembered": false
-      },
-      {
-        "date": "2026-04-19",
-        "remembered": false
-      },
-      {
-        "date": "2026-04-21",
-        "remembered": true
-      }
-    ],
-    "rot": 1,
-    "tags": []
-  },
-  {
-    "id": "mo4kkdzlvgle",
-    "word": "perception de la réalité",
-    "translation": "对现实的感知",
-    "translation2": "perception of reality",
-    "deckId": "default",
-    "createdAt": "2026-04-18",
-    "reviewStage": 3,
+    "reviewStage": 2,
     "nextReview": "2026-04-28",
     "reviewHistory": [
       {
@@ -360,6 +262,130 @@
       {
         "date": "2026-04-21",
         "remembered": true
+      },
+      {
+        "date": "2026-04-25",
+        "remembered": true
+      }
+    ],
+    "rot": 1,
+    "tags": []
+  },
+  {
+    "id": "mo4k76fr5eou",
+    "word": "diligenter",
+    "translation": "展开/进行/积极处理",
+    "translation2": "to diligently",
+    "deckId": "default",
+    "createdAt": "2026-04-18",
+    "reviewStage": 2,
+    "nextReview": "2026-04-28",
+    "reviewHistory": [
+      {
+        "date": "2026-04-18",
+        "remembered": false
+      },
+      {
+        "date": "2026-04-19",
+        "remembered": false
+      },
+      {
+        "date": "2026-04-21",
+        "remembered": true
+      },
+      {
+        "date": "2026-04-25",
+        "remembered": true
+      }
+    ],
+    "rot": 1,
+    "tags": []
+  },
+  {
+    "id": "mo4ki81zb158",
+    "word": "mythomane",
+    "translation": "谎话连篇的",
+    "translation2": "mythomaniac",
+    "deckId": "default",
+    "createdAt": "2026-04-18",
+    "reviewStage": 0,
+    "nextReview": "2026-04-25",
+    "reviewHistory": [
+      {
+        "date": "2026-04-18",
+        "remembered": false
+      },
+      {
+        "date": "2026-04-19",
+        "remembered": false
+      },
+      {
+        "date": "2026-04-21",
+        "remembered": true
+      },
+      {
+        "date": "2026-04-25",
+        "remembered": true
+      }
+    ],
+    "rot": 1,
+    "tags": []
+  },
+  {
+    "id": "mo4kj5gug4zv",
+    "word": "trait de personnalité",
+    "translation": "人格特质/性格特征",
+    "translation2": "personality trait",
+    "deckId": "default",
+    "createdAt": "2026-04-18",
+    "reviewStage": 2,
+    "nextReview": "2026-04-28",
+    "reviewHistory": [
+      {
+        "date": "2026-04-18",
+        "remembered": false
+      },
+      {
+        "date": "2026-04-19",
+        "remembered": false
+      },
+      {
+        "date": "2026-04-21",
+        "remembered": true
+      },
+      {
+        "date": "2026-04-25",
+        "remembered": false
+      }
+    ],
+    "rot": 1,
+    "tags": []
+  },
+  {
+    "id": "mo4kkdzlvgle",
+    "word": "perception de la réalité",
+    "translation": "对现实的感知",
+    "translation2": "perception of reality",
+    "deckId": "default",
+    "createdAt": "2026-04-18",
+    "reviewStage": 4,
+    "nextReview": "2026-05-10",
+    "reviewHistory": [
+      {
+        "date": "2026-04-18",
+        "remembered": false
+      },
+      {
+        "date": "2026-04-19",
+        "remembered": false
+      },
+      {
+        "date": "2026-04-21",
+        "remembered": true
+      },
+      {
+        "date": "2026-04-25",
+        "remembered": true
       }
     ],
     "rot": 1,
@@ -372,8 +398,8 @@
     "translation2": "pathological tendency",
     "deckId": "default",
     "createdAt": "2026-04-18",
-    "reviewStage": 0,
-    "nextReview": "2026-04-21",
+    "reviewStage": 1,
+    "nextReview": "2026-04-26",
     "reviewHistory": [
       {
         "date": "2026-04-18",
@@ -385,6 +411,10 @@
       },
       {
         "date": "2026-04-21",
+        "remembered": true
+      },
+      {
+        "date": "2026-04-25",
         "remembered": true
       }
     ],

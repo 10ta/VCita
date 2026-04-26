@@ -6,8 +6,8 @@
     "translation2": "?",
     "deckId": "default",
     "createdAt": "2026-04-19",
-    "reviewStage": 3,
-    "nextReview": "2026-04-29",
+    "reviewStage": 4,
+    "nextReview": "2026-05-11",
     "reviewHistory": [
       {
         "date": "2026-04-19",
@@ -19,6 +19,10 @@
       },
       {
         "date": "2026-04-22",
+        "remembered": true
+      },
+      {
+        "date": "2026-04-26",
         "remembered": true
       }
     ],
@@ -32,8 +36,8 @@
     "translation2": "credibility referred to...",
     "deckId": "default",
     "createdAt": "2026-04-19",
-    "reviewStage": 2,
-    "nextReview": "2026-04-25",
+    "reviewStage": 3,
+    "nextReview": "2026-05-03",
     "reviewHistory": [
       {
         "date": "2026-04-19",
@@ -45,6 +49,10 @@
       },
       {
         "date": "2026-04-22",
+        "remembered": false
+      },
+      {
+        "date": "2026-04-26",
         "remembered": false
       }
     ],
@@ -59,7 +67,7 @@
     "deckId": "default",
     "createdAt": "2026-04-19",
     "reviewStage": 0,
-    "nextReview": "2026-04-22",
+    "nextReview": "2026-04-26",
     "reviewHistory": [
       {
         "date": "2026-04-19",
@@ -72,6 +80,10 @@
       {
         "date": "2026-04-22",
         "remembered": false
+      },
+      {
+        "date": "2026-04-26",
+        "remembered": true
       }
     ],
     "rot": 1,
@@ -86,8 +98,8 @@
     "translation2": "Did he experience what he said he experienced?",
     "deckId": "default",
     "createdAt": "2026-04-19",
-    "reviewStage": 2,
-    "nextReview": "2026-04-25",
+    "reviewStage": 3,
+    "nextReview": "2026-05-03",
     "reviewHistory": [
       {
         "date": "2026-04-19",
@@ -99,6 +111,10 @@
       },
       {
         "date": "2026-04-22",
+        "remembered": true
+      },
+      {
+        "date": "2026-04-26",
         "remembered": true
       }
     ],
@@ -113,7 +129,7 @@
     "deckId": "default",
     "createdAt": "2026-04-19",
     "reviewStage": 0,
-    "nextReview": "2026-04-22",
+    "nextReview": "2026-04-26",
     "reviewHistory": [
       {
         "date": "2026-04-19",
@@ -126,6 +142,10 @@
       {
         "date": "2026-04-22",
         "remembered": true
+      },
+      {
+        "date": "2026-04-26",
+        "remembered": false
       }
     ],
     "rot": 1,
@@ -138,8 +158,8 @@
     "translation2": "under seal",
     "deckId": "default",
     "createdAt": "2026-04-19",
-    "reviewStage": 1,
-    "nextReview": "2026-04-23",
+    "reviewStage": 2,
+    "nextReview": "2026-04-29",
     "reviewHistory": [
       {
         "date": "2026-04-19",
@@ -151,6 +171,10 @@
       },
       {
         "date": "2026-04-22",
+        "remembered": true
+      },
+      {
+        "date": "2026-04-26",
         "remembered": true
       }
     ],
@@ -166,8 +190,8 @@
     "translation2": "dildo",
     "deckId": "default",
     "createdAt": "2026-04-19",
-    "reviewStage": 0,
-    "nextReview": "2026-04-22",
+    "reviewStage": 1,
+    "nextReview": "2026-04-27",
     "reviewHistory": [
       {
         "date": "2026-04-19",
@@ -180,6 +204,10 @@
       {
         "date": "2026-04-22",
         "remembered": false
+      },
+      {
+        "date": "2026-04-26",
+        "remembered": true
       }
     ],
     "rot": 1,
@@ -192,8 +220,8 @@
     "translation2": "briefcase",
     "deckId": "default",
     "createdAt": "2026-04-19",
-    "reviewStage": 2,
-    "nextReview": "2026-04-25",
+    "reviewStage": 3,
+    "nextReview": "2026-05-03",
     "reviewHistory": [
       {
         "date": "2026-04-19",
@@ -205,6 +233,10 @@
       },
       {
         "date": "2026-04-22",
+        "remembered": true
+      },
+      {
+        "date": "2026-04-26",
         "remembered": true
       }
     ],
@@ -218,8 +250,8 @@
     "translation2": "violation of graves",
     "deckId": "default",
     "createdAt": "2026-04-19",
-    "reviewStage": 0,
-    "nextReview": "2026-04-22",
+    "reviewStage": 1,
+    "nextReview": "2026-04-27",
     "reviewHistory": [
       {
         "date": "2026-04-19",
@@ -232,6 +264,10 @@
       {
         "date": "2026-04-22",
         "remembered": false
+      },
+      {
+        "date": "2026-04-26",
+        "remembered": true
       }
     ],
     "rot": 1,
@@ -246,8 +282,8 @@
     "translation2": "sexual romp",
     "deckId": "default",
     "createdAt": "2026-04-19",
-    "reviewStage": 1,
-    "nextReview": "2026-04-23",
+    "reviewStage": 2,
+    "nextReview": "2026-04-29",
     "reviewHistory": [
       {
         "date": "2026-04-19",
@@ -259,6 +295,10 @@
       },
       {
         "date": "2026-04-22",
+        "remembered": true
+      },
+      {
+        "date": "2026-04-26",
         "remembered": true
       }
     ],
@@ -274,8 +314,8 @@
     "translation2": "a cassette on which we see",
     "deckId": "default",
     "createdAt": "2026-04-19",
-    "reviewStage": 2,
-    "nextReview": "2026-04-25",
+    "reviewStage": 3,
+    "nextReview": "2026-05-03",
     "reviewHistory": [
       {
         "date": "2026-04-19",
@@ -287,6 +327,10 @@
       },
       {
         "date": "2026-04-22",
+        "remembered": true
+      },
+      {
+        "date": "2026-04-26",
         "remembered": true
       }
     ],
@@ -300,8 +344,8 @@
     "translation2": "denial",
     "deckId": "default",
     "createdAt": "2026-04-19",
-    "reviewStage": 0,
-    "nextReview": "2026-04-22",
+    "reviewStage": 2,
+    "nextReview": "2026-04-29",
     "reviewHistory": [
       {
         "date": "2026-04-19",
@@ -313,6 +357,10 @@
       },
       {
         "date": "2026-04-22",
+        "remembered": false
+      },
+      {
+        "date": "2026-04-26",
         "remembered": false
       }
     ],
@@ -326,8 +374,8 @@
     "translation2": "the facts with which he was accused",
     "deckId": "default",
     "createdAt": "2026-04-19",
-    "reviewStage": 1,
-    "nextReview": "2026-04-23",
+    "reviewStage": 2,
+    "nextReview": "2026-04-29",
     "reviewHistory": [
       {
         "date": "2026-04-19",
@@ -339,6 +387,10 @@
       },
       {
         "date": "2026-04-22",
+        "remembered": false
+      },
+      {
+        "date": "2026-04-26",
         "remembered": false
       }
     ],
@@ -354,8 +406,8 @@
     "translation2": "she attributed facts to her husband",
     "deckId": "default",
     "createdAt": "2026-04-19",
-    "reviewStage": 0,
-    "nextReview": "2026-04-22",
+    "reviewStage": 1,
+    "nextReview": "2026-04-27",
     "reviewHistory": [
       {
         "date": "2026-04-19",
@@ -367,6 +419,10 @@
       },
       {
         "date": "2026-04-22",
+        "remembered": false
+      },
+      {
+        "date": "2026-04-26",
         "remembered": false
       }
     ],
@@ -380,8 +436,8 @@
     "translation2": "they surely endured what they denounce",
     "deckId": "default",
     "createdAt": "2026-04-19",
-    "reviewStage": 0,
-    "nextReview": "2026-04-22",
+    "reviewStage": 2,
+    "nextReview": "2026-04-29",
     "reviewHistory": [
       {
         "date": "2026-04-19",
@@ -394,6 +450,10 @@
       {
         "date": "2026-04-22",
         "remembered": false
+      },
+      {
+        "date": "2026-04-26",
+        "remembered": true
       }
     ],
     "rot": 1,
@@ -406,8 +466,8 @@
     "translation2": "it drives you crazy",
     "deckId": "default",
     "createdAt": "2026-04-19",
-    "reviewStage": 0,
-    "nextReview": "2026-04-22",
+    "reviewStage": 1,
+    "nextReview": "2026-04-27",
     "reviewHistory": [
       {
         "date": "2026-04-19",
@@ -420,6 +480,10 @@
       {
         "date": "2026-04-22",
         "remembered": false
+      },
+      {
+        "date": "2026-04-26",
+        "remembered": true
       }
     ],
     "rot": 1,
@@ -432,8 +496,8 @@
     "translation2": "?",
     "deckId": "default",
     "createdAt": "2026-04-19",
-    "reviewStage": 1,
-    "nextReview": "2026-04-23",
+    "reviewStage": 2,
+    "nextReview": "2026-04-29",
     "reviewHistory": [
       {
         "date": "2026-04-19",
@@ -445,6 +509,10 @@
       },
       {
         "date": "2026-04-22",
+        "remembered": true
+      },
+      {
+        "date": "2026-04-26",
         "remembered": true
       }
     ],
@@ -458,8 +526,8 @@
     "translation2": "§",
     "deckId": "default",
     "createdAt": "2026-04-19",
-    "reviewStage": 2,
-    "nextReview": "2026-04-25",
+    "reviewStage": 3,
+    "nextReview": "2026-05-03",
     "reviewHistory": [
       {
         "date": "2026-04-19",
@@ -471,6 +539,10 @@
       },
       {
         "date": "2026-04-22",
+        "remembered": true
+      },
+      {
+        "date": "2026-04-26",
         "remembered": true
       }
     ],
@@ -486,8 +558,8 @@
     "translation2": "party",
     "deckId": "default",
     "createdAt": "2026-04-19",
-    "reviewStage": 1,
-    "nextReview": "2026-04-23",
+    "reviewStage": 0,
+    "nextReview": "2026-04-26",
     "reviewHistory": [
       {
         "date": "2026-04-19",
@@ -499,6 +571,10 @@
       },
       {
         "date": "2026-04-22",
+        "remembered": false
+      },
+      {
+        "date": "2026-04-26",
         "remembered": false
       }
     ],
@@ -513,7 +589,7 @@
     "deckId": "default",
     "createdAt": "2026-04-19",
     "reviewStage": 0,
-    "nextReview": "2026-04-22",
+    "nextReview": "2026-04-26",
     "reviewHistory": [
       {
         "date": "2026-04-19",
@@ -525,6 +601,10 @@
       },
       {
         "date": "2026-04-22",
+        "remembered": false
+      },
+      {
+        "date": "2026-04-26",
         "remembered": false
       }
     ],
@@ -538,8 +618,8 @@
     "translation2": "insulting",
     "deckId": "default",
     "createdAt": "2026-04-19",
-    "reviewStage": 0,
-    "nextReview": "2026-04-22",
+    "reviewStage": 1,
+    "nextReview": "2026-04-27",
     "reviewHistory": [
       {
         "date": "2026-04-19",
@@ -552,6 +632,10 @@
       {
         "date": "2026-04-22",
         "remembered": false
+      },
+      {
+        "date": "2026-04-26",
+        "remembered": true
       }
     ],
     "rot": 1,
@@ -564,8 +648,8 @@
     "translation2": "And there, again, it's the bolt that blows,",
     "deckId": "default",
     "createdAt": "2026-04-19",
-    "reviewStage": 1,
-    "nextReview": "2026-04-23",
+    "reviewStage": 2,
+    "nextReview": "2026-04-29",
     "reviewHistory": [
       {
         "date": "2026-04-19",
@@ -577,6 +661,10 @@
       },
       {
         "date": "2026-04-22",
+        "remembered": true
+      },
+      {
+        "date": "2026-04-26",
         "remembered": true
       }
     ],
@@ -590,8 +678,8 @@
     "translation2": "blowjob",
     "deckId": "default",
     "createdAt": "2026-04-19",
-    "reviewStage": 1,
-    "nextReview": "2026-04-23",
+    "reviewStage": 2,
+    "nextReview": "2026-04-29",
     "reviewHistory": [
       {
         "date": "2026-04-19",
@@ -603,6 +691,10 @@
       },
       {
         "date": "2026-04-22",
+        "remembered": true
+      },
+      {
+        "date": "2026-04-26",
         "remembered": true
       }
     ],
@@ -616,8 +708,8 @@
     "translation2": "sodomize",
     "deckId": "default",
     "createdAt": "2026-04-19",
-    "reviewStage": 1,
-    "nextReview": "2026-04-23",
+    "reviewStage": 2,
+    "nextReview": "2026-04-29",
     "reviewHistory": [
       {
         "date": "2026-04-19",
@@ -630,6 +722,10 @@
       {
         "date": "2026-04-22",
         "remembered": false
+      },
+      {
+        "date": "2026-04-26",
+        "remembered": true
       }
     ],
     "rot": 1,
@@ -642,8 +738,8 @@
     "translation2": "getting blowjobs",
     "deckId": "default",
     "createdAt": "2026-04-19",
-    "reviewStage": 2,
-    "nextReview": "2026-04-25",
+    "reviewStage": 3,
+    "nextReview": "2026-05-03",
     "reviewHistory": [
       {
         "date": "2026-04-19",
@@ -656,6 +752,10 @@
       {
         "date": "2026-04-22",
         "remembered": false
+      },
+      {
+        "date": "2026-04-26",
+        "remembered": true
       }
     ],
     "rot": 1,
@@ -668,8 +768,8 @@
     "translation2": "We got into the game",
     "deckId": "default",
     "createdAt": "2026-04-19",
-    "reviewStage": 0,
-    "nextReview": "2026-04-22",
+    "reviewStage": 1,
+    "nextReview": "2026-04-27",
     "reviewHistory": [
       {
         "date": "2026-04-19",
@@ -682,6 +782,10 @@
       {
         "date": "2026-04-22",
         "remembered": false
+      },
+      {
+        "date": "2026-04-26",
+        "remembered": true
       }
     ],
     "rot": 1,
@@ -694,8 +798,8 @@
     "translation2": "sicken",
     "deckId": "default",
     "createdAt": "2026-04-19",
-    "reviewStage": 1,
-    "nextReview": "2026-04-23",
+    "reviewStage": 2,
+    "nextReview": "2026-04-29",
     "reviewHistory": [
       {
         "date": "2026-04-19",
@@ -707,6 +811,10 @@
       },
       {
         "date": "2026-04-22",
+        "remembered": false
+      },
+      {
+        "date": "2026-04-26",
         "remembered": false
       }
     ],
@@ -721,7 +829,7 @@
     "deckId": "default",
     "createdAt": "2026-04-19",
     "reviewStage": 0,
-    "nextReview": "2026-04-22",
+    "nextReview": "2026-04-26",
     "reviewHistory": [
       {
         "date": "2026-04-19",
@@ -733,6 +841,10 @@
       },
       {
         "date": "2026-04-22",
+        "remembered": false
+      },
+      {
+        "date": "2026-04-26",
         "remembered": false
       }
     ],
@@ -746,8 +858,8 @@
     "translation2": "confectionery",
     "deckId": "default",
     "createdAt": "2026-04-19",
-    "reviewStage": 1,
-    "nextReview": "2026-04-23",
+    "reviewStage": 2,
+    "nextReview": "2026-04-29",
     "reviewHistory": [
       {
         "date": "2026-04-19",
@@ -759,6 +871,10 @@
       },
       {
         "date": "2026-04-22",
+        "remembered": true
+      },
+      {
+        "date": "2026-04-26",
         "remembered": true
       }
     ],
@@ -773,7 +889,7 @@
     "deckId": "default",
     "createdAt": "2026-04-19",
     "reviewStage": 0,
-    "nextReview": "2026-04-22",
+    "nextReview": "2026-04-26",
     "reviewHistory": [
       {
         "date": "2026-04-19",
@@ -785,6 +901,10 @@
       },
       {
         "date": "2026-04-22",
+        "remembered": false
+      },
+      {
+        "date": "2026-04-26",
         "remembered": false
       }
     ],
@@ -800,8 +920,8 @@
     "translation2": "implicated",
     "deckId": "default",
     "createdAt": "2026-04-19",
-    "reviewStage": 1,
-    "nextReview": "2026-04-23",
+    "reviewStage": 2,
+    "nextReview": "2026-04-29",
     "reviewHistory": [
       {
         "date": "2026-04-19",
@@ -813,6 +933,10 @@
       },
       {
         "date": "2026-04-22",
+        "remembered": true
+      },
+      {
+        "date": "2026-04-26",
         "remembered": true
       }
     ],
@@ -826,8 +950,8 @@
     "translation2": "an ink stain",
     "deckId": "default",
     "createdAt": "2026-04-19",
-    "reviewStage": 2,
-    "nextReview": "2026-04-25",
+    "reviewStage": 3,
+    "nextReview": "2026-05-03",
     "reviewHistory": [
       {
         "date": "2026-04-19",
@@ -839,6 +963,10 @@
       },
       {
         "date": "2026-04-22",
+        "remembered": true
+      },
+      {
+        "date": "2026-04-26",
         "remembered": true
       }
     ],
@@ -852,8 +980,8 @@
     "translation2": "",
     "deckId": "default",
     "createdAt": "2026-04-19",
-    "reviewStage": 1,
-    "nextReview": "2026-04-23",
+    "reviewStage": 2,
+    "nextReview": "2026-04-29",
     "reviewHistory": [
       {
         "date": "2026-04-19",
@@ -866,6 +994,10 @@
       {
         "date": "2026-04-22",
         "remembered": false
+      },
+      {
+        "date": "2026-04-26",
+        "remembered": true
       }
     ],
     "rot": 1,
@@ -878,8 +1010,8 @@
     "translation2": "?",
     "deckId": "default",
     "createdAt": "2026-04-19",
-    "reviewStage": 2,
-    "nextReview": "2026-04-25",
+    "reviewStage": 3,
+    "nextReview": "2026-05-03",
     "reviewHistory": [
       {
         "date": "2026-04-19",
@@ -891,6 +1023,10 @@
       },
       {
         "date": "2026-04-22",
+        "remembered": true
+      },
+      {
+        "date": "2026-04-26",
         "remembered": true
       }
     ],
@@ -904,8 +1040,8 @@
     "translation2": "knock",
     "deckId": "default",
     "createdAt": "2026-04-19",
-    "reviewStage": 2,
-    "nextReview": "2026-04-25",
+    "reviewStage": 3,
+    "nextReview": "2026-05-03",
     "reviewHistory": [
       {
         "date": "2026-04-19",
@@ -917,6 +1053,10 @@
       },
       {
         "date": "2026-04-22",
+        "remembered": true
+      },
+      {
+        "date": "2026-04-26",
         "remembered": true
       }
     ],
@@ -930,8 +1070,8 @@
     "translation2": "people we knew a few years ago, who we would have said ...",
     "deckId": "default",
     "createdAt": "2026-04-19",
-    "reviewStage": 2,
-    "nextReview": "2026-04-25",
+    "reviewStage": 3,
+    "nextReview": "2026-05-03",
     "reviewHistory": [
       {
         "date": "2026-04-19",
@@ -943,6 +1083,10 @@
       },
       {
         "date": "2026-04-22",
+        "remembered": true
+      },
+      {
+        "date": "2026-04-26",
         "remembered": true
       }
     ],
@@ -956,8 +1100,8 @@
     "translation2": "slut",
     "deckId": "default",
     "createdAt": "2026-04-19",
-    "reviewStage": 2,
-    "nextReview": "2026-04-25",
+    "reviewStage": 3,
+    "nextReview": "2026-05-03",
     "reviewHistory": [
       {
         "date": "2026-04-19",
@@ -969,6 +1113,10 @@
       },
       {
         "date": "2026-04-22",
+        "remembered": true
+      },
+      {
+        "date": "2026-04-26",
         "remembered": true
       }
     ],
@@ -982,8 +1130,8 @@
     "translation2": "a trash species",
     "deckId": "default",
     "createdAt": "2026-04-19",
-    "reviewStage": 2,
-    "nextReview": "2026-04-25",
+    "reviewStage": 3,
+    "nextReview": "2026-05-03",
     "reviewHistory": [
       {
         "date": "2026-04-19",
@@ -995,6 +1143,10 @@
       },
       {
         "date": "2026-04-22",
+        "remembered": true
+      },
+      {
+        "date": "2026-04-26",
         "remembered": true
       }
     ],
@@ -1009,7 +1161,7 @@
     "deckId": "default",
     "createdAt": "2026-04-19",
     "reviewStage": 0,
-    "nextReview": "2026-04-22",
+    "nextReview": "2026-04-26",
     "reviewHistory": [
       {
         "date": "2026-04-19",
@@ -1022,6 +1174,10 @@
       {
         "date": "2026-04-22",
         "remembered": true
+      },
+      {
+        "date": "2026-04-26",
+        "remembered": false
       }
     ],
     "rot": 1,
@@ -1034,8 +1190,8 @@
     "translation2": "monstrous",
     "deckId": "default",
     "createdAt": "2026-04-19",
-    "reviewStage": 1,
-    "nextReview": "2026-04-23",
+    "reviewStage": 2,
+    "nextReview": "2026-04-29",
     "reviewHistory": [
       {
         "date": "2026-04-19",
@@ -1047,6 +1203,10 @@
       },
       {
         "date": "2026-04-22",
+        "remembered": true
+      },
+      {
+        "date": "2026-04-26",
         "remembered": true
       }
     ],
@@ -1060,8 +1220,8 @@
     "translation2": "a great success",
     "deckId": "default",
     "createdAt": "2026-04-19",
-    "reviewStage": 0,
-    "nextReview": "2026-04-22",
+    "reviewStage": 1,
+    "nextReview": "2026-04-27",
     "reviewHistory": [
       {
         "date": "2026-04-19",
@@ -1074,6 +1234,10 @@
       {
         "date": "2026-04-22",
         "remembered": false
+      },
+      {
+        "date": "2026-04-26",
+        "remembered": true
       }
     ],
     "rot": 1,
@@ -1086,8 +1250,8 @@
     "translation2": "it hurts the heart",
     "deckId": "default",
     "createdAt": "2026-04-19",
-    "reviewStage": 2,
-    "nextReview": "2026-04-25",
+    "reviewStage": 1,
+    "nextReview": "2026-04-27",
     "reviewHistory": [
       {
         "date": "2026-04-19",
@@ -1100,6 +1264,10 @@
       {
         "date": "2026-04-22",
         "remembered": true
+      },
+      {
+        "date": "2026-04-26",
+        "remembered": false
       }
     ],
     "rot": 1,
@@ -1113,7 +1281,7 @@
     "deckId": "default",
     "createdAt": "2026-04-19",
     "reviewStage": 0,
-    "nextReview": "2026-04-22",
+    "nextReview": "2026-04-26",
     "reviewHistory": [
       {
         "date": "2026-04-19",
@@ -1125,6 +1293,10 @@
       },
       {
         "date": "2026-04-22",
+        "remembered": false
+      },
+      {
+        "date": "2026-04-26",
         "remembered": false
       }
     ],
@@ -1140,8 +1312,8 @@
     "translation2": "deny outright",
     "deckId": "default",
     "createdAt": "2026-04-19",
-    "reviewStage": 2,
-    "nextReview": "2026-04-25",
+    "reviewStage": 3,
+    "nextReview": "2026-05-03",
     "reviewHistory": [
       {
         "date": "2026-04-19",
@@ -1153,6 +1325,10 @@
       },
       {
         "date": "2026-04-22",
+        "remembered": true
+      },
+      {
+        "date": "2026-04-26",
         "remembered": true
       }
     ],
@@ -1166,8 +1342,8 @@
     "translation2": "",
     "deckId": "default",
     "createdAt": "2026-04-19",
-    "reviewStage": 2,
-    "nextReview": "2026-04-25",
+    "reviewStage": 3,
+    "nextReview": "2026-05-03",
     "reviewHistory": [
       {
         "date": "2026-04-19",
@@ -1179,6 +1355,10 @@
       },
       {
         "date": "2026-04-22",
+        "remembered": true
+      },
+      {
+        "date": "2026-04-26",
         "remembered": true
       }
     ],
@@ -1192,8 +1372,8 @@
     "translation2": "fiercely",
     "deckId": "default",
     "createdAt": "2026-04-19",
-    "reviewStage": 1,
-    "nextReview": "2026-04-23",
+    "reviewStage": 2,
+    "nextReview": "2026-04-29",
     "reviewHistory": [
       {
         "date": "2026-04-19",
@@ -1206,6 +1386,10 @@
       {
         "date": "2026-04-22",
         "remembered": false
+      },
+      {
+        "date": "2026-04-26",
+        "remembered": true
       }
     ],
     "rot": 1,
@@ -1218,8 +1402,8 @@
     "translation2": "there is no material element, of any nature whatsoever",
     "deckId": "default",
     "createdAt": "2026-04-19",
-    "reviewStage": 1,
-    "nextReview": "2026-04-23",
+    "reviewStage": 2,
+    "nextReview": "2026-04-29",
     "reviewHistory": [
       {
         "date": "2026-04-19",
@@ -1232,6 +1416,10 @@
       {
         "date": "2026-04-22",
         "remembered": false
+      },
+      {
+        "date": "2026-04-26",
+        "remembered": true
       }
     ],
     "rot": 1,
@@ -1246,8 +1434,8 @@
     "translation2": "the testimonies are confused, contradictory",
     "deckId": "default",
     "createdAt": "2026-04-19",
-    "reviewStage": 0,
-    "nextReview": "2026-04-22",
+    "reviewStage": 1,
+    "nextReview": "2026-04-27",
     "reviewHistory": [
       {
         "date": "2026-04-19",
@@ -1260,6 +1448,10 @@
       {
         "date": "2026-04-22",
         "remembered": false
+      },
+      {
+        "date": "2026-04-26",
+        "remembered": true
       }
     ],
     "rot": 1,
@@ -1270,7 +1462,7 @@
   {
     "id": "mo5risfv6ah7",
     "word": "une femme n'est pas apprêtée",
-    "translation": "一个女人蓬头垢面",
+    "translation": "一个��人蓬头垢面",
     "translation2": "",
     "deckId": "default",
     "createdAt": "2026-04-19",

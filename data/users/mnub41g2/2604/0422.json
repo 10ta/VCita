@@ -7,9 +7,22 @@
     "deckId": "default",
     "createdAt": "2026-04-22",
     "reviewStage": 0,
-    "nextReview": "2026-04-22",
-    "reviewHistory": [],
-    "rot": 0,
+    "nextReview": "2026-04-25",
+    "reviewHistory": [
+      {
+        "date": "2026-04-22",
+        "remembered": false
+      },
+      {
+        "date": "2026-04-23",
+        "remembered": false
+      },
+      {
+        "date": "2026-04-25",
+        "remembered": false
+      }
+    ],
+    "rot": 1,
     "tags": []
   },
   {
@@ -19,11 +32,26 @@
     "translation2": "“Ah, hey, we have one more accuser.”",
     "deckId": "default",
     "createdAt": "2026-04-22",
-    "reviewStage": 0,
-    "nextReview": "2026-04-22",
-    "reviewHistory": [],
-    "rot": 0,
-    "tags": []
+    "reviewStage": 1,
+    "nextReview": "2026-04-26",
+    "reviewHistory": [
+      {
+        "date": "2026-04-22",
+        "remembered": true
+      },
+      {
+        "date": "2026-04-23",
+        "remembered": true
+      },
+      {
+        "date": "2026-04-25",
+        "remembered": true
+      }
+    ],
+    "rot": 1,
+    "tags": [
+      "Police et Justice"
+    ]
   },
   {
     "id": "mo9puol9ccnm",
@@ -32,10 +60,23 @@
     "translation2": "Fatal error",
     "deckId": "default",
     "createdAt": "2026-04-22",
-    "reviewStage": 0,
-    "nextReview": "2026-04-22",
-    "reviewHistory": [],
-    "rot": 0,
+    "reviewStage": 1,
+    "nextReview": "2026-04-26",
+    "reviewHistory": [
+      {
+        "date": "2026-04-22",
+        "remembered": true
+      },
+      {
+        "date": "2026-04-23",
+        "remembered": true
+      },
+      {
+        "date": "2026-04-25",
+        "remembered": true
+      }
+    ],
+    "rot": 1,
     "tags": []
   },
   {
@@ -45,10 +86,23 @@
     "translation2": "in an absolutely inconceivable luxury of details,",
     "deckId": "default",
     "createdAt": "2026-04-22",
-    "reviewStage": 0,
-    "nextReview": "2026-04-22",
-    "reviewHistory": [],
-    "rot": 0,
+    "reviewStage": 1,
+    "nextReview": "2026-04-26",
+    "reviewHistory": [
+      {
+        "date": "2026-04-22",
+        "remembered": false
+      },
+      {
+        "date": "2026-04-23",
+        "remembered": false
+      },
+      {
+        "date": "2026-04-25",
+        "remembered": true
+      }
+    ],
+    "rot": 1,
     "tags": []
   },
   {
@@ -58,10 +112,23 @@
     "translation2": "beating to death",
     "deckId": "default",
     "createdAt": "2026-04-22",
-    "reviewStage": 0,
-    "nextReview": "2026-04-22",
-    "reviewHistory": [],
-    "rot": 0,
+    "reviewStage": 2,
+    "nextReview": "2026-04-28",
+    "reviewHistory": [
+      {
+        "date": "2026-04-22",
+        "remembered": true
+      },
+      {
+        "date": "2026-04-23",
+        "remembered": true
+      },
+      {
+        "date": "2026-04-25",
+        "remembered": true
+      }
+    ],
+    "rot": 1,
     "tags": []
   },
   {
@@ -71,10 +138,23 @@
     "translation2": "- Did I read it to him?",
     "deckId": "default",
     "createdAt": "2026-04-22",
-    "reviewStage": 0,
-    "nextReview": "2026-04-22",
-    "reviewHistory": [],
-    "rot": 0,
+    "reviewStage": 1,
+    "nextReview": "2026-04-26",
+    "reviewHistory": [
+      {
+        "date": "2026-04-22",
+        "remembered": true
+      },
+      {
+        "date": "2026-04-23",
+        "remembered": true
+      },
+      {
+        "date": "2026-04-25",
+        "remembered": true
+      }
+    ],
+    "rot": 1,
     "tags": []
   },
   {
@@ -84,11 +164,26 @@
     "translation2": "rummage",
     "deckId": "default",
     "createdAt": "2026-04-22",
-    "reviewStage": 0,
-    "nextReview": "2026-04-22",
-    "reviewHistory": [],
-    "rot": 0,
-    "tags": []
+    "reviewStage": 1,
+    "nextReview": "2026-04-26",
+    "reviewHistory": [
+      {
+        "date": "2026-04-22",
+        "remembered": true
+      },
+      {
+        "date": "2026-04-23",
+        "remembered": true
+      },
+      {
+        "date": "2026-04-25",
+        "remembered": true
+      }
+    ],
+    "rot": 1,
+    "tags": [
+      "Police et Justice"
+    ]
   },
   {
     "id": "mo9qu5ulam6k",
@@ -98,9 +193,22 @@
     "deckId": "default",
     "createdAt": "2026-04-22",
     "reviewStage": 0,
-    "nextReview": "2026-04-22",
-    "reviewHistory": [],
-    "rot": 0,
+    "nextReview": "2026-04-25",
+    "reviewHistory": [
+      {
+        "date": "2026-04-22",
+        "remembered": false
+      },
+      {
+        "date": "2026-04-23",
+        "remembered": false
+      },
+      {
+        "date": "2026-04-25",
+        "remembered": false
+      }
+    ],
+    "rot": 1,
     "tags": []
   },
   {
@@ -111,9 +219,22 @@
     "deckId": "default",
     "createdAt": "2026-04-22",
     "reviewStage": 0,
-    "nextReview": "2026-04-22",
-    "reviewHistory": [],
-    "rot": 0,
+    "nextReview": "2026-04-25",
+    "reviewHistory": [
+      {
+        "date": "2026-04-22",
+        "remembered": false
+      },
+      {
+        "date": "2026-04-23",
+        "remembered": false
+      },
+      {
+        "date": "2026-04-25",
+        "remembered": false
+      }
+    ],
+    "rot": 1,
     "tags": []
   },
   {
@@ -123,10 +244,23 @@
     "translation2": "bury",
     "deckId": "default",
     "createdAt": "2026-04-22",
-    "reviewStage": 0,
-    "nextReview": "2026-04-22",
-    "reviewHistory": [],
-    "rot": 0,
+    "reviewStage": 1,
+    "nextReview": "2026-04-26",
+    "reviewHistory": [
+      {
+        "date": "2026-04-22",
+        "remembered": true
+      },
+      {
+        "date": "2026-04-23",
+        "remembered": true
+      },
+      {
+        "date": "2026-04-25",
+        "remembered": true
+      }
+    ],
+    "rot": 1,
     "tags": []
   },
   {
@@ -136,10 +270,23 @@
     "translation2": "It’s gaining momentum, we see the caravans arriving.",
     "deckId": "default",
     "createdAt": "2026-04-22",
-    "reviewStage": 0,
-    "nextReview": "2026-04-22",
-    "reviewHistory": [],
-    "rot": 0,
+    "reviewStage": 1,
+    "nextReview": "2026-04-26",
+    "reviewHistory": [
+      {
+        "date": "2026-04-22",
+        "remembered": true
+      },
+      {
+        "date": "2026-04-23",
+        "remembered": true
+      },
+      {
+        "date": "2026-04-25",
+        "remembered": true
+      }
+    ],
+    "rot": 1,
     "tags": []
   },
   {
@@ -149,11 +296,26 @@
     "translation2": "a sprawling affair",
     "deckId": "default",
     "createdAt": "2026-04-22",
-    "reviewStage": 0,
-    "nextReview": "2026-04-22",
-    "reviewHistory": [],
-    "rot": 0,
-    "tags": []
+    "reviewStage": 1,
+    "nextReview": "2026-04-26",
+    "reviewHistory": [
+      {
+        "date": "2026-04-22",
+        "remembered": true
+      },
+      {
+        "date": "2026-04-23",
+        "remembered": false
+      },
+      {
+        "date": "2026-04-25",
+        "remembered": false
+      }
+    ],
+    "rot": 1,
+    "tags": [
+      "Police et Justice"
+    ]
   },
   {
     "id": "mo9r596zjx3s",
@@ -162,10 +324,23 @@
     "translation2": "The whole press behaves like a school of fish",
     "deckId": "default",
     "createdAt": "2026-04-22",
-    "reviewStage": 0,
-    "nextReview": "2026-04-22",
-    "reviewHistory": [],
-    "rot": 0,
+    "reviewStage": 1,
+    "nextReview": "2026-04-26",
+    "reviewHistory": [
+      {
+        "date": "2026-04-22",
+        "remembered": true
+      },
+      {
+        "date": "2026-04-23",
+        "remembered": true
+      },
+      {
+        "date": "2026-04-25",
+        "remembered": true
+      }
+    ],
+    "rot": 1,
     "tags": []
   },
   {
@@ -175,10 +350,23 @@
     "translation2": "It echoes",
     "deckId": "default",
     "createdAt": "2026-04-22",
-    "reviewStage": 0,
-    "nextReview": "2026-04-22",
-    "reviewHistory": [],
-    "rot": 0,
+    "reviewStage": 1,
+    "nextReview": "2026-04-26",
+    "reviewHistory": [
+      {
+        "date": "2026-04-22",
+        "remembered": true
+      },
+      {
+        "date": "2026-04-23",
+        "remembered": true
+      },
+      {
+        "date": "2026-04-25",
+        "remembered": true
+      }
+    ],
+    "rot": 1,
     "tags": []
   },
   {
@@ -188,10 +376,23 @@
     "translation2": "I no longer have the image in mind",
     "deckId": "default",
     "createdAt": "2026-04-22",
-    "reviewStage": 0,
-    "nextReview": "2026-04-22",
-    "reviewHistory": [],
-    "rot": 0,
+    "reviewStage": 1,
+    "nextReview": "2026-04-26",
+    "reviewHistory": [
+      {
+        "date": "2026-04-22",
+        "remembered": true
+      },
+      {
+        "date": "2026-04-23",
+        "remembered": true
+      },
+      {
+        "date": "2026-04-25",
+        "remembered": true
+      }
+    ],
+    "rot": 1,
     "tags": []
   },
   {
@@ -201,10 +402,23 @@
     "translation2": "In the absence of a corpse, there is still no crime.",
     "deckId": "default",
     "createdAt": "2026-04-22",
-    "reviewStage": 0,
-    "nextReview": "2026-04-22",
-    "reviewHistory": [],
-    "rot": 0,
+    "reviewStage": 1,
+    "nextReview": "2026-04-26",
+    "reviewHistory": [
+      {
+        "date": "2026-04-22",
+        "remembered": true
+      },
+      {
+        "date": "2026-04-23",
+        "remembered": false
+      },
+      {
+        "date": "2026-04-25",
+        "remembered": false
+      }
+    ],
+    "rot": 1,
     "tags": []
   },
   {
@@ -214,10 +428,23 @@
     "translation2": "We are asking Mr. Burgaud for a break.",
     "deckId": "default",
     "createdAt": "2026-04-22",
-    "reviewStage": 0,
-    "nextReview": "2026-04-22",
-    "reviewHistory": [],
-    "rot": 0,
+    "reviewStage": 1,
+    "nextReview": "2026-04-26",
+    "reviewHistory": [
+      {
+        "date": "2026-04-22",
+        "remembered": true
+      },
+      {
+        "date": "2026-04-23",
+        "remembered": false
+      },
+      {
+        "date": "2026-04-25",
+        "remembered": false
+      }
+    ],
+    "rot": 1,
     "tags": []
   },
   {
@@ -228,9 +455,22 @@
     "deckId": "default",
     "createdAt": "2026-04-22",
     "reviewStage": 0,
-    "nextReview": "2026-04-22",
-    "reviewHistory": [],
-    "rot": 0,
+    "nextReview": "2026-04-25",
+    "reviewHistory": [
+      {
+        "date": "2026-04-22",
+        "remembered": false
+      },
+      {
+        "date": "2026-04-23",
+        "remembered": true
+      },
+      {
+        "date": "2026-04-25",
+        "remembered": true
+      }
+    ],
+    "rot": 1,
     "tags": []
   },
   {
@@ -241,9 +481,22 @@
     "deckId": "default",
     "createdAt": "2026-04-22",
     "reviewStage": 0,
-    "nextReview": "2026-04-22",
-    "reviewHistory": [],
-    "rot": 0,
+    "nextReview": "2026-04-25",
+    "reviewHistory": [
+      {
+        "date": "2026-04-22",
+        "remembered": false
+      },
+      {
+        "date": "2026-04-23",
+        "remembered": false
+      },
+      {
+        "date": "2026-04-25",
+        "remembered": false
+      }
+    ],
+    "rot": 1,
     "tags": []
   },
   {
@@ -253,10 +506,23 @@
     "translation2": "That’s the straw that broke the camel’s back, there.",
     "deckId": "default",
     "createdAt": "2026-04-22",
-    "reviewStage": 0,
-    "nextReview": "2026-04-22",
-    "reviewHistory": [],
-    "rot": 0,
+    "reviewStage": 1,
+    "nextReview": "2026-04-26",
+    "reviewHistory": [
+      {
+        "date": "2026-04-22",
+        "remembered": true
+      },
+      {
+        "date": "2026-04-23",
+        "remembered": true
+      },
+      {
+        "date": "2026-04-25",
+        "remembered": true
+      }
+    ],
+    "rot": 1,
     "tags": []
   },
   {
@@ -267,22 +533,22 @@
     "deckId": "default",
     "createdAt": "2026-04-22",
     "reviewStage": 0,
-    "nextReview": "2026-04-22",
-    "reviewHistory": [],
-    "rot": 0,
-    "tags": []
-  },
-  {
-    "id": "mo9s4kq0guuv",
-    "word": "mais on va plus me croire.\"",
-    "translation": "但人们不会再相信我了。”",
-    "translation2": "but people won't believe me anymore.\"",
-    "deckId": "default",
-    "createdAt": "2026-04-22",
-    "reviewStage": 0,
-    "nextReview": "2026-04-22",
-    "reviewHistory": [],
-    "rot": 0,
+    "nextReview": "2026-04-25",
+    "reviewHistory": [
+      {
+        "date": "2026-04-22",
+        "remembered": true
+      },
+      {
+        "date": "2026-04-23",
+        "remembered": false
+      },
+      {
+        "date": "2026-04-25",
+        "remembered": false
+      }
+    ],
+    "rot": 1,
     "tags": []
   },
   {
@@ -292,10 +558,23 @@
     "translation2": "“You have to tell the truth, if you don’t tell it, I will.”",
     "deckId": "default",
     "createdAt": "2026-04-22",
-    "reviewStage": 0,
-    "nextReview": "2026-04-22",
-    "reviewHistory": [],
-    "rot": 0,
+    "reviewStage": 1,
+    "nextReview": "2026-04-26",
+    "reviewHistory": [
+      {
+        "date": "2026-04-22",
+        "remembered": true
+      },
+      {
+        "date": "2026-04-23",
+        "remembered": true
+      },
+      {
+        "date": "2026-04-25",
+        "remembered": true
+      }
+    ],
+    "rot": 1,
     "tags": []
   },
   {
@@ -305,10 +584,23 @@
     "translation2": "Machiavellianism",
     "deckId": "default",
     "createdAt": "2026-04-22",
-    "reviewStage": 0,
-    "nextReview": "2026-04-22",
-    "reviewHistory": [],
-    "rot": 0,
+    "reviewStage": 1,
+    "nextReview": "2026-04-26",
+    "reviewHistory": [
+      {
+        "date": "2026-04-22",
+        "remembered": true
+      },
+      {
+        "date": "2026-04-23",
+        "remembered": true
+      },
+      {
+        "date": "2026-04-25",
+        "remembered": true
+      }
+    ],
+    "rot": 1,
     "tags": []
   },
   {
@@ -318,10 +610,23 @@
     "translation2": "Everything is inconsistent",
     "deckId": "default",
     "createdAt": "2026-04-22",
-    "reviewStage": 0,
-    "nextReview": "2026-04-22",
-    "reviewHistory": [],
-    "rot": 0,
+    "reviewStage": 1,
+    "nextReview": "2026-04-26",
+    "reviewHistory": [
+      {
+        "date": "2026-04-22",
+        "remembered": true
+      },
+      {
+        "date": "2026-04-23",
+        "remembered": true
+      },
+      {
+        "date": "2026-04-25",
+        "remembered": true
+      }
+    ],
+    "rot": 1,
     "tags": []
   },
   {
@@ -332,9 +637,22 @@
     "deckId": "default",
     "createdAt": "2026-04-22",
     "reviewStage": 0,
-    "nextReview": "2026-04-22",
-    "reviewHistory": [],
-    "rot": 0,
+    "nextReview": "2026-04-25",
+    "reviewHistory": [
+      {
+        "date": "2026-04-22",
+        "remembered": false
+      },
+      {
+        "date": "2026-04-23",
+        "remembered": false
+      },
+      {
+        "date": "2026-04-25",
+        "remembered": false
+      }
+    ],
+    "rot": 1,
     "tags": []
   },
   {
@@ -344,10 +662,23 @@
     "translation2": "divest",
     "deckId": "default",
     "createdAt": "2026-04-22",
-    "reviewStage": 0,
-    "nextReview": "2026-04-22",
-    "reviewHistory": [],
-    "rot": 0,
+    "reviewStage": 1,
+    "nextReview": "2026-04-26",
+    "reviewHistory": [
+      {
+        "date": "2026-04-22",
+        "remembered": true
+      },
+      {
+        "date": "2026-04-23",
+        "remembered": true
+      },
+      {
+        "date": "2026-04-25",
+        "remembered": true
+      }
+    ],
+    "rot": 1,
     "tags": []
   },
   {
@@ -357,11 +688,26 @@
     "translation2": "?",
     "deckId": "default",
     "createdAt": "2026-04-22",
-    "reviewStage": 0,
-    "nextReview": "2026-04-22",
-    "reviewHistory": [],
-    "rot": 0,
-    "tags": []
+    "reviewStage": 1,
+    "nextReview": "2026-04-26",
+    "reviewHistory": [
+      {
+        "date": "2026-04-22",
+        "remembered": false
+      },
+      {
+        "date": "2026-04-23",
+        "remembered": false
+      },
+      {
+        "date": "2026-04-25",
+        "remembered": false
+      }
+    ],
+    "rot": 1,
+    "tags": [
+      "Police et Justice"
+    ]
   },
   {
     "id": "mo9v1j66m1us",
@@ -370,10 +716,23 @@
     "translation2": "scrap dealer",
     "deckId": "default",
     "createdAt": "2026-04-22",
-    "reviewStage": 0,
-    "nextReview": "2026-04-22",
-    "reviewHistory": [],
-    "rot": 0,
+    "reviewStage": 1,
+    "nextReview": "2026-04-26",
+    "reviewHistory": [
+      {
+        "date": "2026-04-22",
+        "remembered": true
+      },
+      {
+        "date": "2026-04-23",
+        "remembered": true
+      },
+      {
+        "date": "2026-04-25",
+        "remembered": false
+      }
+    ],
+    "rot": 1,
     "tags": []
   }
 ]

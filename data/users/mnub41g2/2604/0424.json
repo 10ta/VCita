@@ -1,0 +1,54 @@
+[
+  {
+    "id": "mocz5uhyfp87",
+    "word": "troquet",
+    "translation": "酒吧",
+    "translation2": "bar",
+    "deckId": "default",
+    "createdAt": "2026-04-24",
+    "reviewStage": 0,
+    "nextReview": "2026-04-24",
+    "reviewHistory": [],
+    "rot": 1,
+    "tags": []
+  },
+  {
+    "id": "mocz7gx6esvu",
+    "word": "Sept acquittements, comme réclamés par le parquet",
+    "translation": "应检方要求，七人无罪释放",
+    "translation2": "Seven acquittals, as requested by the prosecution",
+    "deckId": "default",
+    "createdAt": "2026-04-24",
+    "reviewStage": 0,
+    "nextReview": "2026-04-24",
+    "reviewHistory": [],
+    "rot": 1,
+    "tags": []
+  },
+  {
+    "id": "moczae8utjwp",
+    "word": "La France doit se révolter",
+    "translation": "法国人必须抵抗",
+    "translation2": "France must revolt",
+    "deckId": "default",
+    "createdAt": "2026-04-24",
+    "reviewStage": 0,
+    "nextReview": "2026-04-24",
+    "reviewHistory": [],
+    "rot": 1,
+    "tags": []
+  },
+  {
+    "id": "moczbjtxxrc1",
+    "word": "La France, elle est pourrie. Ça sait pas reconnaître ses erreurs.",
+    "translation": "法国已经烂了, 它不知道如何承认错误。",
+    "translation2": "France is rotten. He doesn't know how to recognize his mistakes.",
+    "deckId": "default",
+    "createdAt": "2026-04-24",
+    "reviewStage": 0,
+    "nextReview": "2026-04-24",
+    "reviewHistory": [],
+    "rot": 1,
+    "tags": []
+  }
+]

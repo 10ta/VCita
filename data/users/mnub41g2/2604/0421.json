@@ -6,8 +6,8 @@
     "translation2": "pejorative",
     "deckId": "default",
     "createdAt": "2026-04-21",
-    "reviewStage": 2,
-    "nextReview": "2026-04-25",
+    "reviewStage": 3,
+    "nextReview": "2026-05-01",
     "reviewHistory": [
       {
         "date": "2026-04-21",
@@ -15,6 +15,10 @@
       },
       {
         "date": "2026-04-22",
+        "remembered": false
+      },
+      {
+        "date": "2026-04-24",
         "remembered": false
       }
     ],
@@ -28,8 +32,8 @@
     "translation2": "you're not going to come back",
     "deckId": "default",
     "createdAt": "2026-04-21",
-    "reviewStage": 2,
-    "nextReview": "2026-04-25",
+    "reviewStage": 3,
+    "nextReview": "2026-05-01",
     "reviewHistory": [
       {
         "date": "2026-04-21",
@@ -37,6 +41,10 @@
       },
       {
         "date": "2026-04-22",
+        "remembered": true
+      },
+      {
+        "date": "2026-04-24",
         "remembered": true
       }
     ],
@@ -50,8 +58,8 @@
     "translation2": "belief in",
     "deckId": "default",
     "createdAt": "2026-04-21",
-    "reviewStage": 1,
-    "nextReview": "2026-04-23",
+    "reviewStage": 0,
+    "nextReview": "2026-04-24",
     "reviewHistory": [
       {
         "date": "2026-04-21",
@@ -59,6 +67,10 @@
       },
       {
         "date": "2026-04-22",
+        "remembered": true
+      },
+      {
+        "date": "2026-04-24",
         "remembered": true
       }
     ],
@@ -73,7 +85,7 @@
     "deckId": "default",
     "createdAt": "2026-04-21",
     "reviewStage": 0,
-    "nextReview": "2026-04-22",
+    "nextReview": "2026-04-25",
     "reviewHistory": [
       {
         "date": "2026-04-21",
@@ -81,6 +93,10 @@
       },
       {
         "date": "2026-04-22",
+        "remembered": false
+      },
+      {
+        "date": "2026-04-24",
         "remembered": false
       }
     ],
@@ -95,7 +111,7 @@
     "deckId": "default",
     "createdAt": "2026-04-21",
     "reviewStage": 0,
-    "nextReview": "2026-04-22",
+    "nextReview": "2026-04-25",
     "reviewHistory": [
       {
         "date": "2026-04-21",
@@ -103,6 +119,10 @@
       },
       {
         "date": "2026-04-22",
+        "remembered": false
+      },
+      {
+        "date": "2026-04-24",
         "remembered": false
       }
     ],
@@ -116,8 +136,8 @@
     "translation2": "belonging",
     "deckId": "default",
     "createdAt": "2026-04-21",
-    "reviewStage": 0,
-    "nextReview": "2026-04-22",
+    "reviewStage": 1,
+    "nextReview": "2026-04-26",
     "reviewHistory": [
       {
         "date": "2026-04-21",
@@ -125,6 +145,10 @@
       },
       {
         "date": "2026-04-22",
+        "remembered": false
+      },
+      {
+        "date": "2026-04-24",
         "remembered": false
       }
     ],
@@ -139,7 +163,7 @@
     "deckId": "default",
     "createdAt": "2026-04-21",
     "reviewStage": 0,
-    "nextReview": "2026-04-22",
+    "nextReview": "2026-04-25",
     "reviewHistory": [
       {
         "date": "2026-04-21",
@@ -147,6 +171,10 @@
       },
       {
         "date": "2026-04-22",
+        "remembered": false
+      },
+      {
+        "date": "2026-04-24",
         "remembered": false
       }
     ],
@@ -161,7 +189,7 @@
     "deckId": "default",
     "createdAt": "2026-04-21",
     "reviewStage": 0,
-    "nextReview": "2026-04-22",
+    "nextReview": "2026-04-25",
     "reviewHistory": [
       {
         "date": "2026-04-21",
@@ -169,6 +197,10 @@
       },
       {
         "date": "2026-04-22",
+        "remembered": false
+      },
+      {
+        "date": "2026-04-24",
         "remembered": false
       }
     ],
@@ -182,8 +214,8 @@
     "translation2": "Release",
     "deckId": "default",
     "createdAt": "2026-04-21",
-    "reviewStage": 0,
-    "nextReview": "2026-04-22",
+    "reviewStage": 1,
+    "nextReview": "2026-04-26",
     "reviewHistory": [
       {
         "date": "2026-04-21",
@@ -192,6 +224,10 @@
       {
         "date": "2026-04-22",
         "remembered": false
+      },
+      {
+        "date": "2026-04-24",
+        "remembered": true
       }
     ],
     "rot": 1,
@@ -204,8 +240,8 @@
     "translation2": "blame oneself",
     "deckId": "default",
     "createdAt": "2026-04-21",
-    "reviewStage": 1,
-    "nextReview": "2026-04-23",
+    "reviewStage": 0,
+    "nextReview": "2026-04-25",
     "reviewHistory": [
       {
         "date": "2026-04-21",
@@ -214,6 +250,10 @@
       {
         "date": "2026-04-22",
         "remembered": true
+      },
+      {
+        "date": "2026-04-24",
+        "remembered": false
       }
     ],
     "rot": 1,
@@ -226,8 +266,8 @@
     "translation2": "lace",
     "deckId": "default",
     "createdAt": "2026-04-21",
-    "reviewStage": 1,
-    "nextReview": "2026-04-23",
+    "reviewStage": 2,
+    "nextReview": "2026-04-28",
     "reviewHistory": [
       {
         "date": "2026-04-21",
@@ -235,6 +275,10 @@
       },
       {
         "date": "2026-04-22",
+        "remembered": false
+      },
+      {
+        "date": "2026-04-24",
         "remembered": false
       }
     ],
@@ -249,7 +293,7 @@
     "deckId": "default",
     "createdAt": "2026-04-21",
     "reviewStage": 0,
-    "nextReview": "2026-04-22",
+    "nextReview": "2026-04-25",
     "reviewHistory": [
       {
         "date": "2026-04-21",
@@ -257,6 +301,10 @@
       },
       {
         "date": "2026-04-22",
+        "remembered": false
+      },
+      {
+        "date": "2026-04-24",
         "remembered": false
       }
     ],
@@ -270,8 +318,8 @@
     "translation2": "twist",
     "deckId": "default",
     "createdAt": "2026-04-21",
-    "reviewStage": 0,
-    "nextReview": "2026-04-22",
+    "reviewStage": 1,
+    "nextReview": "2026-04-26",
     "reviewHistory": [
       {
         "date": "2026-04-21",
@@ -279,6 +327,10 @@
       },
       {
         "date": "2026-04-22",
+        "remembered": false
+      },
+      {
+        "date": "2026-04-24",
         "remembered": false
       }
     ],
@@ -292,8 +344,8 @@
     "translation2": "“I will not take responsibility for the death of a little girl, I was only a witness.”",
     "deckId": "default",
     "createdAt": "2026-04-21",
-    "reviewStage": 1,
-    "nextReview": "2026-04-23",
+    "reviewStage": 2,
+    "nextReview": "2026-04-28",
     "reviewHistory": [
       {
         "date": "2026-04-21",
@@ -301,6 +353,10 @@
       },
       {
         "date": "2026-04-22",
+        "remembered": true
+      },
+      {
+        "date": "2026-04-24",
         "remembered": true
       }
     ],

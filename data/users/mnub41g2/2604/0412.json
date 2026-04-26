@@ -710,8 +710,8 @@
     "translation2": "a delinquent = guilty of a crime, a criminal act",
     "deckId": "default",
     "createdAt": "2026-04-12",
-    "reviewStage": 2,
-    "nextReview": "2026-04-23",
+    "reviewStage": 3,
+    "nextReview": "2026-05-02",
     "reviewHistory": [
       {
         "date": "2026-04-12",
@@ -1410,7 +1410,7 @@
   {
     "id": "mnvh4boz82hp",
     "word": "une cour de justice, la cour d'assise, la cour d'appel",
-    "translation": "法院、重罪法庭、上������法院",
+    "translation": "法院、重罪法庭、上�����������法院",
     "translation2": "a court of justice, the assize court, the court of appeal",
     "deckId": "default",
     "createdAt": "2026-04-12",
@@ -1441,9 +1441,9 @@
   },
   {
     "id": "mnvh5y9nfwow",
-    "word": "les tribunaux: le tribunal civil, le tribunal de police, le tribunal correctionnel",
-    "translation": "法庭：民事法庭、违章法庭->Contraventions (违章/违警罪)、轻罪法院",
-    "translation2": "the courts: the civil court, the police court, the criminal court",
+    "word": "les tribunaux: le tribunal civil, le tribunal de police, le tribunal correctionnel, tribunal judiciaire",
+    "translation": "法庭：民事法庭、违章法庭->Contraventions (违章/违警罪)、轻罪法院, 普通法院",
+    "translation2": "the courts: the civil court, the police court, the criminal court, ?",
     "deckId": "default",
     "createdAt": "2026-04-12",
     "reviewStage": 3,
@@ -1671,7 +1671,7 @@
     "deckId": "default",
     "createdAt": "2026-04-12",
     "reviewStage": 5,
-    "nextReview": "2026-05-20",
+    "nextReview": "2026-05-25",
     "reviewHistory": [
       {
         "date": "2026-04-12",
@@ -2022,8 +2022,8 @@
     "translation2": "issue a letter rogatory, a dismissal of the case",
     "deckId": "default",
     "createdAt": "2026-04-12",
-    "reviewStage": 4,
-    "nextReview": "2026-05-05",
+    "reviewStage": 5,
+    "nextReview": "2026-05-25",
     "reviewHistory": [
       {
         "date": "2026-04-12",
@@ -2086,8 +2086,8 @@
     "translation2": "make a judgment",
     "deckId": "default",
     "createdAt": "2026-04-12",
-    "reviewStage": 2,
-    "nextReview": "2026-04-23",
+    "reviewStage": 3,
+    "nextReview": "2026-05-02",
     "reviewHistory": [
       {
         "date": "2026-04-12",
@@ -2118,8 +2118,8 @@
     "translation2": "ê imprisoned, incarcerated placed in police custody",
     "deckId": "default",
     "createdAt": "2026-04-12",
-    "reviewStage": 1,
-    "nextReview": "2026-04-21",
+    "reviewStage": 0,
+    "nextReview": "2026-04-25",
     "reviewHistory": [
       {
         "date": "2026-04-12",
@@ -2374,8 +2374,8 @@
     "translation2": "a trial, the verdict",
     "deckId": "default",
     "createdAt": "2026-04-12",
-    "reviewStage": 1,
-    "nextReview": "2026-04-21",
+    "reviewStage": 0,
+    "nextReview": "2026-04-25",
     "reviewHistory": [
       {
         "date": "2026-04-12",
@@ -2470,8 +2470,8 @@
     "translation2": "ê acquitted, acquittal, ê relaxed, relax, relax sb",
     "deckId": "default",
     "createdAt": "2026-04-12",
-    "reviewStage": 3,
-    "nextReview": "2026-04-27",
+    "reviewStage": 4,
+    "nextReview": "2026-05-10",
     "reviewHistory": [
       {
         "date": "2026-04-12",
@@ -2886,8 +2886,8 @@
     "translation2": "ê found guilty/innocent, conviction",
     "deckId": "default",
     "createdAt": "2026-04-12",
-    "reviewStage": 1,
-    "nextReview": "2026-04-21",
+    "reviewStage": 2,
+    "nextReview": "2026-04-28",
     "reviewHistory": [
       {
         "date": "2026-04-12",
@@ -2982,8 +2982,8 @@
     "translation2": "designate an attacker",
     "deckId": "default",
     "createdAt": "2026-04-12",
-    "reviewStage": 2,
-    "nextReview": "2026-04-23",
+    "reviewStage": 3,
+    "nextReview": "2026-05-02",
     "reviewHistory": [
       {
         "date": "2026-04-12",
