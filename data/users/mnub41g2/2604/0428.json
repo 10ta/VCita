@@ -1,0 +1,362 @@
+[
+  {
+    "id": "moi8xptthz9z",
+    "word": "Bertrand est jaloux, possessif et exclusif.",
+    "translation": "Bertrand嫉妒、占有欲强、排他性强。",
+    "translation2": "Bertrand is jealous, possessive and exclusive.",
+    "deckId": "default",
+    "createdAt": "2026-04-28",
+    "reviewStage": 0,
+    "nextReview": "2026-05-05",
+    "reviewHistory": [
+      {
+        "date": "2026-04-28",
+        "remembered": true
+      },
+      {
+        "date": "2026-04-29",
+        "remembered": true
+      },
+      {
+        "date": "2026-05-01",
+        "remembered": false
+      },
+      {
+        "date": "2026-05-05",
+        "remembered": false
+      }
+    ],
+    "rot": 1,
+    "tags": []
+  },
+  {
+    "id": "moi8xwmo5tbt",
+    "word": "invraisemblable",
+    "translation": "难以置信",
+    "translation2": "implausible",
+    "deckId": "default",
+    "createdAt": "2026-04-28",
+    "reviewStage": 0,
+    "nextReview": "2026-05-05",
+    "reviewHistory": [
+      {
+        "date": "2026-04-28",
+        "remembered": false
+      },
+      {
+        "date": "2026-04-29",
+        "remembered": false
+      },
+      {
+        "date": "2026-05-01",
+        "remembered": false
+      },
+      {
+        "date": "2026-05-05",
+        "remembered": false
+      }
+    ],
+    "rot": 1,
+    "tags": []
+  },
+  {
+    "id": "moi8yudfstnv",
+    "word": "gaillard",
+    "translation": "(noun) 年轻人, 小伙子, 勇士",
+    "translation2": "",
+    "deckId": "default",
+    "createdAt": "2026-04-28",
+    "reviewStage": 0,
+    "nextReview": "2026-05-05",
+    "reviewHistory": [
+      {
+        "date": "2026-04-28",
+        "remembered": false
+      },
+      {
+        "date": "2026-04-29",
+        "remembered": false
+      },
+      {
+        "date": "2026-05-01",
+        "remembered": false
+      },
+      {
+        "date": "2026-05-05",
+        "remembered": false
+      }
+    ],
+    "rot": 1,
+    "tags": []
+  },
+  {
+    "id": "moi991z21cnx",
+    "word": "Il a l'air effondré. Il a l'air épuisé.",
+    "translation": "他看起来很沮丧。他看上去很疲惫。",
+    "translation2": "He looks devastated. He looks exhausted.",
+    "deckId": "default",
+    "createdAt": "2026-04-28",
+    "reviewStage": 0,
+    "nextReview": "2026-05-05",
+    "reviewHistory": [
+      {
+        "date": "2026-04-28",
+        "remembered": false
+      },
+      {
+        "date": "2026-04-29",
+        "remembered": false
+      },
+      {
+        "date": "2026-05-01",
+        "remembered": false
+      },
+      {
+        "date": "2026-05-05",
+        "remembered": false
+      }
+    ],
+    "rot": 1,
+    "tags": []
+  },
+  {
+    "id": "moi9eg8ad6yo",
+    "word": "Comme Jim Morrison, c'était un écorché vif.",
+    "translation": "和Jim Morrison一样，他是一个受折磨的灵魂",
+    "translation2": "",
+    "deckId": "default",
+    "createdAt": "2026-04-28",
+    "reviewStage": 0,
+    "nextReview": "2026-05-05",
+    "reviewHistory": [
+      {
+        "date": "2026-04-28",
+        "remembered": false
+      },
+      {
+        "date": "2026-04-29",
+        "remembered": false
+      },
+      {
+        "date": "2026-05-01",
+        "remembered": false
+      },
+      {
+        "date": "2026-05-05",
+        "remembered": false
+      }
+    ],
+    "rot": 1,
+    "tags": []
+  },
+  {
+    "id": "moi9is9zea95",
+    "word": "Nos convictions, c'est que le libéralisme à tous crins produit inévitablement et de l'exclusion et de la misère, et la montée du fascisme.",
+    "translation": "我们坚信，放任自由主义不可避免地会产生排斥和贫困，以及法西斯主义的崛起。",
+    "translation2": "Our convictions are that all-out liberalism inevitably produces exclusion and poverty, and the rise of fascism.",
+    "deckId": "default",
+    "createdAt": "2026-04-28",
+    "reviewStage": 0,
+    "nextReview": "2026-05-05",
+    "reviewHistory": [
+      {
+        "date": "2026-04-28",
+        "remembered": false
+      },
+      {
+        "date": "2026-04-29",
+        "remembered": false
+      },
+      {
+        "date": "2026-05-01",
+        "remembered": false
+      },
+      {
+        "date": "2026-05-05",
+        "remembered": false
+      }
+    ],
+    "rot": 1,
+    "tags": []
+  },
+  {
+    "id": "moi9ltqwvhqn",
+    "word": "Parce qu'elle est généreuse, elle est tendre.",
+    "translation": "因为她大方，所以她温柔。",
+    "translation2": "Because she is generous, she is tender.",
+    "deckId": "default",
+    "createdAt": "2026-04-28",
+    "reviewStage": 0,
+    "nextReview": "2026-05-05",
+    "reviewHistory": [
+      {
+        "date": "2026-04-28",
+        "remembered": false
+      },
+      {
+        "date": "2026-04-29",
+        "remembered": false
+      },
+      {
+        "date": "2026-05-01",
+        "remembered": false
+      },
+      {
+        "date": "2026-05-05",
+        "remembered": false
+      }
+    ],
+    "rot": 1,
+    "tags": []
+  },
+  {
+    "id": "moi9mzpsf80v",
+    "word": "y a des gens qui ont la grâce.",
+    "translation": "有些人有恩典。",
+    "translation2": "there are people who have grace.",
+    "deckId": "default",
+    "createdAt": "2026-04-28",
+    "reviewStage": 0,
+    "nextReview": "2026-05-05",
+    "reviewHistory": [
+      {
+        "date": "2026-04-28",
+        "remembered": false
+      },
+      {
+        "date": "2026-04-29",
+        "remembered": false
+      },
+      {
+        "date": "2026-05-01",
+        "remembered": false
+      },
+      {
+        "date": "2026-05-05",
+        "remembered": false
+      }
+    ],
+    "rot": 1,
+    "tags": []
+  },
+  {
+    "id": "moi9pp831yfe",
+    "word": "Elle exigeait beaucoup d'elle-même. Et puis, en même temps, c'était une maman très aimante, très mère poule.",
+    "translation": "她对自己要求很高。 同时，她也是一位非常慈爱的母亲，保护欲很强。",
+    "translation2": "She demanded a lot of herself. And then, at the same time, she was a very loving mother, very mother.",
+    "deckId": "default",
+    "createdAt": "2026-04-28",
+    "reviewStage": 0,
+    "nextReview": "2026-05-05",
+    "reviewHistory": [
+      {
+        "date": "2026-04-28",
+        "remembered": true
+      },
+      {
+        "date": "2026-04-29",
+        "remembered": false
+      },
+      {
+        "date": "2026-05-01",
+        "remembered": false
+      },
+      {
+        "date": "2026-05-05",
+        "remembered": false
+      }
+    ],
+    "rot": 1,
+    "tags": []
+  },
+  {
+    "id": "moi9tggua1pe",
+    "word": "En fait, on n'a pas le cœur qui se partage, mais qui grandit.",
+    "translation": "其实，我们的心不是分裂的，而是成长的。",
+    "translation2": "In fact, our hearts are not divided, but rather grow.",
+    "deckId": "default",
+    "createdAt": "2026-04-28",
+    "reviewStage": 0,
+    "nextReview": "2026-05-05",
+    "reviewHistory": [
+      {
+        "date": "2026-04-28",
+        "remembered": false
+      },
+      {
+        "date": "2026-04-29",
+        "remembered": false
+      },
+      {
+        "date": "2026-05-01",
+        "remembered": false
+      },
+      {
+        "date": "2026-05-05",
+        "remembered": false
+      }
+    ],
+    "rot": 1,
+    "tags": []
+  },
+  {
+    "id": "moiekoiljlog",
+    "word": "comme une bête traquée",
+    "translation": "像一头被猎杀的野兽",
+    "translation2": "like a hunted beast",
+    "deckId": "default",
+    "createdAt": "2026-04-28",
+    "reviewStage": 0,
+    "nextReview": "2026-05-05",
+    "reviewHistory": [
+      {
+        "date": "2026-04-28",
+        "remembered": false
+      },
+      {
+        "date": "2026-04-29",
+        "remembered": false
+      },
+      {
+        "date": "2026-05-01",
+        "remembered": false
+      },
+      {
+        "date": "2026-05-05",
+        "remembered": false
+      }
+    ],
+    "rot": 1,
+    "tags": []
+  },
+  {
+    "id": "moiempj7fo95",
+    "word": "Il fait de l'ombre à tout le monde.",
+    "translation": "他让所有人都黯然失色。",
+    "translation2": "He overshadows everyone.",
+    "deckId": "default",
+    "createdAt": "2026-04-28",
+    "reviewStage": 1,
+    "nextReview": "2026-05-06",
+    "reviewHistory": [
+      {
+        "date": "2026-04-28",
+        "remembered": false
+      },
+      {
+        "date": "2026-04-29",
+        "remembered": false
+      },
+      {
+        "date": "2026-05-01",
+        "remembered": false
+      },
+      {
+        "date": "2026-05-05",
+        "remembered": true
+      }
+    ],
+    "rot": 1,
+    "tags": []
+  }
+]

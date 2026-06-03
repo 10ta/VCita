@@ -1,0 +1,302 @@
+[
+  {
+    "id": "mogwti4yz7ef",
+    "word": "curé",
+    "translation": "神父",
+    "translation2": "",
+    "deckId": "default",
+    "createdAt": "2026-04-27",
+    "reviewStage": 2,
+    "nextReview": "2026-05-07",
+    "reviewHistory": [
+      {
+        "date": "2026-04-27",
+        "remembered": true
+      },
+      {
+        "date": "2026-04-28",
+        "remembered": false
+      },
+      {
+        "date": "2026-04-30",
+        "remembered": false
+      },
+      {
+        "date": "2026-05-04",
+        "remembered": true
+      }
+    ],
+    "rot": 1,
+    "tags": []
+  },
+  {
+    "id": "mogxigjmk8cf",
+    "word": "basculement",
+    "translation": "(noun) 倾覆, 翻转, 切换, 转移, 倒塌",
+    "translation2": "",
+    "deckId": "default",
+    "createdAt": "2026-04-27",
+    "reviewStage": 1,
+    "nextReview": "2026-05-05",
+    "reviewHistory": [
+      {
+        "date": "2026-04-27",
+        "remembered": false
+      },
+      {
+        "date": "2026-04-28",
+        "remembered": false
+      },
+      {
+        "date": "2026-04-30",
+        "remembered": false
+      },
+      {
+        "date": "2026-05-04",
+        "remembered": false
+      }
+    ],
+    "rot": 1,
+    "tags": []
+  },
+  {
+    "id": "mogyotxnju6t",
+    "word": "soufflées par le juge",
+    "translation": "被法官吹风(暗示)了",
+    "translation2": "",
+    "deckId": "default",
+    "createdAt": "2026-04-27",
+    "reviewStage": 1,
+    "nextReview": "2026-05-05",
+    "reviewHistory": [
+      {
+        "date": "2026-04-27",
+        "remembered": false
+      },
+      {
+        "date": "2026-04-28",
+        "remembered": false
+      },
+      {
+        "date": "2026-04-30",
+        "remembered": false
+      },
+      {
+        "date": "2026-05-04",
+        "remembered": true
+      }
+    ],
+    "rot": 1,
+    "tags": []
+  },
+  {
+    "id": "mogz5liomko8",
+    "word": "pour les éléments qui ressortaient du dossier",
+    "translation": "对于从文件中出现的元素",
+    "translation2": "for the elements that emerged from the file",
+    "deckId": "default",
+    "createdAt": "2026-04-27",
+    "reviewStage": 2,
+    "nextReview": "2026-05-07",
+    "reviewHistory": [
+      {
+        "date": "2026-04-27",
+        "remembered": true
+      },
+      {
+        "date": "2026-04-28",
+        "remembered": true
+      },
+      {
+        "date": "2026-04-30",
+        "remembered": false
+      },
+      {
+        "date": "2026-05-04",
+        "remembered": false
+      }
+    ],
+    "rot": 1,
+    "tags": []
+  },
+  {
+    "id": "moh0p4wqxpwi",
+    "word": "carburant",
+    "translation": "燃料",
+    "translation2": "fuel",
+    "deckId": "default",
+    "createdAt": "2026-04-27",
+    "reviewStage": 0,
+    "nextReview": "2026-05-04",
+    "reviewHistory": [
+      {
+        "date": "2026-04-27",
+        "remembered": false
+      },
+      {
+        "date": "2026-04-28",
+        "remembered": false
+      },
+      {
+        "date": "2026-04-30",
+        "remembered": false
+      },
+      {
+        "date": "2026-05-04",
+        "remembered": false
+      }
+    ],
+    "rot": 1,
+    "tags": []
+  },
+  {
+    "id": "moh1mgsq9fu7",
+    "word": "qui se sont répercutés sur les prix",
+    "translation": "反馈到了价格上",
+    "translation2": "which had an impact on prices",
+    "deckId": "default",
+    "createdAt": "2026-04-27",
+    "reviewStage": 1,
+    "nextReview": "2026-05-05",
+    "reviewHistory": [
+      {
+        "date": "2026-04-27",
+        "remembered": false
+      },
+      {
+        "date": "2026-04-28",
+        "remembered": false
+      },
+      {
+        "date": "2026-04-30",
+        "remembered": false
+      },
+      {
+        "date": "2026-05-04",
+        "remembered": true
+      }
+    ],
+    "rot": 1,
+    "tags": []
+  },
+  {
+    "id": "moh20xeq5hjx",
+    "word": "épilogue",
+    "translation": "(noun) 结局, 收场, 后记, 尾声, 结语",
+    "translation2": "epilogue",
+    "deckId": "default",
+    "createdAt": "2026-04-27",
+    "reviewStage": 2,
+    "nextReview": "2026-05-07",
+    "reviewHistory": [
+      {
+        "date": "2026-04-27",
+        "remembered": false
+      },
+      {
+        "date": "2026-04-28",
+        "remembered": false
+      },
+      {
+        "date": "2026-04-30",
+        "remembered": false
+      },
+      {
+        "date": "2026-05-04",
+        "remembered": true
+      }
+    ],
+    "rot": 1,
+    "tags": []
+  },
+  {
+    "id": "moh2bn75b0we",
+    "word": "J'ai toujours été considérée comme quelqu'un de pas assez sévère.",
+    "translation": "我一直被认为不够严格。",
+    "translation2": "I have always been considered not strict enough.",
+    "deckId": "default",
+    "createdAt": "2026-04-27",
+    "reviewStage": 1,
+    "nextReview": "2026-05-05",
+    "reviewHistory": [
+      {
+        "date": "2026-04-27",
+        "remembered": false
+      },
+      {
+        "date": "2026-04-28",
+        "remembered": false
+      },
+      {
+        "date": "2026-04-30",
+        "remembered": true
+      },
+      {
+        "date": "2026-05-04",
+        "remembered": true
+      }
+    ],
+    "rot": 1,
+    "tags": []
+  },
+  {
+    "id": "moh2v4b6t1u4",
+    "word": "revirement",
+    "translation": "(noun) 转变, 转折, 翻转, 改变, 政策转变",
+    "translation2": "turnaround",
+    "deckId": "default",
+    "createdAt": "2026-04-27",
+    "reviewStage": 1,
+    "nextReview": "2026-05-05",
+    "reviewHistory": [
+      {
+        "date": "2026-04-27",
+        "remembered": false
+      },
+      {
+        "date": "2026-04-28",
+        "remembered": false
+      },
+      {
+        "date": "2026-04-30",
+        "remembered": false
+      },
+      {
+        "date": "2026-05-04",
+        "remembered": false
+      }
+    ],
+    "rot": 1,
+    "tags": []
+  },
+  {
+    "id": "moh4ionhyjb3",
+    "word": "tout avait été prévu très en amont",
+    "translation": "一切都已提前计划好",
+    "translation2": "everything had been planned well in advance",
+    "deckId": "default",
+    "createdAt": "2026-04-27",
+    "reviewStage": 1,
+    "nextReview": "2026-05-05",
+    "reviewHistory": [
+      {
+        "date": "2026-04-27",
+        "remembered": false
+      },
+      {
+        "date": "2026-04-28",
+        "remembered": false
+      },
+      {
+        "date": "2026-04-30",
+        "remembered": false
+      },
+      {
+        "date": "2026-05-04",
+        "remembered": true
+      }
+    ],
+    "rot": 1,
+    "tags": []
+  }
+]

@@ -7,8 +7,25 @@
     "deckId": "default",
     "createdAt": "2026-04-24",
     "reviewStage": 0,
-    "nextReview": "2026-04-24",
-    "reviewHistory": [],
+    "nextReview": "2026-05-01",
+    "reviewHistory": [
+      {
+        "date": "2026-04-24",
+        "remembered": false
+      },
+      {
+        "date": "2026-04-25",
+        "remembered": false
+      },
+      {
+        "date": "2026-04-27",
+        "remembered": false
+      },
+      {
+        "date": "2026-05-01",
+        "remembered": false
+      }
+    ],
     "rot": 1,
     "tags": []
   },
@@ -20,8 +37,25 @@
     "deckId": "default",
     "createdAt": "2026-04-24",
     "reviewStage": 0,
-    "nextReview": "2026-04-24",
-    "reviewHistory": [],
+    "nextReview": "2026-05-01",
+    "reviewHistory": [
+      {
+        "date": "2026-04-24",
+        "remembered": false
+      },
+      {
+        "date": "2026-04-25",
+        "remembered": false
+      },
+      {
+        "date": "2026-04-27",
+        "remembered": false
+      },
+      {
+        "date": "2026-05-01",
+        "remembered": false
+      }
+    ],
     "rot": 1,
     "tags": []
   },
@@ -32,9 +66,26 @@
     "translation2": "France must revolt",
     "deckId": "default",
     "createdAt": "2026-04-24",
-    "reviewStage": 0,
-    "nextReview": "2026-04-24",
-    "reviewHistory": [],
+    "reviewStage": 1,
+    "nextReview": "2026-05-02",
+    "reviewHistory": [
+      {
+        "date": "2026-04-24",
+        "remembered": true
+      },
+      {
+        "date": "2026-04-25",
+        "remembered": true
+      },
+      {
+        "date": "2026-04-27",
+        "remembered": false
+      },
+      {
+        "date": "2026-05-01",
+        "remembered": true
+      }
+    ],
     "rot": 1,
     "tags": []
   },
@@ -45,9 +96,26 @@
     "translation2": "France is rotten. He doesn't know how to recognize his mistakes.",
     "deckId": "default",
     "createdAt": "2026-04-24",
-    "reviewStage": 0,
-    "nextReview": "2026-04-24",
-    "reviewHistory": [],
+    "reviewStage": 1,
+    "nextReview": "2026-05-02",
+    "reviewHistory": [
+      {
+        "date": "2026-04-24",
+        "remembered": true
+      },
+      {
+        "date": "2026-04-25",
+        "remembered": true
+      },
+      {
+        "date": "2026-04-27",
+        "remembered": false
+      },
+      {
+        "date": "2026-05-01",
+        "remembered": false
+      }
+    ],
     "rot": 1,
     "tags": []
   }

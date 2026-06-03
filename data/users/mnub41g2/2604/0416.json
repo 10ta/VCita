@@ -6,8 +6,8 @@
     "translation2": "contravention",
     "deckId": "default",
     "createdAt": "2026-04-16",
-    "reviewStage": 4,
-    "nextReview": "2026-05-09",
+    "reviewStage": 5,
+    "nextReview": "2026-05-31",
     "reviewHistory": [
       {
         "date": "2026-04-16",
@@ -23,6 +23,10 @@
       },
       {
         "date": "2026-04-23",
+        "remembered": true
+      },
+      {
+        "date": "2026-05-01",
         "remembered": true
       }
     ],
@@ -36,8 +40,8 @@
     "translation2": "inflicted on children",
     "deckId": "default",
     "createdAt": "2026-04-16",
-    "reviewStage": 3,
-    "nextReview": "2026-05-01",
+    "reviewStage": 4,
+    "nextReview": "2026-05-16",
     "reviewHistory": [
       {
         "date": "2026-04-16",
@@ -53,6 +57,10 @@
       },
       {
         "date": "2026-04-23",
+        "remembered": true
+      },
+      {
+        "date": "2026-05-01",
         "remembered": true
       }
     ],
@@ -66,8 +74,8 @@
     "translation2": "disseminate",
     "deckId": "default",
     "createdAt": "2026-04-16",
-    "reviewStage": 1,
-    "nextReview": "2026-04-25",
+    "reviewStage": 3,
+    "nextReview": "2026-05-08",
     "reviewHistory": [
       {
         "date": "2026-04-16",
@@ -79,10 +87,14 @@
       },
       {
         "date": "2026-04-19",
-        "remembered": false
+        "remembered": true
       },
       {
         "date": "2026-04-23",
+        "remembered": true
+      },
+      {
+        "date": "2026-05-01",
         "remembered": true
       }
     ],
@@ -96,8 +108,8 @@
     "translation2": "dilute the horror",
     "deckId": "default",
     "createdAt": "2026-04-16",
-    "reviewStage": 2,
-    "nextReview": "2026-04-27",
+    "reviewStage": 3,
+    "nextReview": "2026-05-08",
     "reviewHistory": [
       {
         "date": "2026-04-16",
@@ -113,6 +125,10 @@
       },
       {
         "date": "2026-04-23",
+        "remembered": true
+      },
+      {
+        "date": "2026-05-01",
         "remembered": true
       }
     ],
@@ -126,8 +142,8 @@
     "translation2": "sordid",
     "deckId": "default",
     "createdAt": "2026-04-16",
-    "reviewStage": 2,
-    "nextReview": "2026-04-27",
+    "reviewStage": 3,
+    "nextReview": "2026-05-08",
     "reviewHistory": [
       {
         "date": "2026-04-16",
@@ -143,6 +159,10 @@
       },
       {
         "date": "2026-04-23",
+        "remembered": true
+      },
+      {
+        "date": "2026-05-01",
         "remembered": true
       }
     ],

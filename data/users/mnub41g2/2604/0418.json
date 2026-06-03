@@ -6,8 +6,8 @@
     "translation2": "question oneself",
     "deckId": "default",
     "createdAt": "2026-04-18",
-    "reviewStage": 3,
-    "nextReview": "2026-05-02",
+    "reviewStage": 4,
+    "nextReview": "2026-05-18",
     "reviewHistory": [
       {
         "date": "2026-04-18",
@@ -23,6 +23,10 @@
       },
       {
         "date": "2026-04-25",
+        "remembered": true
+      },
+      {
+        "date": "2026-05-03",
         "remembered": true
       }
     ],
@@ -36,339 +40,7 @@
     "translation2": "dig deeper into things",
     "deckId": "default",
     "createdAt": "2026-04-18",
-    "reviewStage": 2,
-    "nextReview": "2026-04-28",
-    "reviewHistory": [
-      {
-        "date": "2026-04-18",
-        "remembered": false
-      },
-      {
-        "date": "2026-04-19",
-        "remembered": false
-      },
-      {
-        "date": "2026-04-21",
-        "remembered": true
-      },
-      {
-        "date": "2026-04-25",
-        "remembered": true
-      }
-    ],
-    "rot": 1,
-    "tags": []
-  },
-  {
-    "id": "mo3y2n7u2n6x",
-    "word": "Anthroposophie",
-    "translation": "人神同型同性论",
-    "translation2": "Anthroposophy",
-    "deckId": "default",
-    "createdAt": "2026-04-18",
     "reviewStage": 3,
-    "nextReview": "2026-05-02",
-    "reviewHistory": [
-      {
-        "date": "2026-04-18",
-        "remembered": false
-      },
-      {
-        "date": "2026-04-19",
-        "remembered": true
-      },
-      {
-        "date": "2026-04-21",
-        "remembered": true
-      },
-      {
-        "date": "2026-04-25",
-        "remembered": true
-      }
-    ],
-    "rot": 1,
-    "tags": []
-  },
-  {
-    "id": "mo3y6wjtouma",
-    "word": "Ambidextre",
-    "translation": "双手惯用的",
-    "translation2": "Ambidextrous",
-    "deckId": "default",
-    "createdAt": "2026-04-18",
-    "reviewStage": 0,
-    "nextReview": "2026-04-25",
-    "reviewHistory": [
-      {
-        "date": "2026-04-18",
-        "remembered": false
-      },
-      {
-        "date": "2026-04-19",
-        "remembered": false
-      },
-      {
-        "date": "2026-04-21",
-        "remembered": true
-      },
-      {
-        "date": "2026-04-25",
-        "remembered": false
-      }
-    ],
-    "rot": 1,
-    "tags": []
-  },
-  {
-    "id": "mo3y7cw3otmh",
-    "word": "双脚惯用的",
-    "translation": "Bilatéral",
-    "translation2": "Bilateral",
-    "deckId": "default",
-    "createdAt": "2026-04-18",
-    "reviewStage": 3,
-    "nextReview": "2026-05-02",
-    "reviewHistory": [
-      {
-        "date": "2026-04-18",
-        "remembered": true
-      },
-      {
-        "date": "2026-04-19",
-        "remembered": true
-      },
-      {
-        "date": "2026-04-21",
-        "remembered": true
-      },
-      {
-        "date": "2026-04-25",
-        "remembered": true
-      }
-    ],
-    "rot": 0,
-    "tags": []
-  },
-  {
-    "id": "mo4hjnnf4mhg",
-    "word": "révélation",
-    "translation": "启示/揭露/披露",
-    "translation2": "revelation",
-    "deckId": "default",
-    "createdAt": "2026-04-18",
-    "reviewStage": 3,
-    "nextReview": "2026-05-02",
-    "reviewHistory": [
-      {
-        "date": "2026-04-18",
-        "remembered": true
-      },
-      {
-        "date": "2026-04-19",
-        "remembered": true
-      },
-      {
-        "date": "2026-04-21",
-        "remembered": true
-      },
-      {
-        "date": "2026-04-25",
-        "remembered": true
-      }
-    ],
-    "rot": 1,
-    "tags": []
-  },
-  {
-    "id": "mo4iil55rpkf",
-    "word": "réticence à parler",
-    "translation": "抗拒说话",
-    "translation2": "reluctance to speak",
-    "deckId": "default",
-    "createdAt": "2026-04-18",
-    "reviewStage": 0,
-    "nextReview": "2026-04-25",
-    "reviewHistory": [
-      {
-        "date": "2026-04-18",
-        "remembered": false
-      },
-      {
-        "date": "2026-04-19",
-        "remembered": false
-      },
-      {
-        "date": "2026-04-21",
-        "remembered": false
-      },
-      {
-        "date": "2026-04-25",
-        "remembered": false
-      }
-    ],
-    "rot": 1,
-    "tags": [
-      "Police et Justice"
-    ]
-  },
-  {
-    "id": "mo4imuv2s27u",
-    "word": "On sentait qu'il y avait derrière",
-    "translation": "我们感觉背后有情况",
-    "translation2": "We felt that there was behind",
-    "deckId": "default",
-    "createdAt": "2026-04-18",
-    "reviewStage": 3,
-    "nextReview": "2026-05-02",
-    "reviewHistory": [
-      {
-        "date": "2026-04-18",
-        "remembered": true
-      },
-      {
-        "date": "2026-04-19",
-        "remembered": true
-      },
-      {
-        "date": "2026-04-21",
-        "remembered": true
-      },
-      {
-        "date": "2026-04-25",
-        "remembered": true
-      }
-    ],
-    "rot": 1,
-    "tags": []
-  },
-  {
-    "id": "mo4k2m0c9szm",
-    "word": "construction psychologique",
-    "translation": "心理建构",
-    "translation2": "psychological construction",
-    "deckId": "default",
-    "createdAt": "2026-04-18",
-    "reviewStage": 2,
-    "nextReview": "2026-04-28",
-    "reviewHistory": [
-      {
-        "date": "2026-04-18",
-        "remembered": false
-      },
-      {
-        "date": "2026-04-19",
-        "remembered": false
-      },
-      {
-        "date": "2026-04-21",
-        "remembered": true
-      },
-      {
-        "date": "2026-04-25",
-        "remembered": true
-      }
-    ],
-    "rot": 1,
-    "tags": []
-  },
-  {
-    "id": "mo4k76fr5eou",
-    "word": "diligenter",
-    "translation": "展开/进行/积极处理",
-    "translation2": "to diligently",
-    "deckId": "default",
-    "createdAt": "2026-04-18",
-    "reviewStage": 2,
-    "nextReview": "2026-04-28",
-    "reviewHistory": [
-      {
-        "date": "2026-04-18",
-        "remembered": false
-      },
-      {
-        "date": "2026-04-19",
-        "remembered": false
-      },
-      {
-        "date": "2026-04-21",
-        "remembered": true
-      },
-      {
-        "date": "2026-04-25",
-        "remembered": true
-      }
-    ],
-    "rot": 1,
-    "tags": []
-  },
-  {
-    "id": "mo4ki81zb158",
-    "word": "mythomane",
-    "translation": "谎话连篇的",
-    "translation2": "mythomaniac",
-    "deckId": "default",
-    "createdAt": "2026-04-18",
-    "reviewStage": 0,
-    "nextReview": "2026-04-25",
-    "reviewHistory": [
-      {
-        "date": "2026-04-18",
-        "remembered": false
-      },
-      {
-        "date": "2026-04-19",
-        "remembered": false
-      },
-      {
-        "date": "2026-04-21",
-        "remembered": true
-      },
-      {
-        "date": "2026-04-25",
-        "remembered": true
-      }
-    ],
-    "rot": 1,
-    "tags": []
-  },
-  {
-    "id": "mo4kj5gug4zv",
-    "word": "trait de personnalité",
-    "translation": "人格特质/性格特征",
-    "translation2": "personality trait",
-    "deckId": "default",
-    "createdAt": "2026-04-18",
-    "reviewStage": 2,
-    "nextReview": "2026-04-28",
-    "reviewHistory": [
-      {
-        "date": "2026-04-18",
-        "remembered": false
-      },
-      {
-        "date": "2026-04-19",
-        "remembered": false
-      },
-      {
-        "date": "2026-04-21",
-        "remembered": true
-      },
-      {
-        "date": "2026-04-25",
-        "remembered": false
-      }
-    ],
-    "rot": 1,
-    "tags": []
-  },
-  {
-    "id": "mo4kkdzlvgle",
-    "word": "perception de la réalité",
-    "translation": "对现实的感知",
-    "translation2": "perception of reality",
-    "deckId": "default",
-    "createdAt": "2026-04-18",
-    "reviewStage": 4,
     "nextReview": "2026-05-10",
     "reviewHistory": [
       {
@@ -386,20 +58,58 @@
       {
         "date": "2026-04-25",
         "remembered": true
+      },
+      {
+        "date": "2026-05-03",
+        "remembered": true
       }
     ],
     "rot": 1,
     "tags": []
   },
   {
-    "id": "mo4kmmz3nedw",
-    "word": "tendance pathologique",
-    "translation": "病理倾向",
-    "translation2": "pathological tendency",
+    "id": "mo3y2n7u2n6x",
+    "word": "Anthroposophie",
+    "translation": "人神同型同性论",
+    "translation2": "Anthroposophy",
     "deckId": "default",
     "createdAt": "2026-04-18",
-    "reviewStage": 1,
-    "nextReview": "2026-04-26",
+    "reviewStage": 4,
+    "nextReview": "2026-05-18",
+    "reviewHistory": [
+      {
+        "date": "2026-04-18",
+        "remembered": false
+      },
+      {
+        "date": "2026-04-19",
+        "remembered": true
+      },
+      {
+        "date": "2026-04-21",
+        "remembered": true
+      },
+      {
+        "date": "2026-04-25",
+        "remembered": true
+      },
+      {
+        "date": "2026-05-03",
+        "remembered": true
+      }
+    ],
+    "rot": 1,
+    "tags": []
+  },
+  {
+    "id": "mo3y6wjtouma",
+    "word": "Ambidextre",
+    "translation": "双手惯用的",
+    "translation2": "Ambidextrous",
+    "deckId": "default",
+    "createdAt": "2026-04-18",
+    "reviewStage": 2,
+    "nextReview": "2026-05-06",
     "reviewHistory": [
       {
         "date": "2026-04-18",
@@ -415,6 +125,352 @@
       },
       {
         "date": "2026-04-25",
+        "remembered": false
+      },
+      {
+        "date": "2026-05-03",
+        "remembered": true
+      }
+    ],
+    "rot": 1,
+    "tags": []
+  },
+  {
+    "id": "mo3y7cw3otmh",
+    "word": "双脚惯用的",
+    "translation": "Bilatéral",
+    "translation2": "Bilateral",
+    "deckId": "default",
+    "createdAt": "2026-04-18",
+    "reviewStage": 4,
+    "nextReview": "2026-05-18",
+    "reviewHistory": [
+      {
+        "date": "2026-04-18",
+        "remembered": true
+      },
+      {
+        "date": "2026-04-19",
+        "remembered": true
+      },
+      {
+        "date": "2026-04-21",
+        "remembered": true
+      },
+      {
+        "date": "2026-04-25",
+        "remembered": true
+      },
+      {
+        "date": "2026-05-03",
+        "remembered": true
+      }
+    ],
+    "rot": 0,
+    "tags": []
+  },
+  {
+    "id": "mo4hjnnf4mhg",
+    "word": "révélation",
+    "translation": "启示/揭露/披露",
+    "translation2": "revelation",
+    "deckId": "default",
+    "createdAt": "2026-04-18",
+    "reviewStage": 4,
+    "nextReview": "2026-05-18",
+    "reviewHistory": [
+      {
+        "date": "2026-04-18",
+        "remembered": true
+      },
+      {
+        "date": "2026-04-19",
+        "remembered": true
+      },
+      {
+        "date": "2026-04-21",
+        "remembered": true
+      },
+      {
+        "date": "2026-04-25",
+        "remembered": true
+      },
+      {
+        "date": "2026-05-03",
+        "remembered": true
+      }
+    ],
+    "rot": 1,
+    "tags": []
+  },
+  {
+    "id": "mo4iil55rpkf",
+    "word": "réticence à parler",
+    "translation": "抗拒说话",
+    "translation2": "reluctance to speak",
+    "deckId": "default",
+    "createdAt": "2026-04-18",
+    "reviewStage": 1,
+    "nextReview": "2026-05-04",
+    "reviewHistory": [
+      {
+        "date": "2026-04-18",
+        "remembered": false
+      },
+      {
+        "date": "2026-04-19",
+        "remembered": false
+      },
+      {
+        "date": "2026-04-21",
+        "remembered": false
+      },
+      {
+        "date": "2026-04-25",
+        "remembered": false
+      },
+      {
+        "date": "2026-05-03",
+        "remembered": true
+      }
+    ],
+    "rot": 1,
+    "tags": [
+      "Police et Justice"
+    ]
+  },
+  {
+    "id": "mo4imuv2s27u",
+    "word": "On sentait qu'il y avait derrière",
+    "translation": "我们感觉背后有情况",
+    "translation2": "We felt that there was behind",
+    "deckId": "default",
+    "createdAt": "2026-04-18",
+    "reviewStage": 4,
+    "nextReview": "2026-05-18",
+    "reviewHistory": [
+      {
+        "date": "2026-04-18",
+        "remembered": true
+      },
+      {
+        "date": "2026-04-19",
+        "remembered": true
+      },
+      {
+        "date": "2026-04-21",
+        "remembered": true
+      },
+      {
+        "date": "2026-04-25",
+        "remembered": true
+      },
+      {
+        "date": "2026-05-03",
+        "remembered": true
+      }
+    ],
+    "rot": 1,
+    "tags": []
+  },
+  {
+    "id": "mo4k2m0c9szm",
+    "word": "construction psychologique",
+    "translation": "心理建构",
+    "translation2": "psychological construction",
+    "deckId": "default",
+    "createdAt": "2026-04-18",
+    "reviewStage": 3,
+    "nextReview": "2026-05-10",
+    "reviewHistory": [
+      {
+        "date": "2026-04-18",
+        "remembered": false
+      },
+      {
+        "date": "2026-04-19",
+        "remembered": false
+      },
+      {
+        "date": "2026-04-21",
+        "remembered": true
+      },
+      {
+        "date": "2026-04-25",
+        "remembered": true
+      },
+      {
+        "date": "2026-05-03",
+        "remembered": true
+      }
+    ],
+    "rot": 1,
+    "tags": []
+  },
+  {
+    "id": "mo4k76fr5eou",
+    "word": "diligenter",
+    "translation": "展开/进行/积极处理",
+    "translation2": "to diligently",
+    "deckId": "default",
+    "createdAt": "2026-04-18",
+    "reviewStage": 3,
+    "nextReview": "2026-05-10",
+    "reviewHistory": [
+      {
+        "date": "2026-04-18",
+        "remembered": false
+      },
+      {
+        "date": "2026-04-19",
+        "remembered": false
+      },
+      {
+        "date": "2026-04-21",
+        "remembered": true
+      },
+      {
+        "date": "2026-04-25",
+        "remembered": true
+      },
+      {
+        "date": "2026-05-03",
+        "remembered": true
+      }
+    ],
+    "rot": 1,
+    "tags": []
+  },
+  {
+    "id": "mo4ki81zb158",
+    "word": "mythomane",
+    "translation": "谎话连篇的",
+    "translation2": "mythomaniac",
+    "deckId": "default",
+    "createdAt": "2026-04-18",
+    "reviewStage": 1,
+    "nextReview": "2026-05-04",
+    "reviewHistory": [
+      {
+        "date": "2026-04-18",
+        "remembered": false
+      },
+      {
+        "date": "2026-04-19",
+        "remembered": false
+      },
+      {
+        "date": "2026-04-21",
+        "remembered": true
+      },
+      {
+        "date": "2026-04-25",
+        "remembered": true
+      },
+      {
+        "date": "2026-05-03",
+        "remembered": true
+      }
+    ],
+    "rot": 1,
+    "tags": []
+  },
+  {
+    "id": "mo4kj5gug4zv",
+    "word": "trait de personnalité",
+    "translation": "人格特质/性格特征",
+    "translation2": "personality trait",
+    "deckId": "default",
+    "createdAt": "2026-04-18",
+    "reviewStage": 4,
+    "nextReview": "2026-05-18",
+    "reviewHistory": [
+      {
+        "date": "2026-04-18",
+        "remembered": false
+      },
+      {
+        "date": "2026-04-19",
+        "remembered": false
+      },
+      {
+        "date": "2026-04-21",
+        "remembered": true
+      },
+      {
+        "date": "2026-04-25",
+        "remembered": false
+      },
+      {
+        "date": "2026-05-03",
+        "remembered": true
+      }
+    ],
+    "rot": 1,
+    "tags": []
+  },
+  {
+    "id": "mo4kkdzlvgle",
+    "word": "perception de la réalité",
+    "translation": "对现实的感知",
+    "translation2": "perception of reality",
+    "deckId": "default",
+    "createdAt": "2026-04-18",
+    "reviewStage": 5,
+    "nextReview": "2026-06-02",
+    "reviewHistory": [
+      {
+        "date": "2026-04-18",
+        "remembered": false
+      },
+      {
+        "date": "2026-04-19",
+        "remembered": false
+      },
+      {
+        "date": "2026-04-21",
+        "remembered": true
+      },
+      {
+        "date": "2026-04-25",
+        "remembered": true
+      },
+      {
+        "date": "2026-05-03",
+        "remembered": true
+      }
+    ],
+    "rot": 1,
+    "tags": []
+  },
+  {
+    "id": "mo4kmmz3nedw",
+    "word": "tendance pathologique",
+    "translation": "病理倾向",
+    "translation2": "pathological tendency",
+    "deckId": "default",
+    "createdAt": "2026-04-18",
+    "reviewStage": 3,
+    "nextReview": "2026-05-10",
+    "reviewHistory": [
+      {
+        "date": "2026-04-18",
+        "remembered": false
+      },
+      {
+        "date": "2026-04-19",
+        "remembered": false
+      },
+      {
+        "date": "2026-04-21",
+        "remembered": true
+      },
+      {
+        "date": "2026-04-25",
+        "remembered": true
+      },
+      {
+        "date": "2026-05-03",
         "remembered": true
       }
     ],

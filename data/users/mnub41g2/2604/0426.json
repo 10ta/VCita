@@ -3,25 +3,29 @@
     "id": "moffxcw7sv0j",
     "word": "délire",
     "translation": "激情",
-    "translation2": "翻译失败",
-    "deckId": "default",
-    "createdAt": "2026-04-26",
-    "reviewStage": 0,
-    "nextReview": "2026-04-26",
-    "reviewHistory": [],
-    "rot": 1,
-    "tags": []
-  },
-  {
-    "id": "mofj6ta1db4c",
-    "word": "Mettre un visage",
-    "translation": "做出交代",
     "translation2": "",
     "deckId": "default",
     "createdAt": "2026-04-26",
-    "reviewStage": 0,
-    "nextReview": "2026-04-26",
-    "reviewHistory": [],
+    "reviewStage": 2,
+    "nextReview": "2026-05-06",
+    "reviewHistory": [
+      {
+        "date": "2026-04-26",
+        "remembered": true
+      },
+      {
+        "date": "2026-04-27",
+        "remembered": true
+      },
+      {
+        "date": "2026-04-29",
+        "remembered": true
+      },
+      {
+        "date": "2026-05-03",
+        "remembered": true
+      }
+    ],
     "rot": 1,
     "tags": []
   },
@@ -32,9 +36,26 @@
     "translation2": "bankruptcy",
     "deckId": "default",
     "createdAt": "2026-04-26",
-    "reviewStage": 0,
-    "nextReview": "2026-04-26",
-    "reviewHistory": [],
+    "reviewStage": 1,
+    "nextReview": "2026-05-04",
+    "reviewHistory": [
+      {
+        "date": "2026-04-26",
+        "remembered": false
+      },
+      {
+        "date": "2026-04-27",
+        "remembered": false
+      },
+      {
+        "date": "2026-04-29",
+        "remembered": false
+      },
+      {
+        "date": "2026-05-03",
+        "remembered": true
+      }
+    ],
     "rot": 1,
     "tags": []
   },
@@ -45,9 +66,26 @@
     "translation2": "he apologized, both knees on the ground",
     "deckId": "default",
     "createdAt": "2026-04-26",
-    "reviewStage": 0,
-    "nextReview": "2026-04-26",
-    "reviewHistory": [],
+    "reviewStage": 1,
+    "nextReview": "2026-05-04",
+    "reviewHistory": [
+      {
+        "date": "2026-04-26",
+        "remembered": false
+      },
+      {
+        "date": "2026-04-27",
+        "remembered": false
+      },
+      {
+        "date": "2026-04-29",
+        "remembered": false
+      },
+      {
+        "date": "2026-05-03",
+        "remembered": false
+      }
+    ],
     "rot": 1,
     "tags": []
   },
@@ -58,9 +96,176 @@
     "translation2": "to hang up",
     "deckId": "default",
     "createdAt": "2026-04-26",
+    "reviewStage": 1,
+    "nextReview": "2026-05-04",
+    "reviewHistory": [
+      {
+        "date": "2026-04-26",
+        "remembered": false
+      },
+      {
+        "date": "2026-04-27",
+        "remembered": false
+      },
+      {
+        "date": "2026-04-29",
+        "remembered": false
+      },
+      {
+        "date": "2026-05-03",
+        "remembered": true
+      }
+    ],
+    "rot": 1,
+    "tags": []
+  },
+  {
+    "id": "mofpvv4e7h4p",
+    "word": "malaise",
+    "translation": "(noun) 不适, 不舒服, 发作, 不适感, 不舒服的感觉",
+    "translation2": "faintness",
+    "deckId": "default",
+    "createdAt": "2026-04-26",
+    "reviewStage": 3,
+    "nextReview": "2026-05-10",
+    "reviewHistory": [
+      {
+        "date": "2026-04-26",
+        "remembered": true
+      },
+      {
+        "date": "2026-04-27",
+        "remembered": true
+      },
+      {
+        "date": "2026-04-29",
+        "remembered": true
+      },
+      {
+        "date": "2026-05-03",
+        "remembered": true
+      }
+    ],
+    "rot": 1,
+    "tags": []
+  },
+  {
+    "id": "mofqm1g0wayt",
+    "word": "rivés aux écrans",
+    "translation": "粘在屏幕上",
+    "translation2": "glued to the screens",
+    "deckId": "default",
+    "createdAt": "2026-04-26",
+    "reviewStage": 2,
+    "nextReview": "2026-05-06",
+    "reviewHistory": [
+      {
+        "date": "2026-04-26",
+        "remembered": false
+      },
+      {
+        "date": "2026-04-27",
+        "remembered": false
+      },
+      {
+        "date": "2026-04-29",
+        "remembered": false
+      },
+      {
+        "date": "2026-05-03",
+        "remembered": false
+      }
+    ],
+    "rot": 1,
+    "tags": []
+  },
+  {
+    "id": "mofqxpt4piqg",
+    "word": "il est pris en tenailles",
+    "translation": "他被夹在中间",
+    "translation2": "he is trapped",
+    "deckId": "default",
+    "createdAt": "2026-04-26",
+    "reviewStage": 1,
+    "nextReview": "2026-05-04",
+    "reviewHistory": [
+      {
+        "date": "2026-04-26",
+        "remembered": false
+      },
+      {
+        "date": "2026-04-27",
+        "remembered": false
+      },
+      {
+        "date": "2026-04-29",
+        "remembered": false
+      },
+      {
+        "date": "2026-05-03",
+        "remembered": false
+      }
+    ],
+    "rot": 1,
+    "tags": []
+  },
+  {
+    "id": "mofsup60t506",
+    "word": "engouement",
+    "translation": "狂热",
+    "translation2": "craze",
+    "deckId": "default",
+    "createdAt": "2026-04-26",
     "reviewStage": 0,
-    "nextReview": "2026-04-26",
-    "reviewHistory": [],
+    "nextReview": "2026-05-03",
+    "reviewHistory": [
+      {
+        "date": "2026-04-26",
+        "remembered": true
+      },
+      {
+        "date": "2026-04-27",
+        "remembered": false
+      },
+      {
+        "date": "2026-04-29",
+        "remembered": false
+      },
+      {
+        "date": "2026-05-03",
+        "remembered": false
+      }
+    ],
+    "rot": 1,
+    "tags": []
+  },
+  {
+    "id": "moftgzsx3wcl",
+    "word": "indicible",
+    "translation": "无法形容",
+    "translation2": "unspeakable",
+    "deckId": "default",
+    "createdAt": "2026-04-26",
+    "reviewStage": 1,
+    "nextReview": "2026-05-04",
+    "reviewHistory": [
+      {
+        "date": "2026-04-26",
+        "remembered": false
+      },
+      {
+        "date": "2026-04-27",
+        "remembered": false
+      },
+      {
+        "date": "2026-04-29",
+        "remembered": false
+      },
+      {
+        "date": "2026-05-03",
+        "remembered": false
+      }
+    ],
     "rot": 1,
     "tags": []
   }

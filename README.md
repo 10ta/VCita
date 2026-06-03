@@ -24,6 +24,14 @@ npm install
 
 # 3. Run
 npm run dev
+
+# 4. Caddyfile
+    handle /vocab-forge {
+        redir /vocab-forge/ permanent
+    }
+    handle /vocab-forge/* {
+        reverse_proxy localhost:31777
+    }
 ```
 
 Open http://localhost:3000 — first launch will ask for your **Anthropic API key**.

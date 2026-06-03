@@ -1,0 +1,30 @@
+[
+  {
+    "id": "moslfxbtqcwn",
+    "word": "rédaction",
+    "translation": "写作",
+    "translation2": "writing",
+    "deckId": "default",
+    "createdAt": "2026-05-05",
+    "reviewStage": 0,
+    "nextReview": "2026-05-05",
+    "reviewHistory": [],
+    "rot": 0,
+    "tags": []
+  },
+  {
+    "id": "moslhrfhvwlp",
+    "word": "\"pour que Marie Trintignant se retrouve dans le coma à l'hôpital ?\"",
+    "translation": "“玛丽·特林蒂尼昂最终在医院陷入昏迷？”",
+    "translation2": "“so that Marie Trintignant ends up in a coma in the hospital?”",
+    "deckId": "default",
+    "createdAt": "2026-05-05",
+    "reviewStage": 0,
+    "nextReview": "2026-05-05",
+    "reviewHistory": [],
+    "rot": 0,
+    "tags": [
+      "médecine"
+    ]
+  }
+]
