@@ -1,0 +1,54 @@
+[
+  {
+    "id": "mqun8u2sny8r",
+    "word": "se rassembler",
+    "translation": "收集",
+    "translation2": "gather",
+    "deckId": "default",
+    "createdAt": "2026-06-26",
+    "reviewStage": 0,
+    "nextReview": "2026-06-26",
+    "reviewHistory": [],
+    "rot": 0,
+    "tags": []
+  },
+  {
+    "id": "mqunbxow8slb",
+    "word": "sifflet",
+    "translation": "哨",
+    "translation2": "whistle",
+    "deckId": "default",
+    "createdAt": "2026-06-26",
+    "reviewStage": 0,
+    "nextReview": "2026-06-26",
+    "reviewHistory": [],
+    "rot": 0,
+    "tags": []
+  },
+  {
+    "id": "mquncaqqwk2g",
+    "word": "séance",
+    "translation": "场面",
+    "translation2": "session",
+    "deckId": "default",
+    "createdAt": "2026-06-26",
+    "reviewStage": 0,
+    "nextReview": "2026-06-26",
+    "reviewHistory": [],
+    "rot": 0,
+    "tags": []
+  },
+  {
+    "id": "mquns29pbi6y",
+    "word": "moustiquaire",
+    "translation": "蚊帐",
+    "translation2": "mosquito net",
+    "deckId": "default",
+    "createdAt": "2026-06-26",
+    "reviewStage": 0,
+    "nextReview": "2026-06-26",
+    "reviewHistory": [],
+    "rot": 0,
+    "tags": []
+  }
+]

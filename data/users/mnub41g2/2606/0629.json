@@ -1,0 +1,54 @@
+[
+  {
+    "id": "mqy2bj4h575u",
+    "word": "s’orienter",
+    "translation": "朝着xx方向",
+    "translation2": "orient yourself",
+    "deckId": "default",
+    "createdAt": "2026-06-29",
+    "reviewStage": 0,
+    "nextReview": "2026-06-29",
+    "reviewHistory": [],
+    "rot": 0,
+    "tags": []
+  },
+  {
+    "id": "mqz8pb5c3803",
+    "word": "routière",
+    "translation": "路 adj",
+    "translation2": "road",
+    "deckId": "default",
+    "createdAt": "2026-06-29",
+    "reviewStage": 0,
+    "nextReview": "2026-06-29",
+    "reviewHistory": [],
+    "rot": 0,
+    "tags": []
+  },
+  {
+    "id": "mqz94s4pf97d",
+    "word": "consister",
+    "translation": "组成",
+    "translation2": "consist",
+    "deckId": "default",
+    "createdAt": "2026-06-29",
+    "reviewStage": 0,
+    "nextReview": "2026-06-29",
+    "reviewHistory": [],
+    "rot": 0,
+    "tags": []
+  },
+  {
+    "id": "mqz94xo2bfvo",
+    "word": "nous sommes tous, peu ou prou, sujets au trac.",
+    "translation": "我们或多或少都会怯场。",
+    "translation2": "We are all, to a greater or lesser extent, subject to stage fright.",
+    "deckId": "default",
+    "createdAt": "2026-06-29",
+    "reviewStage": 0,
+    "nextReview": "2026-06-29",
+    "reviewHistory": [],
+    "rot": 0,
+    "tags": []
+  }
+]

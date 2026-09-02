@@ -1,0 +1,41 @@
+[
+  {
+    "id": "mr7m7a5h8wxj",
+    "word": "déplorer",
+    "translation": "感到遗憾",
+    "translation2": "deplore",
+    "deckId": "default",
+    "createdAt": "2026-07-05",
+    "reviewStage": 0,
+    "nextReview": "2026-07-05",
+    "reviewHistory": [],
+    "rot": 0,
+    "tags": []
+  },
+  {
+    "id": "mr7msndcodop",
+    "word": "Je vous recevrai une ordonnance l'automne prochain.",
+    "translation": "明年秋天我开给你处方。",
+    "translation2": "I will receive a prescription for you next fall.",
+    "deckId": "default",
+    "createdAt": "2026-07-05",
+    "reviewStage": 0,
+    "nextReview": "2026-07-05",
+    "reviewHistory": [],
+    "rot": 0,
+    "tags": []
+  },
+  {
+    "id": "mr7nij7zmiuf",
+    "word": "Donc les réparations seront à vos frais",
+    "translation": "因此，维修费用将由您承担。",
+    "translation2": "So repairs will be at your expense.",
+    "deckId": "default",
+    "createdAt": "2026-07-05",
+    "reviewStage": 0,
+    "nextReview": "2026-07-05",
+    "reviewHistory": [],
+    "rot": 0,
+    "tags": []
+  }
+]

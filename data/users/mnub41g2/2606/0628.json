@@ -1,0 +1,28 @@
+[
+  {
+    "id": "mqxutq3jtwoy",
+    "word": "repérer",
+    "translation": "标记, 辨认方向",
+    "translation2": "spot",
+    "deckId": "default",
+    "createdAt": "2026-06-28",
+    "reviewStage": 0,
+    "nextReview": "2026-06-28",
+    "reviewHistory": [],
+    "rot": 0,
+    "tags": []
+  },
+  {
+    "id": "mqxy0ttvg119",
+    "word": "se détendre",
+    "translation": "放松",
+    "translation2": "relax",
+    "deckId": "default",
+    "createdAt": "2026-06-28",
+    "reviewStage": 0,
+    "nextReview": "2026-06-28",
+    "reviewHistory": [],
+    "rot": 0,
+    "tags": []
+  }
+]

@@ -1,0 +1,28 @@
+[
+  {
+    "id": "msfhp931bp3b",
+    "word": "veiller jusqu'à l'aube",
+    "translation": "熬夜到天亮",
+    "translation2": "stay up until dawn",
+    "deckId": "default",
+    "createdAt": "2026-08-05",
+    "reviewStage": 0,
+    "nextReview": "2026-08-05",
+    "reviewHistory": [],
+    "rot": 0,
+    "tags": []
+  },
+  {
+    "id": "msfqs0d4ebql",
+    "word": "Cuisiner avec son enfant, c'est une activité à la fois ludique,",
+    "translation": "和孩子一起做饭是一项既有趣又有趣的活动",
+    "translation2": "Cooking with your child is an activity that is both fun and",
+    "deckId": "default",
+    "createdAt": "2026-08-05",
+    "reviewStage": 0,
+    "nextReview": "2026-08-05",
+    "reviewHistory": [],
+    "rot": 0,
+    "tags": []
+  }
+]

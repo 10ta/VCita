@@ -1,0 +1,67 @@
+[
+  {
+    "id": "mrrj0xzz4hhf",
+    "word": "apparaître",
+    "translation": "出现",
+    "translation2": "appear",
+    "deckId": "default",
+    "createdAt": "2026-07-19",
+    "reviewStage": 0,
+    "nextReview": "2026-07-19",
+    "reviewHistory": [],
+    "rot": 0,
+    "tags": []
+  },
+  {
+    "id": "mrrjmwtfpj1i",
+    "word": "boutade",
+    "translation": "开玩笑",
+    "translation2": "joke",
+    "deckId": "default",
+    "createdAt": "2026-07-19",
+    "reviewStage": 0,
+    "nextReview": "2026-07-19",
+    "reviewHistory": [],
+    "rot": 0,
+    "tags": []
+  },
+  {
+    "id": "mrrjrgxda1ob",
+    "word": "prétexte",
+    "translation": "借口",
+    "translation2": "pretext",
+    "deckId": "default",
+    "createdAt": "2026-07-19",
+    "reviewStage": 0,
+    "nextReview": "2026-07-19",
+    "reviewHistory": [],
+    "rot": 0,
+    "tags": []
+  },
+  {
+    "id": "mrrjsr3n17sv",
+    "word": "avec les bons",
+    "translation": "用好的方式",
+    "translation2": "",
+    "deckId": "default",
+    "createdAt": "2026-07-19",
+    "reviewStage": 0,
+    "nextReview": "2026-07-19",
+    "reviewHistory": [],
+    "rot": 0,
+    "tags": []
+  },
+  {
+    "id": "mrrtwdg5mqsg",
+    "word": "C'est souvent difficile de joindre les deux bouts chaque mois",
+    "translation": "每个月通常很难维持收支平衡",
+    "translation2": "It's often difficult to make ends meet each month",
+    "deckId": "default",
+    "createdAt": "2026-07-19",
+    "reviewStage": 0,
+    "nextReview": "2026-07-19",
+    "reviewHistory": [],
+    "rot": 0,
+    "tags": []
+  }
+]

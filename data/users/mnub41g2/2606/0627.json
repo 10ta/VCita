@@ -1,0 +1,54 @@
+[
+  {
+    "id": "mqw3tjw560wz",
+    "word": "remporter un prix",
+    "translation": "得奖",
+    "translation2": "win a prize",
+    "deckId": "default",
+    "createdAt": "2026-06-27",
+    "reviewStage": 0,
+    "nextReview": "2026-06-27",
+    "reviewHistory": [],
+    "rot": 0,
+    "tags": []
+  },
+  {
+    "id": "mqw45aukd7ar",
+    "word": "vie associative",
+    "translation": "社区生活",
+    "translation2": "community life",
+    "deckId": "default",
+    "createdAt": "2026-06-27",
+    "reviewStage": 0,
+    "nextReview": "2026-06-27",
+    "reviewHistory": [],
+    "rot": 0,
+    "tags": []
+  },
+  {
+    "id": "mqw45kssqrzd",
+    "word": "se poursuivre",
+    "translation": "继续",
+    "translation2": "continue",
+    "deckId": "default",
+    "createdAt": "2026-06-27",
+    "reviewStage": 0,
+    "nextReview": "2026-06-27",
+    "reviewHistory": [],
+    "rot": 0,
+    "tags": []
+  },
+  {
+    "id": "mqw460cp898b",
+    "word": "s’opérer",
+    "translation": "发生, 引起",
+    "translation2": "operate",
+    "deckId": "default",
+    "createdAt": "2026-06-27",
+    "reviewStage": 0,
+    "nextReview": "2026-06-27",
+    "reviewHistory": [],
+    "rot": 0,
+    "tags": []
+  }
+]

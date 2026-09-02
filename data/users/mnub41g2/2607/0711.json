@@ -1,0 +1,54 @@
+[
+  {
+    "id": "mrg5jfxzrvde",
+    "word": "je ne recommencerai pas",
+    "translation": "我不会再这样做了",
+    "translation2": "I won't do it again",
+    "deckId": "default",
+    "createdAt": "2026-07-11",
+    "reviewStage": 0,
+    "nextReview": "2026-07-11",
+    "reviewHistory": [],
+    "rot": 0,
+    "tags": []
+  },
+  {
+    "id": "mrg5k4wgrg3k",
+    "word": "répartition",
+    "translation": "分配",
+    "translation2": "distribution",
+    "deckId": "default",
+    "createdAt": "2026-07-11",
+    "reviewStage": 0,
+    "nextReview": "2026-07-11",
+    "reviewHistory": [],
+    "rot": 0,
+    "tags": []
+  },
+  {
+    "id": "mrg6sok6ik8k",
+    "word": "matériaux de récupération",
+    "translation": "回收材料",
+    "translation2": "recycled materials",
+    "deckId": "default",
+    "createdAt": "2026-07-11",
+    "reviewStage": 0,
+    "nextReview": "2026-07-11",
+    "reviewHistory": [],
+    "rot": 0,
+    "tags": []
+  },
+  {
+    "id": "mrg9mrr34nkk",
+    "word": "faire une réclamation.",
+    "translation": "提出索赔。",
+    "translation2": "make a claim.",
+    "deckId": "default",
+    "createdAt": "2026-07-11",
+    "reviewStage": 0,
+    "nextReview": "2026-07-11",
+    "reviewHistory": [],
+    "rot": 0,
+    "tags": []
+  }
+]

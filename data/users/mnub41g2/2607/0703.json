@@ -1,0 +1,54 @@
+[
+  {
+    "id": "mr4x2j8v0pyb",
+    "word": "Les réhabilitations ont une portée limitée",
+    "translation": "康复范围有限",
+    "translation2": "Rehabilitations are limited in scope",
+    "deckId": "default",
+    "createdAt": "2026-07-03",
+    "reviewStage": 0,
+    "nextReview": "2026-07-03",
+    "reviewHistory": [],
+    "rot": 0,
+    "tags": []
+  },
+  {
+    "id": "mr50o4l65rig",
+    "word": "consensus",
+    "translation": "共识",
+    "translation2": "consensus",
+    "deckId": "default",
+    "createdAt": "2026-07-03",
+    "reviewStage": 0,
+    "nextReview": "2026-07-03",
+    "reviewHistory": [],
+    "rot": 0,
+    "tags": []
+  },
+  {
+    "id": "mr50ygx6fr9l",
+    "word": "De faire varier le répertoire des concerts.",
+    "translation": "改变音乐会曲目。",
+    "translation2": "To vary the concert repertoire.",
+    "deckId": "default",
+    "createdAt": "2026-07-03",
+    "reviewStage": 0,
+    "nextReview": "2026-07-03",
+    "reviewHistory": [],
+    "rot": 0,
+    "tags": []
+  },
+  {
+    "id": "mr51dx6bv794",
+    "word": "perception",
+    "translation": "洞察力",
+    "translation2": "perception",
+    "deckId": "default",
+    "createdAt": "2026-07-03",
+    "reviewStage": 0,
+    "nextReview": "2026-07-03",
+    "reviewHistory": [],
+    "rot": 0,
+    "tags": []
+  }
+]

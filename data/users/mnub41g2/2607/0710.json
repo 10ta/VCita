@@ -1,0 +1,80 @@
+[
+  {
+    "id": "mrep8wpsdqh6",
+    "word": "mobiliser",
+    "translation": "动员",
+    "translation2": "mobilize",
+    "deckId": "default",
+    "createdAt": "2026-07-10",
+    "reviewStage": 0,
+    "nextReview": "2026-07-10",
+    "reviewHistory": [],
+    "rot": 0,
+    "tags": []
+  },
+  {
+    "id": "mrep9jknwubo",
+    "word": "sensibiliser",
+    "translation": "提高认识",
+    "translation2": "to raise awareness",
+    "deckId": "default",
+    "createdAt": "2026-07-10",
+    "reviewStage": 0,
+    "nextReview": "2026-07-10",
+    "reviewHistory": [],
+    "rot": 0,
+    "tags": []
+  },
+  {
+    "id": "mrepetij4w34",
+    "word": "repartir",
+    "translation": "再次启程",
+    "translation2": "",
+    "deckId": "default",
+    "createdAt": "2026-07-10",
+    "reviewStage": 0,
+    "nextReview": "2026-07-10",
+    "reviewHistory": [],
+    "rot": 0,
+    "tags": []
+  },
+  {
+    "id": "mrepsieymee4",
+    "word": "déborder",
+    "translation": "溢出",
+    "translation2": "overflow",
+    "deckId": "default",
+    "createdAt": "2026-07-10",
+    "reviewStage": 0,
+    "nextReview": "2026-07-10",
+    "reviewHistory": [],
+    "rot": 0,
+    "tags": []
+  },
+  {
+    "id": "mreu0qj2lmvo",
+    "word": "D'autant que",
+    "translation": "尤其是自从",
+    "translation2": "Especially since",
+    "deckId": "default",
+    "createdAt": "2026-07-10",
+    "reviewStage": 0,
+    "nextReview": "2026-07-10",
+    "reviewHistory": [],
+    "rot": 0,
+    "tags": []
+  },
+  {
+    "id": "mreu38wkdwd7",
+    "word": "course",
+    "translation": "旅程, 比赛, 进程, 购物",
+    "translation2": "",
+    "deckId": "default",
+    "createdAt": "2026-07-10",
+    "reviewStage": 0,
+    "nextReview": "2026-07-10",
+    "reviewHistory": [],
+    "rot": 0,
+    "tags": []
+  }
+]
