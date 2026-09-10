@@ -6,16 +6,16 @@
     "translation2": "shake",
     "deckId": "default",
     "createdAt": "2026-04-22",
-    "reviewStage": 2,
-    "nextReview": "2026-05-11",
+    "reviewStage": 0,
+    "nextReview": "2026-09-10",
     "reviewHistory": [
       {
         "date": "2026-04-22",
-        "remembered": false
+        "remembered": true
       },
       {
         "date": "2026-04-23",
-        "remembered": false
+        "remembered": true
       },
       {
         "date": "2026-04-25",
@@ -27,6 +27,10 @@
       },
       {
         "date": "2026-05-07",
+        "remembered": false
+      },
+      {
+        "date": "2026-05-22",
         "remembered": false
       }
     ],
@@ -828,8 +832,8 @@
     "translation2": "This affair is a house of cards and it will collapse one fine morning.",
     "deckId": "default",
     "createdAt": "2026-04-22",
-    "reviewStage": 2,
-    "nextReview": "2026-05-12",
+    "reviewStage": 1,
+    "nextReview": "2026-09-11",
     "reviewHistory": [
       {
         "date": "2026-04-22",
@@ -849,6 +853,10 @@
       },
       {
         "date": "2026-05-07",
+        "remembered": false
+      },
+      {
+        "date": "2026-05-22",
         "remembered": false
       }
     ],

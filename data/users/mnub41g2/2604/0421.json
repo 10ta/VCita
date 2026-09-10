@@ -244,32 +244,32 @@
     "translation2": "cattle",
     "deckId": "default",
     "createdAt": "2026-04-21",
-    "reviewStage": 1,
-    "nextReview": "2026-09-11",
+    "reviewStage": 2,
+    "nextReview": "2026-09-13",
     "reviewHistory": [
       {
         "date": "2026-04-21",
-        "remembered": false
+        "remembered": true
       },
       {
         "date": "2026-04-22",
-        "remembered": false
+        "remembered": true
       },
       {
         "date": "2026-04-24",
-        "remembered": false
+        "remembered": true
       },
       {
         "date": "2026-04-28",
-        "remembered": false
+        "remembered": true
       },
       {
         "date": "2026-05-06",
-        "remembered": false
+        "remembered": true
       },
       {
         "date": "2026-05-21",
-        "remembered": false
+        "remembered": true
       }
     ],
     "rot": 1,
