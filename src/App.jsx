@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 
 const INIT_SRC = __SOURCE_LANG__;
 const INIT_T1 = __TARGET_LANG_1__;
@@ -11,6 +11,14 @@ const PAGE_SIZES = __PAGE_SIZES__;
 const DEFAULT_PAGE_SIZE = __DEFAULT_PAGE_SIZE__;
 const INIT_AUTO_ADD = __AUTO_PLAY_ADD__;
 const INIT_AUTO_REVIEW = __AUTO_PLAY_REVIEW__;
+
+// ─── 性能参数 ───
+const WRITE_CONCURRENCY = 8;           // 导入、删除用户时的并发请求数
+const SYNC_CHUNK = 100;                // 一次 sync 请求最多携带的日文件数
+const SAVE_DEBOUNCE_MS = 400;          // 修改后合并落盘的等待时间
+const SAVE_MAX_WAIT_MS = 2000;         // 连续修改时最长等待，避免一直不落盘
+const REMOTE_REFRESH_MIN_GAP_MS = 30000; // 保存后发现远端有改动时，自动刷新的最小间隔
+const TRANSLATE_TIMEOUT_MS = 8000;
 
 const LANGS = [
   { code: "zh-CN", label: "中文" }, { code: "ja", label: "日本語" }, { code: "ko", label: "한국어" },
@@ -26,26 +34,63 @@ const fmtShort = ds => ds.slice(2).replace(/-/g, "");
 const dateToDayPath = (userId, ds) => { const [y, m, d] = ds.split("-"); return `users/${userId}/${y.slice(2)}${m}/${m}${d}.json`; };
 const userMetaPath = uid => `users/${uid}/meta.json`;
 const dayDiff = (dateStr) => { const t = new Date(todayStr() + "T00:00:00"), d = new Date(dateStr + "T00:00:00"); return Math.round((d - t) / 86400000); };
-const getScheduleDates = card => EBB.map(d => addDays(card.createdAt, d));
 
-// ─── Logging ───
-const LOG_KEY = "vf_logs";
-const log = (level, msg, data) => {
-  const entry = { ts: new Date().toISOString(), level, msg, ...(data ? { data } : {}) };
-  try {
-    const logs = JSON.parse(localStorage.getItem(LOG_KEY) || "[]");
-    logs.push(entry);
-    // Keep last 500
-    if (logs.length > 500) logs.splice(0, logs.length - 500);
-    localStorage.setItem(LOG_KEY, JSON.stringify(logs));
-  } catch { }
-  if (level === "error") console.error(`[VF] ${msg}`, data);
-  else console.log(`[VF] ${msg}`, data || "");
+// 同一个 createdAt 的复习日程只算一次
+const schedCache = new Map();
+const getScheduleDates = card => {
+  let s = schedCache.get(card.createdAt);
+  if (!s) { s = EBB.map(d => addDays(card.createdAt, d)); schedCache.set(card.createdAt, s); }
+  return s;
 };
-// Export logs for debug
+const isDueOn = (card, date) => {
+  const history = card.reviewHistory || [];
+  return getScheduleDates(card).some(sd => sd <= date && !history.some(h => h.date === sd));
+};
+const redCountOf = card => (card.reviewHistory || []).filter(h => !h.remembered).length;
+const applyReview = (card, remembered, rd) => {
+  const newHistory = [...(card.reviewHistory || [])];
+  for (const sd of getScheduleDates(card))
+    if (sd <= rd && !newHistory.some(h => h.date === sd)) newHistory.push({ date: sd, remembered });
+  const stage = card.reviewStage || 0;
+  const ns = remembered ? Math.min(stage + 1, EBB.length - 1) : Math.max(0, stage - 1);
+  return { ...card, reviewStage: ns, nextReview: addDays(rd, EBB[ns]), reviewHistory: newHistory };
+};
+const newId = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+
+// ─── 并发工具 ───
+const mapPool = async (items, limit, fn) => {
+  const out = new Array(items.length);
+  let next = 0;
+  const worker = async () => { while (next < items.length) { const k = next++; out[k] = await fn(items[k], k); } };
+  await Promise.all(Array.from({ length: Math.min(limit, items.length) }, worker));
+  return out;
+};
+const withRetry = async (fn, times = 2) => {
+  for (let i = 0; ; i++) {
+    try { return await fn(); }
+    catch (e) { if (i >= times || /返回的是网页/.test(e.message)) throw e; await new Promise(r => setTimeout(r, 300 * (i + 1))); }
+  }
+};
+
+// ─── Logging（内存缓冲，1 秒合并写一次 localStorage）───
+const LOG_KEY = "vf_logs";
+let logBuf = null, logTimer = null;
+const getLogBuf = () => {
+  if (!logBuf) { try { logBuf = JSON.parse(localStorage.getItem(LOG_KEY) || "[]"); } catch { logBuf = []; } }
+  return logBuf;
+};
+const persistLogs = () => { logTimer = null; try { localStorage.setItem(LOG_KEY, JSON.stringify(getLogBuf())); } catch { } };
+const log = (level, msg, data) => {
+  const logs = getLogBuf();
+  logs.push({ ts: new Date().toISOString(), level, msg, ...(data ? { data } : {}) });
+  if (logs.length > 500) logs.splice(0, logs.length - 500);
+  if (!logTimer) logTimer = setTimeout(persistLogs, 1000);
+  if (level === "error") console.error(`[VF] ${msg}`, data);
+  else if (level !== "debug") console.log(`[VF] ${msg}`, data || "");
+};
 const exportLogs = () => {
-  const logs = localStorage.getItem(LOG_KEY) || "[]";
-  const blob = new Blob([logs], { type: "application/json" });
+  if (logTimer) { clearTimeout(logTimer); persistLogs(); }
+  const blob = new Blob([JSON.stringify(getLogBuf())], { type: "application/json" });
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a"); a.href = url; a.download = `vf-logs-${todayStr()}.json`; a.click();
   URL.revokeObjectURL(url);
@@ -60,121 +105,123 @@ const speak = (text, lang) => {
 };
 
 // ─── File API ───
+// 同一路径的写/删严格按调用顺序执行，避免后发先至
+const pathChains = new Map();
+const serialByPath = (p, fn) => {
+  const run = (pathChains.get(p) || Promise.resolve()).catch(() => { }).then(fn);
+  pathChains.set(p, run);
+  run.finally(() => { if (pathChains.get(p) === run) pathChains.delete(p); }).catch(() => { });
+  return run;
+};
+// 统一解析接口响应。服务端没有对应接口时，Vite 会把请求当成页面访问返回 index.html，这里给出明确提示。
+const parseApiResponse = async (r, url) => {
+  const text = await r.text();
+  if (text.trimStart().startsWith("<")) {
+    throw new Error(`接口 ${url} 返回的是网页而不是数据（HTTP ${r.status}）。服务端仍在运行旧版 vite.config.js：请确认新的 vite.config.js 已替换到项目根目录，并重启 Vite。`);
+  }
+  let j;
+  try { j = JSON.parse(text); } catch { throw new Error(`接口 ${url} 返回了无法解析的内容（HTTP ${r.status}）`); }
+  if (!r.ok) throw new Error(`接口 ${url} 出错（HTTP ${r.status}）：${j?.error || text.slice(0, 200)}`);
+  return j;
+};
+const postJSON = async (url, body) => {
+  const r = await fetch(url, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+  return parseApiResponse(r, url);
+};
+const getJSON = async url => parseApiResponse(await fetch(url, { cache: "no-store" }), url);
 const api = {
-  async write(p, data) {
+  write: (p, data) => serialByPath(p, async () => {
     log("debug", "api.write", { path: p });
-    await fetch(`${BASE}api/write`, {
-      method: "POST", headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ path: p, data: typeof data === "string" ? data : JSON.stringify(data, null, 2) })
-    });
-  },
+    return postJSON(`${BASE}api/write`, { path: p, data: typeof data === "string" ? data : JSON.stringify(data, null, 2) });
+  }),
+  del: p => serialByPath(p, async () => {
+    log("debug", "api.delete", { path: p });
+    return postJSON(`${BASE}api/delete`, { path: p });
+  }),
   async read(p) {
-    const r = await fetch(`${BASE}api/read`, {
-      method: "POST", headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ path: p })
-    });
-    const j = await r.json();
+    const j = await postJSON(`${BASE}api/read`, { path: p });
     if (!j.exists) return null;
     try { return JSON.parse(j.data); } catch { return j.data; }
   },
-  async del(p) {
-    log("debug", "api.delete", { path: p });
-    await fetch(`${BASE}api/delete`, {
-      method: "POST", headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ path: p })
-    });
-  },
-  async list() {
-    const r = await fetch(`${BASE}api/list`);
-    const j = await r.json();
-    return j.files || [];
-  },
+  async list() { return (await getJSON(`${BASE}api/list`)).files || []; },
+  // ─── 批量接口（vite.config.js 中实现）───
+  snapshot: uid => getJSON(`${BASE}api/snapshot${uid ? `?uid=${encodeURIComponent(uid)}` : ""}`),
+  rev: uid => getJSON(`${BASE}api/rev?uid=${encodeURIComponent(uid)}`),
+  sync: (uid, files) => postJSON(`${BASE}api/sync`, { uid, files }),
 };
 
 const GLOBAL_KEY = "global.json";
-const loadGlobal = async () => (await api.read(GLOBAL_KEY)) || { users: [{ id: "default", name: "Default" }], activeUser: "default" };
+const defaultGlobal = () => ({ users: [{ id: "default", name: "Default" }], activeUser: "default" });
+const defaultMeta = () => ({ decks: [{ id: "default", name: "Default", createdAt: Date.now() }], sourceLang: INIT_SRC, targetLang1: INIT_T1, targetLang2: INIT_T2 });
+const normalizeMeta = m => {
+  const x = m && typeof m === "object" && Array.isArray(m.decks) ? m : defaultMeta();
+  if (!x.sourceLang) x.sourceLang = INIT_SRC;
+  if (!x.targetLang1) x.targetLang1 = INIT_T1;
+  if (!x.targetLang2) x.targetLang2 = INIT_T2;
+  return x;
+};
 const saveGlobal = g => api.write(GLOBAL_KEY, g);
-const loadUserMeta = async uid => (await api.read(userMetaPath(uid))) || { decks: [{ id: "default", name: "Default", createdAt: Date.now() }], sourceLang: INIT_SRC, targetLang1: INIT_T1, targetLang2: INIT_T2 };
+const loadUserMeta = async uid => normalizeMeta(await api.read(userMetaPath(uid)));
 const saveUserMeta = (uid, m) => api.write(userMetaPath(uid), m);
+const isDayFileOf = (uid, f) => f.startsWith(`users/${uid}/`) && !f.endsWith("meta.json");
 
-const loadUserCards = async uid => {
-  const files = await api.list();
-  const prefix = `users/${uid}/`;
-  const dayFiles = files.filter(f => f.startsWith(prefix) && !f.endsWith("meta.json"));
-  const cards = [];
-  for (const f of dayFiles) { const arr = await api.read(f); if (Array.isArray(arr)) cards.push(...arr); }
-  return cards;
-};
-
-const saveCardToDay = async (uid, card) => {
-  const p = dateToDayPath(uid, card.createdAt);
-  let arr = (await api.read(p)) || [];
-  if (!Array.isArray(arr)) arr = [];
-  const idx = arr.findIndex(c => c.id === card.id);
-  if (idx >= 0) arr[idx] = card; else arr.push(card);
-  await api.write(p, arr);
-};
-
-const removeCardFromDay = async (uid, card) => {
-  const p = dateToDayPath(uid, card.createdAt);
-  let arr = (await api.read(p)) || [];
-  arr = arr.filter(c => c.id !== card.id);
-  if (arr.length === 0) await api.del(p);
-  else await api.write(p, arr);
-};
-
-// ─── Batch helpers: group by day file, read once, write once ───
-const batchSaveCards = async (uid, cardList) => {
-  // Group cards by their day file path
-  const byFile = {};
-  for (const card of cardList) {
-    const p = dateToDayPath(uid, card.createdAt);
-    if (!byFile[p]) byFile[p] = [];
-    byFile[p].push(card);
-  }
-  // For each file: read once, apply all updates, write once
-  for (const [p, updates] of Object.entries(byFile)) {
-    let arr = (await api.read(p)) || [];
-    if (!Array.isArray(arr)) arr = [];
-    for (const card of updates) {
-      const idx = arr.findIndex(c => c.id === card.id);
-      if (idx >= 0) arr[idx] = card; else arr.push(card);
+// 一个请求拿到 global + meta + 该用户所有日文件（uid 为空时由服务端取 activeUser）。
+// 顺带检测"卡片所在文件与 createdAt 不符"或"同一 id 出现在多处"，
+// 返回需要重写的路径和各文件需要剔除的 id，交给 sync 自动修复。
+const loadSnapshot = async uidOrNull => {
+  const t0 = performance.now();
+  const snap = await withRetry(() => api.snapshot(uidOrNull));
+  const uid = snap.uid;
+  const global = snap.global && Array.isArray(snap.global.users) ? snap.global : defaultGlobal();
+  const meta = normalizeMeta(snap.meta);
+  const files = snap.files || {};
+  const dayFiles = Object.keys(files).filter(f => isDayFileOf(uid, f)).sort();
+  const byId = new Map();
+  const occurrences = [];
+  const repair = new Set();
+  for (const f of dayFiles) {
+    const arr = files[f];
+    if (!Array.isArray(arr)) continue;
+    const seenHere = new Set();
+    for (const c of arr) {
+      if (!c || !c.id || typeof c.createdAt !== "string") continue;
+      if (seenHere.has(c.id)) repair.add(f);
+      seenHere.add(c.id);
+      occurrences.push({ id: c.id, file: f });
+      const matched = dateToDayPath(uid, c.createdAt) === f;
+      const prev = byId.get(c.id);
+      if (!prev) { byId.set(c.id, { card: c, matched }); continue; }
+      const better = (matched && !prev.matched) ||
+        (matched === prev.matched && (c.reviewHistory || []).length > (prev.card.reviewHistory || []).length);
+      if (better) byId.set(c.id, { card: c, matched });
     }
-    await api.write(p, arr);
   }
+  const drops = new Map();
+  for (const { id, file } of occurrences) {
+    const target = dateToDayPath(uid, byId.get(id).card.createdAt);
+    if (file !== target) {
+      if (!drops.has(file)) drops.set(file, new Set());
+      drops.get(file).add(id);
+      repair.add(file); repair.add(target);
+    }
+  }
+  const cards = [...byId.values()].map(v => v.card);
+  log("info", "loadSnapshot", { uid, files: dayFiles.length, cards: cards.length, repair: repair.size, ms: Math.round(performance.now() - t0) });
+  return { uid, global, rev: snap.rev, meta, cards, dayFiles, repairPaths: [...repair], repairDrops: drops };
 };
 
-const batchRemoveCards = async (uid, cardList) => {
-  const byFile = {};
-  for (const card of cardList) {
-    const p = dateToDayPath(uid, card.createdAt);
-    if (!byFile[p]) byFile[p] = [];
-    byFile[p].push(card.id);
-  }
-  for (const [p, ids] of Object.entries(byFile)) {
-    let arr = (await api.read(p)) || [];
-    arr = arr.filter(c => !ids.includes(c.id));
-    if (arr.length === 0) await api.del(p);
-    else await api.write(p, arr);
-  }
-};
-
-const gTranslate = async (word, sl, tl) => {
+const gTranslate = async (text, sl, tl) => {
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), TRANSLATE_TIMEOUT_MS);
   try {
-    const r = await fetch(`https://translate.googleapis.com/translate_a/single?client=dict-chrome-ex&sl=${sl}&tl=${tl}&dt=t&dj=1&q=${encodeURIComponent(word)}`);
+    const r = await fetch(`https://translate.googleapis.com/translate_a/single?client=dict-chrome-ex&sl=${sl}&tl=${tl}&dt=t&dj=1&q=${encodeURIComponent(text)}`, { signal: ctrl.signal });
+    if (!r.ok) throw new Error(`HTTP ${r.status}`);
     const d = await r.json();
-    return d.sentences?.map(s => s.trans).filter(Boolean).join("") || "";
+    return d.sentences?.map(s => s.trans).filter(Boolean).join("") || null;
   } catch (e) {
-    // 在 Node.js 中，fetch 的错误详情通常在 e.cause 里
-    console.error("Full Error:", e);
-    console.error("Error Cause:", e.cause);
-    log("error", "translate failed", {
-      message: e.message,
-      stack: e.stack,
-      cause: e.cause // 这一行最重要
-    });
-    return "翻译失败: " + e.message + e.stack + e.cause;
-  }
+    log("error", "translate failed", { text, sl, tl, error: e.name === "AbortError" ? "timeout" : e.message });
+    return null;
+  } finally { clearTimeout(timer); }
 };
 
 const I = {
@@ -208,24 +255,57 @@ const getCardDisplay = (card, meta) => {
   return { src: texts[rot], t1: texts[(rot + 1) % 3], t2: texts[(rot + 2) % 3], srcL: langs[rot], t1L: langs[(rot + 1) % 3], t2L: langs[(rot + 2) % 3] };
 };
 
+// ─── 小组件放在 App 外部：否则每次渲染都是新组件类型，会被卸载重建（日期选择器被打断的原因）───
+const LangSelect = ({ value, onChange }) => <select style={S.langSel} value={value} onChange={e => onChange(e.target.value)}>{LANGS.map(l => <option key={l.code} value={l.code}>{l.label}</option>)}</select>;
+const DateInput = ({ value, onChange, style: sx }) => <input type="date" value={value} onChange={e => e.target.value && onChange(e.target.value)} style={{ ...S.dateInput, ...sx }} />;
+
+const ScheduleDots = ({ card, today, onToggle }) => {
+  const sched = getScheduleDates(card);
+  return (
+    <div style={{ display: "flex", gap: 3, flexWrap: "wrap", alignItems: "center", justifyContent: "center" }}>
+      {sched.map((schDate, i) => {
+        const rh = (card.reviewHistory || []).find(h => h.date === schDate);
+        const isToday = schDate === today, isPast = schDate < today;
+        const diff = dayDiff(schDate);
+        let bg = "#333", clr = "#666";
+        if (rh) { bg = rh.remembered ? "#16a34a" : "#dc2626"; clr = "#fff"; }
+        else if (isToday) { bg = accent; clr = "#fff"; }
+        else if (isPast) { bg = "#555"; clr = "#aaa"; }
+        const diffLabel = isToday ? "" : diff > 0 ? `+${diff}` : `${diff}`;
+        const clickable = !!rh;
+        return (
+          <span key={i} title={`Day ${EBB[i]} → ${schDate}${clickable ? " (click to toggle)" : ""}`}
+            onClick={clickable ? e => { e.stopPropagation(); onToggle(card, schDate); } : undefined}
+            style={{ fontFamily: mono, fontSize: 9, padding: "2px 5px", borderRadius: 3, background: bg, color: clr, lineHeight: 1.2, display: "inline-flex", flexDirection: "column", alignItems: "center", gap: 0, cursor: clickable ? "pointer" : "default" }}>
+            {diffLabel && <span style={{ fontSize: 7, opacity: 0.7, lineHeight: 1 }}>{diffLabel}</span>}
+            {fmtShort(schDate)}
+          </span>
+        );
+      })}
+    </div>
+  );
+};
+
 export default function App() {
   const [global, setGlobal] = useState(null);
   const [meta, setMeta] = useState(null);
   const [cards, setCards] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(null);
+  const [syncState, setSyncState] = useState("idle"); // idle | pending | saving | error
   const [view, setView] = useState("home");
   const [activeDeck, setActiveDeck] = useState("default");
   const [newWord, setNewWord] = useState("");
   const [addDate, setAddDate] = useState(todayStr());
-  const [translating, setTranslating] = useState(false);
+  const [translatingIds, setTranslatingIds] = useState(new Set());
   // Review state — frozen queue approach
-  const [reviewQueue, setReviewQueue] = useState([]); // frozen list of card snapshots at session start
-  const [reviewPos, setReviewPos] = useState(0); // current position in queue
+  const [reviewQueue, setReviewQueue] = useState([]);
+  const [reviewPos, setReviewPos] = useState(0);
   const [reviewRevealed, setReviewRevealed] = useState(false);
   const [reviewSnapshot, setReviewSnapshot] = useState(null);
   const [reviewDate, setReviewDate] = useState(todayStr());
   const [reviewAutoPlay, setReviewAutoPlay] = useState(INIT_AUTO_REVIEW);
-  const [reviewQuizType, setReviewQuizType] = useState(0); // 0=src, 1=t1, 2=t2 — which field to show as question
+  const [reviewQuizType, setReviewQuizType] = useState(0);
   //
   const [newDeckName, setNewDeckName] = useState("");
   const [showDeckModal, setShowDeckModal] = useState(false);
@@ -257,355 +337,569 @@ export default function App() {
   const [page, setPage] = useState(0);
   const [canScroll, setCanScroll] = useState(false);
   const [filterDate, setFilterDate] = useState("");
-  const [filterKeyword, setFilterKeyword] = useState(""); // date filter for home
+  const [filterKeyword, setFilterKeyword] = useState("");
   const [clearTagConfirm, setClearTagConfirm] = useState(false);
   const [batchDateModal, setBatchDateModal] = useState(false);
   const [batchDateVal, setBatchDateVal] = useState(todayStr());
   // Tags
-  const [addTags, setAddTags] = useState(new Set()); // tags selected when adding word
+  const [addTags, setAddTags] = useState(new Set());
   const [newTagInput, setNewTagInput] = useState("");
   const [batchTagModal, setBatchTagModal] = useState(false);
   const [batchTagInput, setBatchTagInput] = useState("");
-  const [singleTagCard, setSingleTagCard] = useState(null); // card id for per-card tag modal
-  // Intensive mode
+  const [singleTagCard, setSingleTagCard] = useState(null);
   const [intensiveMode, setIntensiveMode] = useState("hard"); // "hard" | "tag:xxx"
   const inputRef = useRef(null);
 
-  const uid = () => global?.activeUser || "default";
+  // ─── Store：内存是唯一数据源，所有读取都走 cardsRef，写入先改内存再后台落盘 ───
+  const cardsRef = useRef([]);
+  const globalRef = useRef(null);
+  const storeUidRef = useRef(null);
+  const dirtyRef = useRef(new Set());     // 待落盘的日文件路径
+  const leftRef = useRef(new Map());      // path -> Set(id)：已移出该文件或已删除，需要服务端从该文件剔除
+  const revRef = useRef(null);            // 服务端数据版本号
+  const remoteChangedRef = useRef(false); // 发现其他设备改过数据
+  const lastRefreshAtRef = useRef(0);
+  const flushTimerRef = useRef(null);
+  const firstDirtyAtRef = useRef(0);
+  const flushChainRef = useRef(Promise.resolve());
+  const flushingRef = useRef(false);
+  const retryDelayRef = useRef(2000);
+  const mutationSeqRef = useRef(0);
+  const toastTimerRef = useRef(null);
+  const bootedRef = useRef(false);
+  const todayAtHideRef = useRef(todayStr());
+  const latestRef = useRef({});
+  latestRef.current = { view, reviewDate, addDate, activeDeck };
 
-  const reload = async () => {
-    const g = await loadGlobal();
-    setGlobal(g);
-    const u = g.activeUser || "default";
-    const [m, c, f] = await Promise.all([loadUserMeta(u), loadUserCards(u), api.list()]);
-    if (!m.sourceLang) m.sourceLang = INIT_SRC;
-    if (!m.targetLang1) m.targetLang1 = INIT_T1;
-    if (!m.targetLang2) m.targetLang2 = INIT_T2;
-    setMeta(m); setCards(c);
-    setDayFiles(f.filter(x => x.startsWith(`users/${u}/`) && !x.endsWith("meta.json")));
-    log("info", "reload complete", { user: u, cardCount: c.length });
+  const uid = () => storeUidRef.current || "default";
+  const getLatest = id => cardsRef.current.find(c => c.id === id);
+  const hasUnsaved = () => dirtyRef.current.size > 0 || flushingRef.current;
+
+  const showToast = msg => {
+    clearTimeout(toastTimerRef.current);
+    setToast({ msg, key: Date.now() + Math.random() });
+    toastTimerRef.current = setTimeout(() => setToast(null), 2200);
   };
 
-  useEffect(() => { reload().then(() => setLoading(false)); }, []);
+  const setGlobalBoth = g => { globalRef.current = g; setGlobal(g); };
+
+  const addLeft = (p, id) => { let set = leftRef.current.get(p); if (!set) leftRef.current.set(p, set = new Set()); set.add(id); };
+  // 服务端每次写都会返回 prevRev/rev；prevRev 与本地记录不一致说明中间有别的设备写过
+  const noteRev = r => {
+    if (!r || !r.rev || r.uid !== storeUidRef.current) return;
+    if (revRef.current && r.prevRev !== revRef.current) remoteChangedRef.current = true;
+    revRef.current = r.rev;
+  };
+
+  const commitCards = next => { cardsRef.current = next; mutationSeqRef.current++; setCards(next); };
+
+  const markDirty = paths => {
+    let added = false;
+    for (const p of paths) if (p) { dirtyRef.current.add(p); added = true; }
+    if (!added) return;
+    const now = Date.now();
+    if (!firstDirtyAtRef.current) firstDirtyAtRef.current = now;
+    setSyncState(s => (s === "error" || s === "saving") ? s : "pending");
+    clearTimeout(flushTimerRef.current);
+    const wait = now - firstDirtyAtRef.current >= SAVE_MAX_WAIT_MS ? 0 : SAVE_DEBOUNCE_MS;
+    flushTimerRef.current = setTimeout(() => flushNow(), wait);
+  };
+
+  // 插入或替换卡片（按 id）。createdAt 变化时旧文件也会被标记，自动完成跨文件移动。
+  const upsertCards = list => {
+    if (!list.length) return;
+    const u = storeUidRef.current;
+    const next = cardsRef.current.slice();
+    const idx = new Map(next.map((c, i) => [c.id, i]));
+    const paths = [];
+    for (const card of list) {
+      const i = idx.get(card.id);
+      const newPath = dateToDayPath(u, card.createdAt);
+      if (i !== undefined) {
+        const oldPath = dateToDayPath(u, next[i].createdAt);
+        if (oldPath !== newPath) { addLeft(oldPath, card.id); paths.push(oldPath); }
+        next[i] = card;
+      } else { idx.set(card.id, next.length); next.push(card); }
+      paths.push(newPath);
+      leftRef.current.get(newPath)?.delete(card.id);
+    }
+    commitCards(next);
+    markDirty(paths);
+  };
+
+  const removeCards = ids => {
+    const idSet = new Set(ids);
+    if (!idSet.size) return;
+    const u = storeUidRef.current;
+    const paths = [];
+    const next = cardsRef.current.filter(c => {
+      if (!idSet.has(c.id)) return true;
+      const p = dateToDayPath(u, c.createdAt);
+      paths.push(p);
+      addLeft(p, c.id);
+      return false;
+    });
+    commitCards(next);
+    markDirty(paths);
+  };
+
+  // 落盘：所有脏文件合并成一个 /api/sync 请求，服务端在写锁内完成"读-合并-写"
+  const doFlush = async () => {
+    clearTimeout(flushTimerRef.current);
+    const u = storeUidRef.current;
+    if (!u || dirtyRef.current.size === 0) return;
+    const paths = [...dirtyRef.current];
+    dirtyRef.current.clear();
+    firstDirtyAtRef.current = 0;
+    const own = paths.filter(p => p.startsWith(`users/${u}/`));
+    if (own.length !== paths.length) log("error", "dropping dirty paths of another user", { paths: paths.filter(p => !own.includes(p)) });
+    if (!own.length) { setSyncState("idle"); return; }
+
+    flushingRef.current = true;
+    setSyncState(s => s === "error" ? s : "saving");
+    const t0 = performance.now();
+    const byPath = new Map(own.map(p => [p, []]));
+    for (const c of cardsRef.current) byPath.get(dateToDayPath(u, c.createdAt))?.push(c);
+    const items = own.map(p => ({ path: p, cards: byPath.get(p), dropIds: [...(leftRef.current.get(p) || [])] }));
+
+    const failed = [], foreign = [], written = [], removed = [];
+    for (let i = 0; i < items.length; i += SYNC_CHUNK) {
+      const chunk = items.slice(i, i + SYNC_CHUNK);
+      try {
+        const r = await api.sync(u, chunk);
+        noteRev(r);
+        for (const it of chunk) {
+          const set = leftRef.current.get(it.path);
+          if (set) { it.dropIds.forEach(id => set.delete(id)); if (!set.size) leftRef.current.delete(it.path); }
+          const res = r.results?.[it.path];
+          if (!res) continue;
+          (res.exists ? written : removed).push(it.path);
+          if (res.foreign?.length) foreign.push(...res.foreign);
+        }
+      } catch (e) {
+        chunk.forEach(it => failed.push(it.path));
+        log("error", "sync failed", { files: chunk.length, error: e.message });
+      }
+    }
+    flushingRef.current = false;
+
+    // 服务端合并进来的、别的设备写入的卡片，加入内存（不标脏）
+    if (foreign.length && storeUidRef.current === u) {
+      const ids = new Set(cardsRef.current.map(c => c.id));
+      const add = [];
+      for (const c of foreign) if (typeof c.createdAt === "string" && !ids.has(c.id)) { ids.add(c.id); add.push(c); }
+      if (add.length) {
+        cardsRef.current = [...cardsRef.current, ...add];
+        setCards(cardsRef.current);
+        log("info", "merged cards from other device", { count: add.length });
+      }
+    }
+    if ((written.length || removed.length) && storeUidRef.current === u) {
+      setDayFiles(prev => {
+        const set = new Set(prev);
+        written.forEach(p => set.add(p));
+        removed.forEach(p => set.delete(p));
+        return [...set].sort();
+      });
+    }
+
+    if (failed.length) {
+      failed.forEach(p => dirtyRef.current.add(p));
+      if (retryDelayRef.current === 2000) showToast("保存失败，稍后自动重试");
+      const delay = retryDelayRef.current;
+      retryDelayRef.current = Math.min(delay * 2, 30000);
+      setSyncState("error");
+      clearTimeout(flushTimerRef.current);
+      flushTimerRef.current = setTimeout(() => flushNow(), delay);
+    } else {
+      retryDelayRef.current = 2000;
+      setSyncState(dirtyRef.current.size ? "pending" : "idle");
+      if (remoteChangedRef.current && !hasUnsaved() && Date.now() - lastRefreshAtRef.current > REMOTE_REFRESH_MIN_GAP_MS) {
+        log("info", "remote change detected after save, refreshing");
+        refreshFromDisk();
+      }
+    }
+    log("info", "flush", { files: own.length, failed: failed.length, ms: Math.round(performance.now() - t0) });
+  };
+
+  // 串行执行，返回的 promise 在本次落盘结束后 resolve
+  const flushNow = () => {
+    clearTimeout(flushTimerRef.current);
+    const run = flushChainRef.current.then(doFlush).catch(e => log("error", "flush crashed", { error: e.message }));
+    flushChainRef.current = run;
+    return run;
+  };
+
+  const applyUserData = data => {
+    storeUidRef.current = data.uid;
+    revRef.current = data.rev;
+    remoteChangedRef.current = false;
+    leftRef.current = new Map(data.repairDrops || []);
+    cardsRef.current = data.cards;
+    mutationSeqRef.current++;
+    setCards(data.cards);
+    setMeta(data.meta);
+    setDayFiles(data.dayFiles);
+    if (data.repairPaths?.length) {
+      log("info", "repairing day files", { paths: data.repairPaths });
+      markDirty(data.repairPaths);
+    }
+  };
+
+  const boot = async () => {
+    setLoading(true); setLoadError(null);
+    try {
+      const data = await loadSnapshot(null);
+      setGlobalBoth(data.global);
+      applyUserData(data);
+    } catch (e) {
+      log("error", "boot failed", { error: e.message });
+      setLoadError(e.message);
+    }
+    setLoading(false);
+  };
+
+  // 重新拉取快照：只在没有本地未保存修改、且拉取期间没有新修改时才替换内存
+  const refreshFromDisk = async () => {
+    const u = storeUidRef.current;
+    if (!u) return false;
+    if (hasUnsaved()) { remoteChangedRef.current = true; return false; }
+    lastRefreshAtRef.current = Date.now();
+    const seq = mutationSeqRef.current;
+    try {
+      const data = await loadSnapshot(u);
+      if (seq !== mutationSeqRef.current || u !== storeUidRef.current || hasUnsaved()) {
+        remoteChangedRef.current = true;
+        log("info", "refresh skipped: local changes during refresh");
+        return false;
+      }
+      applyUserData(data);
+      if (globalRef.current) setGlobalBoth({ ...data.global, activeUser: globalRef.current.activeUser });
+      return true;
+    } catch (e) {
+      log("error", "refresh failed", { error: e.message });
+      return false;
+    }
+  };
+
   useEffect(() => {
-    const check = () => setCanScroll(document.documentElement.scrollHeight > window.innerHeight + 50);
-    check();
-    window.addEventListener("resize", check);
-    const observer = new MutationObserver(check);
+    if (bootedRef.current) return; // StrictMode 下 effect 会跑两次
+    bootedRef.current = true;
+    boot();
+  }, []);
+
+  useEffect(() => {
+    let raf = 0;
+    const check = () => { raf = 0; setCanScroll(document.documentElement.scrollHeight > window.innerHeight + 50); };
+    const schedule = () => { if (!raf) raf = requestAnimationFrame(check); };
+    schedule();
+    window.addEventListener("resize", schedule);
+    const observer = new MutationObserver(schedule);
     observer.observe(document.body, { childList: true, subtree: true });
-    return () => { window.removeEventListener("resize", check); observer.disconnect(); };
+    return () => { cancelAnimationFrame(raf); window.removeEventListener("resize", schedule); observer.disconnect(); };
   }, []);
-  // Re-sync when tab becomes visible (fixes stale state after sleep)
+
   useEffect(() => {
-    const onVisible = () => { if (document.visibilityState === "visible") { log("info", "tab visible, reloading"); reload(); } };
-    document.addEventListener("visibilitychange", onVisible);
-    return () => document.removeEventListener("visibilitychange", onVisible);
+    const onVisibility = async () => {
+      if (document.visibilityState === "hidden") {
+        todayAtHideRef.current = todayStr();
+        flushNow();
+        return;
+      }
+      const oldToday = todayAtHideRef.current, nowToday = todayStr();
+      const rolled = oldToday !== nowToday;
+      if (rolled) {
+        const { reviewDate: rd, addDate: ad } = latestRef.current;
+        if (rd === oldToday) setReviewDate(nowToday);
+        if (ad === oldToday) setAddDate(nowToday);
+      }
+      // 切回来只查一个版本号，变了才重新拉快照
+      const u = storeUidRef.current;
+      if (u) {
+        try {
+          const { rev } = await api.rev(u);
+          if (u === storeUidRef.current && rev !== revRef.current) {
+            log("info", "remote change detected on focus", { local: revRef.current, remote: rev });
+            await refreshFromDisk();
+          }
+        } catch (e) { log("error", "rev check failed", { error: e.message }); }
+      }
+      if (rolled) {
+        const { view: v, reviewDate: rd, activeDeck: deck } = latestRef.current;
+        if (v === "review" && (rd === oldToday || rd === nowToday)) startReviewSession(nowToday, deck);
+      }
+    };
+    const onBeforeUnload = e => {
+      if (hasUnsaved()) { flushNow(); e.preventDefault(); e.returnValue = ""; }
+    };
+    document.addEventListener("visibilitychange", onVisibility);
+    window.addEventListener("beforeunload", onBeforeUnload);
+    return () => {
+      document.removeEventListener("visibilitychange", onVisibility);
+      window.removeEventListener("beforeunload", onBeforeUnload);
+    };
   }, []);
 
-  const updateMeta = async m => { setMeta(m); await saveUserMeta(uid(), m); };
-  const updateGlobal = async g => { setGlobal(g); await saveGlobal(g); };
-  const showToast = msg => { setToast(msg); setTimeout(() => setToast(null), 2200); };
-
-  // ─── isDueOn: check if card has unreviewed schedule dates <= date ───
-  const isDueOn = (card, date) => {
-    const sched = getScheduleDates(card);
-    const history = card.reviewHistory || [];
-    // Card is due if there's any schedule date <= date that hasn't been reviewed yet
-    return sched.some(sd => sd <= date && !history.find(h => h.date === sd));
+  const updateMeta = m => {
+    setMeta(m);
+    mutationSeqRef.current++;
+    return saveUserMeta(uid(), m).then(noteRev).catch(e => { log("error", "saveUserMeta failed", { error: e.message }); showToast("设置保存失败"); });
   };
 
-  // ─── Start/reset review session: reload first, then freeze queue ───
-  const startReviewSession = async (forDate) => {
-    await reload(); // ensure fresh data
-    // Use a callback to access latest cards after reload
-    const freshCards = await loadUserCards(uid());
-    const freshMeta = await loadUserMeta(uid());
-    const due = freshCards.filter(c => c.deckId === activeDeck && (() => {
-      const sched = getScheduleDates(c);
-      const history = c.reviewHistory || [];
-      return sched.some(sd => sd <= forDate && !history.find(h => h.date === sd));
-    })());
-    log("info", "startReviewSession", { date: forDate, count: due.length });
+  // ─── Review session：直接从内存过滤，不发请求 ───
+  const startReviewSession = (forDate, deckId = latestRef.current.activeDeck) => {
+    const due = cardsRef.current.filter(c => c.deckId === deckId && isDueOn(c, forDate));
+    log("info", "startReviewSession", { date: forDate, deck: deckId, count: due.length });
     setReviewQueue(due.map(c => ({ ...c })));
     setReviewPos(0);
     setReviewRevealed(false);
     setReviewSnapshot(null);
   };
 
-  // Switch user
-  const switchUser = async userId => {
-    const g = { ...global, activeUser: userId };
-    await saveGlobal(g);
+  // ─── Users ───
+  const resetSessionUI = () => {
     setActiveDeck("default"); setSelected(new Set()); setView("home");
+    setReviewQueue([]); setReviewPos(0); setReviewRevealed(false); setReviewSnapshot(null);
+    setIntensiveQueue([]); setIntensivePos(0); setIntensiveRevealed(false); setIntensiveSnapshot(null);
+  };
+
+  const switchUser = async userId => {
+    if (userId === storeUidRef.current) { setSelected(new Set()); setView("home"); return true; }
+    await flushNow();
+    if (dirtyRef.current.size) { showToast("有修改尚未保存成功，暂不能切换用户"); return false; }
     setLoading(true);
-    const [m, c, f] = await Promise.all([loadUserMeta(userId), loadUserCards(userId), api.list()]);
-    if (!m.sourceLang) m.sourceLang = INIT_SRC;
-    if (!m.targetLang1) m.targetLang1 = INIT_T1;
-    if (!m.targetLang2) m.targetLang2 = INIT_T2;
-    setGlobal(g); setMeta(m); setCards(c);
-    setDayFiles(f.filter(x => x.startsWith(`users/${userId}/`) && !x.endsWith("meta.json")));
-    setLoading(false);
-    log("info", "switchUser", { userId });
+    try {
+      const g = { ...globalRef.current, activeUser: userId };
+      const [data] = await Promise.all([loadSnapshot(userId), saveGlobal(g)]);
+      setGlobalBoth(g);
+      applyUserData(data);
+      resetSessionUI();
+      log("info", "switchUser", { userId });
+      setLoading(false);
+      return true;
+    } catch (e) {
+      log("error", "switchUser failed", { error: e.message });
+      showToast("切换用户失败");
+      setLoading(false);
+      return false;
+    }
   };
 
   const createUser = async () => {
-    if (!newUserName.trim()) return;
+    const name = newUserName.trim();
+    if (!name) return;
     const id = Date.now().toString(36);
-    const g = { ...global, users: [...global.users, { id, name: newUserName.trim() }] };
-    await saveGlobal(g); setGlobal(g);
-    await saveUserMeta(id, { decks: [{ id: "default", name: "Default", createdAt: Date.now() }], sourceLang: INIT_SRC, targetLang1: INIT_T1, targetLang2: INIT_T2 });
+    const g = { ...globalRef.current, users: [...globalRef.current.users, { id, name }] };
+    setGlobalBoth(g);
     setNewUserName(""); setShowUserModal(false);
-    showToast(`User "${newUserName.trim()}" created`);
+    try {
+      await Promise.all([saveGlobal(g), saveUserMeta(id, defaultMeta())]);
+      showToast(`User "${name}" created`);
+    } catch (e) { log("error", "createUser failed", { error: e.message }); showToast("创建用户失败"); }
   };
 
   const deleteUser = async userId => {
     if (userId === "default") return;
-    const files = await api.list();
-    for (const f of files.filter(f => f.startsWith(`users/${userId}/`))) await api.del(f);
-    const g = { ...global, users: global.users.filter(u => u.id !== userId), activeUser: global.activeUser === userId ? "default" : global.activeUser };
-    await saveGlobal(g);
     setDeleteUserConfirm(null);
-    if (global.activeUser === userId) await switchUser("default");
-    else setGlobal(g);
+    if (storeUidRef.current === userId) {
+      const ok = await switchUser("default");
+      if (!ok) return;
+    }
+    try {
+      const files = await api.list();
+      await mapPool(files.filter(f => f.startsWith(`users/${userId}/`)), WRITE_CONCURRENCY, f => api.del(f));
+      const cur = globalRef.current;
+      const g = { ...cur, users: cur.users.filter(u => u.id !== userId), activeUser: cur.activeUser === userId ? "default" : cur.activeUser };
+      setGlobalBoth(g);
+      await saveGlobal(g);
+    } catch (e) { log("error", "deleteUser failed", { error: e.message }); showToast("删除用户失败"); }
   };
 
   // ─── Card ops ───
-  const addCard = async () => {
-    if (!newWord.trim() || translating) return;
-    setTranslating(true);
-    const [t1, t2] = await Promise.all([
-      gTranslate(newWord.trim(), meta.sourceLang, meta.targetLang1),
-      gTranslate(newWord.trim(), meta.sourceLang, meta.targetLang2),
-    ]);
+  // 回车后立刻入库、清空输入框、播放发音；翻译在后台完成后回填
+  const addCard = () => {
+    const word = newWord.trim();
+    if (!word) return;
+    const sl = meta.sourceLang, tl1 = meta.targetLang1, tl2 = meta.targetLang2;
     const card = {
-      id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
-      word: newWord.trim(), translation: t1, translation2: t2,
+      id: newId(),
+      word, translation: "", translation2: "",
       deckId: activeDeck, createdAt: addDate,
       reviewStage: 0, nextReview: addDays(addDate, EBB[0]),
       reviewHistory: [], rot: 0, tags: [...addTags],
     };
-    await saveCardToDay(uid(), card);
-    await reload();
-    setNewWord(""); setTranslating(false);
-    showToast(`✓ ${card.word} → ${t1} / ${t2}`);
-    if (autoPlay) speak(card.word, meta.sourceLang);
-    setTimeout(() => inputRef.current?.focus(), 50);
-    log("info", "addCard", { word: card.word, id: card.id });
+    upsertCards([card]);
+    setNewWord("");
+    if (autoPlay) speak(word, sl);
+    inputRef.current?.focus();
+    log("info", "addCard", { word, id: card.id });
+
+    setTranslatingIds(s => new Set(s).add(card.id));
+    Promise.all([gTranslate(word, sl, tl1), gTranslate(word, sl, tl2)]).then(([t1, t2]) => {
+      const cur = getLatest(card.id);
+      if (cur && (t1 || t2)) {
+        // 只填空字段：翻译回来之前用户手动编辑过的内容不覆盖
+        upsertCards([{ ...cur, translation: cur.translation || t1 || "", translation2: cur.translation2 || t2 || "" }]);
+      }
+      if (t1 && t2) showToast(`✓ ${word} → ${t1} / ${t2}`);
+      else showToast(`翻译失败：${word}，可在词库中手动编辑`);
+    }).finally(() => {
+      setTranslatingIds(s => { const n = new Set(s); n.delete(card.id); return n; });
+    });
   };
 
-  const deleteCard = async card => {
-    await removeCardFromDay(uid(), card); await reload();
+  const deleteCard = card => {
+    removeCards([card.id]);
     setSelected(s => { const n = new Set(s); n.delete(card.id); return n; });
     log("info", "deleteCard", { id: card.id });
   };
-  const batchDelete = async () => {
+  const batchDelete = () => {
     if (selected.size === 0) return;
-    const toDelete = cards.filter(c => selected.has(c.id));
-    await batchRemoveCards(uid(), toDelete);
-    await reload(); showToast(`Deleted ${selected.size} cards`); setSelected(new Set());
+    const n = selected.size;
+    removeCards([...selected]);
+    showToast(`Deleted ${n} cards`); setSelected(new Set());
   };
-  const batchClearTags = async () => {
+  const clearReview = card => {
+    const cur = getLatest(card.id); if (!cur) return;
+    upsertCards([{ ...cur, reviewHistory: [], reviewStage: 0, nextReview: addDays(cur.createdAt, EBB[0]) }]);
+    showToast("Tags cleared");
+  };
+  const batchClearTags = () => {
     if (selected.size === 0) return;
-    const updated = cards.filter(c => selected.has(c.id)).map(c => ({
+    const updated = cardsRef.current.filter(c => selected.has(c.id)).map(c => ({
       ...c, reviewHistory: [], reviewStage: 0, nextReview: addDays(c.createdAt, EBB[0])
     }));
-    await batchSaveCards(uid(), updated);
-    await reload(); showToast(`Cleared tags on ${selected.size} cards`); setSelected(new Set()); setClearTagConfirm(false);
-    log("info", "batchClearTags", { count: selected.size });
+    upsertCards(updated);
+    showToast(`Cleared tags on ${updated.length} cards`); setSelected(new Set()); setClearTagConfirm(false);
+    log("info", "batchClearTags", { count: updated.length });
   };
-  const batchChangeDate = async (newDate) => {
+  const batchChangeDate = newDate => {
     if (selected.size === 0 || !newDate) return;
-    const toMove = cards.filter(c => selected.has(c.id));
-    // Remove from old day files
-    await batchRemoveCards(uid(), toMove);
-    // Save to new day files with updated date
-    const updated = toMove.map(c => ({ ...c, createdAt: newDate, nextReview: addDays(newDate, EBB[c.reviewStage]) }));
-    await batchSaveCards(uid(), updated);
-    await reload(); showToast(`Changed date on ${selected.size} cards`); setSelected(new Set()); setBatchDateModal(false);
-    log("info", "batchChangeDate", { count: selected.size, newDate });
+    const updated = cardsRef.current.filter(c => selected.has(c.id))
+      .map(c => ({ ...c, createdAt: newDate, nextReview: addDays(newDate, EBB[c.reviewStage || 0]) }));
+    upsertCards(updated);
+    showToast(`Changed date on ${updated.length} cards`); setSelected(new Set()); setBatchDateModal(false);
+    log("info", "batchChangeDate", { count: updated.length, newDate });
   };
-  // Tag operations
-  const addTagToCard = async (card, tag) => {
-    const tags = [...new Set([...(card.tags || []), tag])];
-    await saveCardToDay(uid(), { ...card, tags });
-    await reload();
+  const addTagToCard = (card, tag) => {
+    const cur = getLatest(card.id); if (!cur) return;
+    upsertCards([{ ...cur, tags: [...new Set([...(cur.tags || []), tag])] }]);
   };
-  const removeTagFromCard = async (card, tag) => {
-    const tags = (card.tags || []).filter(t => t !== tag);
-    await saveCardToDay(uid(), { ...card, tags });
-    await reload();
+  const removeTagFromCard = (card, tag) => {
+    const cur = getLatest(card.id); if (!cur) return;
+    upsertCards([{ ...cur, tags: (cur.tags || []).filter(t => t !== tag) }]);
   };
-  const batchAddTag = async (tag) => {
-    if (!tag.trim() || selected.size === 0) return;
+  const batchAddTag = tag => {
     const t = tag.trim();
-    const updated = cards.filter(c => selected.has(c.id)).map(c => ({
-      ...c, tags: [...new Set([...(c.tags || []), t])]
-    }));
-    await batchSaveCards(uid(), updated);
-    await reload(); showToast(`Added tag "${t}" to ${selected.size} cards`); setBatchTagModal(false); setBatchTagInput("");
+    if (!t || selected.size === 0) return;
+    const updated = cardsRef.current.filter(c => selected.has(c.id)).map(c => ({ ...c, tags: [...new Set([...(c.tags || []), t])] }));
+    upsertCards(updated);
+    showToast(`Added tag "${t}" to ${updated.length} cards`); setBatchTagModal(false); setBatchTagInput("");
   };
   const toggleSelect = id => setSelected(s => { const n = new Set(s); n.has(id) ? n.delete(id) : n.add(id); return n; });
 
-  const updateCardTranslation = async (card, t0, t1, t2) => {
-    const rot = (card.rot || 0) % 3;
+  const updateCardTranslation = (card, t0, t1, t2) => {
+    const cur = getLatest(card.id); if (!cur) return;
+    const rot = (cur.rot || 0) % 3;
     const fields = ["word", "translation", "translation2"];
-    const updated = { ...card };
+    const updated = { ...cur };
     updated[fields[rot]] = t0;
     updated[fields[(rot + 1) % 3]] = t1;
     updated[fields[(rot + 2) % 3]] = t2;
-    await saveCardToDay(uid(), updated);
-    await reload(); setEditingCard(null); showToast("Updated");
+    upsertCards([updated]);
+    setEditingCard(null); showToast("Updated");
     log("info", "updateCard", { id: card.id });
   };
-  const updateCardDate = async (card, newDate) => {
-    await removeCardFromDay(uid(), card);
-    const updated = { ...card, createdAt: newDate, nextReview: addDays(newDate, EBB[card.reviewStage]) };
-    await saveCardToDay(uid(), updated); await reload();
+  const updateCardDate = (card, newDate) => {
+    const cur = getLatest(card.id); if (!cur) return;
+    upsertCards([{ ...cur, createdAt: newDate, nextReview: addDays(newDate, EBB[cur.reviewStage || 0]) }]);
     log("info", "updateCardDate", { id: card.id, newDate });
+  };
+  const rotateCard = cardId => {
+    const cur = getLatest(cardId); if (!cur) return;
+    upsertCards([{ ...cur, rot: ((cur.rot || 0) + 1) % 3 }]);
+    showToast("Rotated");
+  };
+  const batchRotate = () => {
+    const updated = cardsRef.current.filter(c => selected.has(c.id)).map(c => ({ ...c, rot: ((c.rot || 0) + 1) % 3 }));
+    upsertCards(updated);
+    showToast(`Rotated ${updated.length} cards`);
   };
 
   // ─── Review ───
-  const doReview = async (cardId, remembered) => {
-    const queueCard = reviewQueue.find(c => c.id === cardId);
-    const card = queueCard || cards.find(c => c.id === cardId);
+  const doReview = (cardId, remembered) => {
+    const card = getLatest(cardId);
     if (!card) { log("error", "doReview: card not found", { cardId }); return; }
-    const rd = reviewDate;
-    const sched = getScheduleDates(card);
-    const newHistory = [...(card.reviewHistory || [])];
-    sched.forEach(schDate => {
-      if (schDate <= rd && !newHistory.find(h => h.date === schDate))
-        newHistory.push({ date: schDate, remembered });
-    });
-    let ns = remembered ? Math.min(card.reviewStage + 1, EBB.length - 1) : Math.max(0, card.reviewStage - 1);
-    const updated = { ...card, reviewStage: ns, nextReview: addDays(rd, EBB[ns]), reviewHistory: newHistory };
-    // Update UI immediately (before disk write)
+    const updated = applyReview(card, remembered, reviewDate);
     setReviewQueue(q => q.map(c => c.id === cardId ? updated : c));
     setReviewSnapshot(updated);
     setReviewRevealed(true);
-    // Then persist to disk
-    try {
-      await saveCardToDay(uid(), updated);
-      await reload();
-    } catch (e) { log("error", "doReview save failed", { cardId, error: e.message }); }
-    log("info", "doReview", { cardId, remembered, stage: ns, date: rd });
+    upsertCards([updated]);
+    log("info", "doReview", { cardId, remembered, stage: updated.reviewStage, date: reviewDate });
   };
 
-  const nextReviewCard = () => {
-    setReviewRevealed(false);
-    setReviewSnapshot(null);
-    setReviewPos(p => Math.min(p + 1, reviewQueue.length));
-  };
-  const prevReviewCard = () => {
-    setReviewRevealed(false);
-    setReviewSnapshot(null);
-    setReviewPos(p => Math.max(p - 1, 0));
-  };
+  const nextReviewCard = () => { setReviewRevealed(false); setReviewSnapshot(null); setReviewPos(p => Math.min(p + 1, reviewQueue.length)); };
+  const prevReviewCard = () => { setReviewRevealed(false); setReviewSnapshot(null); setReviewPos(p => Math.max(p - 1, 0)); };
 
-  const toggleReviewDot = async (cardArg, schDate) => {
-    // Use the most up-to-date card data from queue or snapshot
-    const latest = reviewSnapshot?.id === cardArg.id ? reviewSnapshot
-      : intensiveSnapshot?.id === cardArg.id ? intensiveSnapshot
-        : reviewQueue.find(c => c.id === cardArg.id)
-        || intensiveQueue.find(c => c.id === cardArg.id)
-        || cards.find(c => c.id === cardArg.id)
-        || cardArg;
+  const toggleReviewDot = (cardArg, schDate) => {
+    const latest = getLatest(cardArg.id);
+    if (!latest) return;
     const rh = (latest.reviewHistory || []).find(h => h.date === schDate);
     if (!rh) return;
-    const newHistory = latest.reviewHistory.map(h => h.date === schDate ? { ...h, remembered: !h.remembered } : h);
-    const updated = { ...latest, reviewHistory: newHistory };
-    // Update UI state: queues AND snapshots
+    const updated = { ...latest, reviewHistory: latest.reviewHistory.map(h => h.date === schDate ? { ...h, remembered: !h.remembered } : h) };
     setReviewQueue(q => q.map(c => c.id === latest.id ? updated : c));
     setIntensiveQueue(q => q.map(c => c.id === latest.id ? updated : c));
-    if (reviewSnapshot?.id === latest.id) setReviewSnapshot(updated);
-    if (intensiveSnapshot?.id === latest.id) setIntensiveSnapshot(updated);
-    // Persist
-    try {
-      await saveCardToDay(uid(), updated);
-      await reload();
-    } catch (e) { log("error", "toggleReviewDot failed", { cardId: latest.id, error: e.message }); }
+    setReviewSnapshot(s => s?.id === latest.id ? updated : s);
+    setIntensiveSnapshot(s => s?.id === latest.id ? updated : s);
+    upsertCards([updated]);
     log("info", "toggleReviewDot", { cardId: latest.id, date: schDate, newRemembered: !rh.remembered });
   };
 
-  // ─── Intensive review: cards with any red (failed) tags ───
-  const getIntensiveCards = (mode) => {
-    const m = mode || intensiveMode;
-    let pool;
-    if (m === "hard") {
-      pool = cards.filter(c => c.deckId === activeDeck && (c.reviewHistory || []).some(h => !h.remembered));
-    } else if (m.startsWith("tag:")) {
-      const tag = m.slice(4);
-      pool = cards.filter(c => c.deckId === activeDeck && (c.tags || []).includes(tag));
-    } else {
-      pool = [];
-    }
-    return pool.sort((a, b) => {
-      const aRed = (a.reviewHistory || []).filter(h => !h.remembered).length;
-      const bRed = (b.reviewHistory || []).filter(h => !h.remembered).length;
-      if (bRed !== aRed) return bRed - aRed;
-      return a.createdAt.localeCompare(b.createdAt);
+  // ─── Intensive ───
+  const getIntensiveCards = (mode, deckId) => {
+    const pool = cardsRef.current.filter(c => {
+      if (c.deckId !== deckId) return false;
+      if (mode === "hard") return redCountOf(c) > 0;
+      if (mode.startsWith("tag:")) return (c.tags || []).includes(mode.slice(4));
+      return false;
     });
+    return pool.sort((a, b) => (redCountOf(b) - redCountOf(a)) || a.createdAt.localeCompare(b.createdAt));
   };
 
-  const startIntensiveSession = (mode) => {
+  const startIntensiveSession = (mode, deckId = latestRef.current.activeDeck) => {
     const m = mode || intensiveMode;
     setIntensiveMode(m);
-    const ic = getIntensiveCards(m);
-    setIntensiveQueue(ic.map(c => ({ ...c }))); // deep copy snapshots
+    const ic = getIntensiveCards(m, deckId);
+    setIntensiveQueue(ic.map(c => ({ ...c })));
     setIntensivePos(0);
     setIntensiveRevealed(false);
     setIntensiveSnapshot(null);
     log("info", "startIntensiveSession", { mode: m, count: ic.length });
   };
 
-  const doIntensiveReview = async (cardId, remembered) => {
-    const queueCard = intensiveQueue.find(c => c.id === cardId);
-    const card = queueCard || cards.find(c => c.id === cardId);
+  const doIntensiveReview = (cardId, remembered) => {
+    const card = getLatest(cardId);
     if (!card) return;
-    const rd = todayStr();
-    const sched = getScheduleDates(card);
-    const newHistory = [...(card.reviewHistory || [])];
-    sched.forEach(schDate => {
-      if (schDate <= rd && !newHistory.find(h => h.date === schDate))
-        newHistory.push({ date: schDate, remembered });
-    });
-    let ns = remembered ? Math.min(card.reviewStage + 1, EBB.length - 1) : Math.max(0, card.reviewStage - 1);
-    const updated = { ...card, reviewStage: ns, nextReview: addDays(rd, EBB[ns]), reviewHistory: newHistory };
-    // Update UI immediately
+    const updated = applyReview(card, remembered, todayStr());
     setIntensiveQueue(q => q.map(c => c.id === cardId ? updated : c));
     setIntensiveSnapshot(updated);
     setIntensiveRevealed(true);
-    // Persist
-    try {
-      await saveCardToDay(uid(), updated);
-      await reload();
-    } catch (e) { log("error", "doIntensiveReview failed", { cardId, error: e.message }); }
+    upsertCards([updated]);
   };
 
-  const masterCard = async (cardId) => {
-    // Get latest card from queue (includes doIntensiveReview's updates)
-    const queueCard = intensiveQueue.find(c => c.id === cardId);
-    const card = queueCard || cards.find(c => c.id === cardId);
+  const masterCard = cardId => {
+    const card = getLatest(cardId);
     if (!card) return;
     const today = todayStr();
-    const sched = getScheduleDates(card);
-    // Build new history: all schedule dates <= today become green, keep future untouched
-    const pastDates = sched.filter(sd => sd <= today);
-    const newHistory = pastDates.map(sd => ({ date: sd, remembered: true }));
-    // Also keep any existing history entries for future dates (shouldn't normally exist but be safe)
+    const pastDates = getScheduleDates(card).filter(sd => sd <= today);
     const futureEntries = (card.reviewHistory || []).filter(h => h.date > today);
-    const finalHistory = [...newHistory, ...futureEntries];
-    const updated = { ...card, reviewHistory: finalHistory };
-    // Update UI immediately
+    const updated = { ...card, reviewHistory: [...pastDates.map(sd => ({ date: sd, remembered: true })), ...futureEntries] };
     setIntensiveQueue(q => q.map(c => c.id === cardId ? updated : c));
     setIntensiveRevealed(false);
     setIntensiveSnapshot(null);
     setIntensivePos(p => p + 1);
+    upsertCards([updated]);
     showToast("Mastered!");
-    // Persist
-    try {
-      await saveCardToDay(uid(), updated);
-      await reload();
-    } catch (e) { log("error", "masterCard failed", { cardId, error: e.message }); }
     log("info", "masterCard", { cardId, greenDates: pastDates.length });
   };
 
@@ -613,41 +907,56 @@ export default function App() {
   const prevIntensiveCard = () => { setIntensiveRevealed(false); setIntensiveSnapshot(null); setIntensivePos(p => Math.max(p - 1, 0)); };
 
   // ─── Deck ops ───
-  const createDeck = async () => {
+  const createDeck = () => {
     if (!newDeckName.trim()) return;
     const deck = { id: Date.now().toString(36), name: newDeckName.trim(), createdAt: Date.now() };
-    await updateMeta({ ...meta, decks: [...meta.decks, deck] });
+    updateMeta({ ...meta, decks: [...meta.decks, deck] });
     setNewDeckName(""); setShowDeckModal(false); setActiveDeck(deck.id);
     showToast(`Deck "${deck.name}" created`);
   };
-  const renameDeck = async () => {
+  const renameDeck = () => {
     if (!renameDeckVal.trim() || !renameDeckId) return;
-    await updateMeta({ ...meta, decks: meta.decks.map(d => d.id === renameDeckId ? { ...d, name: renameDeckVal.trim() } : d) });
+    updateMeta({ ...meta, decks: meta.decks.map(d => d.id === renameDeckId ? { ...d, name: renameDeckVal.trim() } : d) });
     setRenameDeckId(null); setRenameDeckVal(""); showToast("Deck renamed");
   };
-  const doDeleteDeck = async () => {
+  const doDeleteDeck = () => {
     const deckId = deleteDeckConfirm;
     const dn = meta.decks.find(d => d.id === deckId)?.name;
-    const toRemove = cards.filter(c => c.deckId === deckId);
-    for (const c of toRemove) await removeCardFromDay(uid(), c);
-    await updateMeta({ ...meta, decks: meta.decks.filter(d => d.id !== deckId) });
-    await reload();
+    const toRemove = cardsRef.current.filter(c => c.deckId === deckId);
+    removeCards(toRemove.map(c => c.id));
+    updateMeta({ ...meta, decks: meta.decks.filter(d => d.id !== deckId) });
     if (activeDeck === deckId) setActiveDeck("default");
     setDeleteDeckConfirm(null);
     showToast(`Deleted "${dn}" (${toRemove.length} cards)`);
   };
 
-  // ─── Computed ───
+  // ─── Computed（缓存，cards 变化时才重算）───
   const td = todayStr();
-  const deckCards = cards.filter(c => c.deckId === activeDeck);
-  const allDueCount = cards.filter(c => isDueOn(c, td)).length;
-  const currentDeck = meta?.decks.find(d => d.id === activeDeck);
-  const toggleSelectAll = () => {
-    if (selected.size === deckCards.length) setSelected(new Set());
-    else setSelected(new Set(deckCards.map(c => c.id)));
-  };
+  const deckCards = useMemo(() => cards.filter(c => c.deckId === activeDeck), [cards, activeDeck]);
+  const dueIds = useMemo(() => { const s = new Set(); for (const c of cards) if (isDueOn(c, td)) s.add(c.id); return s; }, [cards, td]);
+  const allDueCount = dueIds.size;
+  const deckStats = useMemo(() => {
+    const m = {};
+    for (const c of cards) { const s = m[c.deckId] || (m[c.deckId] = { count: 0, due: 0 }); s.count++; if (dueIds.has(c.id)) s.due++; }
+    return m;
+  }, [cards, dueIds]);
+  const intensiveCount = useMemo(() => deckCards.filter(c => redCountOf(c) > 0).length, [deckCards]);
+  const allTags = useMemo(() => [...new Set(deckCards.flatMap(c => c.tags || []))].sort(), [deckCards]);
+  const tagCounts = useMemo(() => {
+    const m = {};
+    for (const c of deckCards) for (const t of c.tags || []) m[t] = (m[t] || 0) + 1;
+    return m;
+  }, [deckCards]);
+  const homeFiltered = useMemo(() => {
+    const kw = filterKeyword.toLowerCase();
+    return deckCards.filter(c => {
+      if (filterDate && c.createdAt !== filterDate) return false;
+      if (kw && ![c.word, c.translation, c.translation2].some(s => (s || "").toLowerCase().includes(kw))) return false;
+      return true;
+    });
+  }, [deckCards, filterDate, filterKeyword]);
+  const homeSorted = useMemo(() => [...homeFiltered].sort((a, b) => b.createdAt.localeCompare(a.createdAt) || b.id.localeCompare(a.id)), [homeFiltered]);
 
-  // Review queue: get current card — queue stores full snapshots
   const reviewCurrentCard = (() => {
     if (reviewRevealed && reviewSnapshot) return reviewSnapshot;
     if (reviewPos < reviewQueue.length) return reviewQueue[reviewPos];
@@ -656,8 +965,6 @@ export default function App() {
   const reviewTotal = reviewQueue.length;
   const reviewDone = reviewPos >= reviewTotal && reviewTotal > 0;
 
-  // Intensive review current card
-  // Intensive review current card — queue stores full snapshots
   const intensiveCurrentCard = (() => {
     if (intensiveRevealed && intensiveSnapshot) return intensiveSnapshot;
     if (intensivePos < intensiveQueue.length) return intensiveQueue[intensivePos];
@@ -665,53 +972,44 @@ export default function App() {
   })();
   const intensiveTotal = intensiveQueue.length;
   const intensiveDone = intensivePos >= intensiveTotal && intensiveTotal > 0;
-  const intensiveCount = cards.filter(c => c.deckId === activeDeck && (c.reviewHistory || []).some(h => !h.remembered)).length;
-
-  // All unique tags across all cards in current deck
-  const allTags = [...new Set(cards.filter(c => c.deckId === activeDeck).flatMap(c => c.tags || []))].sort();
 
   // Auto-play TTS on review card change
   const lastPlayedRef = useRef(null);
   useEffect(() => {
     if (!meta) return;
-    const getQuizQuestion = (card) => {
+    const getQuizQuestion = card => {
       const d = getCardDisplay(card, meta);
-      const allFields = [d.src, d.t1, d.t2];
-      const allLangs = [d.srcL, d.t1L, d.t2L];
-      return { text: allFields[reviewQuizType], lang: allLangs[reviewQuizType] };
+      return { text: [d.src, d.t1, d.t2][reviewQuizType], lang: [d.srcL, d.t1L, d.t2L][reviewQuizType] };
     };
     if (view === "review" && reviewAutoPlay && !reviewRevealed && reviewCurrentCard) {
       const key = "r-" + reviewCurrentCard.id + "-" + reviewPos + "-" + reviewQuizType;
-      if (lastPlayedRef.current !== key) {
-        lastPlayedRef.current = key;
-        const q = getQuizQuestion(reviewCurrentCard);
-        speak(q.text, q.lang);
-      }
+      if (lastPlayedRef.current !== key) { lastPlayedRef.current = key; const q = getQuizQuestion(reviewCurrentCard); speak(q.text, q.lang); }
     }
     if (view === "intensive" && reviewAutoPlay && !intensiveRevealed && intensiveCurrentCard) {
       const key = "i-" + intensiveCurrentCard.id + "-" + intensivePos + "-" + reviewQuizType;
-      if (lastPlayedRef.current !== key) {
-        lastPlayedRef.current = key;
-        const q = getQuizQuestion(intensiveCurrentCard);
-        speak(q.text, q.lang);
-      }
+      if (lastPlayedRef.current !== key) { lastPlayedRef.current = key; const q = getQuizQuestion(intensiveCurrentCard); speak(q.text, q.lang); }
     }
   });
 
   // ─── Export / Import ───
   const exportAll = async () => {
-    const usersToExport = exportUsers.size > 0 ? [...exportUsers] : [uid()];
-    const files = {};
-    const allFiles = await api.list();
-    for (const f of allFiles) {
-      if (f === GLOBAL_KEY || usersToExport.some(u => f.startsWith(`users/${u}/`)))
-        files[f] = await api.read(f);
-    }
-    const blob = new Blob([JSON.stringify({ version: 4, exportedAt: new Date().toISOString(), files }, null, 2)], { type: "application/json" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a"); a.href = url; a.download = `vocabforge-${td}.json`; a.click();
-    URL.revokeObjectURL(url);
-    showToast(`Exported ${Object.keys(files).length} files`);
+    try {
+      await flushNow();
+      const usersToExport = exportUsers.size > 0 ? [...exportUsers] : [uid()];
+      const snaps = await Promise.all(usersToExport.map(u => withRetry(() => api.snapshot(u))));
+      const files = {};
+      if (snaps[0]?.global) files[GLOBAL_KEY] = snaps[0].global;
+      for (const sn of snaps) {
+        if (sn.meta != null) files[userMetaPath(sn.uid)] = sn.meta;
+        Object.assign(files, sn.files);
+      }
+      const targets = Object.keys(files);
+      const blob = new Blob([JSON.stringify({ version: 4, exportedAt: new Date().toISOString(), files }, null, 2)], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a"); a.href = url; a.download = `vocabforge-${td}.json`; a.click();
+      URL.revokeObjectURL(url);
+      showToast(`Exported ${targets.length} files`);
+    } catch (e) { log("error", "export failed", { error: e.message }); showToast("导出失败"); }
   };
 
   const importAll = e => {
@@ -720,15 +1018,28 @@ export default function App() {
     reader.onload = async ev => {
       try {
         const imp = JSON.parse(ev.target.result);
+        await flushNow();
+        if (dirtyRef.current.size) { showToast("有修改尚未保存成功，请稍后再导入"); return; }
+        const prevUid = storeUidRef.current;
         if (imp.files) {
-          for (const [p, data] of Object.entries(imp.files))
-            await api.write(p, typeof data === "string" ? data : JSON.stringify(data, null, 2));
+          await mapPool(Object.entries(imp.files), WRITE_CONCURRENCY, ([p, data]) => api.write(p, data));
         } else if (imp.decks && imp.cards) {
-          await saveUserMeta(uid(), { ...(await loadUserMeta(uid())), decks: imp.decks });
-          for (const c of imp.cards) await saveCardToDay(uid(), c);
+          await saveUserMeta(prevUid, { ...(await loadUserMeta(prevUid)), decks: imp.decks });
+          const byPath = {};
+          for (const c of imp.cards) { const p = dateToDayPath(prevUid, c.createdAt); (byPath[p] || (byPath[p] = [])).push(c); }
+          await mapPool(Object.entries(byPath), WRITE_CONCURRENCY, async ([p, list]) => {
+            let arr = await api.read(p);
+            if (!Array.isArray(arr)) arr = [];
+            for (const card of list) { const i = arr.findIndex(c => c.id === card.id); if (i >= 0) arr[i] = card; else arr.push(card); }
+            await api.write(p, arr);
+          });
         }
-        await reload(); showToast("Import complete");
-      } catch { showToast("Import failed"); }
+        const data = await loadSnapshot(null);
+        setGlobalBoth(data.global);
+        applyUserData(data);
+        if (data.uid !== prevUid) resetSessionUI();
+        showToast("Import complete");
+      } catch (err) { log("error", "import failed", { error: err.message }); showToast("Import failed"); }
     };
     reader.readAsText(file); e.target.value = "";
   };
@@ -737,34 +1048,14 @@ export default function App() {
   const setTargetLang1 = v => updateMeta({ ...meta, targetLang1: v });
   const setTargetLang2 = v => updateMeta({ ...meta, targetLang2: v });
 
+  if (loadError) return (
+    <div style={S.loadingScreen}>
+      <div style={{ fontSize: 48, color: accent }}>鍛</div>
+      <p style={{ fontFamily: mono, fontSize: 13, color: "#f87171", margin: "16px 0", maxWidth: 560, padding: "0 16px", lineHeight: 1.7, textAlign: "center", wordBreak: "break-all" }}>加载失败：{loadError}</p>
+      <button style={S.emptyBtn} onClick={boot}>重试</button>
+    </div>
+  );
   if (loading || !meta || !global) return <div style={S.loadingScreen}><div style={S.loadingPulse}>鍛</div></div>;
-
-  const ScheduleDots = ({ card }) => {
-    const sched = getScheduleDates(card);
-    return (
-      <div style={{ display: "flex", gap: 3, flexWrap: "wrap", alignItems: "center", justifyContent: "center" }}>
-        {sched.map((schDate, i) => {
-          const rh = (card.reviewHistory || []).find(h => h.date === schDate);
-          const isToday = schDate === td, isPast = schDate < td;
-          const diff = dayDiff(schDate);
-          let bg = "#333", clr = "#666";
-          if (rh) { bg = rh.remembered ? "#16a34a" : "#dc2626"; clr = "#fff"; }
-          else if (isToday) { bg = accent; clr = "#fff"; }
-          else if (isPast) { bg = "#555"; clr = "#aaa"; }
-          const diffLabel = isToday ? "" : diff > 0 ? `+${diff}` : `${diff}`;
-          const clickable = !!rh;
-          return (
-            <span key={i} title={`Day ${EBB[i]} → ${schDate}${clickable ? " (click to toggle)" : ""}`}
-              onClick={clickable ? e => { e.stopPropagation(); toggleReviewDot(card, schDate); } : undefined}
-              style={{ fontFamily: mono, fontSize: 9, padding: "2px 5px", borderRadius: 3, background: bg, color: clr, lineHeight: 1.2, display: "inline-flex", flexDirection: "column", alignItems: "center", gap: 0, cursor: clickable ? "pointer" : "default" }}>
-              {diffLabel && <span style={{ fontSize: 7, opacity: 0.7, lineHeight: 1 }}>{diffLabel}</span>}
-              {fmtShort(schDate)}
-            </span>
-          );
-        })}
-      </div>
-    );
-  };
 
   const startEdit = card => {
     const rot = (card.rot || 0) % 3;
@@ -774,9 +1065,6 @@ export default function App() {
     setEditT1(texts[(rot + 1) % 3] || "");
     setEditT2(texts[(rot + 2) % 3] || "");
   };
-
-  const LangSelect = ({ value, onChange }) => <select style={S.langSel} value={value} onChange={e => onChange(e.target.value)}>{LANGS.map(l => <option key={l.code} value={l.code}>{l.label}</option>)}</select>;
-  const DateInput = ({ value, onChange, style: sx }) => <input type="date" value={value} onChange={e => e.target.value && onChange(e.target.value)} style={{ ...S.dateInput, ...sx }} />;
 
   const activeUser = global.users.find(u => u.id === global.activeUser) || global.users[0];
   const NAV = [
@@ -789,7 +1077,7 @@ export default function App() {
     { id: "users", label: "用户", icon: <I.User /> },
   ];
 
-  const toggleExportUser = uid => setExportUsers(s => { const n = new Set(s); n.has(uid) ? n.delete(uid) : n.add(uid); return n; });
+  const toggleExportUser = id => setExportUsers(s => { const n = new Set(s); n.has(id) ? n.delete(id) : n.add(id); return n; });
 
   return (
     <div style={S.root}>
@@ -823,14 +1111,20 @@ export default function App() {
         .dtab:hover{background:#1a1a1e;color:#e8e6e3}.dtab.active{background:#e84400;color:#fff;border-color:#e84400}
       `}</style>
 
-      {toast && <div style={S.toast}>{toast}</div>}
+      {toast && <div key={toast.key} style={S.toast}>{toast.msg}</div>}
 
       <header style={S.header}>
         <div style={S.logo} onClick={() => { setView("home"); setSelected(new Set()); }}>
           <span style={S.logoMark}>鍛</span><span style={S.logoText}>VocabForge</span>
         </div>
         <div style={S.headerRight}>
-          {allDueCount > 0 && <div style={S.dueBadge} onClick={() => { setView("review"); startReviewSession(reviewDate); }}>{allDueCount} due</div>}
+          {syncState !== "idle" && (
+            <span style={{ fontFamily: mono, fontSize: 10, color: syncState === "error" ? "#f87171" : textDim, marginRight: 4 }}
+              title={syncState === "error" ? "保存失败，正在自动重试" : "正在保存到磁盘"}>
+              {syncState === "error" ? "● 保存失败·重试中" : "● 保存中"}
+            </span>
+          )}
+          {allDueCount > 0 && <div style={S.dueBadge} onClick={() => { setView("review"); startReviewSession(reviewDate, activeDeck); }}>{allDueCount} due</div>}
           <LangSelect value={meta.sourceLang} onChange={setSourceLang} />
           <span style={{ color: accent, fontSize: 11, fontFamily: mono }}>→</span>
           <LangSelect value={meta.targetLang1} onChange={setTargetLang1} />
@@ -844,8 +1138,8 @@ export default function App() {
           <button key={t.id} className={`nb${view === t.id ? " nav-active" : ""}`}
             onClick={() => {
               setView(t.id); setSelected(new Set());
-              if (t.id === "review") startReviewSession(reviewDate);
-              if (t.id === "intensive") startIntensiveSession();
+              if (t.id === "review") startReviewSession(reviewDate, activeDeck);
+              if (t.id === "intensive") startIntensiveSession(undefined, activeDeck);
             }}>{t.icon} {t.label}</button>
         ))}
         <div style={{ marginLeft: "auto", fontFamily: mono, fontSize: 11, color: textDim, display: "flex", alignItems: "center", gap: 4 }}>
@@ -858,8 +1152,12 @@ export default function App() {
           <div className={`deck-tabs${deckExpanded ? " expanded" : ""}`}>
             {meta.decks.map(d => (
               <button key={d.id} className={`dtab${activeDeck === d.id ? " active" : ""}`}
-                onClick={() => { setActiveDeck(d.id); setSelected(new Set()); if (view === "review") startReviewSession(reviewDate); if (view === "intensive") startIntensiveSession(); }}>
-                {d.name} ({cards.filter(c => c.deckId === d.id).length})
+                onClick={() => {
+                  setActiveDeck(d.id); setSelected(new Set());
+                  if (view === "review") startReviewSession(reviewDate, d.id);
+                  if (view === "intensive") startIntensiveSession(undefined, d.id);
+                }}>
+                {d.name} ({deckStats[d.id]?.count || 0})
               </button>
             ))}
           </div>
@@ -872,32 +1170,10 @@ export default function App() {
 
         {/* ═══ HOME ═══ */}
         {view === "home" && (() => {
-          const filtered = deckCards.filter(c => {
-            if (filterDate && c.createdAt !== filterDate) return false;
-            if (filterKeyword) {
-              const kw = filterKeyword.toLowerCase();
-              const haystack = [c.word, c.translation, c.translation2].map(s => (s || "").toLowerCase());
-              if (!haystack.some(h => h.includes(kw))) return false;
-            }
-            return true;
-          });
-          const sorted = [...filtered].sort((a, b) => b.createdAt.localeCompare(a.createdAt) || b.id.localeCompare(a.id));
-          const totalPages = Math.max(1, Math.ceil(sorted.length / pageSize));
+          const filtered = homeFiltered;
+          const totalPages = Math.max(1, Math.ceil(homeSorted.length / pageSize));
           const safePage = Math.min(page, totalPages - 1);
-          const paged = sorted.slice(safePage * pageSize, (safePage + 1) * pageSize);
-          const rotateCard = async (cardId) => {
-            const card = cards.find(c => c.id === cardId);
-            if (!card) return;
-            await saveCardToDay(uid(), { ...card, rot: ((card.rot || 0) + 1) % 3 });
-            await reload(); showToast("Rotated");
-          };
-          const batchRotate = async () => {
-            const updated = cards.filter(c => selected.has(c.id)).map(c => ({
-              ...c, rot: ((c.rot || 0) + 1) % 3
-            }));
-            await batchSaveCards(uid(), updated);
-            await reload(); showToast(`Rotated ${updated.length} cards`);
-          };
+          const paged = homeSorted.slice(safePage * pageSize, (safePage + 1) * pageSize);
           return (
             <div style={S.content}>
               {deckCards.length > 0 && (<>
@@ -922,7 +1198,6 @@ export default function App() {
                     {selected.size > 0 && <button className="pill" style={{ borderColor: "#dc2626", color: "#f87171" }} onClick={batchDelete}><I.Trash /> Delete</button>}
                   </div>
                 </div>
-                {/* Date filter */}
                 <div style={{ display: "flex", alignItems: "center", gap: 8, paddingBottom: 8, flexWrap: "wrap" }}>
                   <span style={{ fontFamily: mono, fontSize: 11, color: textDim }}>日期筛选:</span>
                   <DateInput value={filterDate} onChange={d => { setFilterDate(d); setPage(0); }} />
@@ -940,7 +1215,7 @@ export default function App() {
                 <div style={S.cardList}>
                   {paged.map((card, i) => {
                     const isEditing = editingCard === card.id;
-                    const isDue = isDueOn(card, td);
+                    const isDue = dueIds.has(card.id);
                     const isSel = selected.has(card.id);
                     const d = getCardDisplay(card, meta);
                     return (
@@ -955,7 +1230,7 @@ export default function App() {
                           )}
                           {isEditing ? (
                             <div style={{ display: "flex", flexDirection: "column", gap: 6, marginTop: 4 }}
-                              onKeyDown={e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); updateCardTranslation(card, editT0, editT1, editT2); } }}>
+                              onKeyDown={e => { if (e.key === "Enter" && !e.shiftKey && !e.nativeEvent.isComposing) { e.preventDefault(); updateCardTranslation(card, editT0, editT1, editT2); } }}>
                               <textarea style={{ ...S.editInput, fontWeight: 600, width: "100%", minHeight: 28, maxHeight: 56, resize: "vertical" }} value={editT0} onChange={e => setEditT0(e.target.value)} placeholder={LN[d.srcL]} rows={1} />
                               <textarea style={{ ...S.editInput, width: "100%", minHeight: 28, maxHeight: 56, resize: "vertical" }} value={editT1} onChange={e => setEditT1(e.target.value)} placeholder={LN[d.t1L]} rows={1} />
                               <textarea style={{ ...S.editInput, width: "100%", minHeight: 28, maxHeight: 56, resize: "vertical" }} value={editT2} onChange={e => setEditT2(e.target.value)} placeholder={LN[d.t2L]} rows={1} />
@@ -969,12 +1244,12 @@ export default function App() {
                               {showT1 && <><span style={S.cardTrans}>{d.t1}</span><button className="spk" style={S.speakBtn} onClick={e => { e.stopPropagation(); speak(d.t1, d.t1L); }} title={LN[d.t1L]}><I.Speaker /></button></>}
                               {showT1 && showT2 && <span style={{ color: "#444", fontSize: 11 }}>/</span>}
                               {showT2 && <><span style={S.cardTrans2}>{d.t2}</span><button className="spk" style={S.speakBtn} onClick={e => { e.stopPropagation(); speak(d.t2, d.t2L); }} title={LN[d.t2L]}><I.Speaker /></button></>}
+                              {translatingIds.has(card.id) && <span style={{ fontFamily: mono, fontSize: 11, color: textDim, animation: "pulse 1s infinite" }}>翻译中…</span>}
                               <button style={S.editBtn} onClick={() => startEdit(card)}><I.Edit /></button>
                             </div>
                           )}
-                          {/* Schedule dots + tags in one row */}
                           <div style={{ display: "flex", alignItems: "center", gap: 6, marginTop: 3 }}>
-                            <div style={{ display: "flex", gap: 3, flexWrap: "wrap" }}><ScheduleDots card={card} /></div>
+                            <div style={{ display: "flex", gap: 3, flexWrap: "wrap" }}><ScheduleDots card={card} today={td} onToggle={toggleReviewDot} /></div>
                             {(card.tags || []).length > 0 && <div style={{ marginLeft: "auto", display: "flex", gap: 3, flexWrap: "wrap", flexShrink: 0 }}>
                               {(card.tags || []).map(t => (
                                 <span key={t} style={{ fontFamily: mono, fontSize: 9, padding: "1px 6px", borderRadius: 10, background: "#8b5cf622", border: "1px solid #8b5cf644", color: "#a78bfa", cursor: "pointer" }}
@@ -991,7 +1266,7 @@ export default function App() {
                             e.stopPropagation();
                             setSingleTagCard(card.id); setBatchTagInput("");
                           }} title="Add tag"><I.Tag /></button>
-                          {(card.reviewHistory || []).length > 0 && <button className="spk" style={{ ...S.speakBtn, padding: 4, color: "#facc15" }} onClick={async e => { e.stopPropagation(); await saveCardToDay(uid(), { ...card, reviewHistory: [], reviewStage: 0, nextReview: addDays(card.createdAt, EBB[0]) }); await reload(); showToast("Tags cleared"); }} title="Clear review">✕</button>}
+                          {(card.reviewHistory || []).length > 0 && <button className="spk" style={{ ...S.speakBtn, padding: 4, color: "#facc15" }} onClick={e => { e.stopPropagation(); clearReview(card); }} title="Clear review">✕</button>}
                           <DateInput value={card.createdAt} onChange={dd => updateCardDate(card, dd)} />
                           <button style={S.deleteBtn} onClick={() => deleteCard(card)}><I.Trash /></button>
                         </div>
@@ -1017,7 +1292,6 @@ export default function App() {
                   )}
                 </div>
               </>)}
-              {/* Clear tag confirmation modal */}
               {clearTagConfirm && (
                 <div style={S.modal} onClick={() => setClearTagConfirm(false)}><div style={S.modalContent} onClick={e => e.stopPropagation()}>
                   <h3 style={S.modalTitle}>确认清除</h3>
@@ -1045,7 +1319,7 @@ export default function App() {
                   )}
                   <div style={{ display: "flex", gap: 8 }}>
                     <input style={S.modalInput} placeholder="New tag..." value={batchTagInput} onChange={e => setBatchTagInput(e.target.value)}
-                      onKeyDown={e => e.key === "Enter" && batchAddTag(batchTagInput)} autoFocus />
+                      onKeyDown={e => e.key === "Enter" && !e.nativeEvent.isComposing && batchAddTag(batchTagInput)} autoFocus />
                     <button className="ab" style={S.modalConfirm} onClick={() => batchAddTag(batchTagInput)}>添加</button>
                   </div>
                 </div></div>
@@ -1053,24 +1327,25 @@ export default function App() {
               {singleTagCard && (() => {
                 const stc = cards.find(c => c.id === singleTagCard);
                 if (!stc) return null;
-                const addSingleTag = async (tag) => {
+                const addSingleTag = tag => {
                   if (!tag.trim()) return;
-                  await addTagToCard(stc, tag.trim());
+                  addTagToCard(stc, tag.trim());
                   setSingleTagCard(null); setBatchTagInput("");
                 };
+                const otherTags = allTags.filter(t => !(stc.tags || []).includes(t));
                 return (
                   <div style={S.modal} onClick={() => setSingleTagCard(null)}><div style={S.modalContent} onClick={e => e.stopPropagation()}>
                     <h3 style={S.modalTitle}>添加标签</h3>
                     <p style={{ fontFamily: mono, fontSize: 12, color: textDim, marginBottom: 12 }}>{stc.word}</p>
                     {(stc.tags || []).length > 0 && <div style={{ display: "flex", gap: 4, flexWrap: "wrap", marginBottom: 8 }}>{(stc.tags || []).map(t => <span key={t} style={{ fontFamily: mono, fontSize: 10, padding: "2px 8px", borderRadius: 10, background: "#8b5cf622", border: "1px solid #8b5cf644", color: "#a78bfa" }}>{t}</span>)}</div>}
-                    {allTags.filter(t => !(stc.tags || []).includes(t)).length > 0 && (
+                    {otherTags.length > 0 && (
                       <div style={{ display: "flex", gap: 4, flexWrap: "wrap", marginBottom: 12 }}>
-                        {allTags.filter(t => !(stc.tags || []).includes(t)).map(t => <button key={t} className="pill" style={{ borderColor: "#8b5cf6", color: "#a78bfa" }} onClick={() => addSingleTag(t)}>{t}</button>)}
+                        {otherTags.map(t => <button key={t} className="pill" style={{ borderColor: "#8b5cf6", color: "#a78bfa" }} onClick={() => addSingleTag(t)}>{t}</button>)}
                       </div>
                     )}
                     <div style={{ display: "flex", gap: 8 }}>
                       <input style={S.modalInput} placeholder="New tag..." value={batchTagInput} onChange={e => setBatchTagInput(e.target.value)}
-                        onKeyDown={e => e.key === "Enter" && addSingleTag(batchTagInput)} autoFocus />
+                        onKeyDown={e => e.key === "Enter" && !e.nativeEvent.isComposing && addSingleTag(batchTagInput)} autoFocus />
                       <button className="ab" style={S.modalConfirm} onClick={() => addSingleTag(batchTagInput)}>添加</button>
                     </div>
                   </div></div>
@@ -1090,44 +1365,50 @@ export default function App() {
                 <input ref={inputRef} style={S.wordInput}
                   placeholder={`Enter a ${LN[meta.sourceLang] || meta.sourceLang} word...`}
                   value={newWord} onChange={e => setNewWord(e.target.value)}
-                  onKeyDown={e => e.key === "Enter" && addCard()} autoFocus disabled={translating} />
+                  onKeyDown={e => e.key === "Enter" && !e.nativeEvent.isComposing && addCard()} autoFocus />
                 <DateInput value={addDate} onChange={setAddDate} />
-                <button className="ab" style={{ ...S.addBtn, opacity: translating ? .5 : 1 }}
-                  onClick={addCard} disabled={translating || !newWord.trim()}>
-                  {translating ? <span style={{ animation: "pulse 1s infinite" }}>翻译中...</span> : <><I.Plus /> Add</>}
+                <button className="ab" style={{ ...S.addBtn, opacity: newWord.trim() ? 1 : .5 }}
+                  onClick={addCard} disabled={!newWord.trim()}>
+                  <I.Plus /> Add
                 </button>
               </div>
               <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 20, alignItems: "center" }}>
                 <button className={`pill${autoPlay ? " on" : ""}`} onClick={() => setAutoPlay(!autoPlay)}><I.Speaker size={12} /> 自动播放</button>
-                {/* Existing tags as toggles */}
                 {allTags.map(t => (
                   <button key={t} className={`pill${addTags.has(t) ? " on" : ""}`} style={addTags.has(t) ? { borderColor: "#8b5cf6", color: "#a78bfa", background: "#8b5cf622" } : {}}
                     onClick={() => setAddTags(s => { const n = new Set(s); n.has(t) ? n.delete(t) : n.add(t); return n; })}><I.Tag /> {t}</button>
                 ))}
-                {/* New tag input */}
+                {[...addTags].filter(t => !allTags.includes(t)).map(t => (
+                  <button key={t} className="pill on" style={{ borderColor: "#8b5cf6", color: "#a78bfa", background: "#8b5cf622" }}
+                    onClick={() => setAddTags(s => { const n = new Set(s); n.delete(t); return n; })}><I.Tag /> {t}</button>
+                ))}
                 <div style={{ display: "flex", gap: 4, alignItems: "center" }}>
                   <input style={{ fontFamily: mono, fontSize: 11, background: bg, color: text, border: `1px solid ${border}`, borderRadius: 16, padding: "4px 10px", width: 100 }}
                     placeholder="+ new tag" value={newTagInput} onChange={e => setNewTagInput(e.target.value)}
                     onKeyDown={e => {
-                      if (e.key === "Enter" && newTagInput.trim()) {
+                      if (e.key === "Enter" && !e.nativeEvent.isComposing && newTagInput.trim()) {
                         const t = newTagInput.trim();
                         setAddTags(s => new Set([...s, t]));
                         setNewTagInput("");
                       }
                     }} />
                 </div>
+                {translatingIds.size > 0 && <span style={{ fontFamily: mono, fontSize: 11, color: textDim, animation: "pulse 1s infinite" }}>翻译中 ({translatingIds.size})</span>}
               </div>
               <div style={{ marginBottom: 32 }}>
                 <h3 style={S.smallTitle}>Recently Added</h3>
-                {deckCards.slice(-5).reverse().map(c => (
-                  <div key={c.id} style={S.recentItem}>
-                    <span style={S.recentWord}>{c.word}</span>
-                    <span style={{ color: accent, fontSize: 12 }}>→</span>
-                    <span style={S.recentTrans}>{c.translation}</span>
-                    <span style={{ color: "#555", fontSize: 12 }}>/</span>
-                    <span style={S.recentTrans2}>{c.translation2}</span>
-                  </div>
-                ))}
+                {deckCards.slice(-5).reverse().map(c => {
+                  const pending = translatingIds.has(c.id);
+                  return (
+                    <div key={c.id} style={S.recentItem}>
+                      <span style={S.recentWord}>{c.word}</span>
+                      <span style={{ color: accent, fontSize: 12 }}>→</span>
+                      <span style={S.recentTrans}>{c.translation || (pending ? "…" : "")}</span>
+                      <span style={{ color: "#555", fontSize: 12 }}>/</span>
+                      <span style={S.recentTrans2}>{c.translation2 || (pending ? "…" : "")}</span>
+                    </div>
+                  );
+                })}
               </div>
               <div><h3 style={S.smallTitle}>Ebbinghaus Schedule</h3><div style={S.intervals}>{EBB.map((d, i) => <div key={i} style={S.intervalPill}>Day {d}</div>)}</div></div>
             </div>
@@ -1139,8 +1420,8 @@ export default function App() {
           <div style={S.content}>
             <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "12px 0", flexWrap: "wrap" }}>
               <span style={{ fontFamily: mono, fontSize: 12, color: textDim }}>Review:</span>
-              <DateInput value={reviewDate} onChange={d => { setReviewDate(d); startReviewSession(d); }} />
-              {reviewDate !== td && <button className="pill" onClick={() => { setReviewDate(todayStr()); startReviewSession(todayStr()); }} style={{ fontSize: 10 }}>Today</button>}
+              <DateInput value={reviewDate} onChange={d => { setReviewDate(d); startReviewSession(d, activeDeck); }} />
+              {reviewDate !== td && <button className="pill" onClick={() => { setReviewDate(td); startReviewSession(td, activeDeck); }} style={{ fontSize: 10 }}>Today</button>}
               <button className={`pill${reviewQuizType === 0 ? " on" : ""}`} onClick={() => setReviewQuizType(0)}>目标</button>
               <button className={`pill${reviewQuizType === 1 ? " on" : ""}`} onClick={() => setReviewQuizType(1)}>翻译1</button>
               <button className={`pill${reviewQuizType === 2 ? " on" : ""}`} onClick={() => setReviewQuizType(2)}>翻译2</button>
@@ -1156,7 +1437,6 @@ export default function App() {
               const rc = reviewCurrentCard;
               if (!rc) return <div style={S.empty}><p style={S.emptyText}>Loading...</p></div>;
               const d = getCardDisplay(rc, meta);
-              // Quiz: pick question/answers based on reviewQuizType
               const allFields = [d.src, d.t1, d.t2];
               const allLangs = [d.srcL, d.t1L, d.t2L];
               const qIdx = reviewQuizType;
@@ -1176,7 +1456,7 @@ export default function App() {
                       <div style={S.reviewWord}>{question}</div>
                       <button className="spk" style={{ ...S.speakBtn, padding: 4 }} onClick={() => speak(question, questionLang)}><I.Speaker size={18} /></button>
                     </div>
-                    <div style={{ marginTop: 8, marginBottom: 24 }}><ScheduleDots card={rc} /></div>
+                    <div style={{ marginTop: 8, marginBottom: 24 }}><ScheduleDots card={rc} today={td} onToggle={toggleReviewDot} /></div>
                     <div style={{ minHeight: 52 }}>
                       {!reviewRevealed ? (
                         <div style={S.reviewActions}>
@@ -1211,11 +1491,10 @@ export default function App() {
           <div style={S.content}>
             <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "12px 0", flexWrap: "wrap" }}>
               <span style={{ fontFamily: serif, fontSize: 16, fontWeight: 600, color: text }}>强化</span>
-              <button className={`pill${intensiveMode === "hard" ? " on" : ""}`} onClick={() => startIntensiveSession("hard")}>🔥 高难度 ({cards.filter(c => c.deckId === activeDeck && (c.reviewHistory || []).some(h => !h.remembered)).length})</button>
+              <button className={`pill${intensiveMode === "hard" ? " on" : ""}`} onClick={() => startIntensiveSession("hard", activeDeck)}>🔥 高难度 ({intensiveCount})</button>
               {allTags.map(t => {
                 const m = "tag:" + t;
-                const cnt = cards.filter(c => c.deckId === activeDeck && (c.tags || []).includes(t)).length;
-                return <button key={t} className={`pill${intensiveMode === m ? " on" : ""}`} style={intensiveMode === m ? { borderColor: "#8b5cf6", color: "#a78bfa", background: "#8b5cf622" } : {}} onClick={() => startIntensiveSession(m)}><I.Tag /> {t} ({cnt})</button>;
+                return <button key={t} className={`pill${intensiveMode === m ? " on" : ""}`} style={intensiveMode === m ? { borderColor: "#8b5cf6", color: "#a78bfa", background: "#8b5cf622" } : {}} onClick={() => startIntensiveSession(m, activeDeck)}><I.Tag /> {t} ({tagCounts[t] || 0})</button>;
               })}
             </div>
             <div style={{ display: "flex", alignItems: "center", gap: 8, paddingBottom: 8, flexWrap: "wrap" }}>
@@ -1234,7 +1513,7 @@ export default function App() {
               const rc = intensiveCurrentCard;
               if (!rc) return <div style={S.empty}><p style={S.emptyText}>Loading...</p></div>;
               const d = getCardDisplay(rc, meta);
-              const redCount = (rc.reviewHistory || []).filter(h => !h.remembered).length;
+              const redCount = redCountOf(rc);
               const allFields = [d.src, d.t1, d.t2];
               const allLangs = [d.srcL, d.t1L, d.t2L];
               const qIdx = reviewQuizType;
@@ -1255,7 +1534,7 @@ export default function App() {
                     </div>
                     {redCount > 0 && <div style={{ fontFamily: mono, fontSize: 11, color: "#f87171", marginBottom: 8 }}>{redCount} failed</div>}
                     {(rc.tags || []).length > 0 && <div style={{ display: "flex", gap: 3, justifyContent: "center", marginBottom: 4 }}>{(rc.tags || []).map(t => <span key={t} style={{ fontFamily: mono, fontSize: 9, padding: "1px 6px", borderRadius: 10, background: "#8b5cf622", border: "1px solid #8b5cf644", color: "#a78bfa" }}>{t}</span>)}</div>}
-                    <div style={{ marginTop: 4, marginBottom: 20 }}><ScheduleDots card={rc} /></div>
+                    <div style={{ marginTop: 4, marginBottom: 20 }}><ScheduleDots card={rc} today={td} onToggle={toggleReviewDot} /></div>
                     <div style={{ minHeight: 52 }}>
                       {!intensiveRevealed ? (
                         <div style={S.reviewActions}>
@@ -1297,8 +1576,8 @@ export default function App() {
             </div>
             <div style={S.deckGrid}>
               {meta.decks.map(deck => {
-                const count = cards.filter(c => c.deckId === deck.id).length;
-                const due = cards.filter(c => c.deckId === deck.id && isDueOn(c, td)).length;
+                const count = deckStats[deck.id]?.count || 0;
+                const due = deckStats[deck.id]?.due || 0;
                 return (
                   <div key={deck.id} className="dk" style={{ ...S.deckCard, ...(activeDeck === deck.id ? { borderColor: accent } : {}) }}
                     onClick={() => { setActiveDeck(deck.id); setView("home"); }}>
@@ -1314,18 +1593,18 @@ export default function App() {
             </div>
             {showDeckModal && <div style={S.modal} onClick={() => setShowDeckModal(false)}><div style={S.modalContent} onClick={e => e.stopPropagation()}>
               <h3 style={S.modalTitle}>New Deck</h3>
-              <input style={S.modalInput} placeholder="Deck name..." value={newDeckName} onChange={e => setNewDeckName(e.target.value)} onKeyDown={e => e.key === "Enter" && createDeck()} autoFocus />
+              <input style={S.modalInput} placeholder="Deck name..." value={newDeckName} onChange={e => setNewDeckName(e.target.value)} onKeyDown={e => e.key === "Enter" && !e.nativeEvent.isComposing && createDeck()} autoFocus />
               <div style={S.modalActions}><button className="ab" style={S.modalCancel} onClick={() => setShowDeckModal(false)}>Cancel</button><button className="ab" style={S.modalConfirm} onClick={createDeck}>Create</button></div>
             </div></div>}
             {renameDeckId && <div style={S.modal} onClick={() => setRenameDeckId(null)}><div style={S.modalContent} onClick={e => e.stopPropagation()}>
               <h3 style={S.modalTitle}>Rename Deck</h3>
-              <input style={S.modalInput} value={renameDeckVal} onChange={e => setRenameDeckVal(e.target.value)} onKeyDown={e => e.key === "Enter" && renameDeck()} autoFocus />
+              <input style={S.modalInput} value={renameDeckVal} onChange={e => setRenameDeckVal(e.target.value)} onKeyDown={e => e.key === "Enter" && !e.nativeEvent.isComposing && renameDeck()} autoFocus />
               <div style={S.modalActions}><button className="ab" style={S.modalCancel} onClick={() => setRenameDeckId(null)}>Cancel</button><button className="ab" style={S.modalConfirm} onClick={renameDeck}>Rename</button></div>
             </div></div>}
             {deleteDeckConfirm && <div style={S.modal} onClick={() => setDeleteDeckConfirm(null)}><div style={S.modalContent} onClick={e => e.stopPropagation()}>
               <h3 style={S.modalTitle}>确认删除</h3>
               <p style={{ fontFamily: sans, fontSize: 14, color: textDim, lineHeight: 1.6, marginBottom: 8 }}>确定要删除 <strong style={{ color: text }}>"{meta.decks.find(d => d.id === deleteDeckConfirm)?.name}"</strong> 吗？</p>
-              <p style={{ fontFamily: mono, fontSize: 12, color: "#f87171", marginBottom: 16 }}>将删除 {cards.filter(c => c.deckId === deleteDeckConfirm).length} 张卡片，不可撤销。</p>
+              <p style={{ fontFamily: mono, fontSize: 12, color: "#f87171", marginBottom: 16 }}>将删除 {deckStats[deleteDeckConfirm]?.count || 0} 张卡片，不可撤销。</p>
               <div style={S.modalActions}><button className="ab" style={S.modalCancel} onClick={() => setDeleteDeckConfirm(null)}>取消</button><button className="ab" style={S.deleteConfirmBtn} onClick={doDeleteDeck}>确认删除</button></div>
             </div></div>}
           </div>
@@ -1350,7 +1629,7 @@ export default function App() {
             </div>
             {showUserModal && <div style={S.modal} onClick={() => setShowUserModal(false)}><div style={S.modalContent} onClick={e => e.stopPropagation()}>
               <h3 style={S.modalTitle}>New User</h3>
-              <input style={S.modalInput} placeholder="User name..." value={newUserName} onChange={e => setNewUserName(e.target.value)} onKeyDown={e => e.key === "Enter" && createUser()} autoFocus />
+              <input style={S.modalInput} placeholder="User name..." value={newUserName} onChange={e => setNewUserName(e.target.value)} onKeyDown={e => e.key === "Enter" && !e.nativeEvent.isComposing && createUser()} autoFocus />
               <div style={S.modalActions}><button className="ab" style={S.modalCancel} onClick={() => setShowUserModal(false)}>Cancel</button><button className="ab" style={S.modalConfirm} onClick={createUser}>Create</button></div>
             </div></div>}
             {deleteUserConfirm && <div style={S.modal} onClick={() => setDeleteUserConfirm(null)}><div style={S.modalContent} onClick={e => e.stopPropagation()}>
@@ -1422,13 +1701,10 @@ const S = {
   dueBadge: { fontFamily: mono, fontSize: 11, fontWeight: 600, background: accentDim, color: accent, padding: "3px 9px", borderRadius: 20, cursor: "pointer" },
   langSel: { fontFamily: mono, fontSize: 11, background: surface, color: text, border: `1px solid ${border}`, borderRadius: 4, padding: "3px 4px", cursor: "pointer" },
   nav: { display: "flex", gap: 2, padding: "10px 0", borderBottom: `1px solid ${border}`, alignItems: "center", flexWrap: "wrap" },
-  navBtn: { fontFamily: mono, fontSize: 12, fontWeight: 500, background: "transparent", color: textDim, border: "1px solid transparent", padding: "4px 11px", borderRadius: 6, cursor: "pointer", transition: "all .15s", display: "flex", alignItems: "center", gap: 4 },
-  navBtnActive: { background: surface2, color: text, borderColor: accent },
   main: { paddingTop: 6 },
   content: { animation: "fadeUp 0.3s ease" },
   sectionHeader: { display: "flex", justifyContent: "space-between", alignItems: "center", padding: "10px 0" },
   sectionTitle: { fontFamily: serif, fontSize: 22, fontWeight: 600, color: text },
-  cardCount: { fontFamily: mono, fontSize: 12, color: textDim },
   empty: { display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "60px 0", gap: 16 },
   emptyText: { fontFamily: serif, fontSize: 18, color: textDim },
   emptyBtn: { display: "flex", alignItems: "center", gap: 8, fontFamily: mono, fontSize: 13, fontWeight: 500, background: accent, color: "#fff", border: "none", padding: "10px 20px", borderRadius: 8, cursor: "pointer" },

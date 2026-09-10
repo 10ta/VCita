@@ -244,8 +244,8 @@
     "translation2": "cattle",
     "deckId": "default",
     "createdAt": "2026-04-21",
-    "reviewStage": 2,
-    "nextReview": "2026-05-10",
+    "reviewStage": 1,
+    "nextReview": "2026-09-11",
     "reviewHistory": [
       {
         "date": "2026-04-21",
@@ -265,6 +265,10 @@
       },
       {
         "date": "2026-05-06",
+        "remembered": false
+      },
+      {
+        "date": "2026-05-21",
         "remembered": false
       }
     ],
