@@ -47,7 +47,7 @@
     "deckId": "default",
     "createdAt": "2026-04-12",
     "reviewStage": 5,
-    "nextReview": "2026-05-28",
+    "nextReview": "2026-08-05",
     "reviewHistory": [
       {
         "date": "2026-04-12",
@@ -67,6 +67,10 @@
       },
       {
         "date": "2026-04-27",
+        "remembered": true
+      },
+      {
+        "date": "2026-05-12",
         "remembered": true
       }
     ],
@@ -82,8 +86,8 @@
     "translation2": "an assessor = the assistant of a judge",
     "deckId": "default",
     "createdAt": "2026-04-12",
-    "reviewStage": 3,
-    "nextReview": "2026-05-08",
+    "reviewStage": 4,
+    "nextReview": "2026-07-21",
     "reviewHistory": [
       {
         "date": "2026-04-12",
@@ -104,6 +108,10 @@
       {
         "date": "2026-04-27",
         "remembered": false
+      },
+      {
+        "date": "2026-05-12",
+        "remembered": true
       }
     ],
     "rot": 1,
