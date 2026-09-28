@@ -142,8 +142,8 @@
     "translation2": "sordid",
     "deckId": "default",
     "createdAt": "2026-04-16",
-    "reviewStage": 3,
-    "nextReview": "2026-05-08",
+    "reviewStage": 4,
+    "nextReview": "2026-09-27",
     "reviewHistory": [
       {
         "date": "2026-04-16",
@@ -163,6 +163,10 @@
       },
       {
         "date": "2026-05-01",
+        "remembered": true
+      },
+      {
+        "date": "2026-05-16",
         "remembered": true
       }
     ],

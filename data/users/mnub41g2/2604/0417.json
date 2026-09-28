@@ -6,8 +6,8 @@
     "translation2": "extremely serious facts",
     "deckId": "default",
     "createdAt": "2026-04-17",
-    "reviewStage": 5,
-    "nextReview": "2026-06-01",
+    "reviewStage": 4,
+    "nextReview": "2026-09-27",
     "reviewHistory": [
       {
         "date": "2026-04-17",
@@ -28,6 +28,10 @@
       {
         "date": "2026-05-02",
         "remembered": true
+      },
+      {
+        "date": "2026-05-17",
+        "remembered": false
       }
     ],
     "rot": 0,

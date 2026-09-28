@@ -6,8 +6,8 @@
     "translation2": "question oneself",
     "deckId": "default",
     "createdAt": "2026-04-18",
-    "reviewStage": 4,
-    "nextReview": "2026-05-18",
+    "reviewStage": 3,
+    "nextReview": "2026-09-19",
     "reviewHistory": [
       {
         "date": "2026-04-18",
@@ -28,6 +28,10 @@
       {
         "date": "2026-05-03",
         "remembered": true
+      },
+      {
+        "date": "2026-05-18",
+        "remembered": false
       }
     ],
     "rot": 1,

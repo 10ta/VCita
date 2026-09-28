@@ -832,8 +832,8 @@
     "translation2": "This affair is a house of cards and it will collapse one fine morning.",
     "deckId": "default",
     "createdAt": "2026-04-22",
-    "reviewStage": 1,
-    "nextReview": "2026-09-11",
+    "reviewStage": 3,
+    "nextReview": "2026-09-19",
     "reviewHistory": [
       {
         "date": "2026-04-22",
