@@ -6,11 +6,17 @@
     "translation2": "So try to really internalize everything I'm going to tell you",
     "deckId": "default",
     "createdAt": "2026-09-26",
-    "reviewStage": 0,
     "nextReview": "2026-09-26",
     "reviewHistory": [],
     "rot": 0,
-    "tags": []
+    "tags": [],
+    "state": "new",
+    "interval": 0,
+    "ease": 2.5,
+    "due": "2026-09-26",
+    "lapses": 0,
+    "reps": 0,
+    "lastReview": null
   },
   {
     "id": "muicb3e8vppx",
@@ -19,10 +25,16 @@
     "translation2": "It's not a miracle method or anything.",
     "deckId": "default",
     "createdAt": "2026-09-26",
-    "reviewStage": 0,
     "nextReview": "2026-09-26",
     "reviewHistory": [],
     "rot": 0,
-    "tags": []
+    "tags": [],
+    "state": "new",
+    "interval": 0,
+    "ease": 2.5,
+    "due": "2026-09-26",
+    "lapses": 0,
+    "reps": 0,
+    "lastReview": null
   }
 ]

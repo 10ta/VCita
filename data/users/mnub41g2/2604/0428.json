@@ -6,28 +6,38 @@
     "translation2": "Bertrand is jealous, possessive and exclusive.",
     "deckId": "default",
     "createdAt": "2026-04-28",
-    "reviewStage": 0,
-    "nextReview": "2026-05-05",
+    "nextReview": "2026-05-06",
     "reviewHistory": [
       {
         "date": "2026-04-28",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       },
       {
         "date": "2026-04-29",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       },
       {
         "date": "2026-05-01",
-        "remembered": false
+        "remembered": false,
+        "rating": 1
       },
       {
         "date": "2026-05-05",
-        "remembered": false
+        "remembered": false,
+        "rating": 1
       }
     ],
     "rot": 1,
-    "tags": []
+    "tags": [],
+    "state": "review",
+    "interval": 1,
+    "ease": 2.1,
+    "due": "2026-05-06",
+    "lapses": 2,
+    "reps": 4,
+    "lastReview": "2026-05-05"
   },
   {
     "id": "moi8xwmo5tbt",
@@ -36,28 +46,38 @@
     "translation2": "implausible",
     "deckId": "default",
     "createdAt": "2026-04-28",
-    "reviewStage": 0,
-    "nextReview": "2026-05-05",
+    "nextReview": "2026-05-06",
     "reviewHistory": [
       {
         "date": "2026-04-28",
-        "remembered": false
+        "remembered": false,
+        "rating": 1
       },
       {
         "date": "2026-04-29",
-        "remembered": false
+        "remembered": false,
+        "rating": 1
       },
       {
         "date": "2026-05-01",
-        "remembered": false
+        "remembered": false,
+        "rating": 1
       },
       {
         "date": "2026-05-05",
-        "remembered": false
+        "remembered": false,
+        "rating": 1
       }
     ],
     "rot": 1,
-    "tags": []
+    "tags": [],
+    "state": "review",
+    "interval": 1,
+    "ease": 1.9,
+    "due": "2026-05-06",
+    "lapses": 3,
+    "reps": 4,
+    "lastReview": "2026-05-05"
   },
   {
     "id": "moi8yudfstnv",
@@ -66,28 +86,38 @@
     "translation2": "",
     "deckId": "default",
     "createdAt": "2026-04-28",
-    "reviewStage": 0,
-    "nextReview": "2026-05-05",
+    "nextReview": "2026-05-06",
     "reviewHistory": [
       {
         "date": "2026-04-28",
-        "remembered": false
+        "remembered": false,
+        "rating": 1
       },
       {
         "date": "2026-04-29",
-        "remembered": false
+        "remembered": false,
+        "rating": 1
       },
       {
         "date": "2026-05-01",
-        "remembered": false
+        "remembered": false,
+        "rating": 1
       },
       {
         "date": "2026-05-05",
-        "remembered": false
+        "remembered": false,
+        "rating": 1
       }
     ],
     "rot": 1,
-    "tags": []
+    "tags": [],
+    "state": "review",
+    "interval": 1,
+    "ease": 1.9,
+    "due": "2026-05-06",
+    "lapses": 3,
+    "reps": 4,
+    "lastReview": "2026-05-05"
   },
   {
     "id": "moi991z21cnx",
@@ -96,28 +126,38 @@
     "translation2": "He looks devastated. He looks exhausted.",
     "deckId": "default",
     "createdAt": "2026-04-28",
-    "reviewStage": 0,
-    "nextReview": "2026-05-05",
+    "nextReview": "2026-05-06",
     "reviewHistory": [
       {
         "date": "2026-04-28",
-        "remembered": false
+        "remembered": false,
+        "rating": 1
       },
       {
         "date": "2026-04-29",
-        "remembered": false
+        "remembered": false,
+        "rating": 1
       },
       {
         "date": "2026-05-01",
-        "remembered": false
+        "remembered": false,
+        "rating": 1
       },
       {
         "date": "2026-05-05",
-        "remembered": false
+        "remembered": false,
+        "rating": 1
       }
     ],
     "rot": 1,
-    "tags": []
+    "tags": [],
+    "state": "review",
+    "interval": 1,
+    "ease": 1.9,
+    "due": "2026-05-06",
+    "lapses": 3,
+    "reps": 4,
+    "lastReview": "2026-05-05"
   },
   {
     "id": "moi9eg8ad6yo",
@@ -126,28 +166,38 @@
     "translation2": "",
     "deckId": "default",
     "createdAt": "2026-04-28",
-    "reviewStage": 0,
-    "nextReview": "2026-05-05",
+    "nextReview": "2026-05-06",
     "reviewHistory": [
       {
         "date": "2026-04-28",
-        "remembered": false
+        "remembered": false,
+        "rating": 1
       },
       {
         "date": "2026-04-29",
-        "remembered": false
+        "remembered": false,
+        "rating": 1
       },
       {
         "date": "2026-05-01",
-        "remembered": false
+        "remembered": false,
+        "rating": 1
       },
       {
         "date": "2026-05-05",
-        "remembered": false
+        "remembered": false,
+        "rating": 1
       }
     ],
     "rot": 1,
-    "tags": []
+    "tags": [],
+    "state": "review",
+    "interval": 1,
+    "ease": 1.9,
+    "due": "2026-05-06",
+    "lapses": 3,
+    "reps": 4,
+    "lastReview": "2026-05-05"
   },
   {
     "id": "moi9is9zea95",
@@ -156,28 +206,38 @@
     "translation2": "Our convictions are that all-out liberalism inevitably produces exclusion and poverty, and the rise of fascism.",
     "deckId": "default",
     "createdAt": "2026-04-28",
-    "reviewStage": 0,
-    "nextReview": "2026-05-05",
+    "nextReview": "2026-05-06",
     "reviewHistory": [
       {
         "date": "2026-04-28",
-        "remembered": false
+        "remembered": false,
+        "rating": 1
       },
       {
         "date": "2026-04-29",
-        "remembered": false
+        "remembered": false,
+        "rating": 1
       },
       {
         "date": "2026-05-01",
-        "remembered": false
+        "remembered": false,
+        "rating": 1
       },
       {
         "date": "2026-05-05",
-        "remembered": false
+        "remembered": false,
+        "rating": 1
       }
     ],
     "rot": 1,
-    "tags": []
+    "tags": [],
+    "state": "review",
+    "interval": 1,
+    "ease": 1.9,
+    "due": "2026-05-06",
+    "lapses": 3,
+    "reps": 4,
+    "lastReview": "2026-05-05"
   },
   {
     "id": "moi9ltqwvhqn",
@@ -186,28 +246,38 @@
     "translation2": "Because she is generous, she is tender.",
     "deckId": "default",
     "createdAt": "2026-04-28",
-    "reviewStage": 0,
-    "nextReview": "2026-05-05",
+    "nextReview": "2026-05-06",
     "reviewHistory": [
       {
         "date": "2026-04-28",
-        "remembered": false
+        "remembered": false,
+        "rating": 1
       },
       {
         "date": "2026-04-29",
-        "remembered": false
+        "remembered": false,
+        "rating": 1
       },
       {
         "date": "2026-05-01",
-        "remembered": false
+        "remembered": false,
+        "rating": 1
       },
       {
         "date": "2026-05-05",
-        "remembered": false
+        "remembered": false,
+        "rating": 1
       }
     ],
     "rot": 1,
-    "tags": []
+    "tags": [],
+    "state": "review",
+    "interval": 1,
+    "ease": 1.9,
+    "due": "2026-05-06",
+    "lapses": 3,
+    "reps": 4,
+    "lastReview": "2026-05-05"
   },
   {
     "id": "moi9mzpsf80v",
@@ -216,28 +286,38 @@
     "translation2": "there are people who have grace.",
     "deckId": "default",
     "createdAt": "2026-04-28",
-    "reviewStage": 0,
-    "nextReview": "2026-05-05",
+    "nextReview": "2026-05-06",
     "reviewHistory": [
       {
         "date": "2026-04-28",
-        "remembered": false
+        "remembered": false,
+        "rating": 1
       },
       {
         "date": "2026-04-29",
-        "remembered": false
+        "remembered": false,
+        "rating": 1
       },
       {
         "date": "2026-05-01",
-        "remembered": false
+        "remembered": false,
+        "rating": 1
       },
       {
         "date": "2026-05-05",
-        "remembered": false
+        "remembered": false,
+        "rating": 1
       }
     ],
     "rot": 1,
-    "tags": []
+    "tags": [],
+    "state": "review",
+    "interval": 1,
+    "ease": 1.9,
+    "due": "2026-05-06",
+    "lapses": 3,
+    "reps": 4,
+    "lastReview": "2026-05-05"
   },
   {
     "id": "moi9pp831yfe",
@@ -246,28 +326,38 @@
     "translation2": "She demanded a lot of herself. And then, at the same time, she was a very loving mother, very mother.",
     "deckId": "default",
     "createdAt": "2026-04-28",
-    "reviewStage": 0,
-    "nextReview": "2026-05-05",
+    "nextReview": "2026-05-06",
     "reviewHistory": [
       {
         "date": "2026-04-28",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       },
       {
         "date": "2026-04-29",
-        "remembered": false
+        "remembered": false,
+        "rating": 1
       },
       {
         "date": "2026-05-01",
-        "remembered": false
+        "remembered": false,
+        "rating": 1
       },
       {
         "date": "2026-05-05",
-        "remembered": false
+        "remembered": false,
+        "rating": 1
       }
     ],
     "rot": 1,
-    "tags": []
+    "tags": [],
+    "state": "review",
+    "interval": 1,
+    "ease": 1.9,
+    "due": "2026-05-06",
+    "lapses": 3,
+    "reps": 4,
+    "lastReview": "2026-05-05"
   },
   {
     "id": "moi9tggua1pe",
@@ -276,28 +366,38 @@
     "translation2": "In fact, our hearts are not divided, but rather grow.",
     "deckId": "default",
     "createdAt": "2026-04-28",
-    "reviewStage": 0,
-    "nextReview": "2026-05-05",
+    "nextReview": "2026-05-06",
     "reviewHistory": [
       {
         "date": "2026-04-28",
-        "remembered": false
+        "remembered": false,
+        "rating": 1
       },
       {
         "date": "2026-04-29",
-        "remembered": false
+        "remembered": false,
+        "rating": 1
       },
       {
         "date": "2026-05-01",
-        "remembered": false
+        "remembered": false,
+        "rating": 1
       },
       {
         "date": "2026-05-05",
-        "remembered": false
+        "remembered": false,
+        "rating": 1
       }
     ],
     "rot": 1,
-    "tags": []
+    "tags": [],
+    "state": "review",
+    "interval": 1,
+    "ease": 1.9,
+    "due": "2026-05-06",
+    "lapses": 3,
+    "reps": 4,
+    "lastReview": "2026-05-05"
   },
   {
     "id": "moiekoiljlog",
@@ -306,28 +406,38 @@
     "translation2": "like a hunted beast",
     "deckId": "default",
     "createdAt": "2026-04-28",
-    "reviewStage": 0,
-    "nextReview": "2026-05-05",
+    "nextReview": "2026-05-06",
     "reviewHistory": [
       {
         "date": "2026-04-28",
-        "remembered": false
+        "remembered": false,
+        "rating": 1
       },
       {
         "date": "2026-04-29",
-        "remembered": false
+        "remembered": false,
+        "rating": 1
       },
       {
         "date": "2026-05-01",
-        "remembered": false
+        "remembered": false,
+        "rating": 1
       },
       {
         "date": "2026-05-05",
-        "remembered": false
+        "remembered": false,
+        "rating": 1
       }
     ],
     "rot": 1,
-    "tags": []
+    "tags": [],
+    "state": "review",
+    "interval": 1,
+    "ease": 1.9,
+    "due": "2026-05-06",
+    "lapses": 3,
+    "reps": 4,
+    "lastReview": "2026-05-05"
   },
   {
     "id": "moiempj7fo95",
@@ -336,27 +446,37 @@
     "translation2": "He overshadows everyone.",
     "deckId": "default",
     "createdAt": "2026-04-28",
-    "reviewStage": 1,
-    "nextReview": "2026-05-06",
+    "nextReview": "2026-05-09",
     "reviewHistory": [
       {
         "date": "2026-04-28",
-        "remembered": false
+        "remembered": false,
+        "rating": 1
       },
       {
         "date": "2026-04-29",
-        "remembered": false
+        "remembered": false,
+        "rating": 1
       },
       {
         "date": "2026-05-01",
-        "remembered": false
+        "remembered": false,
+        "rating": 1
       },
       {
         "date": "2026-05-05",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       }
     ],
     "rot": 1,
-    "tags": []
+    "tags": [],
+    "state": "review",
+    "interval": 4,
+    "ease": 2.1,
+    "due": "2026-05-09",
+    "lapses": 2,
+    "reps": 4,
+    "lastReview": "2026-05-05"
   }
 ]

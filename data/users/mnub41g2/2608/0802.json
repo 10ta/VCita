@@ -6,10 +6,16 @@
     "translation2": "a peaceful and warm melody",
     "deckId": "default",
     "createdAt": "2026-08-02",
-    "reviewStage": 0,
     "nextReview": "2026-08-02",
     "reviewHistory": [],
     "rot": 0,
-    "tags": []
+    "tags": [],
+    "state": "new",
+    "interval": 0,
+    "ease": 2.5,
+    "due": "2026-08-02",
+    "lapses": 0,
+    "reps": 0,
+    "lastReview": null
   }
 ]

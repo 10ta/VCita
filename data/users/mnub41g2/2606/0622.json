@@ -6,11 +6,17 @@
     "translation2": "free oneself",
     "deckId": "default",
     "createdAt": "2026-06-22",
-    "reviewStage": 0,
     "nextReview": "2026-06-22",
     "reviewHistory": [],
     "rot": 0,
-    "tags": []
+    "tags": [],
+    "state": "new",
+    "interval": 0,
+    "ease": 2.5,
+    "due": "2026-06-22",
+    "lapses": 0,
+    "reps": 0,
+    "lastReview": null
   },
   {
     "id": "mqpaxnm7vyap",
@@ -19,11 +25,17 @@
     "translation2": "unspeakable",
     "deckId": "default",
     "createdAt": "2026-06-22",
-    "reviewStage": 0,
     "nextReview": "2026-06-22",
     "reviewHistory": [],
     "rot": 0,
-    "tags": []
+    "tags": [],
+    "state": "new",
+    "interval": 0,
+    "ease": 2.5,
+    "due": "2026-06-22",
+    "lapses": 0,
+    "reps": 0,
+    "lastReview": null
   },
   {
     "id": "mqpay23zcl1n",
@@ -32,11 +44,17 @@
     "translation2": "rehabilitate",
     "deckId": "default",
     "createdAt": "2026-06-22",
-    "reviewStage": 0,
     "nextReview": "2026-06-22",
     "reviewHistory": [],
     "rot": 0,
-    "tags": []
+    "tags": [],
+    "state": "new",
+    "interval": 0,
+    "ease": 2.5,
+    "due": "2026-06-22",
+    "lapses": 0,
+    "reps": 0,
+    "lastReview": null
   },
   {
     "id": "mqpaz4timd43",
@@ -45,11 +63,17 @@
     "translation2": "",
     "deckId": "default",
     "createdAt": "2026-06-22",
-    "reviewStage": 0,
     "nextReview": "2026-06-22",
     "reviewHistory": [],
     "rot": 0,
-    "tags": []
+    "tags": [],
+    "state": "new",
+    "interval": 0,
+    "ease": 2.5,
+    "due": "2026-06-22",
+    "lapses": 0,
+    "reps": 0,
+    "lastReview": null
   },
   {
     "id": "mqpb0wnaaivs",
@@ -58,11 +82,17 @@
     "translation2": "refinement",
     "deckId": "default",
     "createdAt": "2026-06-22",
-    "reviewStage": 0,
     "nextReview": "2026-06-22",
     "reviewHistory": [],
     "rot": 0,
-    "tags": []
+    "tags": [],
+    "state": "new",
+    "interval": 0,
+    "ease": 2.5,
+    "due": "2026-06-22",
+    "lapses": 0,
+    "reps": 0,
+    "lastReview": null
   },
   {
     "id": "mqpb1bp4hy0b",
@@ -71,11 +101,17 @@
     "translation2": "regard",
     "deckId": "default",
     "createdAt": "2026-06-22",
-    "reviewStage": 0,
     "nextReview": "2026-06-22",
     "reviewHistory": [],
     "rot": 0,
-    "tags": []
+    "tags": [],
+    "state": "new",
+    "interval": 0,
+    "ease": 2.5,
+    "due": "2026-06-22",
+    "lapses": 0,
+    "reps": 0,
+    "lastReview": null
   },
   {
     "id": "mqpb4bopksro",
@@ -84,11 +120,17 @@
     "translation2": "expensive",
     "deckId": "default",
     "createdAt": "2026-06-22",
-    "reviewStage": 0,
     "nextReview": "2026-06-22",
     "reviewHistory": [],
     "rot": 0,
-    "tags": []
+    "tags": [],
+    "state": "new",
+    "interval": 0,
+    "ease": 2.5,
+    "due": "2026-06-22",
+    "lapses": 0,
+    "reps": 0,
+    "lastReview": null
   },
   {
     "id": "mqpb4kt8aiq1",
@@ -97,11 +139,17 @@
     "translation2": "with regard to",
     "deckId": "default",
     "createdAt": "2026-06-22",
-    "reviewStage": 0,
     "nextReview": "2026-06-22",
     "reviewHistory": [],
     "rot": 0,
-    "tags": []
+    "tags": [],
+    "state": "new",
+    "interval": 0,
+    "ease": 2.5,
+    "due": "2026-06-22",
+    "lapses": 0,
+    "reps": 0,
+    "lastReview": null
   },
   {
     "id": "mqpb6dxazwvi",
@@ -110,11 +158,17 @@
     "translation2": "find out",
     "deckId": "default",
     "createdAt": "2026-06-22",
-    "reviewStage": 0,
     "nextReview": "2026-06-22",
     "reviewHistory": [],
     "rot": 0,
-    "tags": []
+    "tags": [],
+    "state": "new",
+    "interval": 0,
+    "ease": 2.5,
+    "due": "2026-06-22",
+    "lapses": 0,
+    "reps": 0,
+    "lastReview": null
   },
   {
     "id": "mqpg51bx0854",
@@ -123,11 +177,17 @@
     "translation2": "expatriate",
     "deckId": "default",
     "createdAt": "2026-06-22",
-    "reviewStage": 0,
     "nextReview": "2026-06-22",
     "reviewHistory": [],
     "rot": 0,
-    "tags": []
+    "tags": [],
+    "state": "new",
+    "interval": 0,
+    "ease": 2.5,
+    "due": "2026-06-22",
+    "lapses": 0,
+    "reps": 0,
+    "lastReview": null
   },
   {
     "id": "mqpgb0opwkze",
@@ -136,10 +196,16 @@
     "translation2": "improvises",
     "deckId": "default",
     "createdAt": "2026-06-22",
-    "reviewStage": 0,
     "nextReview": "2026-06-22",
     "reviewHistory": [],
     "rot": 0,
-    "tags": []
+    "tags": [],
+    "state": "new",
+    "interval": 0,
+    "ease": 2.5,
+    "due": "2026-06-22",
+    "lapses": 0,
+    "reps": 0,
+    "lastReview": null
   }
 ]

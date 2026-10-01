@@ -6,11 +6,17 @@
     "translation2": "It's supposed to be a celebration, a moment of shared happiness.",
     "deckId": "default",
     "createdAt": "2026-05-07",
-    "reviewStage": 0,
     "nextReview": "2026-05-07",
     "reviewHistory": [],
     "rot": 0,
-    "tags": []
+    "tags": [],
+    "state": "new",
+    "interval": 0,
+    "ease": 2.5,
+    "due": "2026-05-07",
+    "lapses": 0,
+    "reps": 0,
+    "lastReview": null
   },
   {
     "id": "mov7lcdlzkcj",
@@ -19,11 +25,17 @@
     "translation2": "Sung by almost 80,000 people, it remains engraved forever.",
     "deckId": "default",
     "createdAt": "2026-05-07",
-    "reviewStage": 0,
     "nextReview": "2026-05-07",
     "reviewHistory": [],
     "rot": 0,
-    "tags": []
+    "tags": [],
+    "state": "new",
+    "interval": 0,
+    "ease": 2.5,
+    "due": "2026-05-07",
+    "lapses": 0,
+    "reps": 0,
+    "lastReview": null
   },
   {
     "id": "movctqgo42fm",
@@ -32,11 +44,17 @@
     "translation2": "He was very young, with a very childish face.",
     "deckId": "default",
     "createdAt": "2026-05-07",
-    "reviewStage": 0,
     "nextReview": "2026-05-07",
     "reviewHistory": [],
     "rot": 0,
-    "tags": []
+    "tags": [],
+    "state": "new",
+    "interval": 0,
+    "ease": 2.5,
+    "due": "2026-05-07",
+    "lapses": 0,
+    "reps": 0,
+    "lastReview": null
   },
   {
     "id": "movcuahz8nqy",
@@ -45,11 +63,17 @@
     "translation2": "At that point, he slipped into the crowd.",
     "deckId": "default",
     "createdAt": "2026-05-07",
-    "reviewStage": 0,
     "nextReview": "2026-05-07",
     "reviewHistory": [],
     "rot": 0,
-    "tags": []
+    "tags": [],
+    "state": "new",
+    "interval": 0,
+    "ease": 2.5,
+    "due": "2026-05-07",
+    "lapses": 0,
+    "reps": 0,
+    "lastReview": null
   },
   {
     "id": "movd8s38rv5s",
@@ -58,11 +82,17 @@
     "translation2": "We go around the surveillance cameras.",
     "deckId": "default",
     "createdAt": "2026-05-07",
-    "reviewStage": 0,
     "nextReview": "2026-05-07",
     "reviewHistory": [],
     "rot": 0,
-    "tags": []
+    "tags": [],
+    "state": "new",
+    "interval": 0,
+    "ease": 2.5,
+    "due": "2026-05-07",
+    "lapses": 0,
+    "reps": 0,
+    "lastReview": null
   },
   {
     "id": "movd9ntxwno8",
@@ -71,11 +101,17 @@
     "translation2": "The explosion did not take place inside the stadium, but just behind the gates, near the bars that I had seen a few hours before.",
     "deckId": "default",
     "createdAt": "2026-05-07",
-    "reviewStage": 0,
     "nextReview": "2026-05-07",
     "reviewHistory": [],
     "rot": 0,
-    "tags": []
+    "tags": [],
+    "state": "new",
+    "interval": 0,
+    "ease": 2.5,
+    "due": "2026-05-07",
+    "lapses": 0,
+    "reps": 0,
+    "lastReview": null
   },
   {
     "id": "movdm5ymjntx",
@@ -84,11 +120,17 @@
     "translation2": "And I shout: \"God! Not my son!\"",
     "deckId": "default",
     "createdAt": "2026-05-07",
-    "reviewStage": 0,
     "nextReview": "2026-05-07",
     "reviewHistory": [],
     "rot": 0,
-    "tags": []
+    "tags": [],
+    "state": "new",
+    "interval": 0,
+    "ease": 2.5,
+    "due": "2026-05-07",
+    "lapses": 0,
+    "reps": 0,
+    "lastReview": null
   },
   {
     "id": "movdni1h831u",
@@ -97,11 +139,17 @@
     "translation2": "I go back to where the suicide bomber exploded, to see if there is any debris or a piece of clothing or a fabric that can give me a little faith, to know if my son is alive.",
     "deckId": "default",
     "createdAt": "2026-05-07",
-    "reviewStage": 0,
     "nextReview": "2026-05-07",
     "reviewHistory": [],
     "rot": 0,
-    "tags": []
+    "tags": [],
+    "state": "new",
+    "interval": 0,
+    "ease": 2.5,
+    "due": "2026-05-07",
+    "lapses": 0,
+    "reps": 0,
+    "lastReview": null
   },
   {
     "id": "movdpp7lnp0x",
@@ -110,11 +158,17 @@
     "translation2": "We don't have anyone who is facing the disaster.",
     "deckId": "default",
     "createdAt": "2026-05-07",
-    "reviewStage": 0,
     "nextReview": "2026-05-07",
     "reviewHistory": [],
     "rot": 0,
-    "tags": []
+    "tags": [],
+    "state": "new",
+    "interval": 0,
+    "ease": 2.5,
+    "due": "2026-05-07",
+    "lapses": 0,
+    "reps": 0,
+    "lastReview": null
   },
   {
     "id": "movdtfcqt391",
@@ -123,11 +177,17 @@
     "translation2": "We cannot stand idly by.",
     "deckId": "default",
     "createdAt": "2026-05-07",
-    "reviewStage": 0,
     "nextReview": "2026-05-07",
     "reviewHistory": [],
     "rot": 0,
-    "tags": []
+    "tags": [],
+    "state": "new",
+    "interval": 0,
+    "ease": 2.5,
+    "due": "2026-05-07",
+    "lapses": 0,
+    "reps": 0,
+    "lastReview": null
   },
   {
     "id": "movduohfif41",
@@ -136,11 +196,17 @@
     "translation2": "I open my arms, but with fear, fear, my arms lower and he takes me in his little arms.",
     "deckId": "default",
     "createdAt": "2026-05-07",
-    "reviewStage": 0,
     "nextReview": "2026-05-07",
     "reviewHistory": [],
     "rot": 0,
-    "tags": []
+    "tags": [],
+    "state": "new",
+    "interval": 0,
+    "ease": 2.5,
+    "due": "2026-05-07",
+    "lapses": 0,
+    "reps": 0,
+    "lastReview": null
   },
   {
     "id": "movdvvqdldap",
@@ -149,11 +215,17 @@
     "translation2": "And I say to myself: \"It's not possible, I wasn't able to protect my kid.\"",
     "deckId": "default",
     "createdAt": "2026-05-07",
-    "reviewStage": 0,
     "nextReview": "2026-05-07",
     "reviewHistory": [],
     "rot": 0,
-    "tags": []
+    "tags": [],
+    "state": "new",
+    "interval": 0,
+    "ease": 2.5,
+    "due": "2026-05-07",
+    "lapses": 0,
+    "reps": 0,
+    "lastReview": null
   },
   {
     "id": "movdymofpb0p",
@@ -162,11 +234,17 @@
     "translation2": "there is the body of the second one which has just been blown up. There I go from a few seconds of astonishment to the absolute certainty that I am facing two suicide bombers.",
     "deckId": "default",
     "createdAt": "2026-05-07",
-    "reviewStage": 0,
     "nextReview": "2026-05-07",
     "reviewHistory": [],
     "rot": 0,
-    "tags": []
+    "tags": [],
+    "state": "new",
+    "interval": 0,
+    "ease": 2.5,
+    "due": "2026-05-07",
+    "lapses": 0,
+    "reps": 0,
+    "lastReview": null
   },
   {
     "id": "move44oe5362",
@@ -175,11 +253,17 @@
     "translation2": "The head of the protection service of the President of the Republic comes near me, very discreetly, and whispers in my ear that there is an injured person and perhaps a dead person.",
     "deckId": "default",
     "createdAt": "2026-05-07",
-    "reviewStage": 0,
     "nextReview": "2026-05-07",
     "reviewHistory": [],
     "rot": 0,
-    "tags": []
+    "tags": [],
+    "state": "new",
+    "interval": 0,
+    "ease": 2.5,
+    "due": "2026-05-07",
+    "lapses": 0,
+    "reps": 0,
+    "lastReview": null
   },
   {
     "id": "move6o3eulul",
@@ -188,11 +272,17 @@
     "translation2": "I make sure to leave discreetly, at which point I go to the security headquarters, which is on the top floor of the Stadium.",
     "deckId": "default",
     "createdAt": "2026-05-07",
-    "reviewStage": 0,
     "nextReview": "2026-05-07",
     "reviewHistory": [],
     "rot": 0,
-    "tags": []
+    "tags": [],
+    "state": "new",
+    "interval": 0,
+    "ease": 2.5,
+    "due": "2026-05-07",
+    "lapses": 0,
+    "reps": 0,
+    "lastReview": null
   },
   {
     "id": "move8lbscb1b",
@@ -201,11 +291,17 @@
     "translation2": "I expected to see him surrounded by advisors in the end. He has no advisors other than us.",
     "deckId": "default",
     "createdAt": "2026-05-07",
-    "reviewStage": 0,
     "nextReview": "2026-05-07",
     "reviewHistory": [],
     "rot": 0,
-    "tags": []
+    "tags": [],
+    "state": "new",
+    "interval": 0,
+    "ease": 2.5,
+    "due": "2026-05-07",
+    "lapses": 0,
+    "reps": 0,
+    "lastReview": null
   },
   {
     "id": "movea84zdeuz",
@@ -214,11 +310,17 @@
     "translation2": "And I have to make a decision. Do I request that the game be interrupted? With the risk that the public will rush out of the stadium.",
     "deckId": "default",
     "createdAt": "2026-05-07",
-    "reviewStage": 0,
     "nextReview": "2026-05-07",
     "reviewHistory": [],
     "rot": 0,
-    "tags": []
+    "tags": [],
+    "state": "new",
+    "interval": 0,
+    "ease": 2.5,
+    "due": "2026-05-07",
+    "lapses": 0,
+    "reps": 0,
+    "lastReview": null
   },
   {
     "id": "moveasl8vuqy",
@@ -227,11 +329,17 @@
     "translation2": "We have to keep people inside the stadium, and continue as if nothing had happened.",
     "deckId": "default",
     "createdAt": "2026-05-07",
-    "reviewStage": 0,
     "nextReview": "2026-05-07",
     "reviewHistory": [],
     "rot": 0,
-    "tags": []
+    "tags": [],
+    "state": "new",
+    "interval": 0,
+    "ease": 2.5,
+    "due": "2026-05-07",
+    "lapses": 0,
+    "reps": 0,
+    "lastReview": null
   },
   {
     "id": "movec5rqk5uq",
@@ -240,11 +348,17 @@
     "translation2": "What I say to him is what I could say to all the spectators: \"Stay in the stadium. You are safe there.\"",
     "deckId": "default",
     "createdAt": "2026-05-07",
-    "reviewStage": 0,
     "nextReview": "2026-05-07",
     "reviewHistory": [],
     "rot": 0,
-    "tags": []
+    "tags": [],
+    "state": "new",
+    "interval": 0,
+    "ease": 2.5,
+    "due": "2026-05-07",
+    "lapses": 0,
+    "reps": 0,
+    "lastReview": null
   },
   {
     "id": "movej9lxyjvh",
@@ -253,11 +367,17 @@
     "translation2": "This was what we feared. A commando, divided into several teams probably coordinated to organize horror and fear in the capital.",
     "deckId": "default",
     "createdAt": "2026-05-07",
-    "reviewStage": 0,
     "nextReview": "2026-05-07",
     "reviewHistory": [],
     "rot": 0,
-    "tags": []
+    "tags": [],
+    "state": "new",
+    "interval": 0,
+    "ease": 2.5,
+    "due": "2026-05-07",
+    "lapses": 0,
+    "reps": 0,
+    "lastReview": null
   },
   {
     "id": "movek411dt05",
@@ -266,11 +386,17 @@
     "translation2": "But it was the only moment of the evening when I was able to think.",
     "deckId": "default",
     "createdAt": "2026-05-07",
-    "reviewStage": 0,
     "nextReview": "2026-05-07",
     "reviewHistory": [],
     "rot": 0,
-    "tags": []
+    "tags": [],
+    "state": "new",
+    "interval": 0,
+    "ease": 2.5,
+    "due": "2026-05-07",
+    "lapses": 0,
+    "reps": 0,
+    "lastReview": null
   },
   {
     "id": "movekr1aia70",
@@ -279,11 +405,17 @@
     "translation2": "Afterwards, it was just a succession of questions and orders to be given.",
     "deckId": "default",
     "createdAt": "2026-05-07",
-    "reviewStage": 0,
     "nextReview": "2026-05-07",
     "reviewHistory": [],
     "rot": 0,
-    "tags": []
+    "tags": [],
+    "state": "new",
+    "interval": 0,
+    "ease": 2.5,
+    "due": "2026-05-07",
+    "lapses": 0,
+    "reps": 0,
+    "lastReview": null
   },
   {
     "id": "movenbnykaqk",
@@ -292,10 +424,16 @@
     "translation2": "Unfortunately there is no place on the terrace, because the bar was full of people.",
     "deckId": "default",
     "createdAt": "2026-05-07",
-    "reviewStage": 0,
     "nextReview": "2026-05-07",
     "reviewHistory": [],
     "rot": 0,
-    "tags": []
+    "tags": [],
+    "state": "new",
+    "interval": 0,
+    "ease": 2.5,
+    "due": "2026-05-07",
+    "lapses": 0,
+    "reps": 0,
+    "lastReview": null
   }
 ]

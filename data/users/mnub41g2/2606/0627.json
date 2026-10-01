@@ -6,11 +6,17 @@
     "translation2": "win a prize",
     "deckId": "default",
     "createdAt": "2026-06-27",
-    "reviewStage": 0,
     "nextReview": "2026-06-27",
     "reviewHistory": [],
     "rot": 0,
-    "tags": []
+    "tags": [],
+    "state": "new",
+    "interval": 0,
+    "ease": 2.5,
+    "due": "2026-06-27",
+    "lapses": 0,
+    "reps": 0,
+    "lastReview": null
   },
   {
     "id": "mqw45aukd7ar",
@@ -19,11 +25,17 @@
     "translation2": "community life",
     "deckId": "default",
     "createdAt": "2026-06-27",
-    "reviewStage": 0,
     "nextReview": "2026-06-27",
     "reviewHistory": [],
     "rot": 0,
-    "tags": []
+    "tags": [],
+    "state": "new",
+    "interval": 0,
+    "ease": 2.5,
+    "due": "2026-06-27",
+    "lapses": 0,
+    "reps": 0,
+    "lastReview": null
   },
   {
     "id": "mqw45kssqrzd",
@@ -32,11 +44,17 @@
     "translation2": "continue",
     "deckId": "default",
     "createdAt": "2026-06-27",
-    "reviewStage": 0,
     "nextReview": "2026-06-27",
     "reviewHistory": [],
     "rot": 0,
-    "tags": []
+    "tags": [],
+    "state": "new",
+    "interval": 0,
+    "ease": 2.5,
+    "due": "2026-06-27",
+    "lapses": 0,
+    "reps": 0,
+    "lastReview": null
   },
   {
     "id": "mqw460cp898b",
@@ -45,10 +63,16 @@
     "translation2": "operate",
     "deckId": "default",
     "createdAt": "2026-06-27",
-    "reviewStage": 0,
     "nextReview": "2026-06-27",
     "reviewHistory": [],
     "rot": 0,
-    "tags": []
+    "tags": [],
+    "state": "new",
+    "interval": 0,
+    "ease": 2.5,
+    "due": "2026-06-27",
+    "lapses": 0,
+    "reps": 0,
+    "lastReview": null
   }
 ]

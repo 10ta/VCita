@@ -6,11 +6,17 @@
     "translation2": "questionable",
     "deckId": "default",
     "createdAt": "2026-06-25",
-    "reviewStage": 0,
     "nextReview": "2026-06-25",
     "reviewHistory": [],
     "rot": 0,
-    "tags": []
+    "tags": [],
+    "state": "new",
+    "interval": 0,
+    "ease": 2.5,
+    "due": "2026-06-25",
+    "lapses": 0,
+    "reps": 0,
+    "lastReview": null
   },
   {
     "id": "mqtaoodpji0f",
@@ -19,11 +25,17 @@
     "translation2": "aquatic species",
     "deckId": "default",
     "createdAt": "2026-06-25",
-    "reviewStage": 0,
     "nextReview": "2026-06-25",
     "reviewHistory": [],
     "rot": 0,
-    "tags": []
+    "tags": [],
+    "state": "new",
+    "interval": 0,
+    "ease": 2.5,
+    "due": "2026-06-25",
+    "lapses": 0,
+    "reps": 0,
+    "lastReview": null
   },
   {
     "id": "mqtb9y7tscyo",
@@ -32,11 +44,17 @@
     "translation2": "distribution",
     "deckId": "default",
     "createdAt": "2026-06-25",
-    "reviewStage": 0,
     "nextReview": "2026-06-25",
     "reviewHistory": [],
     "rot": 0,
-    "tags": []
+    "tags": [],
+    "state": "new",
+    "interval": 0,
+    "ease": 2.5,
+    "due": "2026-06-25",
+    "lapses": 0,
+    "reps": 0,
+    "lastReview": null
   },
   {
     "id": "mqtcfyf40o6u",
@@ -45,11 +63,17 @@
     "translation2": "notion",
     "deckId": "default",
     "createdAt": "2026-06-25",
-    "reviewStage": 0,
     "nextReview": "2026-06-25",
     "reviewHistory": [],
     "rot": 0,
-    "tags": []
+    "tags": [],
+    "state": "new",
+    "interval": 0,
+    "ease": 2.5,
+    "due": "2026-06-25",
+    "lapses": 0,
+    "reps": 0,
+    "lastReview": null
   },
   {
     "id": "mqtkj42w03xn",
@@ -58,11 +82,17 @@
     "translation2": "profitability",
     "deckId": "default",
     "createdAt": "2026-06-25",
-    "reviewStage": 0,
     "nextReview": "2026-06-25",
     "reviewHistory": [],
     "rot": 0,
-    "tags": []
+    "tags": [],
+    "state": "new",
+    "interval": 0,
+    "ease": 2.5,
+    "due": "2026-06-25",
+    "lapses": 0,
+    "reps": 0,
+    "lastReview": null
   },
   {
     "id": "mqtkjbny95zl",
@@ -71,10 +101,16 @@
     "translation2": "authentic",
     "deckId": "default",
     "createdAt": "2026-06-25",
-    "reviewStage": 0,
     "nextReview": "2026-06-25",
     "reviewHistory": [],
     "rot": 0,
-    "tags": []
+    "tags": [],
+    "state": "new",
+    "interval": 0,
+    "ease": 2.5,
+    "due": "2026-06-25",
+    "lapses": 0,
+    "reps": 0,
+    "lastReview": null
   }
 ]

@@ -6,11 +6,17 @@
     "translation2": "gather",
     "deckId": "default",
     "createdAt": "2026-06-26",
-    "reviewStage": 0,
     "nextReview": "2026-06-26",
     "reviewHistory": [],
     "rot": 0,
-    "tags": []
+    "tags": [],
+    "state": "new",
+    "interval": 0,
+    "ease": 2.5,
+    "due": "2026-06-26",
+    "lapses": 0,
+    "reps": 0,
+    "lastReview": null
   },
   {
     "id": "mqunbxow8slb",
@@ -19,11 +25,17 @@
     "translation2": "whistle",
     "deckId": "default",
     "createdAt": "2026-06-26",
-    "reviewStage": 0,
     "nextReview": "2026-06-26",
     "reviewHistory": [],
     "rot": 0,
-    "tags": []
+    "tags": [],
+    "state": "new",
+    "interval": 0,
+    "ease": 2.5,
+    "due": "2026-06-26",
+    "lapses": 0,
+    "reps": 0,
+    "lastReview": null
   },
   {
     "id": "mquncaqqwk2g",
@@ -32,11 +44,17 @@
     "translation2": "session",
     "deckId": "default",
     "createdAt": "2026-06-26",
-    "reviewStage": 0,
     "nextReview": "2026-06-26",
     "reviewHistory": [],
     "rot": 0,
-    "tags": []
+    "tags": [],
+    "state": "new",
+    "interval": 0,
+    "ease": 2.5,
+    "due": "2026-06-26",
+    "lapses": 0,
+    "reps": 0,
+    "lastReview": null
   },
   {
     "id": "mquns29pbi6y",
@@ -45,10 +63,16 @@
     "translation2": "mosquito net",
     "deckId": "default",
     "createdAt": "2026-06-26",
-    "reviewStage": 0,
     "nextReview": "2026-06-26",
     "reviewHistory": [],
     "rot": 0,
-    "tags": []
+    "tags": [],
+    "state": "new",
+    "interval": 0,
+    "ease": 2.5,
+    "due": "2026-06-26",
+    "lapses": 0,
+    "reps": 0,
+    "lastReview": null
   }
 ]

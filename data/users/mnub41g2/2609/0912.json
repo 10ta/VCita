@@ -6,11 +6,17 @@
     "translation2": "No matter how hard I try, I can't do it.",
     "deckId": "default",
     "createdAt": "2026-09-12",
-    "reviewStage": 0,
     "nextReview": "2026-09-12",
     "reviewHistory": [],
     "rot": 0,
-    "tags": []
+    "tags": [],
+    "state": "new",
+    "interval": 0,
+    "ease": 2.5,
+    "due": "2026-09-12",
+    "lapses": 0,
+    "reps": 0,
+    "lastReview": null
   },
   {
     "id": "mtyg4f0cfn11",
@@ -19,11 +25,17 @@
     "translation2": "It's hard for me to get out of bad moods",
     "deckId": "default",
     "createdAt": "2026-09-12",
-    "reviewStage": 0,
     "nextReview": "2026-09-12",
     "reviewHistory": [],
     "rot": 1,
-    "tags": []
+    "tags": [],
+    "state": "new",
+    "interval": 0,
+    "ease": 2.5,
+    "due": "2026-09-12",
+    "lapses": 0,
+    "reps": 0,
+    "lastReview": null
   },
   {
     "id": "mtyhpe91aztb",
@@ -32,10 +44,16 @@
     "translation2": "stereotype",
     "deckId": "default",
     "createdAt": "2026-09-12",
-    "reviewStage": 0,
     "nextReview": "2026-09-12",
     "reviewHistory": [],
     "rot": 0,
-    "tags": []
+    "tags": [],
+    "state": "new",
+    "interval": 0,
+    "ease": 2.5,
+    "due": "2026-09-12",
+    "lapses": 0,
+    "reps": 0,
+    "lastReview": null
   }
 ]

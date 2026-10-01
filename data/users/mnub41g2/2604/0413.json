@@ -6,34 +6,45 @@
     "translation2": "a terrifying affair",
     "deckId": "default",
     "createdAt": "2026-04-13",
-    "reviewStage": 1,
-    "nextReview": "2026-04-30",
+    "nextReview": "2026-05-17",
     "reviewHistory": [
       {
         "date": "2026-04-13",
-        "remembered": false
+        "remembered": false,
+        "rating": 1
       },
       {
         "date": "2026-04-14",
-        "remembered": false
+        "remembered": false,
+        "rating": 1
       },
       {
         "date": "2026-04-16",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       },
       {
         "date": "2026-04-20",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       },
       {
         "date": "2026-04-28",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       }
     ],
     "rot": 1,
     "tags": [
       "Police et Justice"
-    ]
+    ],
+    "state": "review",
+    "interval": 19,
+    "ease": 2.3,
+    "due": "2026-05-17",
+    "lapses": 1,
+    "reps": 5,
+    "lastReview": "2026-04-28"
   },
   {
     "id": "mnws4z8crdpm",
@@ -42,34 +53,51 @@
     "translation2": "?",
     "deckId": "default",
     "createdAt": "2026-04-13",
-    "reviewStage": 1,
-    "nextReview": "2026-05-02",
+    "nextReview": "2027-03-02",
     "reviewHistory": [
       {
         "date": "2026-04-13",
-        "remembered": false
+        "remembered": false,
+        "rating": 1
       },
       {
         "date": "2026-04-14",
-        "remembered": false
+        "remembered": false,
+        "rating": 1
       },
       {
         "date": "2026-04-16",
-        "remembered": false
+        "remembered": false,
+        "rating": 1
       },
       {
         "date": "2026-04-20",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       },
       {
         "date": "2026-04-28",
-        "remembered": false
+        "remembered": false,
+        "rating": 1
+      },
+      {
+        "date": "2026-10-01",
+        "rating": 3,
+        "remembered": true,
+        "interval": 152
       }
     ],
     "rot": 1,
     "tags": [
       "Police et Justice"
-    ]
+    ],
+    "state": "review",
+    "interval": 152,
+    "ease": 1.9,
+    "due": "2027-03-02",
+    "lapses": 3,
+    "reps": 6,
+    "lastReview": "2026-10-01"
   },
   {
     "id": "mnws6itv23ny",
@@ -78,34 +106,45 @@
     "translation2": "gang rape on someone",
     "deckId": "default",
     "createdAt": "2026-04-13",
-    "reviewStage": 4,
-    "nextReview": "2026-05-14",
+    "nextReview": "2026-06-14",
     "reviewHistory": [
       {
         "date": "2026-04-13",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       },
       {
         "date": "2026-04-14",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       },
       {
         "date": "2026-04-16",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       },
       {
         "date": "2026-04-20",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       },
       {
         "date": "2026-04-28",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       }
     ],
     "rot": 1,
     "tags": [
       "Police et Justice"
-    ]
+    ],
+    "state": "review",
+    "interval": 47,
+    "ease": 2.5,
+    "due": "2026-06-14",
+    "lapses": 0,
+    "reps": 5,
+    "lastReview": "2026-04-28"
   },
   {
     "id": "mnwsg61bw21h",
@@ -114,32 +153,43 @@
     "translation2": "?",
     "deckId": "default",
     "createdAt": "2026-04-13",
-    "reviewStage": 3,
-    "nextReview": "2026-05-06",
+    "nextReview": "2026-05-15",
     "reviewHistory": [
       {
         "date": "2026-04-13",
-        "remembered": false
+        "remembered": false,
+        "rating": 1
       },
       {
         "date": "2026-04-14",
-        "remembered": false
+        "remembered": false,
+        "rating": 1
       },
       {
         "date": "2026-04-16",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       },
       {
         "date": "2026-04-20",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       },
       {
         "date": "2026-04-28",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       }
     ],
     "rot": 1,
-    "tags": []
+    "tags": [],
+    "state": "review",
+    "interval": 17,
+    "ease": 2.3,
+    "due": "2026-05-15",
+    "lapses": 1,
+    "reps": 5,
+    "lastReview": "2026-04-28"
   },
   {
     "id": "mnwsm39zgvy6",
@@ -148,34 +198,45 @@
     "translation2": "an act of incrimination that is beyond comprehension",
     "deckId": "default",
     "createdAt": "2026-04-13",
-    "reviewStage": 0,
-    "nextReview": "2026-05-01",
+    "nextReview": "2026-05-08",
     "reviewHistory": [
       {
         "date": "2026-04-13",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       },
       {
         "date": "2026-04-14",
-        "remembered": false
+        "remembered": false,
+        "rating": 1
       },
       {
         "date": "2026-04-16",
-        "remembered": false
+        "remembered": false,
+        "rating": 1
       },
       {
         "date": "2026-04-20",
-        "remembered": false
+        "remembered": false,
+        "rating": 1
       },
       {
         "date": "2026-04-28",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       }
     ],
     "rot": 1,
     "tags": [
       "Police et Justice"
-    ]
+    ],
+    "state": "review",
+    "interval": 10,
+    "ease": 1.9,
+    "due": "2026-05-08",
+    "lapses": 3,
+    "reps": 5,
+    "lastReview": "2026-04-28"
   },
   {
     "id": "mnwsp2v1x9iw",
@@ -184,34 +245,45 @@
     "translation2": "tribunal vs court",
     "deckId": "default",
     "createdAt": "2026-04-13",
-    "reviewStage": 4,
-    "nextReview": "2026-05-14",
+    "nextReview": "2026-06-14",
     "reviewHistory": [
       {
         "date": "2026-04-13",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       },
       {
         "date": "2026-04-14",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       },
       {
         "date": "2026-04-16",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       },
       {
         "date": "2026-04-20",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       },
       {
         "date": "2026-04-28",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       }
     ],
     "rot": 1,
     "tags": [
       "Police et Justice"
-    ]
+    ],
+    "state": "review",
+    "interval": 47,
+    "ease": 2.5,
+    "due": "2026-06-14",
+    "lapses": 0,
+    "reps": 5,
+    "lastReview": "2026-04-28"
   },
   {
     "id": "mnwt0cjfuxwf",
@@ -220,32 +292,43 @@
     "translation2": "They will say in their words what they experienced.",
     "deckId": "default",
     "createdAt": "2026-04-13",
-    "reviewStage": 4,
-    "nextReview": "2026-05-14",
+    "nextReview": "2026-06-18",
     "reviewHistory": [
       {
         "date": "2026-04-13",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       },
       {
         "date": "2026-04-14",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       },
       {
         "date": "2026-04-16",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       },
       {
         "date": "2026-04-20",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       },
       {
         "date": "2026-04-28",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       }
     ],
     "rot": 1,
-    "tags": []
+    "tags": [],
+    "state": "review",
+    "interval": 51,
+    "ease": 2.5,
+    "due": "2026-06-18",
+    "lapses": 0,
+    "reps": 5,
+    "lastReview": "2026-04-28"
   },
   {
     "id": "mnwt1opy9hu3",
@@ -254,32 +337,43 @@
     "translation2": "children do not contradict themselves.",
     "deckId": "default",
     "createdAt": "2026-04-13",
-    "reviewStage": 4,
-    "nextReview": "2026-05-14",
+    "nextReview": "2026-06-16",
     "reviewHistory": [
       {
         "date": "2026-04-13",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       },
       {
         "date": "2026-04-14",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       },
       {
         "date": "2026-04-16",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       },
       {
         "date": "2026-04-20",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       },
       {
         "date": "2026-04-28",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       }
     ],
     "rot": 1,
-    "tags": []
+    "tags": [],
+    "state": "review",
+    "interval": 49,
+    "ease": 2.5,
+    "due": "2026-06-16",
+    "lapses": 0,
+    "reps": 5,
+    "lastReview": "2026-04-28"
   },
   {
     "id": "mnwtvpjk8z5d",
@@ -288,32 +382,43 @@
     "translation2": "nonsense",
     "deckId": "default",
     "createdAt": "2026-04-13",
-    "reviewStage": 3,
-    "nextReview": "2026-05-06",
+    "nextReview": "2026-05-15",
     "reviewHistory": [
       {
         "date": "2026-04-13",
-        "remembered": false
+        "remembered": false,
+        "rating": 1
       },
       {
         "date": "2026-04-14",
-        "remembered": false
+        "remembered": false,
+        "rating": 1
       },
       {
         "date": "2026-04-16",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       },
       {
         "date": "2026-04-20",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       },
       {
         "date": "2026-04-28",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       }
     ],
     "rot": 1,
-    "tags": []
+    "tags": [],
+    "state": "review",
+    "interval": 17,
+    "ease": 2.3,
+    "due": "2026-05-15",
+    "lapses": 1,
+    "reps": 5,
+    "lastReview": "2026-04-28"
   },
   {
     "id": "mnwu0f1bj6pm",
@@ -322,34 +427,45 @@
     "translation2": "the designated person responsible for the legal fiasco in Outreau.",
     "deckId": "default",
     "createdAt": "2026-04-13",
-    "reviewStage": 4,
-    "nextReview": "2026-05-14",
+    "nextReview": "2026-06-14",
     "reviewHistory": [
       {
         "date": "2026-04-13",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       },
       {
         "date": "2026-04-14",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       },
       {
         "date": "2026-04-16",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       },
       {
         "date": "2026-04-20",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       },
       {
         "date": "2026-04-28",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       }
     ],
     "rot": 1,
     "tags": [
       "Police et Justice"
-    ]
+    ],
+    "state": "review",
+    "interval": 47,
+    "ease": 2.5,
+    "due": "2026-06-14",
+    "lapses": 0,
+    "reps": 5,
+    "lastReview": "2026-04-28"
   },
   {
     "id": "mnwu71eo2r9f",
@@ -358,32 +474,43 @@
     "translation2": "without any bias of any kind.",
     "deckId": "default",
     "createdAt": "2026-04-13",
-    "reviewStage": 5,
-    "nextReview": "2026-05-31",
+    "nextReview": "2026-05-13",
     "reviewHistory": [
       {
         "date": "2026-04-13",
-        "remembered": false
+        "remembered": false,
+        "rating": 1
       },
       {
         "date": "2026-04-14",
-        "remembered": false
+        "remembered": false,
+        "rating": 1
       },
       {
         "date": "2026-04-16",
-        "remembered": false
+        "remembered": false,
+        "rating": 1
       },
       {
         "date": "2026-04-20",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       },
       {
         "date": "2026-04-28",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       }
     ],
     "rot": 1,
-    "tags": []
+    "tags": [],
+    "state": "review",
+    "interval": 15,
+    "ease": 2.1,
+    "due": "2026-05-13",
+    "lapses": 2,
+    "reps": 5,
+    "lastReview": "2026-04-28"
   },
   {
     "id": "mnwu91226naa",
@@ -392,31 +519,42 @@
     "translation2": "it’s something with serious consequences.",
     "deckId": "default",
     "createdAt": "2026-04-13",
-    "reviewStage": 3,
-    "nextReview": "2026-05-06",
+    "nextReview": "2026-05-17",
     "reviewHistory": [
       {
         "date": "2026-04-13",
-        "remembered": false
+        "remembered": false,
+        "rating": 1
       },
       {
         "date": "2026-04-14",
-        "remembered": false
+        "remembered": false,
+        "rating": 1
       },
       {
         "date": "2026-04-16",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       },
       {
         "date": "2026-04-20",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       },
       {
         "date": "2026-04-28",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       }
     ],
     "rot": 1,
-    "tags": []
+    "tags": [],
+    "state": "review",
+    "interval": 19,
+    "ease": 2.3,
+    "due": "2026-05-17",
+    "lapses": 1,
+    "reps": 5,
+    "lastReview": "2026-04-28"
   }
 ]

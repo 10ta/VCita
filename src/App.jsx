@@ -3,7 +3,6 @@ import { useState, useEffect, useRef, useMemo } from "react";
 const INIT_SRC = __SOURCE_LANG__;
 const INIT_T1 = __TARGET_LANG_1__;
 const INIT_T2 = __TARGET_LANG_2__;
-const EBB = __EBBINGHAUS_DAYS__;
 const INIT_SHOW_SRC = __SHOW_SOURCE__;
 const INIT_SHOW_T1 = __SHOW_TARGET_1__;
 const INIT_SHOW_T2 = __SHOW_TARGET_2__;
@@ -12,6 +11,21 @@ const DEFAULT_PAGE_SIZE = __DEFAULT_PAGE_SIZE__;
 const INIT_AUTO_ADD = __AUTO_PLAY_ADD__;
 const INIT_AUTO_REVIEW = __AUTO_PLAY_REVIEW__;
 
+// ─── 复习调度配置（在 vite.config.js 中修改；旧版配置没有这一项时用默认值）───
+const SRS = {
+  newPerDay: 20,
+  reviewsPerDay: 200,
+  newCardPosition: "mix",   // mix | first | last
+  reviewOrder: "due",       // due | random
+  relearnInSession: true,
+  startingEase: 2.5,
+  easyBonus: 1.3,
+  hardFactor: 1.2,
+  maxInterval: 3650,
+  ...(typeof __SRS_CONFIG__ !== "undefined" ? __SRS_CONFIG__ : {}),
+};
+const MIN_EASE = 1.3;
+
 // ─── 性能参数 ───
 const WRITE_CONCURRENCY = 8;           // 导入、删除用户时的并发请求数
 const SYNC_CHUNK = 100;                // 一次 sync 请求最多携带的日文件数
@@ -19,6 +33,7 @@ const SAVE_DEBOUNCE_MS = 400;          // 修改后合并落盘的等待时间
 const SAVE_MAX_WAIT_MS = 2000;         // 连续修改时最长等待，避免一直不落盘
 const REMOTE_REFRESH_MIN_GAP_MS = 30000; // 保存后发现远端有改动时，自动刷新的最小间隔
 const TRANSLATE_TIMEOUT_MS = 8000;
+const UNDO_LIMIT = 20;
 
 const LANGS = [
   { code: "zh-CN", label: "中文" }, { code: "ja", label: "日本語" }, { code: "ko", label: "한국어" },
@@ -30,32 +45,118 @@ const LN = Object.fromEntries(LANGS.map(l => [l.code, l.label]));
 
 const todayStr = () => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`; };
 const addDays = (ds, n) => { const d = new Date(ds + "T00:00:00"); d.setDate(d.getDate() + n); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`; };
+const daysBetween = (a, b) => Math.round((new Date(b + "T00:00:00") - new Date(a + "T00:00:00")) / 86400000);
 const fmtShort = ds => ds.slice(2).replace(/-/g, "");
 const dateToDayPath = (userId, ds) => { const [y, m, d] = ds.split("-"); return `users/${userId}/${y.slice(2)}${m}/${m}${d}.json`; };
 const userMetaPath = uid => `users/${uid}/meta.json`;
-const dayDiff = (dateStr) => { const t = new Date(todayStr() + "T00:00:00"), d = new Date(dateStr + "T00:00:00"); return Math.round((d - t) / 86400000); };
-
-// 同一个 createdAt 的复习日程只算一次
-const schedCache = new Map();
-const getScheduleDates = card => {
-  let s = schedCache.get(card.createdAt);
-  if (!s) { s = EBB.map(d => addDays(card.createdAt, d)); schedCache.set(card.createdAt, s); }
-  return s;
-};
-const isDueOn = (card, date) => {
-  const history = card.reviewHistory || [];
-  return getScheduleDates(card).some(sd => sd <= date && !history.some(h => h.date === sd));
-};
-const redCountOf = card => (card.reviewHistory || []).filter(h => !h.remembered).length;
-const applyReview = (card, remembered, rd) => {
-  const newHistory = [...(card.reviewHistory || [])];
-  for (const sd of getScheduleDates(card))
-    if (sd <= rd && !newHistory.some(h => h.date === sd)) newHistory.push({ date: sd, remembered });
-  const stage = card.reviewStage || 0;
-  const ns = remembered ? Math.min(stage + 1, EBB.length - 1) : Math.max(0, stage - 1);
-  return { ...card, reviewStage: ns, nextReview: addDays(rd, EBB[ns]), reviewHistory: newHistory };
-};
+const dayDiff = dateStr => daysBetween(todayStr(), dateStr);
+const fmtIvl = d => d < 30 ? `${d}天` : d < 365 ? `${+(d / 30).toFixed(1)}月` : `${+(d / 365).toFixed(1)}年`;
 const newId = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+
+// ═══ SM-2 调度 ═══
+// 卡片字段：state(new|review) interval(天) ease due(YYYY-MM-DD) lapses reps lastReview
+// reviewHistory 每条：{ date, rating(1-4), remembered, interval, wasNew? }
+const RATINGS = [
+  { r: 1, label: "重来", color: "#f87171", bg: "#dc262622", bd: "#dc262655" },
+  { r: 2, label: "困难", color: "#fb923c", bg: "#ea580c22", bd: "#ea580c55" },
+  { r: 3, label: "良好", color: "#4ade80", bg: "#16a34a22", bd: "#16a34a55" },
+  { r: 4, label: "简单", color: "#60a5fa", bg: "#2563eb22", bd: "#2563eb55" },
+];
+const ratingColor = r => (RATINGS.find(x => x.r === r) || RATINGS[2]).color;
+
+// 间隔 ≥3 天时加 ±5% 随机抖动，避免同一天加的卡永远挤在同一天到期
+const fuzzIvl = ivl => {
+  if (ivl < 3) return ivl;
+  const f = Math.max(1, Math.round(ivl * 0.05));
+  return Math.min(SRS.maxInterval, ivl - f + Math.floor(Math.random() * (2 * f + 1)));
+};
+
+// 四个评分各自对应的下次间隔（不含抖动），按钮上显示的就是它
+const previewIntervals = (card, today) => {
+  if (card.state !== "review") return { 1: 1, 2: 1, 3: 1, 4: 4 };
+  const ease = card.ease || SRS.startingEase;
+  const cur = Math.max(1, card.interval || 1);
+  const delay = Math.max(0, daysBetween(card.due || today, today)); // 逾期天数，逾期越久说明记得越牢
+  const cap = v => Math.min(SRS.maxInterval, v);
+  const hard = cap(Math.max(cur + 1, Math.round((cur + delay / 4) * SRS.hardFactor)));
+  const good = cap(Math.max(hard + 1, Math.round((cur + delay / 2) * ease)));
+  const easy = cap(Math.max(good + 1, Math.round((cur + delay) * ease * SRS.easyBonus)));
+  return { 1: 1, 2: hard, 3: good, 4: easy };
+};
+
+const schedule = (card, rating, today, { fuzz = true } = {}) => {
+  const wasNew = card.state !== "review";
+  let ease = card.ease || SRS.startingEase;
+  let lapses = card.lapses || 0;
+  let ivl = previewIntervals(card, today)[rating];
+  if (!wasNew) {
+    if (rating === 1) { lapses += 1; ease -= 0.2; }
+    else if (rating === 2) ease -= 0.15;
+    else if (rating === 4) ease += 0.15;
+  }
+  ease = Math.max(MIN_EASE, Math.round(ease * 100) / 100);
+  if (fuzz && rating > 1) ivl = fuzzIvl(ivl);
+  const due = addDays(today, ivl);
+  const entry = { date: today, rating, remembered: rating > 1, interval: ivl, ...(wasNew ? { wasNew: true } : {}) };
+  return {
+    ...card, state: "review", interval: ivl, ease, due, nextReview: due,
+    lapses, reps: (card.reps || 0) + 1, lastReview: today,
+    reviewHistory: [...(card.reviewHistory || []), entry],
+  };
+};
+
+const newCardFields = date => ({ state: "new", interval: 0, ease: SRS.startingEase, due: date, nextReview: date, lapses: 0, reps: 0, lastReview: null });
+const resetSrs = card => ({ ...card, ...newCardFields(card.createdAt), reviewHistory: [] });
+
+// 旧版（固定艾宾浩斯日程）卡片 → SM-2：按历史记录逐条回放，绿=良好、红=重来
+const migrateCard = card => {
+  if (card.state) return null;
+  const hist = (card.reviewHistory || []).filter(h => h && typeof h.date === "string").sort((a, b) => a.date.localeCompare(b.date));
+  let c = { ...card, ...newCardFields(card.createdAt), reviewHistory: [] };
+  for (const h of hist) c = schedule(c, h.remembered ? 3 : 1, h.date, { fuzz: false });
+  c.reviewHistory = hist.map(h => ({ ...h, rating: h.rating || (h.remembered ? 3 : 1) }));
+  if (hist.length && c.interval >= 3) { c.interval = fuzzIvl(c.interval); c.due = c.nextReview = addDays(c.lastReview, c.interval); }
+  delete c.reviewStage;
+  return c;
+};
+
+const redCountOf = card => (card.reviewHistory || []).filter(h => !h.remembered).length;
+const isDueReview = (card, date) => card.state === "review" && card.due <= date;
+
+// 某牌组某天已学的新卡数、已复习数（用于每日上限）
+const studiedOn = (cards, deckId, date) => {
+  let newDone = 0, revDone = 0;
+  for (const c of cards) {
+    if (c.deckId !== deckId) continue;
+    for (const h of c.reviewHistory || []) if (h.date === date && h.rating) { if (h.wasNew) newDone++; else revDone++; }
+  }
+  return { newDone, revDone };
+};
+const shuffle = a => { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+
+// 按每日上限挑出今天要学的卡
+const pickSession = (cards, deckId, date) => {
+  const { newDone, revDone } = studiedOn(cards, deckId, date);
+  let revs = cards.filter(c => c.deckId === deckId && isDueReview(c, date));
+  revs = SRS.reviewOrder === "random" ? shuffle(revs) : revs.sort((a, b) => a.due.localeCompare(b.due) || a.id.localeCompare(b.id));
+  const news = cards.filter(c => c.deckId === deckId && c.state !== "review" && c.createdAt <= date)
+    .sort((a, b) => a.createdAt.localeCompare(b.createdAt) || a.id.localeCompare(b.id));
+  return {
+    revs: revs.slice(0, Math.max(0, SRS.reviewsPerDay - revDone)),
+    news: news.slice(0, Math.max(0, SRS.newPerDay - newDone)),
+    dueTotal: revs.length, newTotal: news.length, newDone, revDone,
+  };
+};
+const mergeSession = (revs, news) => {
+  if (SRS.newCardPosition === "first") return [...news, ...revs];
+  if (SRS.newCardPosition === "last" || !news.length) return [...revs, ...news];
+  const out = [];
+  const gap = Math.max(1, Math.floor(revs.length / news.length));
+  let ni = 0;
+  revs.forEach((c, i) => { out.push(c); if ((i + 1) % gap === 0 && ni < news.length) out.push(news[ni++]); });
+  while (ni < news.length) out.push(news[ni++]);
+  return out;
+};
 
 // ─── 并发工具 ───
 const mapPool = async (items, limit, fn) => {
@@ -98,10 +199,17 @@ const exportLogs = () => {
 
 // ─── TTS ───
 const BASE = import.meta.env.BASE_URL;
+// 同一时间只保留一个音频；播完或被下一个替换时释放音源。
+// 否则"空格=播放/暂停"类浏览器扩展会抓住残留的音频对象，按空格时反复播放上一张卡的发音。
+let currentAudio = null;
+const releaseAudio = a => { try { a.pause(); a.removeAttribute("src"); a.load(); } catch { } };
 const speak = (text, lang) => {
   if (!text) return;
+  if (currentAudio) releaseAudio(currentAudio);
   const audio = new Audio(`${BASE}api/tts?q=${encodeURIComponent(text)}&tl=${lang}`);
-  audio.play().catch(e => log("error", "TTS failed", { text, lang, error: e.message }));
+  currentAudio = audio;
+  audio.onended = () => { releaseAudio(audio); if (currentAudio === audio) currentAudio = null; };
+  audio.play().catch(e => { if (e.name !== "AbortError") log("error", "TTS failed", { text, lang, error: e.message }); });
 };
 
 // ─── File API ───
@@ -166,8 +274,8 @@ const saveUserMeta = (uid, m) => api.write(userMetaPath(uid), m);
 const isDayFileOf = (uid, f) => f.startsWith(`users/${uid}/`) && !f.endsWith("meta.json");
 
 // 一个请求拿到 global + meta + 该用户所有日文件（uid 为空时由服务端取 activeUser）。
-// 顺带检测"卡片所在文件与 createdAt 不符"或"同一 id 出现在多处"，
-// 返回需要重写的路径和各文件需要剔除的 id，交给 sync 自动修复。
+// 顺带：检测"卡片所在文件与 createdAt 不符"或"同一 id 出现在多处"；把旧版卡片升级到 SM-2。
+// 需要改动的文件交给 sync 自动写回。
 const loadSnapshot = async uidOrNull => {
   const t0 = performance.now();
   const snap = await withRetry(() => api.snapshot(uidOrNull));
@@ -205,9 +313,16 @@ const loadSnapshot = async uidOrNull => {
       repair.add(file); repair.add(target);
     }
   }
-  const cards = [...byId.values()].map(v => v.card);
-  log("info", "loadSnapshot", { uid, files: dayFiles.length, cards: cards.length, repair: repair.size, ms: Math.round(performance.now() - t0) });
-  return { uid, global, rev: snap.rev, meta, cards, dayFiles, repairPaths: [...repair], repairDrops: drops };
+  let migrated = 0;
+  const cards = [...byId.values()].map(v => {
+    const m = migrateCard(v.card);
+    if (!m) return v.card;
+    migrated++;
+    repair.add(dateToDayPath(uid, m.createdAt));
+    return m;
+  });
+  log("info", "loadSnapshot", { uid, files: dayFiles.length, cards: cards.length, migrated, repair: repair.size, ms: Math.round(performance.now() - t0) });
+  return { uid, global, rev: snap.rev, meta, cards, dayFiles, migrated, repairPaths: [...repair], repairDrops: drops };
 };
 
 const gTranslate = async (text, sl, tl) => {
@@ -245,6 +360,7 @@ const I = {
   ArrowDown: () => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><line x1="12" y1="5" x2="12" y2="19" /><polyline points="19 12 12 19 5 12" /></svg>,
   Flame: () => <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M8.5 14.5A2.5 2.5 0 0011 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 11-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 002.5 2.5z" /></svg>,
   Tag: () => <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M20.59 13.41l-7.17 7.17a2 2 0 01-2.83 0L2 12V2h10l8.59 8.59a2 2 0 010 2.82z" /><line x1="7" y1="7" x2="7.01" y2="7" /></svg>,
+  Undo: () => <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><polyline points="9 14 4 9 9 4" /><path d="M20 20v-7a4 4 0 00-4-4H4" /></svg>,
 };
 
 // Rotation display helper
@@ -255,33 +371,33 @@ const getCardDisplay = (card, meta) => {
   return { src: texts[rot], t1: texts[(rot + 1) % 3], t2: texts[(rot + 2) % 3], srcL: langs[rot], t1L: langs[(rot + 1) % 3], t2L: langs[(rot + 2) % 3] };
 };
 
-// ─── 小组件放在 App 外部：否则每次渲染都是新组件类型，会被卸载重建（日期选择器被打断的原因）───
+// ─── 小组件放在 App 外部：否则每次渲染都是新组件类型，会被卸载重建 ───
 const LangSelect = ({ value, onChange }) => <select style={S.langSel} value={value} onChange={e => onChange(e.target.value)}>{LANGS.map(l => <option key={l.code} value={l.code}>{l.label}</option>)}</select>;
 const DateInput = ({ value, onChange, style: sx }) => <input type="date" value={value} onChange={e => e.target.value && onChange(e.target.value)} style={{ ...S.dateInput, ...sx }} />;
 
-const ScheduleDots = ({ card, today, onToggle }) => {
-  const sched = getScheduleDates(card);
+// 卡片调度状态：下次复习、间隔、难度系数、遗忘次数，以及最近 10 次评分色块
+const CardStats = ({ card, center }) => {
+  const chip = (txt, color, title) => (
+    <span key={title} title={title} style={{ fontFamily: mono, fontSize: 9, padding: "2px 6px", borderRadius: 3, background: "#1c1c20", color, lineHeight: 1.3, whiteSpace: "nowrap" }}>{txt}</span>
+  );
+  const hist = (card.reviewHistory || []).slice(-10);
+  const strip = hist.length > 0 && (
+    <span key="h" style={{ display: "inline-flex", gap: 2, alignItems: "center", marginLeft: 2 }}>
+      {hist.map((h, i) => <span key={i} title={`${h.date} · ${(RATINGS.find(x => x.r === h.rating) || {}).label || (h.remembered ? "记得" : "忘记")}`}
+        style={{ width: 6, height: 10, borderRadius: 1, background: ratingColor(h.rating || (h.remembered ? 3 : 1)), opacity: 0.85 }} />)}
+    </span>
+  );
+  const wrap = { display: "flex", gap: 3, flexWrap: "wrap", alignItems: "center", justifyContent: center ? "center" : "flex-start" };
+  if (card.state !== "review") return <div style={wrap}>{chip("新卡", "#60a5fa", "尚未学习")}{strip}</div>;
+  const diff = dayDiff(card.due);
+  const dueTxt = diff < 0 ? `逾期${-diff}天` : diff === 0 ? "今天到期" : `${diff}天后`;
   return (
-    <div style={{ display: "flex", gap: 3, flexWrap: "wrap", alignItems: "center", justifyContent: "center" }}>
-      {sched.map((schDate, i) => {
-        const rh = (card.reviewHistory || []).find(h => h.date === schDate);
-        const isToday = schDate === today, isPast = schDate < today;
-        const diff = dayDiff(schDate);
-        let bg = "#333", clr = "#666";
-        if (rh) { bg = rh.remembered ? "#16a34a" : "#dc2626"; clr = "#fff"; }
-        else if (isToday) { bg = accent; clr = "#fff"; }
-        else if (isPast) { bg = "#555"; clr = "#aaa"; }
-        const diffLabel = isToday ? "" : diff > 0 ? `+${diff}` : `${diff}`;
-        const clickable = !!rh;
-        return (
-          <span key={i} title={`Day ${EBB[i]} → ${schDate}${clickable ? " (click to toggle)" : ""}`}
-            onClick={clickable ? e => { e.stopPropagation(); onToggle(card, schDate); } : undefined}
-            style={{ fontFamily: mono, fontSize: 9, padding: "2px 5px", borderRadius: 3, background: bg, color: clr, lineHeight: 1.2, display: "inline-flex", flexDirection: "column", alignItems: "center", gap: 0, cursor: clickable ? "pointer" : "default" }}>
-            {diffLabel && <span style={{ fontSize: 7, opacity: 0.7, lineHeight: 1 }}>{diffLabel}</span>}
-            {fmtShort(schDate)}
-          </span>
-        );
-      })}
+    <div style={wrap}>
+      {chip(`${dueTxt} · ${fmtShort(card.due)}`, diff <= 0 ? accent : "#aaa", `下次复习 ${card.due}`)}
+      {chip(`间隔 ${fmtIvl(card.interval || 0)}`, "#999", "上次复习到下次复习之间隔多久")}
+      {chip(`倍率 ×${(card.ease || SRS.startingEase).toFixed(2)}`, (card.ease || SRS.startingEase) < 2 ? "#fb923c" : "#999", "答“良好”时，下次间隔 = 当前间隔 × 倍率。越低说明越难记")}
+      {(card.lapses || 0) > 0 && chip(`遗忘${card.lapses}次`, "#f87171", "复习时点了“重来”的次数")}
+      {strip}
     </div>
   );
 };
@@ -298,14 +414,14 @@ export default function App() {
   const [newWord, setNewWord] = useState("");
   const [addDate, setAddDate] = useState(todayStr());
   const [translatingIds, setTranslatingIds] = useState(new Set());
-  // Review state — frozen queue approach
+  // Review：队列只存 { id, retry }，卡片内容始终从内存读取
   const [reviewQueue, setReviewQueue] = useState([]);
   const [reviewPos, setReviewPos] = useState(0);
   const [reviewRevealed, setReviewRevealed] = useState(false);
-  const [reviewSnapshot, setReviewSnapshot] = useState(null);
   const [reviewDate, setReviewDate] = useState(todayStr());
   const [reviewAutoPlay, setReviewAutoPlay] = useState(INIT_AUTO_REVIEW);
   const [reviewQuizType, setReviewQuizType] = useState(0);
+  const [undoCount, setUndoCount] = useState(0);
   //
   const [newDeckName, setNewDeckName] = useState("");
   const [showDeckModal, setShowDeckModal] = useState(false);
@@ -325,11 +441,10 @@ export default function App() {
   const [deleteUserConfirm, setDeleteUserConfirm] = useState(null);
   const [exportUsers, setExportUsers] = useState(new Set());
   const [autoPlay, setAutoPlay] = useState(INIT_AUTO_ADD);
-  // Intensive review
+  // Intensive（强化练习，不改变排期）
   const [intensiveQueue, setIntensiveQueue] = useState([]);
   const [intensivePos, setIntensivePos] = useState(0);
   const [intensiveRevealed, setIntensiveRevealed] = useState(false);
-  const [intensiveSnapshot, setIntensiveSnapshot] = useState(null);
   const [showSrc, setShowSrc] = useState(INIT_SHOW_SRC);
   const [showT1, setShowT1] = useState(INIT_SHOW_T1);
   const [showT2, setShowT2] = useState(INIT_SHOW_T2);
@@ -348,6 +463,7 @@ export default function App() {
   const [batchTagInput, setBatchTagInput] = useState("");
   const [singleTagCard, setSingleTagCard] = useState(null);
   const [intensiveMode, setIntensiveMode] = useState("hard"); // "hard" | "tag:xxx"
+  const [showHelp, setShowHelp] = useState(false);
   const inputRef = useRef(null);
 
   // ─── Store：内存是唯一数据源，所有读取都走 cardsRef，写入先改内存再后台落盘 ───
@@ -368,6 +484,9 @@ export default function App() {
   const toastTimerRef = useRef(null);
   const bootedRef = useRef(false);
   const todayAtHideRef = useRef(todayStr());
+  const undoRef = useRef([]);             // 复习撤销栈：{ before: 作答前的卡片 | null, queue, pos }
+  const keyHandlerRef = useRef(null);
+  const handledKeysRef = useRef(new Set());
   const latestRef = useRef({});
   latestRef.current = { view, reviewDate, addDate, activeDeck };
 
@@ -487,7 +606,7 @@ export default function App() {
     if (foreign.length && storeUidRef.current === u) {
       const ids = new Set(cardsRef.current.map(c => c.id));
       const add = [];
-      for (const c of foreign) if (typeof c.createdAt === "string" && !ids.has(c.id)) { ids.add(c.id); add.push(c); }
+      for (const c of foreign) if (typeof c.createdAt === "string" && !ids.has(c.id)) { ids.add(c.id); add.push(migrateCard(c) || c); }
       if (add.length) {
         cardsRef.current = [...cardsRef.current, ...add];
         setCards(cardsRef.current);
@@ -541,9 +660,10 @@ export default function App() {
     setMeta(data.meta);
     setDayFiles(data.dayFiles);
     if (data.repairPaths?.length) {
-      log("info", "repairing day files", { paths: data.repairPaths });
+      log("info", "repairing day files", { paths: data.repairPaths.length });
       markDirty(data.repairPaths);
     }
+    if (data.migrated) showToast(`已将 ${data.migrated} 张卡升级到新的复习算法`);
   };
 
   const boot = async () => {
@@ -632,11 +752,24 @@ export default function App() {
     const onBeforeUnload = e => {
       if (hasUnsaved()) { flushNow(); e.preventDefault(); e.returnValue = ""; }
     };
+    const onKey = e => keyHandlerRef.current?.(e);
+    // 我们处理过的按键，对应的 keyup 也拦掉（防止按钮在 keyup 时被激活、防止扩展在 keyup 响应）
+    const onKeyUp = e => {
+      if (handledKeysRef.current.has(e.key)) { handledKeysRef.current.delete(e.key); e.preventDefault(); e.stopImmediatePropagation(); }
+    };
+    // 鼠标点按钮时不让按钮获得焦点，避免之后的空格/回车落到这个按钮上
+    const onMouseDown = e => { if (e.button === 0 && e.target.closest?.("button")) e.preventDefault(); };
     document.addEventListener("visibilitychange", onVisibility);
     window.addEventListener("beforeunload", onBeforeUnload);
+    window.addEventListener("keydown", onKey, true);
+    window.addEventListener("keyup", onKeyUp, true);
+    window.addEventListener("mousedown", onMouseDown, true);
     return () => {
       document.removeEventListener("visibilitychange", onVisibility);
       window.removeEventListener("beforeunload", onBeforeUnload);
+      window.removeEventListener("keydown", onKey, true);
+      window.removeEventListener("keyup", onKeyUp, true);
+      window.removeEventListener("mousedown", onMouseDown, true);
     };
   }, []);
 
@@ -646,21 +779,61 @@ export default function App() {
     return saveUserMeta(uid(), m).then(noteRev).catch(e => { log("error", "saveUserMeta failed", { error: e.message }); showToast("设置保存失败"); });
   };
 
-  // ─── Review session：直接从内存过滤，不发请求 ───
+  // ─── Review session：按每日上限从内存挑卡，不发请求 ───
   const startReviewSession = (forDate, deckId = latestRef.current.activeDeck) => {
-    const due = cardsRef.current.filter(c => c.deckId === deckId && isDueOn(c, forDate));
-    log("info", "startReviewSession", { date: forDate, deck: deckId, count: due.length });
-    setReviewQueue(due.map(c => ({ ...c })));
+    const { revs, news } = pickSession(cardsRef.current, deckId, forDate);
+    const q = mergeSession(revs, news).map(c => ({ id: c.id, retry: false }));
+    log("info", "startReviewSession", { date: forDate, deck: deckId, reviews: revs.length, news: news.length });
+    setReviewQueue(q);
     setReviewPos(0);
     setReviewRevealed(false);
-    setReviewSnapshot(null);
+    undoRef.current = [];
+    setUndoCount(0);
+  };
+
+  const pushUndo = entry => {
+    undoRef.current.push(entry);
+    if (undoRef.current.length > UNDO_LIMIT) undoRef.current.shift();
+    setUndoCount(undoRef.current.length);
+  };
+
+  // 评分：本轮重练的卡只练不改排期；"重来"的卡排到队尾再出现一次
+  const answerReview = rating => {
+    const item = reviewQueue[reviewPos];
+    if (!item || !reviewRevealed) return;
+    const card = getLatest(item.id);
+    pushUndo({ before: !item.retry && card ? card : null, queue: reviewQueue, pos: reviewPos });
+    if (card && !item.retry) upsertCards([schedule(card, rating, reviewDate)]);
+    if (card && rating === 1 && SRS.relearnInSession) setReviewQueue([...reviewQueue, { id: item.id, retry: true }]);
+    setReviewPos(reviewPos + 1);
+    setReviewRevealed(false);
+    log("info", "review", { id: item.id, rating, retry: item.retry, date: reviewDate });
+  };
+
+  const skipReview = () => {
+    if (reviewPos >= reviewQueue.length) return;
+    pushUndo({ before: null, queue: reviewQueue, pos: reviewPos });
+    setReviewPos(reviewPos + 1);
+    setReviewRevealed(false);
+  };
+
+  const undoReview = () => {
+    const last = undoRef.current.pop();
+    if (!last) return;
+    setUndoCount(undoRef.current.length);
+    if (last.before) upsertCards([last.before]);
+    setReviewQueue(last.queue);
+    setReviewPos(last.pos);
+    setReviewRevealed(!!last.before || last.queue[last.pos]?.retry);
+    showToast("已撤销");
   };
 
   // ─── Users ───
   const resetSessionUI = () => {
     setActiveDeck("default"); setSelected(new Set()); setView("home");
-    setReviewQueue([]); setReviewPos(0); setReviewRevealed(false); setReviewSnapshot(null);
-    setIntensiveQueue([]); setIntensivePos(0); setIntensiveRevealed(false); setIntensiveSnapshot(null);
+    setReviewQueue([]); setReviewPos(0); setReviewRevealed(false);
+    undoRef.current = []; setUndoCount(0);
+    setIntensiveQueue([]); setIntensivePos(0); setIntensiveRevealed(false);
   };
 
   const switchUser = async userId => {
@@ -725,7 +898,7 @@ export default function App() {
       id: newId(),
       word, translation: "", translation2: "",
       deckId: activeDeck, createdAt: addDate,
-      reviewStage: 0, nextReview: addDays(addDate, EBB[0]),
+      ...newCardFields(addDate),
       reviewHistory: [], rot: 0, tags: [...addTags],
     };
     upsertCards([card]);
@@ -759,24 +932,24 @@ export default function App() {
     removeCards([...selected]);
     showToast(`Deleted ${n} cards`); setSelected(new Set());
   };
+  // 清除复习记录 = 重置为新卡
   const clearReview = card => {
     const cur = getLatest(card.id); if (!cur) return;
-    upsertCards([{ ...cur, reviewHistory: [], reviewStage: 0, nextReview: addDays(cur.createdAt, EBB[0]) }]);
-    showToast("Tags cleared");
+    upsertCards([resetSrs(cur)]);
+    showToast("已重置为新卡");
   };
   const batchClearTags = () => {
     if (selected.size === 0) return;
-    const updated = cardsRef.current.filter(c => selected.has(c.id)).map(c => ({
-      ...c, reviewHistory: [], reviewStage: 0, nextReview: addDays(c.createdAt, EBB[0])
-    }));
+    const updated = cardsRef.current.filter(c => selected.has(c.id)).map(resetSrs);
     upsertCards(updated);
-    showToast(`Cleared tags on ${updated.length} cards`); setSelected(new Set()); setClearTagConfirm(false);
+    showToast(`已将 ${updated.length} 张卡重置为新卡`); setSelected(new Set()); setClearTagConfirm(false);
     log("info", "batchClearTags", { count: updated.length });
   };
+  // 改创建日期只影响文件位置；新卡的 due 跟着走，已学过的卡排期不变
+  const withNewDate = (c, newDate) => ({ ...c, createdAt: newDate, ...(c.state !== "review" ? { due: newDate, nextReview: newDate } : {}) });
   const batchChangeDate = newDate => {
     if (selected.size === 0 || !newDate) return;
-    const updated = cardsRef.current.filter(c => selected.has(c.id))
-      .map(c => ({ ...c, createdAt: newDate, nextReview: addDays(newDate, EBB[c.reviewStage || 0]) }));
+    const updated = cardsRef.current.filter(c => selected.has(c.id)).map(c => withNewDate(c, newDate));
     upsertCards(updated);
     showToast(`Changed date on ${updated.length} cards`); setSelected(new Set()); setBatchDateModal(false);
     log("info", "batchChangeDate", { count: updated.length, newDate });
@@ -812,7 +985,7 @@ export default function App() {
   };
   const updateCardDate = (card, newDate) => {
     const cur = getLatest(card.id); if (!cur) return;
-    upsertCards([{ ...cur, createdAt: newDate, nextReview: addDays(newDate, EBB[cur.reviewStage || 0]) }]);
+    upsertCards([withNewDate(cur, newDate)]);
     log("info", "updateCardDate", { id: card.id, newDate });
   };
   const rotateCard = cardId => {
@@ -826,36 +999,7 @@ export default function App() {
     showToast(`Rotated ${updated.length} cards`);
   };
 
-  // ─── Review ───
-  const doReview = (cardId, remembered) => {
-    const card = getLatest(cardId);
-    if (!card) { log("error", "doReview: card not found", { cardId }); return; }
-    const updated = applyReview(card, remembered, reviewDate);
-    setReviewQueue(q => q.map(c => c.id === cardId ? updated : c));
-    setReviewSnapshot(updated);
-    setReviewRevealed(true);
-    upsertCards([updated]);
-    log("info", "doReview", { cardId, remembered, stage: updated.reviewStage, date: reviewDate });
-  };
-
-  const nextReviewCard = () => { setReviewRevealed(false); setReviewSnapshot(null); setReviewPos(p => Math.min(p + 1, reviewQueue.length)); };
-  const prevReviewCard = () => { setReviewRevealed(false); setReviewSnapshot(null); setReviewPos(p => Math.max(p - 1, 0)); };
-
-  const toggleReviewDot = (cardArg, schDate) => {
-    const latest = getLatest(cardArg.id);
-    if (!latest) return;
-    const rh = (latest.reviewHistory || []).find(h => h.date === schDate);
-    if (!rh) return;
-    const updated = { ...latest, reviewHistory: latest.reviewHistory.map(h => h.date === schDate ? { ...h, remembered: !h.remembered } : h) };
-    setReviewQueue(q => q.map(c => c.id === latest.id ? updated : c));
-    setIntensiveQueue(q => q.map(c => c.id === latest.id ? updated : c));
-    setReviewSnapshot(s => s?.id === latest.id ? updated : s);
-    setIntensiveSnapshot(s => s?.id === latest.id ? updated : s);
-    upsertCards([updated]);
-    log("info", "toggleReviewDot", { cardId: latest.id, date: schDate, newRemembered: !rh.remembered });
-  };
-
-  // ─── Intensive ───
+  // ─── Intensive：纯练习，不改排期；"已掌握"把历史中的红色记录改为绿色，移出高难度 ───
   const getIntensiveCards = (mode, deckId) => {
     const pool = cardsRef.current.filter(c => {
       if (c.deckId !== deckId) return false;
@@ -870,41 +1014,68 @@ export default function App() {
     const m = mode || intensiveMode;
     setIntensiveMode(m);
     const ic = getIntensiveCards(m, deckId);
-    setIntensiveQueue(ic.map(c => ({ ...c })));
+    setIntensiveQueue(ic.map(c => ({ id: c.id, retry: false })));
     setIntensivePos(0);
     setIntensiveRevealed(false);
-    setIntensiveSnapshot(null);
     log("info", "startIntensiveSession", { mode: m, count: ic.length });
   };
 
-  const doIntensiveReview = (cardId, remembered) => {
-    const card = getLatest(cardId);
-    if (!card) return;
-    const updated = applyReview(card, remembered, todayStr());
-    setIntensiveQueue(q => q.map(c => c.id === cardId ? updated : c));
-    setIntensiveSnapshot(updated);
-    setIntensiveRevealed(true);
-    upsertCards([updated]);
+  const intensiveAdvance = again => {
+    const item = intensiveQueue[intensivePos];
+    if (!item) return;
+    if (again) setIntensiveQueue(q => [...q, { id: item.id, retry: true }]);
+    setIntensivePos(p => p + 1);
+    setIntensiveRevealed(false);
   };
 
   const masterCard = cardId => {
     const card = getLatest(cardId);
     if (!card) return;
-    const today = todayStr();
-    const pastDates = getScheduleDates(card).filter(sd => sd <= today);
-    const futureEntries = (card.reviewHistory || []).filter(h => h.date > today);
-    const updated = { ...card, reviewHistory: [...pastDates.map(sd => ({ date: sd, remembered: true })), ...futureEntries] };
-    setIntensiveQueue(q => q.map(c => c.id === cardId ? updated : c));
-    setIntensiveRevealed(false);
-    setIntensiveSnapshot(null);
-    setIntensivePos(p => p + 1);
+    const updated = { ...card, reviewHistory: (card.reviewHistory || []).map(h => h.remembered ? h : { ...h, remembered: true, rating: 3 }) };
     upsertCards([updated]);
-    showToast("Mastered!");
-    log("info", "masterCard", { cardId, greenDates: pastDates.length });
+    intensiveAdvance(false);
+    showToast("已掌握，移出高难度");
+    log("info", "masterCard", { cardId });
   };
 
-  const nextIntensiveCard = () => { setIntensiveRevealed(false); setIntensiveSnapshot(null); setIntensivePos(p => Math.min(p + 1, intensiveQueue.length)); };
-  const prevIntensiveCard = () => { setIntensiveRevealed(false); setIntensiveSnapshot(null); setIntensivePos(p => Math.max(p - 1, 0)); };
+  const prevIntensiveCard = () => { setIntensiveRevealed(false); setIntensivePos(p => Math.max(p - 1, 0)); };
+  const nextIntensiveCard = () => { setIntensiveRevealed(false); setIntensivePos(p => Math.min(p + 1, intensiveQueue.length)); };
+
+  // ─── 快捷键 ───
+  // 复习：空格/回车 显示答案（已显示时=良好）· 1-4 评分 · U/Ctrl+Z 撤销 · S/→ 跳过
+  // 强化：空格/回车 显示答案（已显示时=下一个）· 1 再练 · 2-4 下一个 · M 已掌握 · ←/→ 切换
+  keyHandlerRef.current = e => {
+    const t = e.target;
+    if (showHelp) { if (e.key === "Escape" || e.key === "?") { e.preventDefault(); setShowHelp(false); } return; }
+    if (t && (t.tagName === "INPUT" || t.tagName === "TEXTAREA" || t.tagName === "SELECT" || t.isContentEditable)) return;
+    if (e.altKey || (e.metaKey && e.key !== "z") || (e.ctrlKey && e.key !== "z")) return;
+    const k = e.key;
+    if (k === "?") { e.preventDefault(); setShowHelp(true); return; }
+    const handled = () => {
+      e.preventDefault();
+      e.stopImmediatePropagation();
+      handledKeysRef.current.add(k);
+      if (document.activeElement && document.activeElement.tagName === "BUTTON") document.activeElement.blur();
+    };
+    if (view === "review") {
+      const item = reviewQueue[reviewPos];
+      if ((k === "z" && (e.ctrlKey || e.metaKey)) || k === "u" || k === "U") { handled(); undoReview(); return; }
+      if (!item) return;
+      if (k === " " || k === "Enter") { handled(); reviewRevealed ? answerReview(3) : setReviewRevealed(true); return; }
+      if (["1", "2", "3", "4"].includes(k) && reviewRevealed) { handled(); answerReview(+k); return; }
+      if (k === "s" || k === "S" || k === "ArrowRight") { handled(); skipReview(); return; }
+    }
+    if (view === "intensive") {
+      const item = intensiveQueue[intensivePos];
+      if (k === "ArrowLeft") { handled(); prevIntensiveCard(); return; }
+      if (!item) return;
+      if (k === " " || k === "Enter") { handled(); intensiveRevealed ? intensiveAdvance(false) : setIntensiveRevealed(true); return; }
+      if (k === "ArrowRight") { handled(); nextIntensiveCard(); return; }
+      if (intensiveRevealed && k === "1") { handled(); intensiveAdvance(true); return; }
+      if (intensiveRevealed && ["2", "3", "4"].includes(k)) { handled(); intensiveAdvance(false); return; }
+      if (intensiveRevealed && (k === "m" || k === "M")) { handled(); masterCard(item.id); return; }
+    }
+  };
 
   // ─── Deck ops ───
   const createDeck = () => {
@@ -932,12 +1103,18 @@ export default function App() {
 
   // ─── Computed（缓存，cards 变化时才重算）───
   const td = todayStr();
+  const cardsById = useMemo(() => new Map(cards.map(c => [c.id, c])), [cards]);
   const deckCards = useMemo(() => cards.filter(c => c.deckId === activeDeck), [cards, activeDeck]);
-  const dueIds = useMemo(() => { const s = new Set(); for (const c of cards) if (isDueOn(c, td)) s.add(c.id); return s; }, [cards, td]);
-  const allDueCount = dueIds.size;
+  const dueIds = useMemo(() => { const s = new Set(); for (const c of cards) if (isDueReview(c, td)) s.add(c.id); return s; }, [cards, td]);
+  // 今天本牌组还能学的数量（已扣除每日上限）
+  const todayPlan = useMemo(() => {
+    const p = pickSession(cards, activeDeck, td);
+    return { rev: p.revs.length, nw: p.news.length, dueTotal: p.dueTotal, newTotal: p.newTotal, newDone: p.newDone, revDone: p.revDone };
+  }, [cards, activeDeck, td]);
+  const todayTotal = todayPlan.rev + todayPlan.nw;
   const deckStats = useMemo(() => {
     const m = {};
-    for (const c of cards) { const s = m[c.deckId] || (m[c.deckId] = { count: 0, due: 0 }); s.count++; if (dueIds.has(c.id)) s.due++; }
+    for (const c of cards) { const s = m[c.deckId] || (m[c.deckId] = { count: 0, due: 0, nw: 0 }); s.count++; if (dueIds.has(c.id)) s.due++; if (c.state !== "review") s.nw++; }
     return m;
   }, [cards, dueIds]);
   const intensiveCount = useMemo(() => deckCards.filter(c => redCountOf(c) > 0).length, [deckCards]);
@@ -957,19 +1134,13 @@ export default function App() {
   }, [deckCards, filterDate, filterKeyword]);
   const homeSorted = useMemo(() => [...homeFiltered].sort((a, b) => b.createdAt.localeCompare(a.createdAt) || b.id.localeCompare(a.id)), [homeFiltered]);
 
-  const reviewCurrentCard = (() => {
-    if (reviewRevealed && reviewSnapshot) return reviewSnapshot;
-    if (reviewPos < reviewQueue.length) return reviewQueue[reviewPos];
-    return null;
-  })();
+  const reviewItem = reviewQueue[reviewPos] || null;
+  const reviewCurrentCard = reviewItem ? cardsById.get(reviewItem.id) || null : null;
   const reviewTotal = reviewQueue.length;
   const reviewDone = reviewPos >= reviewTotal && reviewTotal > 0;
 
-  const intensiveCurrentCard = (() => {
-    if (intensiveRevealed && intensiveSnapshot) return intensiveSnapshot;
-    if (intensivePos < intensiveQueue.length) return intensiveQueue[intensivePos];
-    return null;
-  })();
+  const intensiveItem = intensiveQueue[intensivePos] || null;
+  const intensiveCurrentCard = intensiveItem ? cardsById.get(intensiveItem.id) || null : null;
   const intensiveTotal = intensiveQueue.length;
   const intensiveDone = intensivePos >= intensiveTotal && intensiveTotal > 0;
 
@@ -1004,7 +1175,7 @@ export default function App() {
         Object.assign(files, sn.files);
       }
       const targets = Object.keys(files);
-      const blob = new Blob([JSON.stringify({ version: 4, exportedAt: new Date().toISOString(), files }, null, 2)], { type: "application/json" });
+      const blob = new Blob([JSON.stringify({ version: 5, exportedAt: new Date().toISOString(), files }, null, 2)], { type: "application/json" });
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a"); a.href = url; a.download = `vocabforge-${td}.json`; a.click();
       URL.revokeObjectURL(url);
@@ -1070,7 +1241,7 @@ export default function App() {
   const NAV = [
     { id: "home", label: "词库", icon: <I.Book /> },
     { id: "add", label: "添加", icon: <I.PlusCircle /> },
-    { id: "review", label: `复习${allDueCount ? ` (${allDueCount})` : ""}`, icon: <I.RefreshCw /> },
+    { id: "review", label: `复习${todayTotal ? ` (${todayPlan.rev}${todayPlan.nw ? `+${todayPlan.nw}新` : ""})` : ""}`, icon: <I.RefreshCw /> },
     { id: "intensive", label: `强化${intensiveCount ? ` (${intensiveCount})` : ""}`, icon: <I.Flame /> },
     { id: "decks", label: "牌组", icon: <I.Layers /> },
     { id: "export", label: "备份", icon: <I.Save /> },
@@ -1078,6 +1249,31 @@ export default function App() {
   ];
 
   const toggleExportUser = id => setExportUsers(s => { const n = new Set(s); n.has(id) ? n.delete(id) : n.add(id); return n; });
+
+  // 复习/强化共用：题面与答案
+  const quizParts = card => {
+    const d = getCardDisplay(card, meta);
+    const allFields = [d.src, d.t1, d.t2];
+    const allLangs = [d.srcL, d.t1L, d.t2L];
+    const qIdx = reviewQuizType;
+    return {
+      question: allFields[qIdx], questionLang: allLangs[qIdx],
+      ans: allFields.filter((_, i) => i !== qIdx), ansL: allLangs.filter((_, i) => i !== qIdx),
+    };
+  };
+  // 普通函数而非组件：组件定义在 App 内会在每次渲染时被卸载重建，动画会反复播放
+  const renderAnswer = (ans, ansL) => (
+    <div style={{ animation: "fadeUp 0.25s ease", marginBottom: 20, borderTop: `1px solid ${border}`, paddingTop: 16 }}>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}>
+        <div style={S.reviewTrans}>{ans[0]}</div>
+        <button className="spk" style={S.speakBtn} onClick={() => speak(ans[0], ansL[0])}><I.Speaker /></button>
+      </div>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8, marginTop: 6 }}>
+        <div style={S.reviewTrans2}>{ans[1]}</div>
+        <button className="spk" style={S.speakBtn} onClick={() => speak(ans[1], ansL[1])}><I.Speaker /></button>
+      </div>
+    </div>
+  );
 
   return (
     <div style={S.root}>
@@ -1089,7 +1285,6 @@ export default function App() {
         @keyframes slideIn{from{opacity:0;transform:translateX(-8px)}to{opacity:1;transform:translateX(0)}}
         @keyframes pulse{0%,100%{opacity:.4}50%{opacity:1}}
         @keyframes toast{0%{opacity:0;transform:translateY(20px)}10%{opacity:1;transform:translateY(0)}90%{opacity:1}100%{opacity:0;transform:translateY(-10px)}}
-        @keyframes cardFlip{from{transform:rotateX(90deg);opacity:0}to{transform:rotateX(0);opacity:1}}
         .hi:hover{background:#161618!important}
         @media(hover:none){.hi:hover{background:inherit!important}}
         .card-due{border:1px solid #e8440088!important;box-shadow:0 0 8px #e8440022}
@@ -1097,7 +1292,7 @@ export default function App() {
         .nb{font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:500;background:transparent;color:#777;border:1px solid transparent;padding:4px 11px;border-radius:6px;cursor:pointer;transition:all .15s;display:flex;align-items:center;gap:4px}
         .nb:hover:not(.nav-active){background:#1a1a1e}
         .nb.nav-active{background:#1a1a1e;border-color:#e84400;color:#e8e6e3}
-        .ab:hover{transform:translateY(-1px);filter:brightness(1.1)}.dk:hover{border-color:#e84400!important}
+        .ab:hover{transform:translateY(-1px);filter:brightness(1.15)}.dk:hover{border-color:#e84400!important}
         .spk:hover{color:#e84400!important}.scb:hover{opacity:1!important;border-color:#e84400!important;color:#e84400!important}
         input::placeholder{color:#444}
         .cb{appearance:none;width:16px;height:16px;border:2px solid #333;border-radius:4px;cursor:pointer;flex-shrink:0;position:relative;background:transparent;outline:none}
@@ -1105,10 +1300,12 @@ export default function App() {
         .cb:focus{box-shadow:none}
         .pill{font-family:'JetBrains Mono',monospace;font-size:11px;padding:4px 10px;border-radius:20px;cursor:pointer;border:1px solid #333;background:transparent;color:#777;transition:all .15s;display:inline-flex;align-items:center;gap:4px}
         .pill:hover{border-color:#555;color:#e8e6e3}.pill.on{border-color:#e84400;background:#e8440022;color:#e84400}
+        .pill:disabled{opacity:.35;cursor:default}
         .deck-tabs{display:flex;gap:0;overflow:hidden;flex:1;min-width:0}
         .deck-tabs.expanded{flex-wrap:wrap;overflow:visible}
         .dtab{font-family:'JetBrains Mono',monospace;font-size:11px;padding:4px 10px;border-radius:4px;cursor:pointer;border:1px solid #222226;background:transparent;color:#777;white-space:nowrap;transition:all .15s}
         .dtab:hover{background:#1a1a1e;color:#e8e6e3}.dtab.active{background:#e84400;color:#fff;border-color:#e84400}
+        kbd{font-family:'JetBrains Mono',monospace;font-size:9px;padding:0 4px;border:1px solid #333;border-radius:3px;color:#666;margin:0 1px}
       `}</style>
 
       {toast && <div key={toast.key} style={S.toast}>{toast.msg}</div>}
@@ -1124,14 +1321,64 @@ export default function App() {
               {syncState === "error" ? "● 保存失败·重试中" : "● 保存中"}
             </span>
           )}
-          {allDueCount > 0 && <div style={S.dueBadge} onClick={() => { setView("review"); startReviewSession(reviewDate, activeDeck); }}>{allDueCount} due</div>}
+          {todayTotal > 0 && <div style={S.dueBadge} title={`到期 ${todayPlan.rev} · 新卡 ${todayPlan.nw}`} onClick={() => { setView("review"); startReviewSession(reviewDate, activeDeck); }}>{todayTotal} 今日</div>}
           <LangSelect value={meta.sourceLang} onChange={setSourceLang} />
           <span style={{ color: accent, fontSize: 11, fontFamily: mono }}>→</span>
           <LangSelect value={meta.targetLang1} onChange={setTargetLang1} />
           <span style={{ color: "#555", fontSize: 10, fontFamily: mono }}>/</span>
           <LangSelect value={meta.targetLang2} onChange={setTargetLang2} />
+          <button style={S.helpBtn} className="spk" onClick={() => setShowHelp(true)} title="说明 (?)">?</button>
         </div>
       </header>
+
+      {showHelp && (
+        <div style={S.modal} onClick={() => setShowHelp(false)}>
+          <div style={{ ...S.modalContent, maxWidth: 560, maxHeight: "85vh", overflowY: "auto" }} onClick={e => e.stopPropagation()}>
+            <h3 style={S.modalTitle}>说明</h3>
+            {[
+              ["卡片标签", [
+                ["逾期155天 · 260429", "应该在 2026-04-29 复习，已经过了 155 天。未到期时显示“N天后”"],
+                ["间隔 1天", "上次复习到这次复习之间隔多久。每次答对都会变长"],
+                ["倍率 ×1.90", "答“良好”时，下次间隔 = 当前间隔 × 倍率。新卡 2.50，每次重来 −0.2、困难 −0.15、简单 +0.15，最低 1.30。越低说明这张卡越难记"],
+                ["遗忘3次", "复习时点了“重来”的次数"],
+                ["彩色小块", "最近 10 次评分：红=重来 橙=困难 绿=良好 蓝=简单"],
+                ["新卡", "还没学过，按每日新卡上限逐步引入"],
+              ]],
+              ["评分按钮", [
+                ["重来", "没想起来。本轮末尾再练一次，明天再复习，倍率下降"],
+                ["困难", "想起来了但很吃力。间隔小幅增长，倍率略降"],
+                ["良好", "正常想起。间隔 × 倍率"],
+                ["简单", "毫不费力。间隔增长最多，倍率上升"],
+                ["5月后 / 1.1年后", "选这个评分后，这张卡下次出现的时间"],
+                ["逾期很久仍答对", "逾期天数会计入新间隔，所以间隔可能一下拉得很长。如果其实记得很勉强，请选“困难”或“重来”"],
+              ]],
+              ["数字与上限", [
+                ["复习 (197+20新)", `今天还要复习 197 张到期卡 + 学 20 张新卡。每日上限：新卡 ${SRS.newPerDay}、复习 ${SRS.reviewsPerDay}（在 vite.config.js 修改）`],
+                ["本轮重练", "点“重来”的卡在本轮末尾再出现，只是练习，不改排期"],
+                ["强化", "按“记错过”或标签集中练习，不改排期。“已掌握”会把红色记录改为绿色"],
+              ]],
+              ["快捷键", [
+                ["空格 / 回车", "显示答案；已显示时 = 良好"],
+                ["1 – 4", "评分"],
+                ["U / Ctrl+Z", "撤销上一次作答"],
+                ["S / →", "跳过（留到下次）"],
+                ["?", "打开 / 关闭本说明"],
+              ]],
+            ].map(([title, rows]) => (
+              <div key={title} style={{ marginBottom: 16 }}>
+                <h4 style={{ ...S.smallTitle, marginBottom: 6 }}>{title}</h4>
+                {rows.map(([k, v]) => (
+                  <div key={k} style={{ display: "flex", gap: 12, padding: "5px 0", borderBottom: `1px solid ${border}`, fontSize: 13, lineHeight: 1.5 }}>
+                    <span style={{ fontFamily: mono, fontSize: 12, color: text, flex: "0 0 128px" }}>{k}</span>
+                    <span style={{ color: textDim }}>{v}</span>
+                  </div>
+                ))}
+              </div>
+            ))}
+            <div style={S.modalActions}><button className="ab" style={S.modalConfirm} onClick={() => setShowHelp(false)}>知道了</button></div>
+          </div>
+        </div>
+      )}
 
       <nav style={S.nav}>
         {NAV.map(t => (
@@ -1193,7 +1440,7 @@ export default function App() {
                   <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
                     {selected.size > 0 && <button className="pill on" style={{ borderColor: "#16a34a", color: "#4ade80", background: "#16a34a22" }} onClick={batchRotate}><I.Rotate /> Rotate</button>}
                     {selected.size > 0 && <button className="pill" style={{ borderColor: "#8b5cf6", color: "#a78bfa" }} onClick={() => setBatchTagModal(true)}><I.Tag /> 标签</button>}
-                    {selected.size > 0 && <button className="pill" style={{ borderColor: "#eab308", color: "#facc15" }} onClick={() => setClearTagConfirm(true)}>清除tag</button>}
+                    {selected.size > 0 && <button className="pill" style={{ borderColor: "#eab308", color: "#facc15" }} onClick={() => setClearTagConfirm(true)}>重置为新卡</button>}
                     {selected.size > 0 && <button className="pill" style={{ borderColor: "#3b82f6", color: "#60a5fa" }} onClick={() => { setBatchDateVal(todayStr()); setBatchDateModal(true); }}>修改日期</button>}
                     {selected.size > 0 && <button className="pill" style={{ borderColor: "#dc2626", color: "#f87171" }} onClick={batchDelete}><I.Trash /> Delete</button>}
                   </div>
@@ -1219,7 +1466,13 @@ export default function App() {
                     const isSel = selected.has(card.id);
                     const d = getCardDisplay(card, meta);
                     return (
-                      <div key={card.id} className={`hi${isSel ? " card-sel" : ""}${isDue && !isSel ? " card-due" : ""}`} style={{ ...S.cardItem, animationDelay: `${Math.min(i, 20) * 25}ms` }}>
+                      <div key={card.id} className={`hi${isSel ? " card-sel" : ""}${isDue && !isSel ? " card-due" : ""}`} style={{ ...S.cardItem, cursor: isEditing ? "default" : "pointer", animationDelay: `${Math.min(i, 20) * 25}ms` }}
+                        onClick={e => {
+                          // 点空白处切换选中；按钮、输入框、复选框等控件自己处理；拖选文字时不触发
+                          if (isEditing || e.target.closest("button,input,textarea,select,a,label")) return;
+                          if (window.getSelection()?.toString()) return;
+                          toggleSelect(card.id);
+                        }}>
                         <input type="checkbox" className="cb" checked={isSel} onChange={() => toggleSelect(card.id)} style={{ marginRight: 10, marginTop: 4 }} />
                         <div style={{ flex: 1, minWidth: 0 }}>
                           {showSrc && (
@@ -1249,7 +1502,7 @@ export default function App() {
                             </div>
                           )}
                           <div style={{ display: "flex", alignItems: "center", gap: 6, marginTop: 3 }}>
-                            <div style={{ display: "flex", gap: 3, flexWrap: "wrap" }}><ScheduleDots card={card} today={td} onToggle={toggleReviewDot} /></div>
+                            <CardStats card={card} />
                             {(card.tags || []).length > 0 && <div style={{ marginLeft: "auto", display: "flex", gap: 3, flexWrap: "wrap", flexShrink: 0 }}>
                               {(card.tags || []).map(t => (
                                 <span key={t} style={{ fontFamily: mono, fontSize: 9, padding: "1px 6px", borderRadius: 10, background: "#8b5cf622", border: "1px solid #8b5cf644", color: "#a78bfa", cursor: "pointer" }}
@@ -1266,7 +1519,7 @@ export default function App() {
                             e.stopPropagation();
                             setSingleTagCard(card.id); setBatchTagInput("");
                           }} title="Add tag"><I.Tag /></button>
-                          {(card.reviewHistory || []).length > 0 && <button className="spk" style={{ ...S.speakBtn, padding: 4, color: "#facc15" }} onClick={e => { e.stopPropagation(); clearReview(card); }} title="Clear review">✕</button>}
+                          {card.state === "review" && <button className="spk" style={{ ...S.speakBtn, padding: 4, color: "#facc15" }} onClick={e => { e.stopPropagation(); clearReview(card); }} title="重置为新卡">✕</button>}
                           <DateInput value={card.createdAt} onChange={dd => updateCardDate(card, dd)} />
                           <button style={S.deleteBtn} onClick={() => deleteCard(card)}><I.Trash /></button>
                         </div>
@@ -1294,10 +1547,10 @@ export default function App() {
               </>)}
               {clearTagConfirm && (
                 <div style={S.modal} onClick={() => setClearTagConfirm(false)}><div style={S.modalContent} onClick={e => e.stopPropagation()}>
-                  <h3 style={S.modalTitle}>确认清除</h3>
-                  <p style={{ fontFamily: sans, fontSize: 14, color: textDim, lineHeight: 1.6, marginBottom: 8 }}>确定要清除 <strong style={{ color: text }}>{selected.size}</strong> 张卡片的所有复习记录吗？</p>
-                  <p style={{ fontFamily: mono, fontSize: 12, color: "#facc15", marginBottom: 16 }}>复习进度将重置为初始状态，不可撤销。</p>
-                  <div style={S.modalActions}><button className="ab" style={S.modalCancel} onClick={() => setClearTagConfirm(false)}>取消</button><button className="ab" style={{ ...S.deleteConfirmBtn, background: "#ca8a04" }} onClick={batchClearTags}>确认清除</button></div>
+                  <h3 style={S.modalTitle}>确认重置</h3>
+                  <p style={{ fontFamily: sans, fontSize: 14, color: textDim, lineHeight: 1.6, marginBottom: 8 }}>确定要把 <strong style={{ color: text }}>{selected.size}</strong> 张卡片重置为新卡吗？</p>
+                  <p style={{ fontFamily: mono, fontSize: 12, color: "#facc15", marginBottom: 16 }}>复习记录、间隔、难度系数都会清空，不可撤销。</p>
+                  <div style={S.modalActions}><button className="ab" style={S.modalCancel} onClick={() => setClearTagConfirm(false)}>取消</button><button className="ab" style={{ ...S.deleteConfirmBtn, background: "#ca8a04" }} onClick={batchClearTags}>确认重置</button></div>
                 </div></div>
               )}
               {batchDateModal && (
@@ -1325,7 +1578,7 @@ export default function App() {
                 </div></div>
               )}
               {singleTagCard && (() => {
-                const stc = cards.find(c => c.id === singleTagCard);
+                const stc = cardsById.get(singleTagCard);
                 if (!stc) return null;
                 const addSingleTag = tag => {
                   if (!tag.trim()) return;
@@ -1410,81 +1663,89 @@ export default function App() {
                   );
                 })}
               </div>
-              <div><h3 style={S.smallTitle}>Ebbinghaus Schedule</h3><div style={S.intervals}>{EBB.map((d, i) => <div key={i} style={S.intervalPill}>Day {d}</div>)}</div></div>
+              <div>
+                <h3 style={S.smallTitle}>复习设置（SM-2）</h3>
+                <div style={S.intervals}>
+                  <div style={S.intervalPill}>每日新卡 {SRS.newPerDay}</div>
+                  <div style={S.intervalPill}>每日复习 {SRS.reviewsPerDay}</div>
+                  <div style={S.intervalPill}>本牌组待学新卡 {deckStats[activeDeck]?.nw || 0}</div>
+                </div>
+                <p style={{ fontFamily: mono, fontSize: 10, color: "#555", marginTop: 8 }}>在 vite.config.js 中修改</p>
+              </div>
             </div>
           </div>
         )}
 
         {/* ═══ REVIEW ═══ */}
-        {view === "review" && (
-          <div style={S.content}>
-            <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "12px 0", flexWrap: "wrap" }}>
-              <span style={{ fontFamily: mono, fontSize: 12, color: textDim }}>Review:</span>
-              <DateInput value={reviewDate} onChange={d => { setReviewDate(d); startReviewSession(d, activeDeck); }} />
-              {reviewDate !== td && <button className="pill" onClick={() => { setReviewDate(td); startReviewSession(td, activeDeck); }} style={{ fontSize: 10 }}>Today</button>}
-              <button className={`pill${reviewQuizType === 0 ? " on" : ""}`} onClick={() => setReviewQuizType(0)}>目标</button>
-              <button className={`pill${reviewQuizType === 1 ? " on" : ""}`} onClick={() => setReviewQuizType(1)}>翻译1</button>
-              <button className={`pill${reviewQuizType === 2 ? " on" : ""}`} onClick={() => setReviewQuizType(2)}>翻译2</button>
-              <div style={{ marginLeft: "auto" }}><button className={`pill${reviewAutoPlay ? " on" : ""}`} onClick={() => setReviewAutoPlay(!reviewAutoPlay)}><I.Speaker size={12} /> 自动播放</button></div>
-            </div>
-            {reviewTotal === 0 ? (
-              <div style={S.empty}><div style={{ fontSize: 48, color: "#4ade80", marginBottom: 8 }}>✓</div>
-                <p style={S.emptyText}>No cards due on {reviewDate}</p></div>
-            ) : reviewDone ? (
-              <div style={S.empty}><div style={{ fontSize: 48, color: "#4ade80", marginBottom: 8 }}>✓</div>
-                <p style={S.emptyText}>All {reviewTotal} cards reviewed!</p></div>
-            ) : (() => {
-              const rc = reviewCurrentCard;
-              if (!rc) return <div style={S.empty}><p style={S.emptyText}>Loading...</p></div>;
-              const d = getCardDisplay(rc, meta);
-              const allFields = [d.src, d.t1, d.t2];
-              const allLangs = [d.srcL, d.t1L, d.t2L];
-              const qIdx = reviewQuizType;
-              const question = allFields[qIdx];
-              const questionLang = allLangs[qIdx];
-              const ans = allFields.filter((_, i) => i !== qIdx);
-              const ansL = allLangs.filter((_, i) => i !== qIdx);
-              return (
-                <div style={S.reviewArea}>
-                  <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 16, marginBottom: 8 }}>
-                    {reviewPos > 0 && <button className="pill" onClick={prevReviewCard} style={{ fontSize: 11 }}>‹ 上一个</button>}
-                    <span style={S.reviewProgress}>{reviewPos + 1} / {reviewTotal}</span>
-                    {reviewPos < reviewTotal - 1 && <button className="pill" onClick={nextReviewCard} style={{ fontSize: 11 }}>下一个 ›</button>}
-                  </div>
-                  <div style={S.reviewCard} key={rc.id + reviewPos}>
-                    <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8, marginBottom: 4 }}>
-                      <div style={S.reviewWord}>{question}</div>
-                      <button className="spk" style={{ ...S.speakBtn, padding: 4 }} onClick={() => speak(question, questionLang)}><I.Speaker size={18} /></button>
-                    </div>
-                    <div style={{ marginTop: 8, marginBottom: 24 }}><ScheduleDots card={rc} today={td} onToggle={toggleReviewDot} /></div>
-                    <div style={{ minHeight: 52 }}>
-                      {!reviewRevealed ? (
-                        <div style={S.reviewActions}>
-                          <button className="ab" style={S.forgotBtn} onClick={() => doReview(rc.id, false)}><I.X /> 不记得</button>
-                          <button className="ab" style={S.knewBtn} onClick={() => doReview(rc.id, true)}><I.Check /> 记得</button>
-                        </div>
-                      ) : (
-                        <button className="ab" style={{ ...S.showBtn, width: "100%", justifyContent: "center" }} onClick={nextReviewCard}>Next →</button>
-                      )}
-                    </div>
-                    {reviewRevealed && (
-                      <div style={{ animation: "fadeUp 0.3s ease", marginTop: 20, borderTop: `1px solid ${border}`, paddingTop: 16 }}>
-                        <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}>
-                          <div style={S.reviewTrans}>{ans[0]}</div>
-                          <button className="spk" style={S.speakBtn} onClick={() => speak(ans[0], ansL[0])}><I.Speaker /></button>
-                        </div>
-                        <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8, marginTop: 6 }}>
-                          <div style={S.reviewTrans2}>{ans[1]}</div>
-                          <button className="spk" style={S.speakBtn} onClick={() => speak(ans[1], ansL[1])}><I.Speaker /></button>
-                        </div>
-                      </div>
-                    )}
-                  </div>
+        {view === "review" && (() => {
+          const st = studiedOn(cards, activeDeck, reviewDate);
+          const limitLine = `今日已学：新卡 ${st.newDone}/${SRS.newPerDay} · 复习 ${st.revDone}/${SRS.reviewsPerDay}`;
+          return (
+            <div style={S.content}>
+              <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "12px 0", flexWrap: "wrap" }}>
+                <span style={{ fontFamily: mono, fontSize: 12, color: textDim }}>Review:</span>
+                <DateInput value={reviewDate} onChange={d => { setReviewDate(d); startReviewSession(d, activeDeck); }} />
+                {reviewDate !== td && <button className="pill" onClick={() => { setReviewDate(td); startReviewSession(td, activeDeck); }} style={{ fontSize: 10 }}>Today</button>}
+                <button className={`pill${reviewQuizType === 0 ? " on" : ""}`} onClick={() => setReviewQuizType(0)}>目标</button>
+                <button className={`pill${reviewQuizType === 1 ? " on" : ""}`} onClick={() => setReviewQuizType(1)}>翻译1</button>
+                <button className={`pill${reviewQuizType === 2 ? " on" : ""}`} onClick={() => setReviewQuizType(2)}>翻译2</button>
+                <div style={{ marginLeft: "auto" }}><button className={`pill${reviewAutoPlay ? " on" : ""}`} onClick={() => setReviewAutoPlay(!reviewAutoPlay)}><I.Speaker size={12} /> 自动播放</button></div>
+              </div>
+              {reviewTotal === 0 || reviewDone ? (
+                <div style={S.empty}>
+                  <div style={{ fontSize: 48, color: "#4ade80", marginBottom: 8 }}>✓</div>
+                  <p style={S.emptyText}>{reviewDone ? `本轮完成，共 ${reviewTotal} 次作答` : `${reviewDate} 没有要学的卡片`}</p>
+                  <p style={{ fontFamily: mono, fontSize: 11, color: textDim }}>{limitLine}</p>
+                  {undoCount > 0 && <button className="pill" onClick={undoReview}><I.Undo /> 撤销上一次</button>}
                 </div>
-              );
-            })()}
-          </div>
-        )}
+              ) : !reviewCurrentCard ? (
+                <div style={S.empty}><p style={S.emptyText}>这张卡已被删除</p><button className="pill" onClick={skipReview}>跳过 ›</button></div>
+              ) : (() => {
+                const rc = reviewCurrentCard;
+                const qp = quizParts(rc);
+                const ivls = previewIntervals(rc, reviewDate);
+                const retry = reviewItem.retry;
+                return (
+                  <div style={S.reviewArea}>
+                    <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 12, marginBottom: 8 }}>
+                      <button className="pill" onClick={undoReview} disabled={!undoCount} style={{ fontSize: 11 }} title="撤销 (U)"><I.Undo /> 撤销</button>
+                      <span style={{ ...S.reviewProgress, marginBottom: 0 }}>{reviewPos + 1} / {reviewTotal}</span>
+                      <button className="pill" onClick={skipReview} style={{ fontSize: 11 }} title="跳过，留到下次 (S)">跳过 ›</button>
+                    </div>
+                    <div style={S.reviewCard} key={rc.id + "-" + reviewPos}>
+                      <div style={{ display: "flex", justifyContent: "center", gap: 6, marginBottom: 6, minHeight: 16 }}>
+                        {rc.state !== "review" && <span style={{ ...S.badge, color: "#60a5fa", borderColor: "#2563eb55" }}>新卡</span>}
+                        {retry && <span style={{ ...S.badge, color: "#fb923c", borderColor: "#ea580c55" }}>本轮重练 · 不影响排期</span>}
+                      </div>
+                      <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8, marginBottom: 4 }}>
+                        <div style={S.reviewWord}>{qp.question}</div>
+                        <button className="spk" style={{ ...S.speakBtn, padding: 4 }} onClick={() => speak(qp.question, qp.questionLang)}><I.Speaker size={18} /></button>
+                      </div>
+                      <div style={{ marginTop: 8, marginBottom: 24 }}><CardStats card={rc} center /></div>
+                      {!reviewRevealed ? (
+                        <button className="ab" style={{ ...S.showBtn, width: "100%", justifyContent: "center" }} onClick={() => setReviewRevealed(true)}>显示答案 <kbd>空格</kbd></button>
+                      ) : (<>
+                        {renderAnswer(qp.ans, qp.ansL)}
+                        <div style={S.gradeRow}>
+                          {RATINGS.map(({ r, label, color, bg: b, bd }) => (
+                            <button key={r} className="ab" style={{ ...S.gradeBtn, color, background: b, borderColor: bd }} onClick={() => answerReview(r)}>
+                              <span style={{ fontSize: 14, fontWeight: 600 }}>{label}</span>
+                              <span style={{ fontSize: 10, opacity: 0.8 }}>{retry ? (r === 1 ? "再来一次" : "本轮完成") : (r === 1 && SRS.relearnInSession ? "本轮再练·明天" : `${fmtIvl(ivls[r])}后`)}</span>
+                              <kbd style={{ borderColor: bd, color }}>{r}</kbd>
+                            </button>
+                          ))}
+                        </div>
+                      </>)}
+                    </div>
+                    <p style={{ fontFamily: mono, fontSize: 10, color: "#555", marginTop: 14, textAlign: "center", lineHeight: 1.8 }}>
+                      <kbd>空格</kbd> 显示答案 / 良好　<kbd>1</kbd>–<kbd>4</kbd> 评分　<kbd>U</kbd> 撤销　<kbd>S</kbd> 跳过<br />{limitLine}
+                    </p>
+                  </div>
+                );
+              })()}
+            </div>
+          );
+        })()}
 
         {/* ═══ INTENSIVE ═══ */}
         {view === "intensive" && (
@@ -1501,6 +1762,7 @@ export default function App() {
               <button className={`pill${reviewQuizType === 0 ? " on" : ""}`} onClick={() => setReviewQuizType(0)}>目标</button>
               <button className={`pill${reviewQuizType === 1 ? " on" : ""}`} onClick={() => setReviewQuizType(1)}>翻译1</button>
               <button className={`pill${reviewQuizType === 2 ? " on" : ""}`} onClick={() => setReviewQuizType(2)}>翻译2</button>
+              <span style={{ fontFamily: mono, fontSize: 10, color: "#555" }}>练习模式，不影响复习排期</span>
               <div style={{ marginLeft: "auto" }}><button className={`pill${reviewAutoPlay ? " on" : ""}`} onClick={() => setReviewAutoPlay(!reviewAutoPlay)}><I.Speaker size={12} /> 自动播放</button></div>
             </div>
             {intensiveTotal === 0 ? (
@@ -1508,59 +1770,51 @@ export default function App() {
                 <p style={S.emptyText}>{intensiveMode === "hard" ? "没有高难度词汇" : "该标签没有词汇"}</p></div>
             ) : intensiveDone ? (
               <div style={S.empty}><div style={{ fontSize: 48, color: "#4ade80", marginBottom: 8 }}>✓</div>
-                <p style={S.emptyText}>强化复习完成！共 {intensiveTotal} 个</p></div>
+                <p style={S.emptyText}>强化练习完成！共 {intensiveTotal} 次</p></div>
+            ) : !intensiveCurrentCard ? (
+              <div style={S.empty}><p style={S.emptyText}>这张卡已被删除</p><button className="pill" onClick={nextIntensiveCard}>下一个 ›</button></div>
             ) : (() => {
               const rc = intensiveCurrentCard;
-              if (!rc) return <div style={S.empty}><p style={S.emptyText}>Loading...</p></div>;
-              const d = getCardDisplay(rc, meta);
+              const qp = quizParts(rc);
               const redCount = redCountOf(rc);
-              const allFields = [d.src, d.t1, d.t2];
-              const allLangs = [d.srcL, d.t1L, d.t2L];
-              const qIdx = reviewQuizType;
-              const question = allFields[qIdx], questionLang = allLangs[qIdx];
-              const ans = allFields.filter((_, i) => i !== qIdx);
-              const ansL = allLangs.filter((_, i) => i !== qIdx);
               return (
                 <div style={S.reviewArea}>
                   <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 16, marginBottom: 8 }}>
                     {intensivePos > 0 && <button className="pill" onClick={prevIntensiveCard} style={{ fontSize: 11 }}>‹ 上一个</button>}
-                    <span style={S.reviewProgress}>{intensivePos + 1} / {intensiveTotal}</span>
+                    <span style={{ ...S.reviewProgress, marginBottom: 0 }}>{intensivePos + 1} / {intensiveTotal}</span>
                     {intensivePos < intensiveTotal - 1 && <button className="pill" onClick={nextIntensiveCard} style={{ fontSize: 11 }}>下一个 ›</button>}
                   </div>
-                  <div style={S.reviewCard} key={rc.id + intensivePos}>
+                  <div style={S.reviewCard} key={rc.id + "-" + intensivePos}>
+                    <div style={{ display: "flex", justifyContent: "center", gap: 6, marginBottom: 6, minHeight: 16 }}>
+                      {redCount > 0 && <span style={{ ...S.badge, color: "#f87171", borderColor: "#dc262655" }}>{redCount} 次记错</span>}
+                      {intensiveItem.retry && <span style={{ ...S.badge, color: "#fb923c", borderColor: "#ea580c55" }}>再练</span>}
+                      {(rc.tags || []).map(t => <span key={t} style={{ ...S.badge, color: "#a78bfa", borderColor: "#8b5cf644" }}>{t}</span>)}
+                    </div>
                     <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8, marginBottom: 4 }}>
-                      <div style={S.reviewWord}>{question}</div>
-                      <button className="spk" style={{ ...S.speakBtn, padding: 4 }} onClick={() => speak(question, questionLang)}><I.Speaker size={18} /></button>
+                      <div style={S.reviewWord}>{qp.question}</div>
+                      <button className="spk" style={{ ...S.speakBtn, padding: 4 }} onClick={() => speak(qp.question, qp.questionLang)}><I.Speaker size={18} /></button>
                     </div>
-                    {redCount > 0 && <div style={{ fontFamily: mono, fontSize: 11, color: "#f87171", marginBottom: 8 }}>{redCount} failed</div>}
-                    {(rc.tags || []).length > 0 && <div style={{ display: "flex", gap: 3, justifyContent: "center", marginBottom: 4 }}>{(rc.tags || []).map(t => <span key={t} style={{ fontFamily: mono, fontSize: 9, padding: "1px 6px", borderRadius: 10, background: "#8b5cf622", border: "1px solid #8b5cf644", color: "#a78bfa" }}>{t}</span>)}</div>}
-                    <div style={{ marginTop: 4, marginBottom: 20 }}><ScheduleDots card={rc} today={td} onToggle={toggleReviewDot} /></div>
-                    <div style={{ minHeight: 52 }}>
-                      {!intensiveRevealed ? (
-                        <div style={S.reviewActions}>
-                          <button className="ab" style={S.forgotBtn} onClick={() => doIntensiveReview(rc.id, false)}><I.X /> 不记得</button>
-                          <button className="ab" style={S.knewBtn} onClick={() => doIntensiveReview(rc.id, true)}><I.Check /> 记得</button>
-                        </div>
-                      ) : (
-                        <div style={{ display: "flex", gap: 8 }}>
-                          <button className="ab" style={{ ...S.showBtn, flex: 1, justifyContent: "center" }} onClick={nextIntensiveCard}>Next →</button>
-                          <button className="ab" style={{ ...S.showBtn, justifyContent: "center", background: "#16a34a22", borderColor: "#16a34a44", color: "#4ade80" }} onClick={() => masterCard(rc.id)}>✓ 已掌握</button>
-                        </div>
-                      )}
-                    </div>
-                    {intensiveRevealed && (
-                      <div style={{ animation: "fadeUp 0.3s ease", marginTop: 20, borderTop: `1px solid ${border}`, paddingTop: 16 }}>
-                        <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}>
-                          <div style={S.reviewTrans}>{ans[0]}</div>
-                          <button className="spk" style={S.speakBtn} onClick={() => speak(ans[0], ansL[0])}><I.Speaker /></button>
-                        </div>
-                        <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8, marginTop: 6 }}>
-                          <div style={S.reviewTrans2}>{ans[1]}</div>
-                          <button className="spk" style={S.speakBtn} onClick={() => speak(ans[1], ansL[1])}><I.Speaker /></button>
-                        </div>
+                    <div style={{ marginTop: 8, marginBottom: 24 }}><CardStats card={rc} center /></div>
+                    {!intensiveRevealed ? (
+                      <button className="ab" style={{ ...S.showBtn, width: "100%", justifyContent: "center" }} onClick={() => setIntensiveRevealed(true)}>显示答案 <kbd>空格</kbd></button>
+                    ) : (<>
+                      {renderAnswer(qp.ans, qp.ansL)}
+                      <div style={S.gradeRow}>
+                        <button className="ab" style={{ ...S.gradeBtn, color: "#f87171", background: "#dc262622", borderColor: "#dc262655" }} onClick={() => intensiveAdvance(true)}>
+                          <span style={{ fontSize: 14, fontWeight: 600 }}>再练</span><span style={{ fontSize: 10, opacity: .8 }}>排到队尾</span><kbd>1</kbd>
+                        </button>
+                        <button className="ab" style={{ ...S.gradeBtn, color: text, background: surface2, borderColor: border }} onClick={() => intensiveAdvance(false)}>
+                          <span style={{ fontSize: 14, fontWeight: 600 }}>下一个</span><span style={{ fontSize: 10, opacity: .8 }}>记住了</span><kbd>空格</kbd>
+                        </button>
+                        {redCount > 0 && <button className="ab" style={{ ...S.gradeBtn, color: "#4ade80", background: "#16a34a22", borderColor: "#16a34a55" }} onClick={() => masterCard(rc.id)}>
+                          <span style={{ fontSize: 14, fontWeight: 600 }}>已掌握</span><span style={{ fontSize: 10, opacity: .8 }}>移出高难度</span><kbd>M</kbd>
+                        </button>}
                       </div>
-                    )}
+                    </>)}
                   </div>
+                  <p style={{ fontFamily: mono, fontSize: 10, color: "#555", marginTop: 14, textAlign: "center" }}>
+                    <kbd>空格</kbd> 显示答案 / 下一个　<kbd>1</kbd> 再练　<kbd>M</kbd> 已掌握　<kbd>←</kbd><kbd>→</kbd> 切换
+                  </p>
                 </div>
               );
             })()}
@@ -1576,13 +1830,16 @@ export default function App() {
             </div>
             <div style={S.deckGrid}>
               {meta.decks.map(deck => {
-                const count = deckStats[deck.id]?.count || 0;
-                const due = deckStats[deck.id]?.due || 0;
+                const st = deckStats[deck.id] || { count: 0, due: 0, nw: 0 };
                 return (
                   <div key={deck.id} className="dk" style={{ ...S.deckCard, ...(activeDeck === deck.id ? { borderColor: accent } : {}) }}
                     onClick={() => { setActiveDeck(deck.id); setView("home"); }}>
                     <div style={S.deckName}>{deck.name}</div>
-                    <div style={S.deckStats}><span>{count} cards</span>{due > 0 && <span style={{ color: accent, fontWeight: 600 }}>{due} due</span>}</div>
+                    <div style={S.deckStats}>
+                      <span>{st.count} cards</span>
+                      {st.due > 0 && <span style={{ color: accent, fontWeight: 600 }}>{st.due} 到期</span>}
+                      {st.nw > 0 && <span style={{ color: "#60a5fa" }}>{st.nw} 新</span>}
+                    </div>
                     <div style={{ position: "absolute", top: 8, right: 8, display: "flex", gap: 4 }}>
                       <button style={S.deckActionBtn} onClick={e => { e.stopPropagation(); setRenameDeckId(deck.id); setRenameDeckVal(deck.name); }}><I.Edit /></button>
                       {deck.id !== "default" && <button style={S.deckActionBtn} onClick={e => { e.stopPropagation(); setDeleteDeckConfirm(deck.id); }}><I.Trash /></button>}
@@ -1668,7 +1925,12 @@ export default function App() {
                 <button className="pill" onClick={exportLogs} style={{ fontSize: 12 }}><I.Download /> Export debug logs</button>
               </div>
               <div style={S.statsGrid}>
-                {[{ n: cards.length, l: "Total" }, { n: meta.decks.length, l: "Decks" }, { n: allDueCount, l: "Due" }, { n: cards.filter(c => c.reviewStage >= EBB.length - 1).length, l: "Done" }].map((s, i) => (
+                {[
+                  { n: cards.length, l: "Total" },
+                  { n: cards.filter(c => c.state !== "review").length, l: "新卡" },
+                  { n: dueIds.size, l: "到期" },
+                  { n: cards.filter(c => c.state === "review" && (c.interval || 0) >= 21).length, l: "成熟 ≥21天" },
+                ].map((s, i) => (
                   <div key={i} style={S.statCard}><div style={S.statNum}>{s.n}</div><div style={{ fontFamily: mono, fontSize: 11, color: textDim, marginTop: 4 }}>{s.l}</div></div>
                 ))}
               </div>
@@ -1698,6 +1960,7 @@ const S = {
   logo: { display: "flex", alignItems: "center", gap: 8, cursor: "pointer" },
   logoMark: { fontSize: 22, fontWeight: 700, color: accent },
   logoText: { fontFamily: mono, fontSize: 15, fontWeight: 600, color: text, letterSpacing: "-0.5px" },
+  helpBtn: { width: 22, height: 22, marginLeft: 4, borderRadius: "50%", border: `1px solid ${border}`, background: surface, color: textDim, fontFamily: mono, fontSize: 12, fontWeight: 600, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", padding: 0 },
   dueBadge: { fontFamily: mono, fontSize: 11, fontWeight: 600, background: accentDim, color: accent, padding: "3px 9px", borderRadius: 20, cursor: "pointer" },
   langSel: { fontFamily: mono, fontSize: 11, background: surface, color: text, border: `1px solid ${border}`, borderRadius: 4, padding: "3px 4px", cursor: "pointer" },
   nav: { display: "flex", gap: 2, padding: "10px 0", borderBottom: `1px solid ${border}`, alignItems: "center", flexWrap: "wrap" },
@@ -1735,18 +1998,18 @@ const S = {
   intervalPill: { fontFamily: mono, fontSize: 11, color: textDim, background: surface2, padding: "3px 9px", borderRadius: 20, border: `1px solid ${border}` },
   reviewArea: { display: "flex", flexDirection: "column", alignItems: "center", padding: "20px 0" },
   reviewProgress: { fontFamily: mono, fontSize: 12, color: textDim, marginBottom: 16 },
-  reviewCard: { width: "100%", maxWidth: 480, background: surface, borderRadius: 16, padding: "32px 24px", textAlign: "center", border: `1px solid ${border}` },
+  reviewCard: { width: "100%", maxWidth: 520, background: surface, borderRadius: 16, padding: "24px 20px 28px", textAlign: "center", border: `1px solid ${border}` },
   reviewWord: { fontFamily: serif, fontSize: 32, fontWeight: 700, color: text },
   reviewTrans: { fontFamily: sans, fontSize: 20, fontWeight: 500, color: text },
   reviewTrans2: { fontFamily: mono, fontSize: 14, color: "#888" },
-  showBtn: { display: "inline-flex", alignItems: "center", gap: 8, fontFamily: mono, fontSize: 13, background: surface2, color: text, border: `1px solid ${border}`, padding: "10px 24px", borderRadius: 10, cursor: "pointer" },
-  reviewActions: { display: "flex", gap: 12, justifyContent: "center" },
-  forgotBtn: { display: "flex", alignItems: "center", gap: 6, fontFamily: mono, fontSize: 13, fontWeight: 600, background: "#dc262622", color: "#f87171", border: "1px solid #dc262644", padding: "12px 28px", borderRadius: 10, cursor: "pointer" },
-  knewBtn: { display: "flex", alignItems: "center", gap: 6, fontFamily: mono, fontSize: 13, fontWeight: 600, background: "#16a34a22", color: "#4ade80", border: "1px solid #16a34a44", padding: "12px 28px", borderRadius: 10, cursor: "pointer" },
+  showBtn: { display: "inline-flex", alignItems: "center", gap: 8, fontFamily: mono, fontSize: 13, background: surface2, color: text, border: `1px solid ${border}`, padding: "12px 24px", borderRadius: 10, cursor: "pointer" },
+  badge: { fontFamily: mono, fontSize: 10, padding: "1px 8px", borderRadius: 10, border: "1px solid", lineHeight: 1.5 },
+  gradeRow: { display: "flex", gap: 8, justifyContent: "center", flexWrap: "wrap" },
+  gradeBtn: { flex: "1 1 0", minWidth: 92, display: "flex", flexDirection: "column", alignItems: "center", gap: 3, fontFamily: mono, padding: "10px 6px", borderRadius: 10, border: "1px solid", cursor: "pointer" },
   deckGrid: { display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(170px,1fr))", gap: 12, paddingTop: 8 },
   deckCard: { background: surface, borderRadius: 12, padding: "18px 14px", border: `1px solid ${border}`, cursor: "pointer", transition: "all .2s", position: "relative" },
   deckName: { fontFamily: serif, fontSize: 16, fontWeight: 600, color: text, marginBottom: 6 },
-  deckStats: { fontFamily: mono, fontSize: 11, color: textDim, display: "flex", gap: 8 },
+  deckStats: { fontFamily: mono, fontSize: 11, color: textDim, display: "flex", gap: 8, flexWrap: "wrap" },
   deckActionBtn: { background: "transparent", border: "none", color: "#555", cursor: "pointer", padding: 3, display: "flex" },
   newDeckBtn: { display: "flex", alignItems: "center", gap: 6, fontFamily: mono, fontSize: 12, fontWeight: 500, background: surface2, color: text, border: `1px solid ${border}`, padding: "5px 12px", borderRadius: 8, cursor: "pointer" },
   modal: { position: "fixed", inset: 0, background: "rgba(0,0,0,0.7)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 100 },

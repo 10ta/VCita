@@ -6,32 +6,43 @@
     "translation2": "I'm about to pig out",
     "deckId": "default",
     "createdAt": "2026-04-15",
-    "reviewStage": 2,
-    "nextReview": "2026-05-04",
+    "nextReview": "2026-05-08",
     "reviewHistory": [
       {
         "date": "2026-04-15",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       },
       {
         "date": "2026-04-16",
-        "remembered": false
+        "remembered": false,
+        "rating": 1
       },
       {
         "date": "2026-04-18",
-        "remembered": false
+        "remembered": false,
+        "rating": 1
       },
       {
         "date": "2026-04-22",
-        "remembered": false
+        "remembered": false,
+        "rating": 1
       },
       {
         "date": "2026-04-30",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       }
     ],
     "rot": 1,
-    "tags": []
+    "tags": [],
+    "state": "review",
+    "interval": 8,
+    "ease": 1.9,
+    "due": "2026-05-08",
+    "lapses": 3,
+    "reps": 5,
+    "lastReview": "2026-04-30"
   },
   {
     "id": "mo08m4yplyq6",
@@ -40,33 +51,44 @@
     "translation2": "penalty",
     "deckId": "default",
     "createdAt": "2026-04-15",
-    "reviewStage": 2,
-    "nextReview": "2026-05-04",
+    "nextReview": "2026-05-17",
     "reviewHistory": [
       {
         "date": "2026-04-15",
-        "remembered": false
+        "remembered": false,
+        "rating": 1
       },
       {
         "date": "2026-04-16",
-        "remembered": false
+        "remembered": false,
+        "rating": 1
       },
       {
         "date": "2026-04-18",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       },
       {
         "date": "2026-04-22",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       },
       {
         "date": "2026-04-30",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       }
     ],
     "rot": 1,
     "tags": [
       "Police et Justice"
-    ]
+    ],
+    "state": "review",
+    "interval": 17,
+    "ease": 2.3,
+    "due": "2026-05-17",
+    "lapses": 1,
+    "reps": 5,
+    "lastReview": "2026-04-30"
   }
 ]

@@ -6,11 +6,17 @@
     "translation2": "mobilize",
     "deckId": "default",
     "createdAt": "2026-07-10",
-    "reviewStage": 0,
     "nextReview": "2026-07-10",
     "reviewHistory": [],
     "rot": 0,
-    "tags": []
+    "tags": [],
+    "state": "new",
+    "interval": 0,
+    "ease": 2.5,
+    "due": "2026-07-10",
+    "lapses": 0,
+    "reps": 0,
+    "lastReview": null
   },
   {
     "id": "mrep9jknwubo",
@@ -19,11 +25,17 @@
     "translation2": "to raise awareness",
     "deckId": "default",
     "createdAt": "2026-07-10",
-    "reviewStage": 0,
     "nextReview": "2026-07-10",
     "reviewHistory": [],
     "rot": 0,
-    "tags": []
+    "tags": [],
+    "state": "new",
+    "interval": 0,
+    "ease": 2.5,
+    "due": "2026-07-10",
+    "lapses": 0,
+    "reps": 0,
+    "lastReview": null
   },
   {
     "id": "mrepetij4w34",
@@ -32,11 +44,17 @@
     "translation2": "",
     "deckId": "default",
     "createdAt": "2026-07-10",
-    "reviewStage": 0,
     "nextReview": "2026-07-10",
     "reviewHistory": [],
     "rot": 0,
-    "tags": []
+    "tags": [],
+    "state": "new",
+    "interval": 0,
+    "ease": 2.5,
+    "due": "2026-07-10",
+    "lapses": 0,
+    "reps": 0,
+    "lastReview": null
   },
   {
     "id": "mrepsieymee4",
@@ -45,11 +63,17 @@
     "translation2": "overflow",
     "deckId": "default",
     "createdAt": "2026-07-10",
-    "reviewStage": 0,
     "nextReview": "2026-07-10",
     "reviewHistory": [],
     "rot": 0,
-    "tags": []
+    "tags": [],
+    "state": "new",
+    "interval": 0,
+    "ease": 2.5,
+    "due": "2026-07-10",
+    "lapses": 0,
+    "reps": 0,
+    "lastReview": null
   },
   {
     "id": "mreu0qj2lmvo",
@@ -58,11 +82,17 @@
     "translation2": "Especially since",
     "deckId": "default",
     "createdAt": "2026-07-10",
-    "reviewStage": 0,
     "nextReview": "2026-07-10",
     "reviewHistory": [],
     "rot": 0,
-    "tags": []
+    "tags": [],
+    "state": "new",
+    "interval": 0,
+    "ease": 2.5,
+    "due": "2026-07-10",
+    "lapses": 0,
+    "reps": 0,
+    "lastReview": null
   },
   {
     "id": "mreu38wkdwd7",
@@ -71,10 +101,16 @@
     "translation2": "",
     "deckId": "default",
     "createdAt": "2026-07-10",
-    "reviewStage": 0,
     "nextReview": "2026-07-10",
     "reviewHistory": [],
     "rot": 0,
-    "tags": []
+    "tags": [],
+    "state": "new",
+    "interval": 0,
+    "ease": 2.5,
+    "due": "2026-07-10",
+    "lapses": 0,
+    "reps": 0,
+    "lastReview": null
   }
 ]

@@ -6,28 +6,38 @@
     "translation2": "",
     "deckId": "default",
     "createdAt": "2026-04-26",
-    "reviewStage": 2,
-    "nextReview": "2026-05-06",
+    "nextReview": "2026-05-24",
     "reviewHistory": [
       {
         "date": "2026-04-26",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       },
       {
         "date": "2026-04-27",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       },
       {
         "date": "2026-04-29",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       },
       {
         "date": "2026-05-03",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       }
     ],
     "rot": 1,
-    "tags": []
+    "tags": [],
+    "state": "review",
+    "interval": 21,
+    "ease": 2.5,
+    "due": "2026-05-24",
+    "lapses": 0,
+    "reps": 4,
+    "lastReview": "2026-05-03"
   },
   {
     "id": "mofkv3ind2ql",
@@ -36,28 +46,38 @@
     "translation2": "bankruptcy",
     "deckId": "default",
     "createdAt": "2026-04-26",
-    "reviewStage": 1,
-    "nextReview": "2026-05-04",
+    "nextReview": "2026-05-09",
     "reviewHistory": [
       {
         "date": "2026-04-26",
-        "remembered": false
+        "remembered": false,
+        "rating": 1
       },
       {
         "date": "2026-04-27",
-        "remembered": false
+        "remembered": false,
+        "rating": 1
       },
       {
         "date": "2026-04-29",
-        "remembered": false
+        "remembered": false,
+        "rating": 1
       },
       {
         "date": "2026-05-03",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       }
     ],
     "rot": 1,
-    "tags": []
+    "tags": [],
+    "state": "review",
+    "interval": 6,
+    "ease": 2.1,
+    "due": "2026-05-09",
+    "lapses": 2,
+    "reps": 4,
+    "lastReview": "2026-05-03"
   },
   {
     "id": "mofkxglkxn3k",
@@ -66,28 +86,38 @@
     "translation2": "he apologized, both knees on the ground",
     "deckId": "default",
     "createdAt": "2026-04-26",
-    "reviewStage": 1,
     "nextReview": "2026-05-04",
     "reviewHistory": [
       {
         "date": "2026-04-26",
-        "remembered": false
+        "remembered": false,
+        "rating": 1
       },
       {
         "date": "2026-04-27",
-        "remembered": false
+        "remembered": false,
+        "rating": 1
       },
       {
         "date": "2026-04-29",
-        "remembered": false
+        "remembered": false,
+        "rating": 1
       },
       {
         "date": "2026-05-03",
-        "remembered": false
+        "remembered": false,
+        "rating": 1
       }
     ],
     "rot": 1,
-    "tags": []
+    "tags": [],
+    "state": "review",
+    "interval": 1,
+    "ease": 1.9,
+    "due": "2026-05-04",
+    "lapses": 3,
+    "reps": 4,
+    "lastReview": "2026-05-03"
   },
   {
     "id": "mofl3l3sviu5",
@@ -96,28 +126,38 @@
     "translation2": "to hang up",
     "deckId": "default",
     "createdAt": "2026-04-26",
-    "reviewStage": 1,
-    "nextReview": "2026-05-04",
+    "nextReview": "2026-05-07",
     "reviewHistory": [
       {
         "date": "2026-04-26",
-        "remembered": false
+        "remembered": false,
+        "rating": 1
       },
       {
         "date": "2026-04-27",
-        "remembered": false
+        "remembered": false,
+        "rating": 1
       },
       {
         "date": "2026-04-29",
-        "remembered": false
+        "remembered": false,
+        "rating": 1
       },
       {
         "date": "2026-05-03",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       }
     ],
     "rot": 1,
-    "tags": []
+    "tags": [],
+    "state": "review",
+    "interval": 4,
+    "ease": 2.1,
+    "due": "2026-05-07",
+    "lapses": 2,
+    "reps": 4,
+    "lastReview": "2026-05-03"
   },
   {
     "id": "mofpvv4e7h4p",
@@ -126,28 +166,38 @@
     "translation2": "faintness",
     "deckId": "default",
     "createdAt": "2026-04-26",
-    "reviewStage": 3,
-    "nextReview": "2026-05-10",
+    "nextReview": "2026-05-22",
     "reviewHistory": [
       {
         "date": "2026-04-26",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       },
       {
         "date": "2026-04-27",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       },
       {
         "date": "2026-04-29",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       },
       {
         "date": "2026-05-03",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       }
     ],
     "rot": 1,
-    "tags": []
+    "tags": [],
+    "state": "review",
+    "interval": 19,
+    "ease": 2.5,
+    "due": "2026-05-22",
+    "lapses": 0,
+    "reps": 4,
+    "lastReview": "2026-05-03"
   },
   {
     "id": "mofqm1g0wayt",
@@ -156,28 +206,38 @@
     "translation2": "glued to the screens",
     "deckId": "default",
     "createdAt": "2026-04-26",
-    "reviewStage": 2,
-    "nextReview": "2026-05-06",
+    "nextReview": "2026-05-04",
     "reviewHistory": [
       {
         "date": "2026-04-26",
-        "remembered": false
+        "remembered": false,
+        "rating": 1
       },
       {
         "date": "2026-04-27",
-        "remembered": false
+        "remembered": false,
+        "rating": 1
       },
       {
         "date": "2026-04-29",
-        "remembered": false
+        "remembered": false,
+        "rating": 1
       },
       {
         "date": "2026-05-03",
-        "remembered": false
+        "remembered": false,
+        "rating": 1
       }
     ],
     "rot": 1,
-    "tags": []
+    "tags": [],
+    "state": "review",
+    "interval": 1,
+    "ease": 1.9,
+    "due": "2026-05-04",
+    "lapses": 3,
+    "reps": 4,
+    "lastReview": "2026-05-03"
   },
   {
     "id": "mofqxpt4piqg",
@@ -186,28 +246,38 @@
     "translation2": "he is trapped",
     "deckId": "default",
     "createdAt": "2026-04-26",
-    "reviewStage": 1,
     "nextReview": "2026-05-04",
     "reviewHistory": [
       {
         "date": "2026-04-26",
-        "remembered": false
+        "remembered": false,
+        "rating": 1
       },
       {
         "date": "2026-04-27",
-        "remembered": false
+        "remembered": false,
+        "rating": 1
       },
       {
         "date": "2026-04-29",
-        "remembered": false
+        "remembered": false,
+        "rating": 1
       },
       {
         "date": "2026-05-03",
-        "remembered": false
+        "remembered": false,
+        "rating": 1
       }
     ],
     "rot": 1,
-    "tags": []
+    "tags": [],
+    "state": "review",
+    "interval": 1,
+    "ease": 1.9,
+    "due": "2026-05-04",
+    "lapses": 3,
+    "reps": 4,
+    "lastReview": "2026-05-03"
   },
   {
     "id": "mofsup60t506",
@@ -216,28 +286,38 @@
     "translation2": "craze",
     "deckId": "default",
     "createdAt": "2026-04-26",
-    "reviewStage": 0,
-    "nextReview": "2026-05-03",
+    "nextReview": "2026-05-04",
     "reviewHistory": [
       {
         "date": "2026-04-26",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       },
       {
         "date": "2026-04-27",
-        "remembered": false
+        "remembered": false,
+        "rating": 1
       },
       {
         "date": "2026-04-29",
-        "remembered": false
+        "remembered": false,
+        "rating": 1
       },
       {
         "date": "2026-05-03",
-        "remembered": false
+        "remembered": false,
+        "rating": 1
       }
     ],
     "rot": 1,
-    "tags": []
+    "tags": [],
+    "state": "review",
+    "interval": 1,
+    "ease": 1.9,
+    "due": "2026-05-04",
+    "lapses": 3,
+    "reps": 4,
+    "lastReview": "2026-05-03"
   },
   {
     "id": "moftgzsx3wcl",
@@ -246,27 +326,37 @@
     "translation2": "unspeakable",
     "deckId": "default",
     "createdAt": "2026-04-26",
-    "reviewStage": 1,
     "nextReview": "2026-05-04",
     "reviewHistory": [
       {
         "date": "2026-04-26",
-        "remembered": false
+        "remembered": false,
+        "rating": 1
       },
       {
         "date": "2026-04-27",
-        "remembered": false
+        "remembered": false,
+        "rating": 1
       },
       {
         "date": "2026-04-29",
-        "remembered": false
+        "remembered": false,
+        "rating": 1
       },
       {
         "date": "2026-05-03",
-        "remembered": false
+        "remembered": false,
+        "rating": 1
       }
     ],
     "rot": 1,
-    "tags": []
+    "tags": [],
+    "state": "review",
+    "interval": 1,
+    "ease": 1.9,
+    "due": "2026-05-04",
+    "lapses": 3,
+    "reps": 4,
+    "lastReview": "2026-05-03"
   }
 ]

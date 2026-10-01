@@ -6,32 +6,43 @@
     "translation2": "contravention",
     "deckId": "default",
     "createdAt": "2026-04-16",
-    "reviewStage": 5,
-    "nextReview": "2026-05-31",
+    "nextReview": "2026-06-21",
     "reviewHistory": [
       {
         "date": "2026-04-16",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       },
       {
         "date": "2026-04-17",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       },
       {
         "date": "2026-04-19",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       },
       {
         "date": "2026-04-23",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       },
       {
         "date": "2026-05-01",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       }
     ],
     "rot": 0,
-    "tags": []
+    "tags": [],
+    "state": "review",
+    "interval": 51,
+    "ease": 2.5,
+    "due": "2026-06-21",
+    "lapses": 0,
+    "reps": 5,
+    "lastReview": "2026-05-01"
   },
   {
     "id": "mo1m23wblhee",
@@ -40,32 +51,43 @@
     "translation2": "inflicted on children",
     "deckId": "default",
     "createdAt": "2026-04-16",
-    "reviewStage": 4,
-    "nextReview": "2026-05-16",
+    "nextReview": "2026-06-18",
     "reviewHistory": [
       {
         "date": "2026-04-16",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       },
       {
         "date": "2026-04-17",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       },
       {
         "date": "2026-04-19",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       },
       {
         "date": "2026-04-23",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       },
       {
         "date": "2026-05-01",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       }
     ],
     "rot": 0,
-    "tags": []
+    "tags": [],
+    "state": "review",
+    "interval": 48,
+    "ease": 2.5,
+    "due": "2026-06-18",
+    "lapses": 0,
+    "reps": 5,
+    "lastReview": "2026-05-01"
   },
   {
     "id": "mo1mgpk3vgja",
@@ -74,32 +96,43 @@
     "translation2": "disseminate",
     "deckId": "default",
     "createdAt": "2026-04-16",
-    "reviewStage": 3,
-    "nextReview": "2026-05-08",
+    "nextReview": "2026-05-20",
     "reviewHistory": [
       {
         "date": "2026-04-16",
-        "remembered": false
+        "remembered": false,
+        "rating": 1
       },
       {
         "date": "2026-04-17",
-        "remembered": false
+        "remembered": false,
+        "rating": 1
       },
       {
         "date": "2026-04-19",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       },
       {
         "date": "2026-04-23",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       },
       {
         "date": "2026-05-01",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       }
     ],
     "rot": 1,
-    "tags": []
+    "tags": [],
+    "state": "review",
+    "interval": 19,
+    "ease": 2.3,
+    "due": "2026-05-20",
+    "lapses": 1,
+    "reps": 5,
+    "lastReview": "2026-05-01"
   },
   {
     "id": "mo1mi6wvtu3m",
@@ -108,32 +141,43 @@
     "translation2": "dilute the horror",
     "deckId": "default",
     "createdAt": "2026-04-16",
-    "reviewStage": 3,
-    "nextReview": "2026-05-08",
+    "nextReview": "2026-05-19",
     "reviewHistory": [
       {
         "date": "2026-04-16",
-        "remembered": false
+        "remembered": false,
+        "rating": 1
       },
       {
         "date": "2026-04-17",
-        "remembered": false
+        "remembered": false,
+        "rating": 1
       },
       {
         "date": "2026-04-19",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       },
       {
         "date": "2026-04-23",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       },
       {
         "date": "2026-05-01",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       }
     ],
     "rot": 1,
-    "tags": []
+    "tags": [],
+    "state": "review",
+    "interval": 18,
+    "ease": 2.3,
+    "due": "2026-05-19",
+    "lapses": 1,
+    "reps": 5,
+    "lastReview": "2026-05-01"
   },
   {
     "id": "mo1mpr9sccyb",
@@ -142,35 +186,47 @@
     "translation2": "sordid",
     "deckId": "default",
     "createdAt": "2026-04-16",
-    "reviewStage": 4,
-    "nextReview": "2026-09-27",
+    "nextReview": "2026-06-26",
     "reviewHistory": [
       {
         "date": "2026-04-16",
-        "remembered": false
+        "remembered": false,
+        "rating": 1
       },
       {
         "date": "2026-04-17",
-        "remembered": false
+        "remembered": false,
+        "rating": 1
       },
       {
         "date": "2026-04-19",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       },
       {
         "date": "2026-04-23",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       },
       {
         "date": "2026-05-01",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       },
       {
         "date": "2026-05-16",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       }
     ],
     "rot": 0,
-    "tags": []
+    "tags": [],
+    "state": "review",
+    "interval": 41,
+    "ease": 2.3,
+    "due": "2026-06-26",
+    "lapses": 1,
+    "reps": 6,
+    "lastReview": "2026-05-16"
   }
 ]

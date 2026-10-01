@@ -6,11 +6,17 @@
     "translation2": "stay up until dawn",
     "deckId": "default",
     "createdAt": "2026-08-05",
-    "reviewStage": 0,
     "nextReview": "2026-08-05",
     "reviewHistory": [],
     "rot": 0,
-    "tags": []
+    "tags": [],
+    "state": "new",
+    "interval": 0,
+    "ease": 2.5,
+    "due": "2026-08-05",
+    "lapses": 0,
+    "reps": 0,
+    "lastReview": null
   },
   {
     "id": "msfqs0d4ebql",
@@ -19,10 +25,16 @@
     "translation2": "Cooking with your child is an activity that is both fun and",
     "deckId": "default",
     "createdAt": "2026-08-05",
-    "reviewStage": 0,
     "nextReview": "2026-08-05",
     "reviewHistory": [],
     "rot": 0,
-    "tags": []
+    "tags": [],
+    "state": "new",
+    "interval": 0,
+    "ease": 2.5,
+    "due": "2026-08-05",
+    "lapses": 0,
+    "reps": 0,
+    "lastReview": null
   }
 ]

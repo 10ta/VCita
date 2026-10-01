@@ -6,11 +6,17 @@
     "translation2": "confer",
     "deckId": "default",
     "createdAt": "2026-07-29",
-    "reviewStage": 0,
     "nextReview": "2026-07-29",
     "reviewHistory": [],
     "rot": 0,
-    "tags": []
+    "tags": [],
+    "state": "new",
+    "interval": 0,
+    "ease": 2.5,
+    "due": "2026-07-29",
+    "lapses": 0,
+    "reps": 0,
+    "lastReview": null
   },
   {
     "id": "ms5g4znu6xxx",
@@ -19,11 +25,17 @@
     "translation2": "boys are endowed with more...",
     "deckId": "default",
     "createdAt": "2026-07-29",
-    "reviewStage": 0,
     "nextReview": "2026-07-29",
     "reviewHistory": [],
     "rot": 0,
-    "tags": []
+    "tags": [],
+    "state": "new",
+    "interval": 0,
+    "ease": 2.5,
+    "due": "2026-07-29",
+    "lapses": 0,
+    "reps": 0,
+    "lastReview": null
   },
   {
     "id": "ms5g9pqc7oqq",
@@ -32,11 +44,17 @@
     "translation2": "",
     "deckId": "default",
     "createdAt": "2026-07-29",
-    "reviewStage": 0,
     "nextReview": "2026-07-29",
     "reviewHistory": [],
     "rot": 0,
-    "tags": []
+    "tags": [],
+    "state": "new",
+    "interval": 0,
+    "ease": 2.5,
+    "due": "2026-07-29",
+    "lapses": 0,
+    "reps": 0,
+    "lastReview": null
   },
   {
     "id": "ms5gxpyrf9o1",
@@ -45,11 +63,17 @@
     "translation2": "an emblematic building",
     "deckId": "default",
     "createdAt": "2026-07-29",
-    "reviewStage": 0,
     "nextReview": "2026-07-29",
     "reviewHistory": [],
     "rot": 0,
-    "tags": []
+    "tags": [],
+    "state": "new",
+    "interval": 0,
+    "ease": 2.5,
+    "due": "2026-07-29",
+    "lapses": 0,
+    "reps": 0,
+    "lastReview": null
   },
   {
     "id": "ms5h3nj9dcg5",
@@ -58,11 +82,17 @@
     "translation2": "",
     "deckId": "default",
     "createdAt": "2026-07-29",
-    "reviewStage": 0,
     "nextReview": "2026-07-29",
     "reviewHistory": [],
     "rot": 0,
-    "tags": []
+    "tags": [],
+    "state": "new",
+    "interval": 0,
+    "ease": 2.5,
+    "due": "2026-07-29",
+    "lapses": 0,
+    "reps": 0,
+    "lastReview": null
   },
   {
     "id": "ms5h3ystwyuw",
@@ -71,11 +101,17 @@
     "translation2": "It is governed by strict standards",
     "deckId": "default",
     "createdAt": "2026-07-29",
-    "reviewStage": 0,
     "nextReview": "2026-07-29",
     "reviewHistory": [],
     "rot": 0,
-    "tags": []
+    "tags": [],
+    "state": "new",
+    "interval": 0,
+    "ease": 2.5,
+    "due": "2026-07-29",
+    "lapses": 0,
+    "reps": 0,
+    "lastReview": null
   },
   {
     "id": "ms5s09vddp5g",
@@ -84,11 +120,17 @@
     "translation2": "craze",
     "deckId": "default",
     "createdAt": "2026-07-29",
-    "reviewStage": 0,
     "nextReview": "2026-07-29",
     "reviewHistory": [],
     "rot": 0,
-    "tags": []
+    "tags": [],
+    "state": "new",
+    "interval": 0,
+    "ease": 2.5,
+    "due": "2026-07-29",
+    "lapses": 0,
+    "reps": 0,
+    "lastReview": null
   },
   {
     "id": "ms5t1zl4jks3",
@@ -97,11 +139,17 @@
     "translation2": "",
     "deckId": "default",
     "createdAt": "2026-07-29",
-    "reviewStage": 0,
     "nextReview": "2026-07-29",
     "reviewHistory": [],
     "rot": 0,
-    "tags": []
+    "tags": [],
+    "state": "new",
+    "interval": 0,
+    "ease": 2.5,
+    "due": "2026-07-29",
+    "lapses": 0,
+    "reps": 0,
+    "lastReview": null
   },
   {
     "id": "ms66impabm0s",
@@ -110,10 +158,16 @@
     "translation2": "breathe fire",
     "deckId": "default",
     "createdAt": "2026-07-29",
-    "reviewStage": 0,
     "nextReview": "2026-07-29",
     "reviewHistory": [],
     "rot": 0,
-    "tags": []
+    "tags": [],
+    "state": "new",
+    "interval": 0,
+    "ease": 2.5,
+    "due": "2026-07-29",
+    "lapses": 0,
+    "reps": 0,
+    "lastReview": null
   }
 ]

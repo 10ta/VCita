@@ -6,35 +6,47 @@
     "translation2": "extremely serious facts",
     "deckId": "default",
     "createdAt": "2026-04-17",
-    "reviewStage": 4,
-    "nextReview": "2026-09-27",
+    "nextReview": "2026-05-18",
     "reviewHistory": [
       {
         "date": "2026-04-17",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       },
       {
         "date": "2026-04-18",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       },
       {
         "date": "2026-04-20",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       },
       {
         "date": "2026-04-24",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       },
       {
         "date": "2026-05-02",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       },
       {
         "date": "2026-05-17",
-        "remembered": false
+        "remembered": false,
+        "rating": 1
       }
     ],
     "rot": 0,
-    "tags": []
+    "tags": [],
+    "state": "review",
+    "interval": 1,
+    "ease": 2.3,
+    "due": "2026-05-18",
+    "lapses": 1,
+    "reps": 6,
+    "lastReview": "2026-05-17"
   }
 ]

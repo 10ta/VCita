@@ -6,11 +6,17 @@
     "translation2": "worrying",
     "deckId": "default",
     "createdAt": "2026-07-28",
-    "reviewStage": 0,
     "nextReview": "2026-07-28",
     "reviewHistory": [],
     "rot": 0,
-    "tags": []
+    "tags": [],
+    "state": "new",
+    "interval": 0,
+    "ease": 2.5,
+    "due": "2026-07-28",
+    "lapses": 0,
+    "reps": 0,
+    "lastReview": null
   },
   {
     "id": "ms4763zroxc0",
@@ -19,11 +25,17 @@
     "translation2": "provoked criticism",
     "deckId": "default",
     "createdAt": "2026-07-28",
-    "reviewStage": 0,
     "nextReview": "2026-07-28",
     "reviewHistory": [],
     "rot": 0,
-    "tags": []
+    "tags": [],
+    "state": "new",
+    "interval": 0,
+    "ease": 2.5,
+    "due": "2026-07-28",
+    "lapses": 0,
+    "reps": 0,
+    "lastReview": null
   },
   {
     "id": "ms48tlie8xdn",
@@ -32,11 +44,17 @@
     "translation2": "self-esteem.",
     "deckId": "default",
     "createdAt": "2026-07-28",
-    "reviewStage": 0,
     "nextReview": "2026-07-28",
     "reviewHistory": [],
     "rot": 0,
-    "tags": []
+    "tags": [],
+    "state": "new",
+    "interval": 0,
+    "ease": 2.5,
+    "due": "2026-07-28",
+    "lapses": 0,
+    "reps": 0,
+    "lastReview": null
   },
   {
     "id": "ms4bvyn3ew9o",
@@ -45,11 +63,17 @@
     "translation2": "To what extent",
     "deckId": "default",
     "createdAt": "2026-07-28",
-    "reviewStage": 0,
     "nextReview": "2026-07-28",
     "reviewHistory": [],
     "rot": 0,
-    "tags": []
+    "tags": [],
+    "state": "new",
+    "interval": 0,
+    "ease": 2.5,
+    "due": "2026-07-28",
+    "lapses": 0,
+    "reps": 0,
+    "lastReview": null
   },
   {
     "id": "ms4dk8jkohjs",
@@ -58,11 +82,17 @@
     "translation2": "The overabundance of requests.",
     "deckId": "default",
     "createdAt": "2026-07-28",
-    "reviewStage": 0,
     "nextReview": "2026-07-28",
     "reviewHistory": [],
     "rot": 0,
-    "tags": []
+    "tags": [],
+    "state": "new",
+    "interval": 0,
+    "ease": 2.5,
+    "due": "2026-07-28",
+    "lapses": 0,
+    "reps": 0,
+    "lastReview": null
   },
   {
     "id": "ms4e3xfxcn9w",
@@ -71,11 +101,17 @@
     "translation2": "reluctance",
     "deckId": "default",
     "createdAt": "2026-07-28",
-    "reviewStage": 0,
     "nextReview": "2026-07-28",
     "reviewHistory": [],
     "rot": 0,
-    "tags": []
+    "tags": [],
+    "state": "new",
+    "interval": 0,
+    "ease": 2.5,
+    "due": "2026-07-28",
+    "lapses": 0,
+    "reps": 0,
+    "lastReview": null
   },
   {
     "id": "ms4e4ewa0t5f",
@@ -84,11 +120,17 @@
     "translation2": "intellectual freedom",
     "deckId": "default",
     "createdAt": "2026-07-28",
-    "reviewStage": 0,
     "nextReview": "2026-07-28",
     "reviewHistory": [],
     "rot": 0,
-    "tags": []
+    "tags": [],
+    "state": "new",
+    "interval": 0,
+    "ease": 2.5,
+    "due": "2026-07-28",
+    "lapses": 0,
+    "reps": 0,
+    "lastReview": null
   },
   {
     "id": "ms4mhcnu2kje",
@@ -97,11 +139,17 @@
     "translation2": "",
     "deckId": "default",
     "createdAt": "2026-07-28",
-    "reviewStage": 0,
     "nextReview": "2026-07-28",
     "reviewHistory": [],
     "rot": 0,
-    "tags": []
+    "tags": [],
+    "state": "new",
+    "interval": 0,
+    "ease": 2.5,
+    "due": "2026-07-28",
+    "lapses": 0,
+    "reps": 0,
+    "lastReview": null
   },
   {
     "id": "ms4mkwmdgzj4",
@@ -110,11 +158,17 @@
     "translation2": "within reach of",
     "deckId": "default",
     "createdAt": "2026-07-28",
-    "reviewStage": 0,
     "nextReview": "2026-07-28",
     "reviewHistory": [],
     "rot": 0,
-    "tags": []
+    "tags": [],
+    "state": "new",
+    "interval": 0,
+    "ease": 2.5,
+    "due": "2026-07-28",
+    "lapses": 0,
+    "reps": 0,
+    "lastReview": null
   },
   {
     "id": "ms4mlhfyb41j",
@@ -123,11 +177,17 @@
     "translation2": "",
     "deckId": "default",
     "createdAt": "2026-07-28",
-    "reviewStage": 0,
     "nextReview": "2026-07-28",
     "reviewHistory": [],
     "rot": 0,
-    "tags": []
+    "tags": [],
+    "state": "new",
+    "interval": 0,
+    "ease": 2.5,
+    "due": "2026-07-28",
+    "lapses": 0,
+    "reps": 0,
+    "lastReview": null
   },
   {
     "id": "ms4odjfhzpns",
@@ -136,11 +196,17 @@
     "translation2": "",
     "deckId": "default",
     "createdAt": "2026-07-28",
-    "reviewStage": 0,
     "nextReview": "2026-07-28",
     "reviewHistory": [],
     "rot": 0,
-    "tags": []
+    "tags": [],
+    "state": "new",
+    "interval": 0,
+    "ease": 2.5,
+    "due": "2026-07-28",
+    "lapses": 0,
+    "reps": 0,
+    "lastReview": null
   },
   {
     "id": "ms4ofk5g2fzi",
@@ -149,11 +215,17 @@
     "translation2": "thoroughly",
     "deckId": "default",
     "createdAt": "2026-07-28",
-    "reviewStage": 0,
     "nextReview": "2026-07-28",
     "reviewHistory": [],
     "rot": 0,
-    "tags": []
+    "tags": [],
+    "state": "new",
+    "interval": 0,
+    "ease": 2.5,
+    "due": "2026-07-28",
+    "lapses": 0,
+    "reps": 0,
+    "lastReview": null
   },
   {
     "id": "ms4og3qqytlj",
@@ -162,11 +234,17 @@
     "translation2": "",
     "deckId": "default",
     "createdAt": "2026-07-28",
-    "reviewStage": 0,
     "nextReview": "2026-07-28",
     "reviewHistory": [],
     "rot": 0,
-    "tags": []
+    "tags": [],
+    "state": "new",
+    "interval": 0,
+    "ease": 2.5,
+    "due": "2026-07-28",
+    "lapses": 0,
+    "reps": 0,
+    "lastReview": null
   },
   {
     "id": "ms4ogqwqpp1k",
@@ -175,11 +253,17 @@
     "translation2": "",
     "deckId": "default",
     "createdAt": "2026-07-28",
-    "reviewStage": 0,
     "nextReview": "2026-07-28",
     "reviewHistory": [],
     "rot": 0,
-    "tags": []
+    "tags": [],
+    "state": "new",
+    "interval": 0,
+    "ease": 2.5,
+    "due": "2026-07-28",
+    "lapses": 0,
+    "reps": 0,
+    "lastReview": null
   },
   {
     "id": "ms4ohajv9g8a",
@@ -188,11 +272,17 @@
     "translation2": "the root of the problem",
     "deckId": "default",
     "createdAt": "2026-07-28",
-    "reviewStage": 0,
     "nextReview": "2026-07-28",
     "reviewHistory": [],
     "rot": 0,
-    "tags": []
+    "tags": [],
+    "state": "new",
+    "interval": 0,
+    "ease": 2.5,
+    "due": "2026-07-28",
+    "lapses": 0,
+    "reps": 0,
+    "lastReview": null
   },
   {
     "id": "ms4ohxyp22x6",
@@ -201,11 +291,17 @@
     "translation2": "",
     "deckId": "default",
     "createdAt": "2026-07-28",
-    "reviewStage": 0,
     "nextReview": "2026-07-28",
     "reviewHistory": [],
     "rot": 0,
-    "tags": []
+    "tags": [],
+    "state": "new",
+    "interval": 0,
+    "ease": 2.5,
+    "due": "2026-07-28",
+    "lapses": 0,
+    "reps": 0,
+    "lastReview": null
   },
   {
     "id": "ms4oka91bt3j",
@@ -214,10 +310,16 @@
     "translation2": "questions that agitate our time",
     "deckId": "default",
     "createdAt": "2026-07-28",
-    "reviewStage": 0,
     "nextReview": "2026-07-28",
     "reviewHistory": [],
     "rot": 0,
-    "tags": []
+    "tags": [],
+    "state": "new",
+    "interval": 0,
+    "ease": 2.5,
+    "due": "2026-07-28",
+    "lapses": 0,
+    "reps": 0,
+    "lastReview": null
   }
 ]

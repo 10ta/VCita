@@ -6,11 +6,17 @@
     "translation2": "We were there from the start of filming.",
     "deckId": "default",
     "createdAt": "2026-05-06",
-    "reviewStage": 0,
     "nextReview": "2026-05-06",
     "reviewHistory": [],
     "rot": 0,
-    "tags": []
+    "tags": [],
+    "state": "new",
+    "interval": 0,
+    "ease": 2.5,
+    "due": "2026-05-06",
+    "lapses": 0,
+    "reps": 0,
+    "lastReview": null
   },
   {
     "id": "motqjpxwwo8e",
@@ -19,11 +25,17 @@
     "translation2": "Come, my darling girl.",
     "deckId": "default",
     "createdAt": "2026-05-06",
-    "reviewStage": 0,
     "nextReview": "2026-05-06",
     "reviewHistory": [],
     "rot": 0,
-    "tags": []
+    "tags": [],
+    "state": "new",
+    "interval": 0,
+    "ease": 2.5,
+    "due": "2026-05-06",
+    "lapses": 0,
+    "reps": 0,
+    "lastReview": null
   },
   {
     "id": "motqn3ubtggz",
@@ -32,11 +44,17 @@
     "translation2": "so as not to miss a call from Bertrand.",
     "deckId": "default",
     "createdAt": "2026-05-06",
-    "reviewStage": 0,
     "nextReview": "2026-05-06",
     "reviewHistory": [],
     "rot": 0,
-    "tags": []
+    "tags": [],
+    "state": "new",
+    "interval": 0,
+    "ease": 2.5,
+    "due": "2026-05-06",
+    "lapses": 0,
+    "reps": 0,
+    "lastReview": null
   },
   {
     "id": "motqnn4op35b",
@@ -45,11 +63,17 @@
     "translation2": "",
     "deckId": "default",
     "createdAt": "2026-05-06",
-    "reviewStage": 0,
     "nextReview": "2026-05-06",
     "reviewHistory": [],
     "rot": 0,
-    "tags": []
+    "tags": [],
+    "state": "new",
+    "interval": 0,
+    "ease": 2.5,
+    "due": "2026-05-06",
+    "lapses": 0,
+    "reps": 0,
+    "lastReview": null
   },
   {
     "id": "motsnlsofkbc",
@@ -58,11 +82,17 @@
     "translation2": "She grabbed me.",
     "deckId": "default",
     "createdAt": "2026-05-06",
-    "reviewStage": 0,
     "nextReview": "2026-05-06",
     "reviewHistory": [],
     "rot": 0,
-    "tags": []
+    "tags": [],
+    "state": "new",
+    "interval": 0,
+    "ease": 2.5,
+    "due": "2026-05-06",
+    "lapses": 0,
+    "reps": 0,
+    "lastReview": null
   },
   {
     "id": "motsofqcjgpk",
@@ -71,11 +101,17 @@
     "translation2": "From there, I slapped him.",
     "deckId": "default",
     "createdAt": "2026-05-06",
-    "reviewStage": 0,
     "nextReview": "2026-05-06",
     "reviewHistory": [],
     "rot": 0,
-    "tags": []
+    "tags": [],
+    "state": "new",
+    "interval": 0,
+    "ease": 2.5,
+    "due": "2026-05-06",
+    "lapses": 0,
+    "reps": 0,
+    "lastReview": null
   },
   {
     "id": "motsqdk6olnm",
@@ -84,11 +120,17 @@
     "translation2": "Throwing her onto the sofa, she landed on the edge of the sofa on her stomach, and fell to the floor.",
     "deckId": "default",
     "createdAt": "2026-05-06",
-    "reviewStage": 0,
     "nextReview": "2026-05-06",
     "reviewHistory": [],
     "rot": 0,
-    "tags": []
+    "tags": [],
+    "state": "new",
+    "interval": 0,
+    "ease": 2.5,
+    "due": "2026-05-06",
+    "lapses": 0,
+    "reps": 0,
+    "lastReview": null
   },
   {
     "id": "motst0l9y5ic",
@@ -97,11 +139,17 @@
     "translation2": "It means a gesture like that, and presto, about-face.",
     "deckId": "default",
     "createdAt": "2026-05-06",
-    "reviewStage": 0,
     "nextReview": "2026-05-06",
     "reviewHistory": [],
     "rot": 0,
-    "tags": []
+    "tags": [],
+    "state": "new",
+    "interval": 0,
+    "ease": 2.5,
+    "due": "2026-05-06",
+    "lapses": 0,
+    "reps": 0,
+    "lastReview": null
   },
   {
     "id": "motsym87gnsu",
@@ -110,11 +158,17 @@
     "translation2": "Of course we always have an ounce of hope",
     "deckId": "default",
     "createdAt": "2026-05-06",
-    "reviewStage": 0,
     "nextReview": "2026-05-06",
     "reviewHistory": [],
     "rot": 0,
-    "tags": []
+    "tags": [],
+    "state": "new",
+    "interval": 0,
+    "ease": 2.5,
+    "due": "2026-05-06",
+    "lapses": 0,
+    "reps": 0,
+    "lastReview": null
   },
   {
     "id": "mott1b9cwje7",
@@ -123,13 +177,19 @@
     "translation2": "Marie Trintignant is in an irreversible coma, with a completely flat encephalogram…",
     "deckId": "default",
     "createdAt": "2026-05-06",
-    "reviewStage": 0,
     "nextReview": "2026-05-06",
     "reviewHistory": [],
     "rot": 0,
     "tags": [
       "médecine"
-    ]
+    ],
+    "state": "new",
+    "interval": 0,
+    "ease": 2.5,
+    "due": "2026-05-06",
+    "lapses": 0,
+    "reps": 0,
+    "lastReview": null
   },
   {
     "id": "mott374l9mrz",
@@ -138,13 +198,19 @@
     "translation2": "as a result of cerebral edema",
     "deckId": "default",
     "createdAt": "2026-05-06",
-    "reviewStage": 0,
     "nextReview": "2026-05-06",
     "reviewHistory": [],
     "rot": 0,
     "tags": [
       "médecine"
-    ]
+    ],
+    "state": "new",
+    "interval": 0,
+    "ease": 2.5,
+    "due": "2026-05-06",
+    "lapses": 0,
+    "reps": 0,
+    "lastReview": null
   },
   {
     "id": "mott3jqtmslv",
@@ -153,13 +219,19 @@
     "translation2": "And this despite the resuscitation continued since his arrival at the Hartmann clinic.",
     "deckId": "default",
     "createdAt": "2026-05-06",
-    "reviewStage": 0,
     "nextReview": "2026-05-06",
     "reviewHistory": [],
     "rot": 0,
     "tags": [
       "médecine"
-    ]
+    ],
+    "state": "new",
+    "interval": 0,
+    "ease": 2.5,
+    "due": "2026-05-06",
+    "lapses": 0,
+    "reps": 0,
+    "lastReview": null
   },
   {
     "id": "mott9bw78o0u",
@@ -168,11 +240,17 @@
     "translation2": "don't cry...the one you lost. On the contrary, rejoice in having known her.",
     "deckId": "default",
     "createdAt": "2026-05-06",
-    "reviewStage": 0,
     "nextReview": "2026-05-06",
     "reviewHistory": [],
     "rot": 0,
-    "tags": []
+    "tags": [],
+    "state": "new",
+    "interval": 0,
+    "ease": 2.5,
+    "due": "2026-05-06",
+    "lapses": 0,
+    "reps": 0,
+    "lastReview": null
   },
   {
     "id": "mou1wrpanfo0",
@@ -181,13 +259,19 @@
     "translation2": "Behind the larynx, we find bruises, possibly caused by someone riding, at the level of the person's neck and who is on it.",
     "deckId": "default",
     "createdAt": "2026-05-06",
-    "reviewStage": 0,
     "nextReview": "2026-05-06",
     "reviewHistory": [],
     "rot": 0,
     "tags": [
       "médecine"
-    ]
+    ],
+    "state": "new",
+    "interval": 0,
+    "ease": 2.5,
+    "due": "2026-05-06",
+    "lapses": 0,
+    "reps": 0,
+    "lastReview": null
   },
   {
     "id": "mou22jmjsa0b",
@@ -196,13 +280,19 @@
     "translation2": "There are intracerebral pain lesions",
     "deckId": "default",
     "createdAt": "2026-05-06",
-    "reviewStage": 0,
     "nextReview": "2026-05-06",
     "reviewHistory": [],
     "rot": 0,
     "tags": [
       "médecine"
-    ]
+    ],
+    "state": "new",
+    "interval": 0,
+    "ease": 2.5,
+    "due": "2026-05-06",
+    "lapses": 0,
+    "reps": 0,
+    "lastReview": null
   },
   {
     "id": "mou268n06je7",
@@ -211,13 +301,19 @@
     "translation2": "and intracerebral bleeding, and this very significant hematoma.",
     "deckId": "default",
     "createdAt": "2026-05-06",
-    "reviewStage": 0,
     "nextReview": "2026-05-06",
     "reviewHistory": [],
     "rot": 0,
     "tags": [
       "médecine"
-    ]
+    ],
+    "state": "new",
+    "interval": 0,
+    "ease": 2.5,
+    "due": "2026-05-06",
+    "lapses": 0,
+    "reps": 0,
+    "lastReview": null
   },
   {
     "id": "mou2788ikq69",
@@ -226,13 +322,19 @@
     "translation2": "All together excludes a single mechanism of head trauma.",
     "deckId": "default",
     "createdAt": "2026-05-06",
-    "reviewStage": 0,
     "nextReview": "2026-05-06",
     "reviewHistory": [],
     "rot": 0,
     "tags": [
       "médecine"
-    ]
+    ],
+    "state": "new",
+    "interval": 0,
+    "ease": 2.5,
+    "due": "2026-05-06",
+    "lapses": 0,
+    "reps": 0,
+    "lastReview": null
   },
   {
     "id": "mou29tfzvs7a",
@@ -241,11 +343,17 @@
     "translation2": "These blows could not have been delivered in a matter of seconds.",
     "deckId": "default",
     "createdAt": "2026-05-06",
-    "reviewStage": 0,
     "nextReview": "2026-05-06",
     "reviewHistory": [],
     "rot": 0,
-    "tags": []
+    "tags": [],
+    "state": "new",
+    "interval": 0,
+    "ease": 2.5,
+    "due": "2026-05-06",
+    "lapses": 0,
+    "reps": 0,
+    "lastReview": null
   },
   {
     "id": "mou2bcsxrvjd",
@@ -254,13 +362,19 @@
     "translation2": "So this autopsy clearly tells us that it was not a chance fall that caused his death.",
     "deckId": "default",
     "createdAt": "2026-05-06",
-    "reviewStage": 0,
     "nextReview": "2026-05-06",
     "reviewHistory": [],
     "rot": 0,
     "tags": [
       "médecine"
-    ]
+    ],
+    "state": "new",
+    "interval": 0,
+    "ease": 2.5,
+    "due": "2026-05-06",
+    "lapses": 0,
+    "reps": 0,
+    "lastReview": null
   },
   {
     "id": "mou2j5tzo1wp",
@@ -269,11 +383,17 @@
     "translation2": "The actress was allegedly the victim of fatal beatings.",
     "deckId": "default",
     "createdAt": "2026-05-06",
-    "reviewStage": 0,
     "nextReview": "2026-05-06",
     "reviewHistory": [],
     "rot": 0,
-    "tags": []
+    "tags": [],
+    "state": "new",
+    "interval": 0,
+    "ease": 2.5,
+    "due": "2026-05-06",
+    "lapses": 0,
+    "reps": 0,
+    "lastReview": null
   },
   {
     "id": "mou2l4qaouae",
@@ -282,11 +402,17 @@
     "translation2": "These are the things we never get over that we keep going through our heads.",
     "deckId": "default",
     "createdAt": "2026-05-06",
-    "reviewStage": 0,
     "nextReview": "2026-05-06",
     "reviewHistory": [],
     "rot": 0,
-    "tags": []
+    "tags": [],
+    "state": "new",
+    "interval": 0,
+    "ease": 2.5,
+    "due": "2026-05-06",
+    "lapses": 0,
+    "reps": 0,
+    "lastReview": null
   },
   {
     "id": "mou2nwpdmhg1",
@@ -295,13 +421,19 @@
     "translation2": "Marie Trintignant had a crushed nose literally exploded from brain damage and damage to both optic nerves.",
     "deckId": "default",
     "createdAt": "2026-05-06",
-    "reviewStage": 0,
     "nextReview": "2026-05-06",
     "reviewHistory": [],
     "rot": 0,
     "tags": [
       "médecine"
-    ]
+    ],
+    "state": "new",
+    "interval": 0,
+    "ease": 2.5,
+    "due": "2026-05-06",
+    "lapses": 0,
+    "reps": 0,
+    "lastReview": null
   },
   {
     "id": "mou2ujxrxky3",
@@ -310,11 +442,17 @@
     "translation2": "She's massacred, it's scary.",
     "deckId": "default",
     "createdAt": "2026-05-06",
-    "reviewStage": 0,
     "nextReview": "2026-05-06",
     "reviewHistory": [],
     "rot": 0,
-    "tags": []
+    "tags": [],
+    "state": "new",
+    "interval": 0,
+    "ease": 2.5,
+    "due": "2026-05-06",
+    "lapses": 0,
+    "reps": 0,
+    "lastReview": null
   },
   {
     "id": "mou3437kaik4",
@@ -323,11 +461,17 @@
     "translation2": "These are big slaps. And I was beside myself.",
     "deckId": "default",
     "createdAt": "2026-05-06",
-    "reviewStage": 0,
     "nextReview": "2026-05-06",
     "reviewHistory": [],
     "rot": 0,
-    "tags": []
+    "tags": [],
+    "state": "new",
+    "interval": 0,
+    "ease": 2.5,
+    "due": "2026-05-06",
+    "lapses": 0,
+    "reps": 0,
+    "lastReview": null
   },
   {
     "id": "mou35qqjofyr",
@@ -336,11 +480,17 @@
     "translation2": "And I really slapped her hard",
     "deckId": "default",
     "createdAt": "2026-05-06",
-    "reviewStage": 0,
     "nextReview": "2026-05-06",
     "reviewHistory": [],
     "rot": 0,
-    "tags": []
+    "tags": [],
+    "state": "new",
+    "interval": 0,
+    "ease": 2.5,
+    "due": "2026-05-06",
+    "lapses": 0,
+    "reps": 0,
+    "lastReview": null
   },
   {
     "id": "mou37r6stblc",
@@ -349,11 +499,17 @@
     "translation2": "“The poignant confession of Bertrand Cantat.”",
     "deckId": "default",
     "createdAt": "2026-05-06",
-    "reviewStage": 0,
     "nextReview": "2026-05-06",
     "reviewHistory": [],
     "rot": 0,
-    "tags": []
+    "tags": [],
+    "state": "new",
+    "interval": 0,
+    "ease": 2.5,
+    "due": "2026-05-06",
+    "lapses": 0,
+    "reps": 0,
+    "lastReview": null
   },
   {
     "id": "mou38r2mjj1u",
@@ -362,11 +518,17 @@
     "translation2": "but the tone of the article provokes empathy for him.",
     "deckId": "default",
     "createdAt": "2026-05-06",
-    "reviewStage": 0,
     "nextReview": "2026-05-06",
     "reviewHistory": [],
     "rot": 0,
-    "tags": []
+    "tags": [],
+    "state": "new",
+    "interval": 0,
+    "ease": 2.5,
+    "due": "2026-05-06",
+    "lapses": 0,
+    "reps": 0,
+    "lastReview": null
   },
   {
     "id": "mou3921bccde",
@@ -375,11 +537,17 @@
     "translation2": "And in fact, he's going to start to turn things around.",
     "deckId": "default",
     "createdAt": "2026-05-06",
-    "reviewStage": 0,
     "nextReview": "2026-05-06",
     "reviewHistory": [],
     "rot": 0,
-    "tags": []
+    "tags": [],
+    "state": "new",
+    "interval": 0,
+    "ease": 2.5,
+    "due": "2026-05-06",
+    "lapses": 0,
+    "reps": 0,
+    "lastReview": null
   },
   {
     "id": "mou3afhbe1gg",
@@ -388,11 +556,17 @@
     "translation2": "And he is of formidable intelligence, a narcissistic pervert.",
     "deckId": "default",
     "createdAt": "2026-05-06",
-    "reviewStage": 0,
     "nextReview": "2026-05-06",
     "reviewHistory": [],
     "rot": 0,
-    "tags": []
+    "tags": [],
+    "state": "new",
+    "interval": 0,
+    "ease": 2.5,
+    "due": "2026-05-06",
+    "lapses": 0,
+    "reps": 0,
+    "lastReview": null
   },
   {
     "id": "mou40btyciqj",
@@ -401,11 +575,17 @@
     "translation2": "He will put everything in place so that all doubts go elsewhere",
     "deckId": "default",
     "createdAt": "2026-05-06",
-    "reviewStage": 0,
     "nextReview": "2026-05-06",
     "reviewHistory": [],
     "rot": 0,
-    "tags": []
+    "tags": [],
+    "state": "new",
+    "interval": 0,
+    "ease": 2.5,
+    "due": "2026-05-06",
+    "lapses": 0,
+    "reps": 0,
+    "lastReview": null
   },
   {
     "id": "mou4dh07m6vi",
@@ -414,11 +594,17 @@
     "translation2": "the language elements of Cantat's defense, which make around twenty blows received appear to be self-defense.",
     "deckId": "default",
     "createdAt": "2026-05-06",
-    "reviewStage": 0,
     "nextReview": "2026-05-06",
     "reviewHistory": [],
     "rot": 0,
-    "tags": []
+    "tags": [],
+    "state": "new",
+    "interval": 0,
+    "ease": 2.5,
+    "due": "2026-05-06",
+    "lapses": 0,
+    "reps": 0,
+    "lastReview": null
   },
   {
     "id": "mou4ghngrpka",
@@ -427,11 +613,17 @@
     "translation2": "The media becomes a battlefield between two big names in the bar.",
     "deckId": "default",
     "createdAt": "2026-05-06",
-    "reviewStage": 0,
     "nextReview": "2026-05-06",
     "reviewHistory": [],
     "rot": 0,
-    "tags": []
+    "tags": [],
+    "state": "new",
+    "interval": 0,
+    "ease": 2.5,
+    "due": "2026-05-06",
+    "lapses": 0,
+    "reps": 0,
+    "lastReview": null
   },
   {
     "id": "mou4j8bt05ii",
@@ -440,11 +632,17 @@
     "translation2": "It is completely improbable to think that this frail young woman could have jostled and knocked to the ground a fellow who is a true athlete.",
     "deckId": "default",
     "createdAt": "2026-05-06",
-    "reviewStage": 0,
     "nextReview": "2026-05-06",
     "reviewHistory": [],
     "rot": 0,
-    "tags": []
+    "tags": [],
+    "state": "new",
+    "interval": 0,
+    "ease": 2.5,
+    "due": "2026-05-06",
+    "lapses": 0,
+    "reps": 0,
+    "lastReview": null
   },
   {
     "id": "mou4mibtonw6",
@@ -453,11 +651,17 @@
     "translation2": "“Words hurt more than blows.” Words that “castrate”.",
     "deckId": "default",
     "createdAt": "2026-05-06",
-    "reviewStage": 0,
     "nextReview": "2026-05-06",
     "reviewHistory": [],
     "rot": 0,
-    "tags": []
+    "tags": [],
+    "state": "new",
+    "interval": 0,
+    "ease": 2.5,
+    "due": "2026-05-06",
+    "lapses": 0,
+    "reps": 0,
+    "lastReview": null
   },
   {
     "id": "mou4n4uwoxdb",
@@ -466,11 +670,17 @@
     "translation2": "It’s the classic excuse for men who hit.",
     "deckId": "default",
     "createdAt": "2026-05-06",
-    "reviewStage": 0,
     "nextReview": "2026-05-06",
     "reviewHistory": [],
     "rot": 0,
-    "tags": []
+    "tags": [],
+    "state": "new",
+    "interval": 0,
+    "ease": 2.5,
+    "due": "2026-05-06",
+    "lapses": 0,
+    "reps": 0,
+    "lastReview": null
   },
   {
     "id": "mou4x6jh7a8t",
@@ -479,11 +689,17 @@
     "translation2": "to get angry at someone, to get angry.",
     "deckId": "default",
     "createdAt": "2026-05-06",
-    "reviewStage": 0,
     "nextReview": "2026-05-06",
     "reviewHistory": [],
     "rot": 0,
-    "tags": []
+    "tags": [],
+    "state": "new",
+    "interval": 0,
+    "ease": 2.5,
+    "due": "2026-05-06",
+    "lapses": 0,
+    "reps": 0,
+    "lastReview": null
   },
   {
     "id": "mou5lvx60t5d",
@@ -492,11 +708,17 @@
     "translation2": "and who lets Bertrand Cantat's brother demolish the image of Marie Trintignant on his set",
     "deckId": "default",
     "createdAt": "2026-05-06",
-    "reviewStage": 0,
     "nextReview": "2026-05-06",
     "reviewHistory": [],
     "rot": 0,
-    "tags": []
+    "tags": [],
+    "state": "new",
+    "interval": 0,
+    "ease": 2.5,
+    "due": "2026-05-06",
+    "lapses": 0,
+    "reps": 0,
+    "lastReview": null
   },
   {
     "id": "mou5q8j1srsk",
@@ -505,13 +727,19 @@
     "translation2": "crime of passion",
     "deckId": "default",
     "createdAt": "2026-05-06",
-    "reviewStage": 0,
     "nextReview": "2026-05-06",
     "reviewHistory": [],
     "rot": 0,
     "tags": [
       "Police et Justice"
-    ]
+    ],
+    "state": "new",
+    "interval": 0,
+    "ease": 2.5,
+    "due": "2026-05-06",
+    "lapses": 0,
+    "reps": 0,
+    "lastReview": null
   },
   {
     "id": "mou5qmu82djr",
@@ -520,13 +748,19 @@
     "translation2": "crime under the influence of passion.",
     "deckId": "default",
     "createdAt": "2026-05-06",
-    "reviewStage": 0,
     "nextReview": "2026-05-06",
     "reviewHistory": [],
     "rot": 0,
     "tags": [
       "Police et Justice"
-    ]
+    ],
+    "state": "new",
+    "interval": 0,
+    "ease": 2.5,
+    "due": "2026-05-06",
+    "lapses": 0,
+    "reps": 0,
+    "lastReview": null
   },
   {
     "id": "mou6d73rqo3z",
@@ -535,13 +769,19 @@
     "translation2": "It’s a crime of passion and she kinda deserves it.",
     "deckId": "default",
     "createdAt": "2026-05-06",
-    "reviewStage": 0,
     "nextReview": "2026-05-06",
     "reviewHistory": [],
     "rot": 0,
     "tags": [
       "Police et Justice"
-    ]
+    ],
+    "state": "new",
+    "interval": 0,
+    "ease": 2.5,
+    "due": "2026-05-06",
+    "lapses": 0,
+    "reps": 0,
+    "lastReview": null
   },
   {
     "id": "mou6e7qtez2m",
@@ -550,13 +790,19 @@
     "translation2": "How could they both get there, to exacerbate their passion?",
     "deckId": "default",
     "createdAt": "2026-05-06",
-    "reviewStage": 0,
     "nextReview": "2026-05-06",
     "reviewHistory": [],
     "rot": 0,
     "tags": [
       "Police et Justice"
-    ]
+    ],
+    "state": "new",
+    "interval": 0,
+    "ease": 2.5,
+    "due": "2026-05-06",
+    "lapses": 0,
+    "reps": 0,
+    "lastReview": null
   },
   {
     "id": "mou6flxtztgp",
@@ -565,12 +811,18 @@
     "translation2": "I am outraged by this type of treatment.",
     "deckId": "default",
     "createdAt": "2026-05-06",
-    "reviewStage": 0,
     "nextReview": "2026-05-06",
     "reviewHistory": [],
     "rot": 0,
     "tags": [
       "Police et Justice"
-    ]
+    ],
+    "state": "new",
+    "interval": 0,
+    "ease": 2.5,
+    "due": "2026-05-06",
+    "lapses": 0,
+    "reps": 0,
+    "lastReview": null
   }
 ]

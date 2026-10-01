@@ -6,11 +6,17 @@
     "translation2": "don't make that face",
     "deckId": "default",
     "createdAt": "2026-07-26",
-    "reviewStage": 0,
     "nextReview": "2026-07-26",
     "reviewHistory": [],
     "rot": 0,
-    "tags": []
+    "tags": [],
+    "state": "new",
+    "interval": 0,
+    "ease": 2.5,
+    "due": "2026-07-26",
+    "lapses": 0,
+    "reps": 0,
+    "lastReview": null
   },
   {
     "id": "ms1oh8re11au",
@@ -19,11 +25,17 @@
     "translation2": "it concerns my father,  he is an oblivion",
     "deckId": "default",
     "createdAt": "2026-07-26",
-    "reviewStage": 0,
     "nextReview": "2026-07-26",
     "reviewHistory": [],
     "rot": 0,
-    "tags": []
+    "tags": [],
+    "state": "new",
+    "interval": 0,
+    "ease": 2.5,
+    "due": "2026-07-26",
+    "lapses": 0,
+    "reps": 0,
+    "lastReview": null
   },
   {
     "id": "ms1ohty7nm3t",
@@ -32,10 +44,16 @@
     "translation2": "bewitchment",
     "deckId": "default",
     "createdAt": "2026-07-26",
-    "reviewStage": 0,
     "nextReview": "2026-07-26",
     "reviewHistory": [],
     "rot": 0,
-    "tags": []
+    "tags": [],
+    "state": "new",
+    "interval": 0,
+    "ease": 2.5,
+    "due": "2026-07-26",
+    "lapses": 0,
+    "reps": 0,
+    "lastReview": null
   }
 ]

@@ -6,11 +6,17 @@
     "translation2": "Only a few decades ago, it was a poor, dependent country and often considered the “pupil” of France and Europe.",
     "deckId": "default",
     "createdAt": "2026-05-08",
-    "reviewStage": 0,
     "nextReview": "2026-05-08",
     "reviewHistory": [],
     "rot": 0,
-    "tags": []
+    "tags": [],
+    "state": "new",
+    "interval": 0,
+    "ease": 2.5,
+    "due": "2026-05-08",
+    "lapses": 0,
+    "reps": 0,
+    "lastReview": null
   },
   {
     "id": "mowv7ah9cscy",
@@ -19,11 +25,17 @@
     "translation2": "But she chose another path: learn silently, observe the world, prepare with patience, and move forward without arrogance.",
     "deckId": "default",
     "createdAt": "2026-05-08",
-    "reviewStage": 0,
     "nextReview": "2026-05-08",
     "reviewHistory": [],
     "rot": 0,
-    "tags": []
+    "tags": [],
+    "state": "new",
+    "interval": 0,
+    "ease": 2.5,
+    "due": "2026-05-08",
+    "lapses": 0,
+    "reps": 0,
+    "lastReview": null
   },
   {
     "id": "mowvakbl6yv7",
@@ -32,11 +44,17 @@
     "translation2": "Today, this strategy allows it not only to compete, but even to challenge the leading world power, the United States.",
     "deckId": "default",
     "createdAt": "2026-05-08",
-    "reviewStage": 0,
     "nextReview": "2026-05-08",
     "reviewHistory": [],
     "rot": 0,
-    "tags": []
+    "tags": [],
+    "state": "new",
+    "interval": 0,
+    "ease": 2.5,
+    "due": "2026-05-08",
+    "lapses": 0,
+    "reps": 0,
+    "lastReview": null
   },
   {
     "id": "mowvbkpsc07u",
@@ -45,11 +63,17 @@
     "translation2": "This trajectory shows a universal lesson: nothing is fixed in history.",
     "deckId": "default",
     "createdAt": "2026-05-08",
-    "reviewStage": 0,
     "nextReview": "2026-05-08",
     "reviewHistory": [],
     "rot": 0,
-    "tags": []
+    "tags": [],
+    "state": "new",
+    "interval": 0,
+    "ease": 2.5,
+    "due": "2026-05-08",
+    "lapses": 0,
+    "reps": 0,
+    "lastReview": null
   },
   {
     "id": "mowvdweqn2p3",
@@ -58,11 +82,17 @@
     "translation2": "Power struggles are not eternal.",
     "deckId": "default",
     "createdAt": "2026-05-08",
-    "reviewStage": 0,
     "nextReview": "2026-05-08",
     "reviewHistory": [],
     "rot": 0,
-    "tags": []
+    "tags": [],
+    "state": "new",
+    "interval": 0,
+    "ease": 2.5,
+    "due": "2026-05-08",
+    "lapses": 0,
+    "reps": 0,
+    "lastReview": null
   },
   {
     "id": "mowverip42cd",
@@ -71,11 +101,17 @@
     "translation2": "learn from your enemies and keep a low profile until D-day”",
     "deckId": "default",
     "createdAt": "2026-05-08",
-    "reviewStage": 0,
     "nextReview": "2026-05-08",
     "reviewHistory": [],
     "rot": 0,
-    "tags": []
+    "tags": [],
+    "state": "new",
+    "interval": 0,
+    "ease": 2.5,
+    "due": "2026-05-08",
+    "lapses": 0,
+    "reps": 0,
+    "lastReview": null
   },
   {
     "id": "mowvffyyle1o",
@@ -84,10 +120,16 @@
     "translation2": "It is a philosophy of resilience, intelligence and long-term strategy.",
     "deckId": "default",
     "createdAt": "2026-05-08",
-    "reviewStage": 0,
     "nextReview": "2026-05-08",
     "reviewHistory": [],
     "rot": 0,
-    "tags": []
+    "tags": [],
+    "state": "new",
+    "interval": 0,
+    "ease": 2.5,
+    "due": "2026-05-08",
+    "lapses": 0,
+    "reps": 0,
+    "lastReview": null
   }
 ]

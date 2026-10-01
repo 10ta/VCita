@@ -6,11 +6,17 @@
     "translation2": "deplore",
     "deckId": "default",
     "createdAt": "2026-07-05",
-    "reviewStage": 0,
     "nextReview": "2026-07-05",
     "reviewHistory": [],
     "rot": 0,
-    "tags": []
+    "tags": [],
+    "state": "new",
+    "interval": 0,
+    "ease": 2.5,
+    "due": "2026-07-05",
+    "lapses": 0,
+    "reps": 0,
+    "lastReview": null
   },
   {
     "id": "mr7msndcodop",
@@ -19,11 +25,17 @@
     "translation2": "I will receive a prescription for you next fall.",
     "deckId": "default",
     "createdAt": "2026-07-05",
-    "reviewStage": 0,
     "nextReview": "2026-07-05",
     "reviewHistory": [],
     "rot": 0,
-    "tags": []
+    "tags": [],
+    "state": "new",
+    "interval": 0,
+    "ease": 2.5,
+    "due": "2026-07-05",
+    "lapses": 0,
+    "reps": 0,
+    "lastReview": null
   },
   {
     "id": "mr7nij7zmiuf",
@@ -32,10 +44,16 @@
     "translation2": "So repairs will be at your expense.",
     "deckId": "default",
     "createdAt": "2026-07-05",
-    "reviewStage": 0,
     "nextReview": "2026-07-05",
     "reviewHistory": [],
     "rot": 0,
-    "tags": []
+    "tags": [],
+    "state": "new",
+    "interval": 0,
+    "ease": 2.5,
+    "due": "2026-07-05",
+    "lapses": 0,
+    "reps": 0,
+    "lastReview": null
   }
 ]

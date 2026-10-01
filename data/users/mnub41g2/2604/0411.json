@@ -6,35 +6,47 @@
     "translation2": "baggage check-in",
     "deckId": "default",
     "createdAt": "2026-04-11",
-    "reviewStage": 5,
-    "nextReview": "2026-06-11",
+    "nextReview": "2026-09-09",
     "reviewHistory": [
       {
         "date": "2026-04-11",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       },
       {
         "date": "2026-04-12",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       },
       {
         "date": "2026-04-14",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       },
       {
         "date": "2026-04-18",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       },
       {
         "date": "2026-04-26",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       },
       {
         "date": "2026-05-11",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       }
     ],
-    "rot": 1
+    "rot": 1,
+    "state": "review",
+    "interval": 121,
+    "ease": 2.5,
+    "due": "2026-09-09",
+    "lapses": 0,
+    "reps": 6,
+    "lastReview": "2026-05-11"
   },
   {
     "id": "mnu4wzqkbhnf",
@@ -43,35 +55,47 @@
     "translation2": "window",
     "deckId": "default",
     "createdAt": "2026-04-11",
-    "reviewStage": 5,
-    "nextReview": "2026-06-11",
+    "nextReview": "2026-09-11",
     "reviewHistory": [
       {
         "date": "2026-04-11",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       },
       {
         "date": "2026-04-12",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       },
       {
         "date": "2026-04-14",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       },
       {
         "date": "2026-04-18",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       },
       {
         "date": "2026-04-26",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       },
       {
         "date": "2026-05-11",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       }
     ],
-    "rot": 0
+    "rot": 0,
+    "state": "review",
+    "interval": 123,
+    "ease": 2.5,
+    "due": "2026-09-11",
+    "lapses": 0,
+    "reps": 6,
+    "lastReview": "2026-05-11"
   },
   {
     "id": "mnu4xjn8ganq",
@@ -80,35 +104,47 @@
     "translation2": "fly over a country",
     "deckId": "default",
     "createdAt": "2026-04-11",
-    "reviewStage": 5,
-    "nextReview": "2026-06-11",
+    "nextReview": "2026-09-12",
     "reviewHistory": [
       {
         "date": "2026-04-11",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       },
       {
         "date": "2026-04-12",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       },
       {
         "date": "2026-04-14",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       },
       {
         "date": "2026-04-18",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       },
       {
         "date": "2026-04-26",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       },
       {
         "date": "2026-05-11",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       }
     ],
-    "rot": 1
+    "rot": 1,
+    "state": "review",
+    "interval": 124,
+    "ease": 2.5,
+    "due": "2026-09-12",
+    "lapses": 0,
+    "reps": 6,
+    "lastReview": "2026-05-11"
   },
   {
     "id": "mnu51m9fm4xs",
@@ -117,35 +153,47 @@
     "translation2": "customs",
     "deckId": "default",
     "createdAt": "2026-04-11",
-    "reviewStage": 5,
-    "nextReview": "2026-06-11",
+    "nextReview": "2026-09-13",
     "reviewHistory": [
       {
         "date": "2026-04-11",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       },
       {
         "date": "2026-04-12",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       },
       {
         "date": "2026-04-14",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       },
       {
         "date": "2026-04-18",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       },
       {
         "date": "2026-04-26",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       },
       {
         "date": "2026-05-11",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       }
     ],
-    "rot": 1
+    "rot": 1,
+    "state": "review",
+    "interval": 125,
+    "ease": 2.5,
+    "due": "2026-09-13",
+    "lapses": 0,
+    "reps": 6,
+    "lastReview": "2026-05-11"
   },
   {
     "id": "mnu52o4iw9k9",
@@ -154,35 +202,47 @@
     "translation2": "hoist the sails",
     "deckId": "default",
     "createdAt": "2026-04-11",
-    "reviewStage": 5,
-    "nextReview": "2026-06-11",
+    "nextReview": "2026-09-19",
     "reviewHistory": [
       {
         "date": "2026-04-11",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       },
       {
         "date": "2026-04-12",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       },
       {
         "date": "2026-04-14",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       },
       {
         "date": "2026-04-18",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       },
       {
         "date": "2026-04-26",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       },
       {
         "date": "2026-05-11",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       }
     ],
-    "rot": 1
+    "rot": 1,
+    "state": "review",
+    "interval": 131,
+    "ease": 2.5,
+    "due": "2026-09-19",
+    "lapses": 0,
+    "reps": 6,
+    "lastReview": "2026-05-11"
   },
   {
     "id": "mnu53c9rtwhl",
@@ -191,35 +251,47 @@
     "translation2": "to land; dock",
     "deckId": "default",
     "createdAt": "2026-04-11",
-    "reviewStage": 5,
-    "nextReview": "2026-06-14",
+    "nextReview": "2026-09-15",
     "reviewHistory": [
       {
         "date": "2026-04-11",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       },
       {
         "date": "2026-04-12",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       },
       {
         "date": "2026-04-14",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       },
       {
         "date": "2026-04-18",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       },
       {
         "date": "2026-04-26",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       },
       {
         "date": "2026-05-11",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       }
     ],
-    "rot": 1
+    "rot": 1,
+    "state": "review",
+    "interval": 127,
+    "ease": 2.5,
+    "due": "2026-09-15",
+    "lapses": 0,
+    "reps": 6,
+    "lastReview": "2026-05-11"
   },
   {
     "id": "mnu54npjvjds",
@@ -228,35 +300,47 @@
     "translation2": "drop anchor, anchor, ?, swell",
     "deckId": "default",
     "createdAt": "2026-04-11",
-    "reviewStage": 5,
-    "nextReview": "2026-06-14",
+    "nextReview": "2026-09-07",
     "reviewHistory": [
       {
         "date": "2026-04-11",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       },
       {
         "date": "2026-04-12",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       },
       {
         "date": "2026-04-14",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       },
       {
         "date": "2026-04-18",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       },
       {
         "date": "2026-04-26",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       },
       {
         "date": "2026-05-11",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       }
     ],
-    "rot": 1
+    "rot": 1,
+    "state": "review",
+    "interval": 119,
+    "ease": 2.5,
+    "due": "2026-09-07",
+    "lapses": 0,
+    "reps": 6,
+    "lastReview": "2026-05-11"
   },
   {
     "id": "mnu56ypreenb",
@@ -265,35 +349,47 @@
     "translation2": "the spaceship/space shuttle",
     "deckId": "default",
     "createdAt": "2026-04-11",
-    "reviewStage": 5,
-    "nextReview": "2026-06-14",
+    "nextReview": "2026-09-18",
     "reviewHistory": [
       {
         "date": "2026-04-11",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       },
       {
         "date": "2026-04-12",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       },
       {
         "date": "2026-04-14",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       },
       {
         "date": "2026-04-18",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       },
       {
         "date": "2026-04-26",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       },
       {
         "date": "2026-05-11",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       }
     ],
-    "rot": 1
+    "rot": 1,
+    "state": "review",
+    "interval": 130,
+    "ease": 2.5,
+    "due": "2026-09-18",
+    "lapses": 0,
+    "reps": 6,
+    "lastReview": "2026-05-11"
   },
   {
     "id": "mnu57fswpxhk",
@@ -302,35 +398,47 @@
     "translation2": "money",
     "deckId": "default",
     "createdAt": "2026-04-11",
-    "reviewStage": 5,
-    "nextReview": "2026-06-14",
+    "nextReview": "2026-09-08",
     "reviewHistory": [
       {
         "date": "2026-04-11",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       },
       {
         "date": "2026-04-12",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       },
       {
         "date": "2026-04-14",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       },
       {
         "date": "2026-04-18",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       },
       {
         "date": "2026-04-26",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       },
       {
         "date": "2026-05-11",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       }
     ],
-    "rot": 0
+    "rot": 0,
+    "state": "review",
+    "interval": 120,
+    "ease": 2.5,
+    "due": "2026-09-08",
+    "lapses": 0,
+    "reps": 6,
+    "lastReview": "2026-05-11"
   },
   {
     "id": "mnu588p0zxzu",
@@ -339,35 +447,47 @@
     "translation2": "go horseback riding, camel riding",
     "deckId": "default",
     "createdAt": "2026-04-11",
-    "reviewStage": 5,
-    "nextReview": "2026-06-14",
+    "nextReview": "2026-09-10",
     "reviewHistory": [
       {
         "date": "2026-04-11",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       },
       {
         "date": "2026-04-12",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       },
       {
         "date": "2026-04-14",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       },
       {
         "date": "2026-04-18",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       },
       {
         "date": "2026-04-26",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       },
       {
         "date": "2026-05-11",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       }
     ],
-    "rot": 1
+    "rot": 1,
+    "state": "review",
+    "interval": 122,
+    "ease": 2.5,
+    "due": "2026-09-10",
+    "lapses": 0,
+    "reps": 6,
+    "lastReview": "2026-05-11"
   },
   {
     "id": "mnu7okjl73j4",
@@ -376,35 +496,47 @@
     "translation2": "an adventure/misadventure",
     "deckId": "default",
     "createdAt": "2026-04-11",
-    "reviewStage": 5,
-    "nextReview": "2026-06-14",
+    "nextReview": "2026-09-10",
     "reviewHistory": [
       {
         "date": "2026-04-11",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       },
       {
         "date": "2026-04-12",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       },
       {
         "date": "2026-04-14",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       },
       {
         "date": "2026-04-18",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       },
       {
         "date": "2026-04-26",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       },
       {
         "date": "2026-05-11",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       }
     ],
-    "rot": 1
+    "rot": 1,
+    "state": "review",
+    "interval": 122,
+    "ease": 2.5,
+    "due": "2026-09-10",
+    "lapses": 0,
+    "reps": 6,
+    "lastReview": "2026-05-11"
   },
   {
     "id": "mnu7qqgzovv9",
@@ -413,35 +545,47 @@
     "translation2": "an organized tour, a group trip",
     "deckId": "default",
     "createdAt": "2026-04-11",
-    "reviewStage": 5,
-    "nextReview": "2026-06-14",
+    "nextReview": "2026-09-17",
     "reviewHistory": [
       {
         "date": "2026-04-11",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       },
       {
         "date": "2026-04-12",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       },
       {
         "date": "2026-04-14",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       },
       {
         "date": "2026-04-18",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       },
       {
         "date": "2026-04-26",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       },
       {
         "date": "2026-05-11",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       }
     ],
-    "rot": 1
+    "rot": 1,
+    "state": "review",
+    "interval": 129,
+    "ease": 2.5,
+    "due": "2026-09-17",
+    "lapses": 0,
+    "reps": 6,
+    "lastReview": "2026-05-11"
   },
   {
     "id": "mnu8q8hisbst",
@@ -450,35 +594,47 @@
     "translation2": "cabin baggage",
     "deckId": "default",
     "createdAt": "2026-04-11",
-    "reviewStage": 5,
-    "nextReview": "2026-06-14",
+    "nextReview": "2026-09-14",
     "reviewHistory": [
       {
         "date": "2026-04-11",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       },
       {
         "date": "2026-04-12",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       },
       {
         "date": "2026-04-14",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       },
       {
         "date": "2026-04-18",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       },
       {
         "date": "2026-04-26",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       },
       {
         "date": "2026-05-11",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       }
     ],
-    "rot": 1
+    "rot": 1,
+    "state": "review",
+    "interval": 126,
+    "ease": 2.5,
+    "due": "2026-09-14",
+    "lapses": 0,
+    "reps": 6,
+    "lastReview": "2026-05-11"
   },
   {
     "id": "mnu8qxou301a",
@@ -487,35 +643,47 @@
     "translation2": "a leaflet",
     "deckId": "default",
     "createdAt": "2026-04-11",
-    "reviewStage": 5,
-    "nextReview": "2026-06-14",
+    "nextReview": "2026-09-19",
     "reviewHistory": [
       {
         "date": "2026-04-11",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       },
       {
         "date": "2026-04-12",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       },
       {
         "date": "2026-04-14",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       },
       {
         "date": "2026-04-18",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       },
       {
         "date": "2026-04-26",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       },
       {
         "date": "2026-05-11",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       }
     ],
-    "rot": 1
+    "rot": 1,
+    "state": "review",
+    "interval": 131,
+    "ease": 2.5,
+    "due": "2026-09-19",
+    "lapses": 0,
+    "reps": 6,
+    "lastReview": "2026-05-11"
   },
   {
     "id": "mnu8tsg9mnhw",
@@ -524,35 +692,47 @@
     "translation2": "unusual trails",
     "deckId": "default",
     "createdAt": "2026-04-11",
-    "reviewStage": 2,
-    "nextReview": "2026-05-18",
+    "nextReview": "2026-05-12",
     "reviewHistory": [
       {
         "date": "2026-04-11",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       },
       {
         "date": "2026-04-12",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       },
       {
         "date": "2026-04-14",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       },
       {
         "date": "2026-04-18",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       },
       {
         "date": "2026-04-26",
-        "remembered": false
+        "remembered": false,
+        "rating": 1
       },
       {
         "date": "2026-05-11",
-        "remembered": false
+        "remembered": false,
+        "rating": 1
       }
     ],
-    "rot": 1
+    "rot": 1,
+    "state": "review",
+    "interval": 1,
+    "ease": 2.1,
+    "due": "2026-05-12",
+    "lapses": 2,
+    "reps": 6,
+    "lastReview": "2026-05-11"
   },
   {
     "id": "mnu8wutn8yv9",
@@ -561,35 +741,47 @@
     "translation2": "a setback, an unforeseen event",
     "deckId": "default",
     "createdAt": "2026-04-11",
-    "reviewStage": 4,
-    "nextReview": "2026-05-30",
+    "nextReview": "2026-05-12",
     "reviewHistory": [
       {
         "date": "2026-04-11",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       },
       {
         "date": "2026-04-12",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       },
       {
         "date": "2026-04-14",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       },
       {
         "date": "2026-04-18",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       },
       {
         "date": "2026-04-26",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       },
       {
         "date": "2026-05-11",
-        "remembered": false
+        "remembered": false,
+        "rating": 1
       }
     ],
-    "rot": 1
+    "rot": 1,
+    "state": "review",
+    "interval": 1,
+    "ease": 2.3,
+    "due": "2026-05-12",
+    "lapses": 1,
+    "reps": 6,
+    "lastReview": "2026-05-11"
   },
   {
     "id": "mnub9ao7bc6k",
@@ -598,35 +790,47 @@
     "translation2": "a change of scenery, escape",
     "deckId": "default",
     "createdAt": "2026-04-11",
-    "reviewStage": 5,
-    "nextReview": "2026-06-14",
+    "nextReview": "2026-05-12",
     "reviewHistory": [
       {
         "date": "2026-04-11",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       },
       {
         "date": "2026-04-12",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       },
       {
         "date": "2026-04-14",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       },
       {
         "date": "2026-04-18",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       },
       {
         "date": "2026-04-26",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       },
       {
         "date": "2026-05-11",
-        "remembered": false
+        "remembered": false,
+        "rating": 1
       }
     ],
-    "rot": 1
+    "rot": 1,
+    "state": "review",
+    "interval": 1,
+    "ease": 2.3,
+    "due": "2026-05-12",
+    "lapses": 1,
+    "reps": 6,
+    "lastReview": "2026-05-11"
   },
   {
     "id": "mnubxly8hgvs",
@@ -635,35 +839,47 @@
     "translation2": "discover, explore unknown or little-known lands",
     "deckId": "default",
     "createdAt": "2026-04-11",
-    "reviewStage": 5,
-    "nextReview": "2026-06-14",
+    "nextReview": "2026-05-12",
     "reviewHistory": [
       {
         "date": "2026-04-11",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       },
       {
         "date": "2026-04-12",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       },
       {
         "date": "2026-04-14",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       },
       {
         "date": "2026-04-18",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       },
       {
         "date": "2026-04-26",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       },
       {
         "date": "2026-05-11",
-        "remembered": false
+        "remembered": false,
+        "rating": 1
       }
     ],
-    "rot": 1
+    "rot": 1,
+    "state": "review",
+    "interval": 1,
+    "ease": 2.3,
+    "due": "2026-05-12",
+    "lapses": 1,
+    "reps": 6,
+    "lastReview": "2026-05-11"
   },
   {
     "id": "mnud76uqeywh",
@@ -672,35 +888,47 @@
     "translation2": "a shelter, a home",
     "deckId": "default",
     "createdAt": "2026-04-11",
-    "reviewStage": 5,
-    "nextReview": "2026-06-14",
+    "nextReview": "2026-09-17",
     "reviewHistory": [
       {
         "date": "2026-04-11",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       },
       {
         "date": "2026-04-12",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       },
       {
         "date": "2026-04-14",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       },
       {
         "date": "2026-04-18",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       },
       {
         "date": "2026-04-26",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       },
       {
         "date": "2026-05-11",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       }
     ],
-    "rot": 1
+    "rot": 1,
+    "state": "review",
+    "interval": 129,
+    "ease": 2.5,
+    "due": "2026-09-17",
+    "lapses": 0,
+    "reps": 6,
+    "lastReview": "2026-05-11"
   },
   {
     "id": "mnud8ia6y8zi",
@@ -709,35 +937,47 @@
     "translation2": "a seasonal lodge",
     "deckId": "default",
     "createdAt": "2026-04-11",
-    "reviewStage": 5,
-    "nextReview": "2026-06-14",
+    "nextReview": "2026-09-07",
     "reviewHistory": [
       {
         "date": "2026-04-11",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       },
       {
         "date": "2026-04-12",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       },
       {
         "date": "2026-04-14",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       },
       {
         "date": "2026-04-18",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       },
       {
         "date": "2026-04-26",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       },
       {
         "date": "2026-05-11",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       }
     ],
-    "rot": 1
+    "rot": 1,
+    "state": "review",
+    "interval": 119,
+    "ease": 2.5,
+    "due": "2026-09-07",
+    "lapses": 0,
+    "reps": 6,
+    "lastReview": "2026-05-11"
   },
   {
     "id": "mnud9oday4fn",
@@ -746,35 +986,47 @@
     "translation2": "a camp, camp",
     "deckId": "default",
     "createdAt": "2026-04-11",
-    "reviewStage": 4,
-    "nextReview": "2026-06-09",
+    "nextReview": "2026-09-14",
     "reviewHistory": [
       {
         "date": "2026-04-11",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       },
       {
         "date": "2026-04-12",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       },
       {
         "date": "2026-04-14",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       },
       {
         "date": "2026-04-18",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       },
       {
         "date": "2026-04-26",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       },
       {
         "date": "2026-05-11",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       }
     ],
-    "rot": 1
+    "rot": 1,
+    "state": "review",
+    "interval": 126,
+    "ease": 2.5,
+    "due": "2026-09-14",
+    "lapses": 0,
+    "reps": 6,
+    "lastReview": "2026-05-11"
   },
   {
     "id": "mnue0jerqebg",
@@ -783,35 +1035,47 @@
     "translation2": "everything included",
     "deckId": "default",
     "createdAt": "2026-04-11",
-    "reviewStage": 5,
-    "nextReview": "2026-06-24",
+    "nextReview": "2026-09-08",
     "reviewHistory": [
       {
         "date": "2026-04-11",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       },
       {
         "date": "2026-04-12",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       },
       {
         "date": "2026-04-14",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       },
       {
         "date": "2026-04-18",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       },
       {
         "date": "2026-04-26",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       },
       {
         "date": "2026-05-11",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       }
     ],
-    "rot": 1
+    "rot": 1,
+    "state": "review",
+    "interval": 120,
+    "ease": 2.5,
+    "due": "2026-09-08",
+    "lapses": 0,
+    "reps": 6,
+    "lastReview": "2026-05-11"
   },
   {
     "id": "mnueln7jea8r",
@@ -820,35 +1084,47 @@
     "translation2": "solicitude",
     "deckId": "default",
     "createdAt": "2026-04-11",
-    "reviewStage": 4,
-    "nextReview": "2026-06-09",
+    "nextReview": "2026-05-12",
     "reviewHistory": [
       {
         "date": "2026-04-11",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       },
       {
         "date": "2026-04-12",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       },
       {
         "date": "2026-04-14",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       },
       {
         "date": "2026-04-18",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       },
       {
         "date": "2026-04-26",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       },
       {
         "date": "2026-05-11",
-        "remembered": false
+        "remembered": false,
+        "rating": 1
       }
     ],
-    "rot": 1
+    "rot": 1,
+    "state": "review",
+    "interval": 1,
+    "ease": 2.3,
+    "due": "2026-05-12",
+    "lapses": 1,
+    "reps": 6,
+    "lastReview": "2026-05-11"
   },
   {
     "id": "mnueo8jdu4gw",
@@ -857,35 +1133,47 @@
     "translation2": "inappropriate behavior",
     "deckId": "default",
     "createdAt": "2026-04-11",
-    "reviewStage": 5,
-    "nextReview": "2026-06-24",
+    "nextReview": "2026-09-11",
     "reviewHistory": [
       {
         "date": "2026-04-11",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       },
       {
         "date": "2026-04-12",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       },
       {
         "date": "2026-04-14",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       },
       {
         "date": "2026-04-18",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       },
       {
         "date": "2026-04-26",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       },
       {
         "date": "2026-05-11",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       }
     ],
-    "rot": 1
+    "rot": 1,
+    "state": "review",
+    "interval": 123,
+    "ease": 2.5,
+    "due": "2026-09-11",
+    "lapses": 0,
+    "reps": 6,
+    "lastReview": "2026-05-11"
   },
   {
     "id": "mnuetrbpmnep",
@@ -894,35 +1182,47 @@
     "translation2": "understanding; understanding",
     "deckId": "default",
     "createdAt": "2026-04-11",
-    "reviewStage": 5,
-    "nextReview": "2026-06-24",
+    "nextReview": "2026-09-15",
     "reviewHistory": [
       {
         "date": "2026-04-11",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       },
       {
         "date": "2026-04-12",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       },
       {
         "date": "2026-04-14",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       },
       {
         "date": "2026-04-18",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       },
       {
         "date": "2026-04-26",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       },
       {
         "date": "2026-05-11",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       }
     ],
-    "rot": 0
+    "rot": 0,
+    "state": "review",
+    "interval": 127,
+    "ease": 2.5,
+    "due": "2026-09-15",
+    "lapses": 0,
+    "reps": 6,
+    "lastReview": "2026-05-11"
   },
   {
     "id": "mnueudc24kfs",
@@ -931,35 +1231,47 @@
     "translation2": "have prejudices",
     "deckId": "default",
     "createdAt": "2026-04-11",
-    "reviewStage": 5,
-    "nextReview": "2026-06-24",
+    "nextReview": "2026-09-16",
     "reviewHistory": [
       {
         "date": "2026-04-11",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       },
       {
         "date": "2026-04-12",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       },
       {
         "date": "2026-04-14",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       },
       {
         "date": "2026-04-18",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       },
       {
         "date": "2026-04-26",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       },
       {
         "date": "2026-05-11",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       }
     ],
-    "rot": 1
+    "rot": 1,
+    "state": "review",
+    "interval": 128,
+    "ease": 2.5,
+    "due": "2026-09-16",
+    "lapses": 0,
+    "reps": 6,
+    "lastReview": "2026-05-11"
   },
   {
     "id": "mnueutt722ur",
@@ -968,35 +1280,47 @@
     "translation2": "stare at someone",
     "deckId": "default",
     "createdAt": "2026-04-11",
-    "reviewStage": 5,
-    "nextReview": "2026-06-24",
+    "nextReview": "2026-09-12",
     "reviewHistory": [
       {
         "date": "2026-04-11",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       },
       {
         "date": "2026-04-12",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       },
       {
         "date": "2026-04-14",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       },
       {
         "date": "2026-04-18",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       },
       {
         "date": "2026-04-26",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       },
       {
         "date": "2026-05-11",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       }
     ],
-    "rot": 1
+    "rot": 1,
+    "state": "review",
+    "interval": 124,
+    "ease": 2.5,
+    "due": "2026-09-12",
+    "lapses": 0,
+    "reps": 6,
+    "lastReview": "2026-05-11"
   },
   {
     "id": "mnuew6ednvib",
@@ -1005,35 +1329,47 @@
     "translation2": "ê curious about culture; folklore; habits; local uses",
     "deckId": "default",
     "createdAt": "2026-04-11",
-    "reviewStage": 5,
-    "nextReview": "2026-07-12",
+    "nextReview": "2026-09-17",
     "reviewHistory": [
       {
         "date": "2026-04-11",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       },
       {
         "date": "2026-04-12",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       },
       {
         "date": "2026-04-14",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       },
       {
         "date": "2026-04-18",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       },
       {
         "date": "2026-04-26",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       },
       {
         "date": "2026-05-11",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       }
     ],
-    "rot": 0
+    "rot": 0,
+    "state": "review",
+    "interval": 129,
+    "ease": 2.5,
+    "due": "2026-09-17",
+    "lapses": 0,
+    "reps": 6,
+    "lastReview": "2026-05-11"
   },
   {
     "id": "mnuf6qkiw02l",
@@ -1042,35 +1378,47 @@
     "translation2": "take care of; be attentive to; be vigilant",
     "deckId": "default",
     "createdAt": "2026-04-11",
-    "reviewStage": 4,
-    "nextReview": "2026-06-27",
+    "nextReview": "2026-05-12",
     "reviewHistory": [
       {
         "date": "2026-04-11",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       },
       {
         "date": "2026-04-12",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       },
       {
         "date": "2026-04-14",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       },
       {
         "date": "2026-04-18",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       },
       {
         "date": "2026-04-26",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       },
       {
         "date": "2026-05-11",
-        "remembered": false
+        "remembered": false,
+        "rating": 1
       }
     ],
-    "rot": 1
+    "rot": 1,
+    "state": "review",
+    "interval": 1,
+    "ease": 2.3,
+    "due": "2026-05-12",
+    "lapses": 1,
+    "reps": 6,
+    "lastReview": "2026-05-11"
   },
   {
     "id": "mnuf7ggrjzr6",
@@ -1079,35 +1427,47 @@
     "translation2": "a grove",
     "deckId": "default",
     "createdAt": "2026-04-11",
-    "reviewStage": 5,
-    "nextReview": "2026-07-12",
+    "nextReview": "2026-09-17",
     "reviewHistory": [
       {
         "date": "2026-04-11",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       },
       {
         "date": "2026-04-12",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       },
       {
         "date": "2026-04-14",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       },
       {
         "date": "2026-04-18",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       },
       {
         "date": "2026-04-26",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       },
       {
         "date": "2026-05-11",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       }
     ],
-    "rot": 0
+    "rot": 0,
+    "state": "review",
+    "interval": 129,
+    "ease": 2.5,
+    "due": "2026-09-17",
+    "lapses": 0,
+    "reps": 6,
+    "lastReview": "2026-05-11"
   },
   {
     "id": "mnuf82qjoowa",
@@ -1116,35 +1476,47 @@
     "translation2": "a starry/clear sky",
     "deckId": "default",
     "createdAt": "2026-04-11",
-    "reviewStage": 5,
-    "nextReview": "2026-07-12",
+    "nextReview": "2026-09-19",
     "reviewHistory": [
       {
         "date": "2026-04-11",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       },
       {
         "date": "2026-04-12",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       },
       {
         "date": "2026-04-14",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       },
       {
         "date": "2026-04-18",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       },
       {
         "date": "2026-04-26",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       },
       {
         "date": "2026-05-11",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       }
     ],
-    "rot": 1
+    "rot": 1,
+    "state": "review",
+    "interval": 131,
+    "ease": 2.5,
+    "due": "2026-09-19",
+    "lapses": 0,
+    "reps": 6,
+    "lastReview": "2026-05-11"
   },
   {
     "id": "mnuf8kgdvg7y",
@@ -1153,35 +1525,47 @@
     "translation2": "a temperate, mild, mild climate",
     "deckId": "default",
     "createdAt": "2026-04-11",
-    "reviewStage": 4,
-    "nextReview": "2026-06-27",
+    "nextReview": "2026-05-12",
     "reviewHistory": [
       {
         "date": "2026-04-11",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       },
       {
         "date": "2026-04-12",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       },
       {
         "date": "2026-04-14",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       },
       {
         "date": "2026-04-18",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       },
       {
         "date": "2026-04-26",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       },
       {
         "date": "2026-05-11",
-        "remembered": false
+        "remembered": false,
+        "rating": 1
       }
     ],
-    "rot": 1
+    "rot": 1,
+    "state": "review",
+    "interval": 1,
+    "ease": 2.3,
+    "due": "2026-05-12",
+    "lapses": 1,
+    "reps": 6,
+    "lastReview": "2026-05-11"
   },
   {
     "id": "mnuf9rurae53",
@@ -1190,35 +1574,47 @@
     "translation2": "a continental, maritime, Mediterranean, tropical climate",
     "deckId": "default",
     "createdAt": "2026-04-11",
-    "reviewStage": 4,
-    "nextReview": "2026-06-27",
+    "nextReview": "2026-06-16",
     "reviewHistory": [
       {
         "date": "2026-04-11",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       },
       {
         "date": "2026-04-12",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       },
       {
         "date": "2026-04-14",
-        "remembered": false
+        "remembered": false,
+        "rating": 1
       },
       {
         "date": "2026-04-18",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       },
       {
         "date": "2026-04-26",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       },
       {
         "date": "2026-05-11",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       }
     ],
-    "rot": 1
+    "rot": 1,
+    "state": "review",
+    "interval": 36,
+    "ease": 2.3,
+    "due": "2026-06-16",
+    "lapses": 1,
+    "reps": 6,
+    "lastReview": "2026-05-11"
   },
   {
     "id": "mnufcossfwsc",
@@ -1227,35 +1623,47 @@
     "translation2": "dunes; the sand",
     "deckId": "default",
     "createdAt": "2026-04-11",
-    "reviewStage": 5,
-    "nextReview": "2026-07-12",
+    "nextReview": "2026-09-15",
     "reviewHistory": [
       {
         "date": "2026-04-11",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       },
       {
         "date": "2026-04-12",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       },
       {
         "date": "2026-04-14",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       },
       {
         "date": "2026-04-18",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       },
       {
         "date": "2026-04-26",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       },
       {
         "date": "2026-05-11",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       }
     ],
-    "rot": 0
+    "rot": 0,
+    "state": "review",
+    "interval": 127,
+    "ease": 2.5,
+    "due": "2026-09-15",
+    "lapses": 0,
+    "reps": 6,
+    "lastReview": "2026-05-11"
   },
   {
     "id": "mnufd3jokt6r",
@@ -1264,35 +1672,47 @@
     "translation2": "fauna, flora, vegetation",
     "deckId": "default",
     "createdAt": "2026-04-11",
-    "reviewStage": 4,
-    "nextReview": "2026-06-27",
+    "nextReview": "2026-05-12",
     "reviewHistory": [
       {
         "date": "2026-04-11",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       },
       {
         "date": "2026-04-12",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       },
       {
         "date": "2026-04-14",
-        "remembered": false
+        "remembered": false,
+        "rating": 1
       },
       {
         "date": "2026-04-18",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       },
       {
         "date": "2026-04-26",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       },
       {
         "date": "2026-05-11",
-        "remembered": false
+        "remembered": false,
+        "rating": 1
       }
     ],
-    "rot": 1
+    "rot": 1,
+    "state": "review",
+    "interval": 1,
+    "ease": 2.1,
+    "due": "2026-05-12",
+    "lapses": 2,
+    "reps": 6,
+    "lastReview": "2026-05-11"
   },
   {
     "id": "mnufdn3l7v9k",
@@ -1301,35 +1721,47 @@
     "translation2": "a river; a river",
     "deckId": "default",
     "createdAt": "2026-04-11",
-    "reviewStage": 5,
-    "nextReview": "2026-07-12",
+    "nextReview": "2026-09-10",
     "reviewHistory": [
       {
         "date": "2026-04-11",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       },
       {
         "date": "2026-04-12",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       },
       {
         "date": "2026-04-14",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       },
       {
         "date": "2026-04-18",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       },
       {
         "date": "2026-04-26",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       },
       {
         "date": "2026-05-11",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       }
     ],
-    "rot": 1
+    "rot": 1,
+    "state": "review",
+    "interval": 122,
+    "ease": 2.5,
+    "due": "2026-09-10",
+    "lapses": 0,
+    "reps": 6,
+    "lastReview": "2026-05-11"
   },
   {
     "id": "mnufes0t4b6s",
@@ -1338,35 +1770,47 @@
     "translation2": "the seafront, the beach, a seaside resort",
     "deckId": "default",
     "createdAt": "2026-04-11",
-    "reviewStage": 3,
-    "nextReview": "2026-06-19",
+    "nextReview": "2026-05-12",
     "reviewHistory": [
       {
         "date": "2026-04-11",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       },
       {
         "date": "2026-04-12",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       },
       {
         "date": "2026-04-14",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       },
       {
         "date": "2026-04-18",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       },
       {
         "date": "2026-04-26",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       },
       {
         "date": "2026-05-11",
-        "remembered": false
+        "remembered": false,
+        "rating": 1
       }
     ],
-    "rot": 1
+    "rot": 1,
+    "state": "review",
+    "interval": 1,
+    "ease": 2.3,
+    "due": "2026-05-12",
+    "lapses": 1,
+    "reps": 6,
+    "lastReview": "2026-05-11"
   },
   {
     "id": "mnufgjqesxmx",
@@ -1375,35 +1819,47 @@
     "translation2": "a ?, a panorama, a captivating landscape",
     "deckId": "default",
     "createdAt": "2026-04-11",
-    "reviewStage": 4,
-    "nextReview": "2026-06-27",
+    "nextReview": "2026-05-12",
     "reviewHistory": [
       {
         "date": "2026-04-11",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       },
       {
         "date": "2026-04-12",
-        "remembered": false
+        "remembered": false,
+        "rating": 1
       },
       {
         "date": "2026-04-14",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       },
       {
         "date": "2026-04-18",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       },
       {
         "date": "2026-04-26",
-        "remembered": false
+        "remembered": false,
+        "rating": 1
       },
       {
         "date": "2026-05-11",
-        "remembered": false
+        "remembered": false,
+        "rating": 1
       }
     ],
-    "rot": 1
+    "rot": 1,
+    "state": "review",
+    "interval": 1,
+    "ease": 1.9,
+    "due": "2026-05-12",
+    "lapses": 3,
+    "reps": 6,
+    "lastReview": "2026-05-11"
   },
   {
     "id": "mnufj0awsotb",
@@ -1412,35 +1868,47 @@
     "translation2": "picturesque",
     "deckId": "default",
     "createdAt": "2026-04-11",
-    "reviewStage": 5,
-    "nextReview": "2026-07-21",
+    "nextReview": "2026-05-12",
     "reviewHistory": [
       {
         "date": "2026-04-11",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       },
       {
         "date": "2026-04-12",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       },
       {
         "date": "2026-04-14",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       },
       {
         "date": "2026-04-18",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       },
       {
         "date": "2026-04-26",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       },
       {
         "date": "2026-05-11",
-        "remembered": false
+        "remembered": false,
+        "rating": 1
       }
     ],
-    "rot": 1
+    "rot": 1,
+    "state": "review",
+    "interval": 1,
+    "ease": 2.3,
+    "due": "2026-05-12",
+    "lapses": 1,
+    "reps": 6,
+    "lastReview": "2026-05-11"
   },
   {
     "id": "mnufjzmzg8yj",
@@ -1449,35 +1917,47 @@
     "translation2": "a natural park",
     "deckId": "default",
     "createdAt": "2026-04-11",
-    "reviewStage": 5,
-    "nextReview": "2026-07-21",
+    "nextReview": "2026-09-07",
     "reviewHistory": [
       {
         "date": "2026-04-11",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       },
       {
         "date": "2026-04-12",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       },
       {
         "date": "2026-04-14",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       },
       {
         "date": "2026-04-18",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       },
       {
         "date": "2026-04-26",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       },
       {
         "date": "2026-05-11",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       }
     ],
-    "rot": 1
+    "rot": 1,
+    "state": "review",
+    "interval": 119,
+    "ease": 2.5,
+    "due": "2026-09-07",
+    "lapses": 0,
+    "reps": 6,
+    "lastReview": "2026-05-11"
   },
   {
     "id": "mnufkhqlv93b",
@@ -1486,35 +1966,47 @@
     "translation2": "a shore",
     "deckId": "default",
     "createdAt": "2026-04-11",
-    "reviewStage": 5,
-    "nextReview": "2026-07-21",
+    "nextReview": "2026-05-29",
     "reviewHistory": [
       {
         "date": "2026-04-11",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       },
       {
         "date": "2026-04-12",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       },
       {
         "date": "2026-04-14",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       },
       {
         "date": "2026-04-18",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       },
       {
         "date": "2026-04-26",
-        "remembered": false
+        "remembered": false,
+        "rating": 1
       },
       {
         "date": "2026-05-11",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       }
     ],
-    "rot": 1
+    "rot": 1,
+    "state": "review",
+    "interval": 18,
+    "ease": 2.3,
+    "due": "2026-05-29",
+    "lapses": 1,
+    "reps": 6,
+    "lastReview": "2026-05-11"
   },
   {
     "id": "mnuflkr4ksb7",
@@ -1523,35 +2015,47 @@
     "translation2": "steep contours",
     "deckId": "default",
     "createdAt": "2026-04-11",
-    "reviewStage": 4,
-    "nextReview": "2026-07-06",
+    "nextReview": "2026-05-12",
     "reviewHistory": [
       {
         "date": "2026-04-11",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       },
       {
         "date": "2026-04-12",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       },
       {
         "date": "2026-04-14",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       },
       {
         "date": "2026-04-18",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       },
       {
         "date": "2026-04-26",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       },
       {
         "date": "2026-05-11",
-        "remembered": false
+        "remembered": false,
+        "rating": 1
       }
     ],
-    "rot": 1
+    "rot": 1,
+    "state": "review",
+    "interval": 1,
+    "ease": 2.3,
+    "due": "2026-05-12",
+    "lapses": 1,
+    "reps": 6,
+    "lastReview": "2026-05-11"
   },
   {
     "id": "mnufm5vt2iit",
@@ -1560,35 +2064,47 @@
     "translation2": "smooth; flat; regular",
     "deckId": "default",
     "createdAt": "2026-04-11",
-    "reviewStage": 5,
-    "nextReview": "2026-07-21",
+    "nextReview": "2026-09-09",
     "reviewHistory": [
       {
         "date": "2026-04-11",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       },
       {
         "date": "2026-04-12",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       },
       {
         "date": "2026-04-14",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       },
       {
         "date": "2026-04-18",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       },
       {
         "date": "2026-04-26",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       },
       {
         "date": "2026-05-11",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       }
     ],
-    "rot": 1
+    "rot": 1,
+    "state": "review",
+    "interval": 121,
+    "ease": 2.5,
+    "due": "2026-09-09",
+    "lapses": 0,
+    "reps": 6,
+    "lastReview": "2026-05-11"
   },
   {
     "id": "mnufmz0i7z9m",
@@ -1597,35 +2113,47 @@
     "translation2": "a stream",
     "deckId": "default",
     "createdAt": "2026-04-11",
-    "reviewStage": 5,
-    "nextReview": "2026-07-21",
+    "nextReview": "2026-09-15",
     "reviewHistory": [
       {
         "date": "2026-04-11",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       },
       {
         "date": "2026-04-12",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       },
       {
         "date": "2026-04-14",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       },
       {
         "date": "2026-04-18",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       },
       {
         "date": "2026-04-26",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       },
       {
         "date": "2026-05-11",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       }
     ],
-    "rot": 0
+    "rot": 0,
+    "state": "review",
+    "interval": 127,
+    "ease": 2.5,
+    "due": "2026-09-15",
+    "lapses": 0,
+    "reps": 6,
+    "lastReview": "2026-05-11"
   },
   {
     "id": "mnufnxaevrsd",
@@ -1634,35 +2162,47 @@
     "translation2": "the souks; a bazaar",
     "deckId": "default",
     "createdAt": "2026-04-11",
-    "reviewStage": 4,
-    "nextReview": "2026-07-06",
+    "nextReview": "2026-05-12",
     "reviewHistory": [
       {
         "date": "2026-04-11",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       },
       {
         "date": "2026-04-12",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       },
       {
         "date": "2026-04-14",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       },
       {
         "date": "2026-04-18",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       },
       {
         "date": "2026-04-26",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       },
       {
         "date": "2026-05-11",
-        "remembered": false
+        "remembered": false,
+        "rating": 1
       }
     ],
-    "rot": 1
+    "rot": 1,
+    "state": "review",
+    "interval": 1,
+    "ease": 2.3,
+    "due": "2026-05-12",
+    "lapses": 1,
+    "reps": 6,
+    "lastReview": "2026-05-11"
   },
   {
     "id": "mnufrsbs17f9",
@@ -1671,35 +2211,47 @@
     "translation2": "a palace",
     "deckId": "default",
     "createdAt": "2026-04-11",
-    "reviewStage": 5,
-    "nextReview": "2026-07-21",
+    "nextReview": "2026-09-15",
     "reviewHistory": [
       {
         "date": "2026-04-11",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       },
       {
         "date": "2026-04-12",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       },
       {
         "date": "2026-04-14",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       },
       {
         "date": "2026-04-18",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       },
       {
         "date": "2026-04-26",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       },
       {
         "date": "2026-05-11",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       }
     ],
-    "rot": 1
+    "rot": 1,
+    "state": "review",
+    "interval": 127,
+    "ease": 2.5,
+    "due": "2026-09-15",
+    "lapses": 0,
+    "reps": 6,
+    "lastReview": "2026-05-11"
   },
   {
     "id": "mnucxqiovmm9",
@@ -1708,35 +2260,47 @@
     "translation2": "radiate in, around, crisscross a province, a region",
     "deckId": "default",
     "createdAt": "2026-04-11",
-    "reviewStage": 5,
-    "nextReview": "2026-07-21",
+    "nextReview": "2026-09-12",
     "reviewHistory": [
       {
         "date": "2026-04-11",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       },
       {
         "date": "2026-04-12",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       },
       {
         "date": "2026-04-14",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       },
       {
         "date": "2026-04-18",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       },
       {
         "date": "2026-04-26",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       },
       {
         "date": "2026-05-11",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       }
     ],
-    "rot": 1
+    "rot": 1,
+    "state": "review",
+    "interval": 124,
+    "ease": 2.5,
+    "due": "2026-09-12",
+    "lapses": 0,
+    "reps": 6,
+    "lastReview": "2026-05-11"
   },
   {
     "id": "mnufncvta5ya",
@@ -1745,34 +2309,46 @@
     "translation2": "?",
     "deckId": "default",
     "createdAt": "2026-04-11",
-    "reviewStage": 5,
-    "nextReview": "2026-07-21",
+    "nextReview": "2026-05-12",
     "reviewHistory": [
       {
         "date": "2026-04-11",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       },
       {
         "date": "2026-04-12",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       },
       {
         "date": "2026-04-14",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       },
       {
         "date": "2026-04-18",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       },
       {
         "date": "2026-04-26",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       },
       {
         "date": "2026-05-11",
-        "remembered": false
+        "remembered": false,
+        "rating": 1
       }
     ],
-    "rot": 1
+    "rot": 1,
+    "state": "review",
+    "interval": 1,
+    "ease": 2.3,
+    "due": "2026-05-12",
+    "lapses": 1,
+    "reps": 6,
+    "lastReview": "2026-05-11"
   }
 ]

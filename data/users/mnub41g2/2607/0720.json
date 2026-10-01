@@ -6,11 +6,17 @@
     "translation2": "takes place, takes place",
     "deckId": "default",
     "createdAt": "2026-07-20",
-    "reviewStage": 0,
     "nextReview": "2026-07-20",
     "reviewHistory": [],
     "rot": 0,
-    "tags": []
+    "tags": [],
+    "state": "new",
+    "interval": 0,
+    "ease": 2.5,
+    "due": "2026-07-20",
+    "lapses": 0,
+    "reps": 0,
+    "lastReview": null
   },
   {
     "id": "mrsww847hxz0",
@@ -19,11 +25,17 @@
     "translation2": "confrontation",
     "deckId": "default",
     "createdAt": "2026-07-20",
-    "reviewStage": 0,
     "nextReview": "2026-07-20",
     "reviewHistory": [],
     "rot": 0,
-    "tags": []
+    "tags": [],
+    "state": "new",
+    "interval": 0,
+    "ease": 2.5,
+    "due": "2026-07-20",
+    "lapses": 0,
+    "reps": 0,
+    "lastReview": null
   },
   {
     "id": "mrswwfbel6az",
@@ -32,11 +44,17 @@
     "translation2": "sterility",
     "deckId": "default",
     "createdAt": "2026-07-20",
-    "reviewStage": 0,
     "nextReview": "2026-07-20",
     "reviewHistory": [],
     "rot": 0,
-    "tags": []
+    "tags": [],
+    "state": "new",
+    "interval": 0,
+    "ease": 2.5,
+    "due": "2026-07-20",
+    "lapses": 0,
+    "reps": 0,
+    "lastReview": null
   },
   {
     "id": "mrsxndhlzbzs",
@@ -45,11 +63,17 @@
     "translation2": "dirty jokes",
     "deckId": "default",
     "createdAt": "2026-07-20",
-    "reviewStage": 0,
     "nextReview": "2026-07-20",
     "reviewHistory": [],
     "rot": 0,
-    "tags": []
+    "tags": [],
+    "state": "new",
+    "interval": 0,
+    "ease": 2.5,
+    "due": "2026-07-20",
+    "lapses": 0,
+    "reps": 0,
+    "lastReview": null
   },
   {
     "id": "mrsxqrj6p5d2",
@@ -58,11 +82,17 @@
     "translation2": "Start a home",
     "deckId": "default",
     "createdAt": "2026-07-20",
-    "reviewStage": 0,
     "nextReview": "2026-07-20",
     "reviewHistory": [],
     "rot": 0,
-    "tags": []
+    "tags": [],
+    "state": "new",
+    "interval": 0,
+    "ease": 2.5,
+    "due": "2026-07-20",
+    "lapses": 0,
+    "reps": 0,
+    "lastReview": null
   },
   {
     "id": "mrsxqzoxa7su",
@@ -71,11 +101,17 @@
     "translation2": "Save money",
     "deckId": "default",
     "createdAt": "2026-07-20",
-    "reviewStage": 0,
     "nextReview": "2026-07-20",
     "reviewHistory": [],
     "rot": 0,
-    "tags": []
+    "tags": [],
+    "state": "new",
+    "interval": 0,
+    "ease": 2.5,
+    "due": "2026-07-20",
+    "lapses": 0,
+    "reps": 0,
+    "lastReview": null
   },
   {
     "id": "mrsxsznnbyzf",
@@ -84,10 +120,16 @@
     "translation2": "",
     "deckId": "default",
     "createdAt": "2026-07-20",
-    "reviewStage": 0,
     "nextReview": "2026-07-20",
     "reviewHistory": [],
     "rot": 0,
-    "tags": []
+    "tags": [],
+    "state": "new",
+    "interval": 0,
+    "ease": 2.5,
+    "due": "2026-07-20",
+    "lapses": 0,
+    "reps": 0,
+    "lastReview": null
   }
 ]

@@ -1,0 +1,40 @@
+[
+  {
+    "id": "mupkzry549wp",
+    "word": "Ce sont (d'ailleurs) des entreprises où on vit mieux et qui durent plus long temps.",
+    "translation": "而且，这些公司让我们生活得更好、寿命更长。",
+    "translation2": "These are (moreover) companies where we live better and which last longer.",
+    "deckId": "default",
+    "createdAt": "2026-10-01",
+    "state": "new",
+    "interval": 0,
+    "ease": 2.5,
+    "due": "2026-10-01",
+    "nextReview": "2026-10-01",
+    "lapses": 0,
+    "reps": 0,
+    "lastReview": null,
+    "reviewHistory": [],
+    "rot": 0,
+    "tags": []
+  },
+  {
+    "id": "mupkzzdf2rj6",
+    "word": "Pour certains, le télétravail est même la condition de leur équilibre.",
+    "translation": "对于一些人来说，远程办公甚至是他们保持平衡的条件。",
+    "translation2": "For some, teleworking is even the condition for their balance.",
+    "deckId": "default",
+    "createdAt": "2026-10-01",
+    "state": "new",
+    "interval": 0,
+    "ease": 2.5,
+    "due": "2026-10-01",
+    "nextReview": "2026-10-01",
+    "lapses": 0,
+    "reps": 0,
+    "lastReview": null,
+    "reviewHistory": [],
+    "rot": 0,
+    "tags": []
+  }
+]

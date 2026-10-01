@@ -6,28 +6,38 @@
     "translation2": "bar",
     "deckId": "default",
     "createdAt": "2026-04-24",
-    "reviewStage": 0,
-    "nextReview": "2026-05-01",
+    "nextReview": "2026-05-02",
     "reviewHistory": [
       {
         "date": "2026-04-24",
-        "remembered": false
+        "remembered": false,
+        "rating": 1
       },
       {
         "date": "2026-04-25",
-        "remembered": false
+        "remembered": false,
+        "rating": 1
       },
       {
         "date": "2026-04-27",
-        "remembered": false
+        "remembered": false,
+        "rating": 1
       },
       {
         "date": "2026-05-01",
-        "remembered": false
+        "remembered": false,
+        "rating": 1
       }
     ],
     "rot": 1,
-    "tags": []
+    "tags": [],
+    "state": "review",
+    "interval": 1,
+    "ease": 1.9,
+    "due": "2026-05-02",
+    "lapses": 3,
+    "reps": 4,
+    "lastReview": "2026-05-01"
   },
   {
     "id": "mocz7gx6esvu",
@@ -36,28 +46,38 @@
     "translation2": "Seven acquittals, as requested by the prosecution",
     "deckId": "default",
     "createdAt": "2026-04-24",
-    "reviewStage": 0,
-    "nextReview": "2026-05-01",
+    "nextReview": "2026-05-02",
     "reviewHistory": [
       {
         "date": "2026-04-24",
-        "remembered": false
+        "remembered": false,
+        "rating": 1
       },
       {
         "date": "2026-04-25",
-        "remembered": false
+        "remembered": false,
+        "rating": 1
       },
       {
         "date": "2026-04-27",
-        "remembered": false
+        "remembered": false,
+        "rating": 1
       },
       {
         "date": "2026-05-01",
-        "remembered": false
+        "remembered": false,
+        "rating": 1
       }
     ],
     "rot": 1,
-    "tags": []
+    "tags": [],
+    "state": "review",
+    "interval": 1,
+    "ease": 1.9,
+    "due": "2026-05-02",
+    "lapses": 3,
+    "reps": 4,
+    "lastReview": "2026-05-01"
   },
   {
     "id": "moczae8utjwp",
@@ -66,28 +86,38 @@
     "translation2": "France must revolt",
     "deckId": "default",
     "createdAt": "2026-04-24",
-    "reviewStage": 1,
-    "nextReview": "2026-05-02",
+    "nextReview": "2026-05-06",
     "reviewHistory": [
       {
         "date": "2026-04-24",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       },
       {
         "date": "2026-04-25",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       },
       {
         "date": "2026-04-27",
-        "remembered": false
+        "remembered": false,
+        "rating": 1
       },
       {
         "date": "2026-05-01",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       }
     ],
     "rot": 1,
-    "tags": []
+    "tags": [],
+    "state": "review",
+    "interval": 5,
+    "ease": 2.3,
+    "due": "2026-05-06",
+    "lapses": 1,
+    "reps": 4,
+    "lastReview": "2026-05-01"
   },
   {
     "id": "moczbjtxxrc1",
@@ -96,27 +126,37 @@
     "translation2": "France is rotten. He doesn't know how to recognize his mistakes.",
     "deckId": "default",
     "createdAt": "2026-04-24",
-    "reviewStage": 1,
     "nextReview": "2026-05-02",
     "reviewHistory": [
       {
         "date": "2026-04-24",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       },
       {
         "date": "2026-04-25",
-        "remembered": true
+        "remembered": true,
+        "rating": 3
       },
       {
         "date": "2026-04-27",
-        "remembered": false
+        "remembered": false,
+        "rating": 1
       },
       {
         "date": "2026-05-01",
-        "remembered": false
+        "remembered": false,
+        "rating": 1
       }
     ],
     "rot": 1,
-    "tags": []
+    "tags": [],
+    "state": "review",
+    "interval": 1,
+    "ease": 2.1,
+    "due": "2026-05-02",
+    "lapses": 2,
+    "reps": 4,
+    "lastReview": "2026-05-01"
   }
 ]

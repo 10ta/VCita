@@ -6,11 +6,17 @@
     "translation2": "susceptible",
     "deckId": "default",
     "createdAt": "2026-07-01",
-    "reviewStage": 0,
     "nextReview": "2026-07-01",
     "reviewHistory": [],
     "rot": 0,
-    "tags": []
+    "tags": [],
+    "state": "new",
+    "interval": 0,
+    "ease": 2.5,
+    "due": "2026-07-01",
+    "lapses": 0,
+    "reps": 0,
+    "lastReview": null
   },
   {
     "id": "mr1vitixn3f7",
@@ -19,11 +25,17 @@
     "translation2": "migrant",
     "deckId": "default",
     "createdAt": "2026-07-01",
-    "reviewStage": 0,
     "nextReview": "2026-07-01",
     "reviewHistory": [],
     "rot": 0,
-    "tags": []
+    "tags": [],
+    "state": "new",
+    "interval": 0,
+    "ease": 2.5,
+    "due": "2026-07-01",
+    "lapses": 0,
+    "reps": 0,
+    "lastReview": null
   },
   {
     "id": "mr1vlxpls4c3",
@@ -32,11 +44,17 @@
     "translation2": "mediator",
     "deckId": "default",
     "createdAt": "2026-07-01",
-    "reviewStage": 0,
     "nextReview": "2026-07-01",
     "reviewHistory": [],
     "rot": 0,
-    "tags": []
+    "tags": [],
+    "state": "new",
+    "interval": 0,
+    "ease": 2.5,
+    "due": "2026-07-01",
+    "lapses": 0,
+    "reps": 0,
+    "lastReview": null
   },
   {
     "id": "mr1zgxmdu9ao",
@@ -45,11 +63,17 @@
     "translation2": "attic",
     "deckId": "default",
     "createdAt": "2026-07-01",
-    "reviewStage": 0,
     "nextReview": "2026-07-01",
     "reviewHistory": [],
     "rot": 0,
-    "tags": []
+    "tags": [],
+    "state": "new",
+    "interval": 0,
+    "ease": 2.5,
+    "due": "2026-07-01",
+    "lapses": 0,
+    "reps": 0,
+    "lastReview": null
   },
   {
     "id": "mr22p4navzay",
@@ -58,10 +82,16 @@
     "translation2": "The price doesn't matter to me.",
     "deckId": "default",
     "createdAt": "2026-07-01",
-    "reviewStage": 0,
     "nextReview": "2026-07-01",
     "reviewHistory": [],
     "rot": 0,
-    "tags": []
+    "tags": [],
+    "state": "new",
+    "interval": 0,
+    "ease": 2.5,
+    "due": "2026-07-01",
+    "lapses": 0,
+    "reps": 0,
+    "lastReview": null
   }
 ]

@@ -6,11 +6,17 @@
     "translation2": "",
     "deckId": "default",
     "createdAt": "2026-07-24",
-    "reviewStage": 0,
     "nextReview": "2026-07-24",
     "reviewHistory": [],
     "rot": 0,
-    "tags": []
+    "tags": [],
+    "state": "new",
+    "interval": 0,
+    "ease": 2.5,
+    "due": "2026-07-24",
+    "lapses": 0,
+    "reps": 0,
+    "lastReview": null
   },
   {
     "id": "mryb2302yp1n",
@@ -19,11 +25,17 @@
     "translation2": "get drunk",
     "deckId": "default",
     "createdAt": "2026-07-24",
-    "reviewStage": 0,
     "nextReview": "2026-07-24",
     "reviewHistory": [],
     "rot": 0,
-    "tags": []
+    "tags": [],
+    "state": "new",
+    "interval": 0,
+    "ease": 2.5,
+    "due": "2026-07-24",
+    "lapses": 0,
+    "reps": 0,
+    "lastReview": null
   },
   {
     "id": "mryb6b388zby",
@@ -32,11 +44,17 @@
     "translation2": "It is in constant transformation",
     "deckId": "default",
     "createdAt": "2026-07-24",
-    "reviewStage": 0,
     "nextReview": "2026-07-24",
     "reviewHistory": [],
     "rot": 0,
-    "tags": []
+    "tags": [],
+    "state": "new",
+    "interval": 0,
+    "ease": 2.5,
+    "due": "2026-07-24",
+    "lapses": 0,
+    "reps": 0,
+    "lastReview": null
   },
   {
     "id": "mrybbvibywgq",
@@ -45,11 +63,17 @@
     "translation2": "",
     "deckId": "default",
     "createdAt": "2026-07-24",
-    "reviewStage": 0,
     "nextReview": "2026-07-24",
     "reviewHistory": [],
     "rot": 0,
-    "tags": []
+    "tags": [],
+    "state": "new",
+    "interval": 0,
+    "ease": 2.5,
+    "due": "2026-07-24",
+    "lapses": 0,
+    "reps": 0,
+    "lastReview": null
   },
   {
     "id": "mrybcx6z8koj",
@@ -58,11 +82,17 @@
     "translation2": "film, filming",
     "deckId": "default",
     "createdAt": "2026-07-24",
-    "reviewStage": 0,
     "nextReview": "2026-07-24",
     "reviewHistory": [],
     "rot": 0,
-    "tags": []
+    "tags": [],
+    "state": "new",
+    "interval": 0,
+    "ease": 2.5,
+    "due": "2026-07-24",
+    "lapses": 0,
+    "reps": 0,
+    "lastReview": null
   },
   {
     "id": "mrybv0r2g0ca",
@@ -71,11 +101,17 @@
     "translation2": "",
     "deckId": "default",
     "createdAt": "2026-07-24",
-    "reviewStage": 0,
     "nextReview": "2026-07-24",
     "reviewHistory": [],
     "rot": 0,
-    "tags": []
+    "tags": [],
+    "state": "new",
+    "interval": 0,
+    "ease": 2.5,
+    "due": "2026-07-24",
+    "lapses": 0,
+    "reps": 0,
+    "lastReview": null
   },
   {
     "id": "mrybvcup6v93",
@@ -84,11 +120,17 @@
     "translation2": "is woven from",
     "deckId": "default",
     "createdAt": "2026-07-24",
-    "reviewStage": 0,
     "nextReview": "2026-07-24",
     "reviewHistory": [],
     "rot": 0,
-    "tags": []
+    "tags": [],
+    "state": "new",
+    "interval": 0,
+    "ease": 2.5,
+    "due": "2026-07-24",
+    "lapses": 0,
+    "reps": 0,
+    "lastReview": null
   },
   {
     "id": "mryby1w608g2",
@@ -97,11 +139,17 @@
     "translation2": "itinerary",
     "deckId": "default",
     "createdAt": "2026-07-24",
-    "reviewStage": 0,
     "nextReview": "2026-07-24",
     "reviewHistory": [],
     "rot": 0,
-    "tags": []
+    "tags": [],
+    "state": "new",
+    "interval": 0,
+    "ease": 2.5,
+    "due": "2026-07-24",
+    "lapses": 0,
+    "reps": 0,
+    "lastReview": null
   },
   {
     "id": "mryy95rahvab",
@@ -110,11 +158,17 @@
     "translation2": "stealth",
     "deckId": "default",
     "createdAt": "2026-07-24",
-    "reviewStage": 0,
     "nextReview": "2026-07-24",
     "reviewHistory": [],
     "rot": 0,
-    "tags": []
+    "tags": [],
+    "state": "new",
+    "interval": 0,
+    "ease": 2.5,
+    "due": "2026-07-24",
+    "lapses": 0,
+    "reps": 0,
+    "lastReview": null
   },
   {
     "id": "mryy9zjhfq97",
@@ -123,11 +177,17 @@
     "translation2": "pilgrimage",
     "deckId": "default",
     "createdAt": "2026-07-24",
-    "reviewStage": 0,
     "nextReview": "2026-07-24",
     "reviewHistory": [],
     "rot": 0,
-    "tags": []
+    "tags": [],
+    "state": "new",
+    "interval": 0,
+    "ease": 2.5,
+    "due": "2026-07-24",
+    "lapses": 0,
+    "reps": 0,
+    "lastReview": null
   },
   {
     "id": "mryyd791z6ml",
@@ -136,11 +196,17 @@
     "translation2": "take my blood and live again",
     "deckId": "default",
     "createdAt": "2026-07-24",
-    "reviewStage": 0,
     "nextReview": "2026-07-24",
     "reviewHistory": [],
     "rot": 0,
-    "tags": []
+    "tags": [],
+    "state": "new",
+    "interval": 0,
+    "ease": 2.5,
+    "due": "2026-07-24",
+    "lapses": 0,
+    "reps": 0,
+    "lastReview": null
   },
   {
     "id": "mryynz1jvv4k",
@@ -149,11 +215,17 @@
     "translation2": "hill",
     "deckId": "default",
     "createdAt": "2026-07-24",
-    "reviewStage": 0,
     "nextReview": "2026-07-24",
     "reviewHistory": [],
     "rot": 0,
-    "tags": []
+    "tags": [],
+    "state": "new",
+    "interval": 0,
+    "ease": 2.5,
+    "due": "2026-07-24",
+    "lapses": 0,
+    "reps": 0,
+    "lastReview": null
   },
   {
     "id": "mryyqv4xccjs",
@@ -162,11 +234,17 @@
     "translation2": "die! Dirty traitor",
     "deckId": "default",
     "createdAt": "2026-07-24",
-    "reviewStage": 0,
     "nextReview": "2026-07-24",
     "reviewHistory": [],
     "rot": 0,
-    "tags": []
+    "tags": [],
+    "state": "new",
+    "interval": 0,
+    "ease": 2.5,
+    "due": "2026-07-24",
+    "lapses": 0,
+    "reps": 0,
+    "lastReview": null
   },
   {
     "id": "mryyugi4rrpo",
@@ -175,11 +253,17 @@
     "translation2": "formidable",
     "deckId": "default",
     "createdAt": "2026-07-24",
-    "reviewStage": 0,
     "nextReview": "2026-07-24",
     "reviewHistory": [],
     "rot": 0,
-    "tags": []
+    "tags": [],
+    "state": "new",
+    "interval": 0,
+    "ease": 2.5,
+    "due": "2026-07-24",
+    "lapses": 0,
+    "reps": 0,
+    "lastReview": null
   },
   {
     "id": "mryzitku1rsh",
@@ -188,11 +272,17 @@
     "translation2": "lamentable",
     "deckId": "default",
     "createdAt": "2026-07-24",
-    "reviewStage": 0,
     "nextReview": "2026-07-24",
     "reviewHistory": [],
     "rot": 0,
-    "tags": []
+    "tags": [],
+    "state": "new",
+    "interval": 0,
+    "ease": 2.5,
+    "due": "2026-07-24",
+    "lapses": 0,
+    "reps": 0,
+    "lastReview": null
   },
   {
     "id": "mryzjv8vo2cu",
@@ -201,11 +291,17 @@
     "translation2": "a side road",
     "deckId": "default",
     "createdAt": "2026-07-24",
-    "reviewStage": 0,
     "nextReview": "2026-07-24",
     "reviewHistory": [],
     "rot": 0,
-    "tags": []
+    "tags": [],
+    "state": "new",
+    "interval": 0,
+    "ease": 2.5,
+    "due": "2026-07-24",
+    "lapses": 0,
+    "reps": 0,
+    "lastReview": null
   },
   {
     "id": "mryzkawosp1l",
@@ -214,11 +310,17 @@
     "translation2": "at the risk of your life",
     "deckId": "default",
     "createdAt": "2026-07-24",
-    "reviewStage": 0,
     "nextReview": "2026-07-24",
     "reviewHistory": [],
     "rot": 0,
-    "tags": []
+    "tags": [],
+    "state": "new",
+    "interval": 0,
+    "ease": 2.5,
+    "due": "2026-07-24",
+    "lapses": 0,
+    "reps": 0,
+    "lastReview": null
   },
   {
     "id": "mrz08og60isi",
@@ -227,10 +329,16 @@
     "translation2": "apparently",
     "deckId": "default",
     "createdAt": "2026-07-24",
-    "reviewStage": 0,
     "nextReview": "2026-07-24",
     "reviewHistory": [],
     "rot": 0,
-    "tags": []
+    "tags": [],
+    "state": "new",
+    "interval": 0,
+    "ease": 2.5,
+    "due": "2026-07-24",
+    "lapses": 0,
+    "reps": 0,
+    "lastReview": null
   }
 ]

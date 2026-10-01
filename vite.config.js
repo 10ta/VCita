@@ -6,7 +6,7 @@ import zlib from 'zlib'
 import { promisify } from 'util'
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-//  所有配置都在这里改
+//  所有配置都在这里改（改完 Vite 会自动重启，刷新页面生效）
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 // ─── 语言配置 ───
@@ -14,8 +14,17 @@ const SOURCE_LANG = 'fr'
 const TARGET_LANG_1 = 'zh-CN'
 const TARGET_LANG_2 = 'en'
 
-// ─── 艾宾浩斯复习周期（天数）───
-const EBBINGHAUS_DAYS = [0, 1, 3, 7, 15, 30]
+// ─── 复习调度（SM-2）───
+// 上限按牌组、按天计算
+const NEW_CARDS_PER_DAY = 20        // 每天最多引入多少张新卡
+const REVIEWS_PER_DAY = 200         // 每天最多复习多少张到期卡
+const NEW_CARD_POSITION = 'mix'     // 新卡在队列中的位置：'mix' 穿插 | 'first' 先学新卡 | 'last' 复习完再学
+const REVIEW_ORDER = 'due'          // 到期卡顺序：'due' 最早到期优先 | 'random' 随机
+const RELEARN_IN_SESSION = true     // 点"重来"的卡是否在本轮末尾再出现一次
+const STARTING_EASE = 2.5           // 新卡初始难度系数，越大间隔增长越快（最低 1.3）
+const EASY_BONUS = 1.3              // "简单"在"良好"基础上的额外乘数
+const HARD_FACTOR = 1.2             // "困难"的间隔乘数
+const MAX_INTERVAL_DAYS = 3650      // 最长间隔（天）
 
 // ─── 监听地址 ───
 const HOST = '127.0.0.1'
@@ -60,7 +69,7 @@ const AUTO_PLAY_REVIEW = false
 //   GET  /api/list                        → { files }
 //   GET  /api/tts?q=&tl=
 //
-// 批量接口（新）:
+// 批量接口:
 //   GET  /api/snapshot?uid=   一次返回 global + meta + 该用户所有日文件（不带 uid 时取 activeUser）
 //   POST /api/sync            { uid, files: [{ path, cards, dropIds }] }
 //                             服务端在该用户的写锁内对每个文件做"读-合并-写"：
@@ -336,7 +345,17 @@ export default defineConfig({
     __SOURCE_LANG__: JSON.stringify(SOURCE_LANG),
     __TARGET_LANG_1__: JSON.stringify(TARGET_LANG_1),
     __TARGET_LANG_2__: JSON.stringify(TARGET_LANG_2),
-    __EBBINGHAUS_DAYS__: JSON.stringify(EBBINGHAUS_DAYS),
+    __SRS_CONFIG__: JSON.stringify({
+      newPerDay: NEW_CARDS_PER_DAY,
+      reviewsPerDay: REVIEWS_PER_DAY,
+      newCardPosition: NEW_CARD_POSITION,
+      reviewOrder: REVIEW_ORDER,
+      relearnInSession: RELEARN_IN_SESSION,
+      startingEase: STARTING_EASE,
+      easyBonus: EASY_BONUS,
+      hardFactor: HARD_FACTOR,
+      maxInterval: MAX_INTERVAL_DAYS,
+    }),
     __SHOW_SOURCE__: JSON.stringify(SHOW_SOURCE),
     __SHOW_TARGET_1__: JSON.stringify(SHOW_TARGET_1),
     __SHOW_TARGET_2__: JSON.stringify(SHOW_TARGET_2),

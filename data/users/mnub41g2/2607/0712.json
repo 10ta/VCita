@@ -6,10 +6,16 @@
     "translation2": "postponement",
     "deckId": "default",
     "createdAt": "2026-07-12",
-    "reviewStage": 0,
     "nextReview": "2026-07-12",
     "reviewHistory": [],
     "rot": 0,
-    "tags": []
+    "tags": [],
+    "state": "new",
+    "interval": 0,
+    "ease": 2.5,
+    "due": "2026-07-12",
+    "lapses": 0,
+    "reps": 0,
+    "lastReview": null
   }
 ]

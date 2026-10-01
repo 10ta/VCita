@@ -6,11 +6,17 @@
     "translation2": "Alas,",
     "deckId": "default",
     "createdAt": "2026-07-25",
-    "reviewStage": 0,
     "nextReview": "2026-07-25",
     "reviewHistory": [],
     "rot": 0,
-    "tags": []
+    "tags": [],
+    "state": "new",
+    "interval": 0,
+    "ease": 2.5,
+    "due": "2026-07-25",
+    "lapses": 0,
+    "reps": 0,
+    "lastReview": null
   },
   {
     "id": "mrzx203him01",
@@ -19,11 +25,17 @@
     "translation2": "turn around if you value your life",
     "deckId": "default",
     "createdAt": "2026-07-25",
-    "reviewStage": 0,
     "nextReview": "2026-07-25",
     "reviewHistory": [],
     "rot": 0,
-    "tags": []
+    "tags": [],
+    "state": "new",
+    "interval": 0,
+    "ease": 2.5,
+    "due": "2026-07-25",
+    "lapses": 0,
+    "reps": 0,
+    "lastReview": null
   },
   {
     "id": "mrzx6ptukyp0",
@@ -32,11 +44,17 @@
     "translation2": "sinister burden",
     "deckId": "default",
     "createdAt": "2026-07-25",
-    "reviewStage": 0,
     "nextReview": "2026-07-25",
     "reviewHistory": [],
     "rot": 0,
-    "tags": []
+    "tags": [],
+    "state": "new",
+    "interval": 0,
+    "ease": 2.5,
+    "due": "2026-07-25",
+    "lapses": 0,
+    "reps": 0,
+    "lastReview": null
   },
   {
     "id": "mrzxofknz994",
@@ -45,11 +63,17 @@
     "translation2": "stagnation",
     "deckId": "default",
     "createdAt": "2026-07-25",
-    "reviewStage": 0,
     "nextReview": "2026-07-25",
     "reviewHistory": [],
     "rot": 0,
-    "tags": []
+    "tags": [],
+    "state": "new",
+    "interval": 0,
+    "ease": 2.5,
+    "due": "2026-07-25",
+    "lapses": 0,
+    "reps": 0,
+    "lastReview": null
   },
   {
     "id": "mrzxpj7pq2vz",
@@ -58,11 +82,17 @@
     "translation2": "resurrection",
     "deckId": "default",
     "createdAt": "2026-07-25",
-    "reviewStage": 0,
     "nextReview": "2026-07-25",
     "reviewHistory": [],
     "rot": 0,
-    "tags": []
+    "tags": [],
+    "state": "new",
+    "interval": 0,
+    "ease": 2.5,
+    "due": "2026-07-25",
+    "lapses": 0,
+    "reps": 0,
+    "lastReview": null
   },
   {
     "id": "mrzxqljqmfzj",
@@ -71,11 +101,17 @@
     "translation2": "vex",
     "deckId": "default",
     "createdAt": "2026-07-25",
-    "reviewStage": 0,
     "nextReview": "2026-07-25",
     "reviewHistory": [],
     "rot": 0,
-    "tags": []
+    "tags": [],
+    "state": "new",
+    "interval": 0,
+    "ease": 2.5,
+    "due": "2026-07-25",
+    "lapses": 0,
+    "reps": 0,
+    "lastReview": null
   },
   {
     "id": "ms013g3f4x5m",
@@ -84,11 +120,17 @@
     "translation2": "was seized by",
     "deckId": "default",
     "createdAt": "2026-07-25",
-    "reviewStage": 0,
     "nextReview": "2026-07-25",
     "reviewHistory": [],
     "rot": 0,
-    "tags": []
+    "tags": [],
+    "state": "new",
+    "interval": 0,
+    "ease": 2.5,
+    "due": "2026-07-25",
+    "lapses": 0,
+    "reps": 0,
+    "lastReview": null
   },
   {
     "id": "ms08pvnvtwsp",
@@ -97,11 +139,17 @@
     "translation2": "spot, mark",
     "deckId": "default",
     "createdAt": "2026-07-25",
-    "reviewStage": 0,
     "nextReview": "2026-07-25",
     "reviewHistory": [],
     "rot": 0,
-    "tags": []
+    "tags": [],
+    "state": "new",
+    "interval": 0,
+    "ease": 2.5,
+    "due": "2026-07-25",
+    "lapses": 0,
+    "reps": 0,
+    "lastReview": null
   },
   {
     "id": "ms093srf5v16",
@@ -110,11 +158,17 @@
     "translation2": "if you hesitate, you will be carried away",
     "deckId": "default",
     "createdAt": "2026-07-25",
-    "reviewStage": 0,
     "nextReview": "2026-07-25",
     "reviewHistory": [],
     "rot": 0,
-    "tags": []
+    "tags": [],
+    "state": "new",
+    "interval": 0,
+    "ease": 2.5,
+    "due": "2026-07-25",
+    "lapses": 0,
+    "reps": 0,
+    "lastReview": null
   },
   {
     "id": "ms0943a9xvok",
@@ -123,11 +177,17 @@
     "translation2": "if you hesitate, you lose",
     "deckId": "default",
     "createdAt": "2026-07-25",
-    "reviewStage": 0,
     "nextReview": "2026-07-25",
     "reviewHistory": [],
     "rot": 0,
-    "tags": []
+    "tags": [],
+    "state": "new",
+    "interval": 0,
+    "ease": 2.5,
+    "due": "2026-07-25",
+    "lapses": 0,
+    "reps": 0,
+    "lastReview": null
   },
   {
     "id": "ms0djx3917bu",
@@ -136,11 +196,17 @@
     "translation2": "deny",
     "deckId": "default",
     "createdAt": "2026-07-25",
-    "reviewStage": 0,
     "nextReview": "2026-07-25",
     "reviewHistory": [],
     "rot": 0,
-    "tags": []
+    "tags": [],
+    "state": "new",
+    "interval": 0,
+    "ease": 2.5,
+    "due": "2026-07-25",
+    "lapses": 0,
+    "reps": 0,
+    "lastReview": null
   },
   {
     "id": "ms0gw3zz5hfn",
@@ -149,10 +215,16 @@
     "translation2": "hypnotized by",
     "deckId": "default",
     "createdAt": "2026-07-25",
-    "reviewStage": 0,
     "nextReview": "2026-07-25",
     "reviewHistory": [],
     "rot": 0,
-    "tags": []
+    "tags": [],
+    "state": "new",
+    "interval": 0,
+    "ease": 2.5,
+    "due": "2026-07-25",
+    "lapses": 0,
+    "reps": 0,
+    "lastReview": null
   }
 ]

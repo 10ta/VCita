@@ -6,11 +6,17 @@
     "translation2": "suffocates",
     "deckId": "default",
     "createdAt": "2026-06-23",
-    "reviewStage": 0,
     "nextReview": "2026-06-23",
     "reviewHistory": [],
     "rot": 0,
-    "tags": []
+    "tags": [],
+    "state": "new",
+    "interval": 0,
+    "ease": 2.5,
+    "due": "2026-06-23",
+    "lapses": 0,
+    "reps": 0,
+    "lastReview": null
   },
   {
     "id": "mqqe00wo8u2o",
@@ -19,11 +25,17 @@
     "translation2": "pill",
     "deckId": "default",
     "createdAt": "2026-06-23",
-    "reviewStage": 0,
     "nextReview": "2026-06-23",
     "reviewHistory": [],
     "rot": 0,
-    "tags": []
+    "tags": [],
+    "state": "new",
+    "interval": 0,
+    "ease": 2.5,
+    "due": "2026-06-23",
+    "lapses": 0,
+    "reps": 0,
+    "lastReview": null
   },
   {
     "id": "mqqlndx7tzje",
@@ -32,11 +44,17 @@
     "translation2": "exile",
     "deckId": "default",
     "createdAt": "2026-06-23",
-    "reviewStage": 0,
     "nextReview": "2026-06-23",
     "reviewHistory": [],
     "rot": 0,
-    "tags": []
+    "tags": [],
+    "state": "new",
+    "interval": 0,
+    "ease": 2.5,
+    "due": "2026-06-23",
+    "lapses": 0,
+    "reps": 0,
+    "lastReview": null
   },
   {
     "id": "mqqo17149f9s",
@@ -45,11 +63,17 @@
     "translation2": "establish",
     "deckId": "default",
     "createdAt": "2026-06-23",
-    "reviewStage": 0,
     "nextReview": "2026-06-23",
     "reviewHistory": [],
     "rot": 0,
-    "tags": []
+    "tags": [],
+    "state": "new",
+    "interval": 0,
+    "ease": 2.5,
+    "due": "2026-06-23",
+    "lapses": 0,
+    "reps": 0,
+    "lastReview": null
   },
   {
     "id": "mqqo3eds2339",
@@ -58,11 +82,17 @@
     "translation2": "pick up",
     "deckId": "default",
     "createdAt": "2026-06-23",
-    "reviewStage": 0,
     "nextReview": "2026-06-23",
     "reviewHistory": [],
     "rot": 0,
-    "tags": []
+    "tags": [],
+    "state": "new",
+    "interval": 0,
+    "ease": 2.5,
+    "due": "2026-06-23",
+    "lapses": 0,
+    "reps": 0,
+    "lastReview": null
   },
   {
     "id": "mqqo40z81hxe",
@@ -71,11 +101,17 @@
     "translation2": "first place on the podium",
     "deckId": "default",
     "createdAt": "2026-06-23",
-    "reviewStage": 0,
     "nextReview": "2026-06-23",
     "reviewHistory": [],
     "rot": 0,
-    "tags": []
+    "tags": [],
+    "state": "new",
+    "interval": 0,
+    "ease": 2.5,
+    "due": "2026-06-23",
+    "lapses": 0,
+    "reps": 0,
+    "lastReview": null
   },
   {
     "id": "mqqo6gbz4sg8",
@@ -84,11 +120,17 @@
     "translation2": "a native speaker",
     "deckId": "default",
     "createdAt": "2026-06-23",
-    "reviewStage": 0,
     "nextReview": "2026-06-23",
     "reviewHistory": [],
     "rot": 0,
-    "tags": []
+    "tags": [],
+    "state": "new",
+    "interval": 0,
+    "ease": 2.5,
+    "due": "2026-06-23",
+    "lapses": 0,
+    "reps": 0,
+    "lastReview": null
   },
   {
     "id": "mqqo731ilz5e",
@@ -97,11 +139,17 @@
     "translation2": "social component",
     "deckId": "default",
     "createdAt": "2026-06-23",
-    "reviewStage": 0,
     "nextReview": "2026-06-23",
     "reviewHistory": [],
     "rot": 0,
-    "tags": []
+    "tags": [],
+    "state": "new",
+    "interval": 0,
+    "ease": 2.5,
+    "due": "2026-06-23",
+    "lapses": 0,
+    "reps": 0,
+    "lastReview": null
   },
   {
     "id": "mqqox4iqo6x8",
@@ -110,11 +158,17 @@
     "translation2": "bench, chair and stool",
     "deckId": "default",
     "createdAt": "2026-06-23",
-    "reviewStage": 0,
     "nextReview": "2026-06-23",
     "reviewHistory": [],
     "rot": 0,
-    "tags": []
+    "tags": [],
+    "state": "new",
+    "interval": 0,
+    "ease": 2.5,
+    "due": "2026-06-23",
+    "lapses": 0,
+    "reps": 0,
+    "lastReview": null
   },
   {
     "id": "mqqoz166snsv",
@@ -123,11 +177,17 @@
     "translation2": "furniture",
     "deckId": "default",
     "createdAt": "2026-06-23",
-    "reviewStage": 0,
     "nextReview": "2026-06-23",
     "reviewHistory": [],
     "rot": 0,
-    "tags": []
+    "tags": [],
+    "state": "new",
+    "interval": 0,
+    "ease": 2.5,
+    "due": "2026-06-23",
+    "lapses": 0,
+    "reps": 0,
+    "lastReview": null
   },
   {
     "id": "mqqoz8aqg23n",
@@ -136,11 +196,17 @@
     "translation2": "competition",
     "deckId": "default",
     "createdAt": "2026-06-23",
-    "reviewStage": 0,
     "nextReview": "2026-06-23",
     "reviewHistory": [],
     "rot": 0,
-    "tags": []
+    "tags": [],
+    "state": "new",
+    "interval": 0,
+    "ease": 2.5,
+    "due": "2026-06-23",
+    "lapses": 0,
+    "reps": 0,
+    "lastReview": null
   },
   {
     "id": "mqqp7xn6zpz5",
@@ -149,11 +215,17 @@
     "translation2": "formerly",
     "deckId": "default",
     "createdAt": "2026-06-23",
-    "reviewStage": 0,
     "nextReview": "2026-06-23",
     "reviewHistory": [],
     "rot": 0,
-    "tags": []
+    "tags": [],
+    "state": "new",
+    "interval": 0,
+    "ease": 2.5,
+    "due": "2026-06-23",
+    "lapses": 0,
+    "reps": 0,
+    "lastReview": null
   },
   {
     "id": "mqqp8ywuebpp",
@@ -162,11 +234,17 @@
     "translation2": "fulfilled",
     "deckId": "default",
     "createdAt": "2026-06-23",
-    "reviewStage": 0,
     "nextReview": "2026-06-23",
     "reviewHistory": [],
     "rot": 0,
-    "tags": []
+    "tags": [],
+    "state": "new",
+    "interval": 0,
+    "ease": 2.5,
+    "due": "2026-06-23",
+    "lapses": 0,
+    "reps": 0,
+    "lastReview": null
   },
   {
     "id": "mqqpbhmn5eix",
@@ -175,11 +253,17 @@
     "translation2": "mutation",
     "deckId": "default",
     "createdAt": "2026-06-23",
-    "reviewStage": 0,
     "nextReview": "2026-06-23",
     "reviewHistory": [],
     "rot": 0,
-    "tags": []
+    "tags": [],
+    "state": "new",
+    "interval": 0,
+    "ease": 2.5,
+    "due": "2026-06-23",
+    "lapses": 0,
+    "reps": 0,
+    "lastReview": null
   },
   {
     "id": "mqqpbnj5ofbm",
@@ -188,11 +272,17 @@
     "translation2": "body",
     "deckId": "default",
     "createdAt": "2026-06-23",
-    "reviewStage": 0,
     "nextReview": "2026-06-23",
     "reviewHistory": [],
     "rot": 0,
-    "tags": []
+    "tags": [],
+    "state": "new",
+    "interval": 0,
+    "ease": 2.5,
+    "due": "2026-06-23",
+    "lapses": 0,
+    "reps": 0,
+    "lastReview": null
   },
   {
     "id": "mqqpc9g07g1z",
@@ -201,11 +291,17 @@
     "translation2": "congener",
     "deckId": "default",
     "createdAt": "2026-06-23",
-    "reviewStage": 0,
     "nextReview": "2026-06-23",
     "reviewHistory": [],
     "rot": 0,
-    "tags": []
+    "tags": [],
+    "state": "new",
+    "interval": 0,
+    "ease": 2.5,
+    "due": "2026-06-23",
+    "lapses": 0,
+    "reps": 0,
+    "lastReview": null
   },
   {
     "id": "mqqpckch4ed6",
@@ -214,11 +310,17 @@
     "translation2": "prodigious",
     "deckId": "default",
     "createdAt": "2026-06-23",
-    "reviewStage": 0,
     "nextReview": "2026-06-23",
     "reviewHistory": [],
     "rot": 0,
-    "tags": []
+    "tags": [],
+    "state": "new",
+    "interval": 0,
+    "ease": 2.5,
+    "due": "2026-06-23",
+    "lapses": 0,
+    "reps": 0,
+    "lastReview": null
   },
   {
     "id": "mqqpfdy1pwhc",
@@ -227,11 +329,17 @@
     "translation2": "shortly",
     "deckId": "default",
     "createdAt": "2026-06-23",
-    "reviewStage": 0,
     "nextReview": "2026-06-23",
     "reviewHistory": [],
     "rot": 0,
-    "tags": []
+    "tags": [],
+    "state": "new",
+    "interval": 0,
+    "ease": 2.5,
+    "due": "2026-06-23",
+    "lapses": 0,
+    "reps": 0,
+    "lastReview": null
   },
   {
     "id": "mqqppqhedxci",
@@ -240,11 +348,17 @@
     "translation2": "boom",
     "deckId": "default",
     "createdAt": "2026-06-23",
-    "reviewStage": 0,
     "nextReview": "2026-06-23",
     "reviewHistory": [],
     "rot": 0,
-    "tags": []
+    "tags": [],
+    "state": "new",
+    "interval": 0,
+    "ease": 2.5,
+    "due": "2026-06-23",
+    "lapses": 0,
+    "reps": 0,
+    "lastReview": null
   },
   {
     "id": "mqqpxb7xi5km",
@@ -253,11 +367,17 @@
     "translation2": "Parliament",
     "deckId": "default",
     "createdAt": "2026-06-23",
-    "reviewStage": 0,
     "nextReview": "2026-06-23",
     "reviewHistory": [],
     "rot": 0,
-    "tags": []
+    "tags": [],
+    "state": "new",
+    "interval": 0,
+    "ease": 2.5,
+    "due": "2026-06-23",
+    "lapses": 0,
+    "reps": 0,
+    "lastReview": null
   },
   {
     "id": "mqqpxta4qa31",
@@ -266,11 +386,17 @@
     "translation2": "The breadth and variety",
     "deckId": "default",
     "createdAt": "2026-06-23",
-    "reviewStage": 0,
     "nextReview": "2026-06-23",
     "reviewHistory": [],
     "rot": 0,
-    "tags": []
+    "tags": [],
+    "state": "new",
+    "interval": 0,
+    "ease": 2.5,
+    "due": "2026-06-23",
+    "lapses": 0,
+    "reps": 0,
+    "lastReview": null
   },
   {
     "id": "mqqpzn02jjo0",
@@ -279,11 +405,17 @@
     "translation2": "sequins and rhinestones",
     "deckId": "default",
     "createdAt": "2026-06-23",
-    "reviewStage": 0,
     "nextReview": "2026-06-23",
     "reviewHistory": [],
     "rot": 0,
-    "tags": []
+    "tags": [],
+    "state": "new",
+    "interval": 0,
+    "ease": 2.5,
+    "due": "2026-06-23",
+    "lapses": 0,
+    "reps": 0,
+    "lastReview": null
   },
   {
     "id": "mqqpzvnwtb0r",
@@ -292,11 +424,17 @@
     "translation2": "convey",
     "deckId": "default",
     "createdAt": "2026-06-23",
-    "reviewStage": 0,
     "nextReview": "2026-06-23",
     "reviewHistory": [],
     "rot": 0,
-    "tags": []
+    "tags": [],
+    "state": "new",
+    "interval": 0,
+    "ease": 2.5,
+    "due": "2026-06-23",
+    "lapses": 0,
+    "reps": 0,
+    "lastReview": null
   },
   {
     "id": "mqqqo4fbgk2e",
@@ -305,11 +443,17 @@
     "translation2": "to do without",
     "deckId": "default",
     "createdAt": "2026-06-23",
-    "reviewStage": 0,
     "nextReview": "2026-06-23",
     "reviewHistory": [],
     "rot": 0,
-    "tags": []
+    "tags": [],
+    "state": "new",
+    "interval": 0,
+    "ease": 2.5,
+    "due": "2026-06-23",
+    "lapses": 0,
+    "reps": 0,
+    "lastReview": null
   },
   {
     "id": "mqqrcx4wppg9",
@@ -318,11 +462,17 @@
     "translation2": "altar",
     "deckId": "default",
     "createdAt": "2026-06-23",
-    "reviewStage": 0,
     "nextReview": "2026-06-23",
     "reviewHistory": [],
     "rot": 0,
-    "tags": []
+    "tags": [],
+    "state": "new",
+    "interval": 0,
+    "ease": 2.5,
+    "due": "2026-06-23",
+    "lapses": 0,
+    "reps": 0,
+    "lastReview": null
   },
   {
     "id": "mqqrfum754k0",
@@ -331,11 +481,17 @@
     "translation2": "reform",
     "deckId": "default",
     "createdAt": "2026-06-23",
-    "reviewStage": 0,
     "nextReview": "2026-06-23",
     "reviewHistory": [],
     "rot": 0,
-    "tags": []
+    "tags": [],
+    "state": "new",
+    "interval": 0,
+    "ease": 2.5,
+    "due": "2026-06-23",
+    "lapses": 0,
+    "reps": 0,
+    "lastReview": null
   },
   {
     "id": "mqqrg12gpy27",
@@ -344,11 +500,17 @@
     "translation2": "observation",
     "deckId": "default",
     "createdAt": "2026-06-23",
-    "reviewStage": 0,
     "nextReview": "2026-06-23",
     "reviewHistory": [],
     "rot": 0,
-    "tags": []
+    "tags": [],
+    "state": "new",
+    "interval": 0,
+    "ease": 2.5,
+    "due": "2026-06-23",
+    "lapses": 0,
+    "reps": 0,
+    "lastReview": null
   },
   {
     "id": "mqqrhh7eaa11",
@@ -357,10 +519,16 @@
     "translation2": "The interests at stake are difficult to reconcile.",
     "deckId": "default",
     "createdAt": "2026-06-23",
-    "reviewStage": 0,
     "nextReview": "2026-06-23",
     "reviewHistory": [],
     "rot": 0,
-    "tags": []
+    "tags": [],
+    "state": "new",
+    "interval": 0,
+    "ease": 2.5,
+    "due": "2026-06-23",
+    "lapses": 0,
+    "reps": 0,
+    "lastReview": null
   }
 ]

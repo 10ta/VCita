@@ -6,11 +6,17 @@
     "translation2": "orient yourself",
     "deckId": "default",
     "createdAt": "2026-06-29",
-    "reviewStage": 0,
     "nextReview": "2026-06-29",
     "reviewHistory": [],
     "rot": 0,
-    "tags": []
+    "tags": [],
+    "state": "new",
+    "interval": 0,
+    "ease": 2.5,
+    "due": "2026-06-29",
+    "lapses": 0,
+    "reps": 0,
+    "lastReview": null
   },
   {
     "id": "mqz8pb5c3803",
@@ -19,11 +25,17 @@
     "translation2": "road",
     "deckId": "default",
     "createdAt": "2026-06-29",
-    "reviewStage": 0,
     "nextReview": "2026-06-29",
     "reviewHistory": [],
     "rot": 0,
-    "tags": []
+    "tags": [],
+    "state": "new",
+    "interval": 0,
+    "ease": 2.5,
+    "due": "2026-06-29",
+    "lapses": 0,
+    "reps": 0,
+    "lastReview": null
   },
   {
     "id": "mqz94s4pf97d",
@@ -32,11 +44,17 @@
     "translation2": "consist",
     "deckId": "default",
     "createdAt": "2026-06-29",
-    "reviewStage": 0,
     "nextReview": "2026-06-29",
     "reviewHistory": [],
     "rot": 0,
-    "tags": []
+    "tags": [],
+    "state": "new",
+    "interval": 0,
+    "ease": 2.5,
+    "due": "2026-06-29",
+    "lapses": 0,
+    "reps": 0,
+    "lastReview": null
   },
   {
     "id": "mqz94xo2bfvo",
@@ -45,10 +63,16 @@
     "translation2": "We are all, to a greater or lesser extent, subject to stage fright.",
     "deckId": "default",
     "createdAt": "2026-06-29",
-    "reviewStage": 0,
     "nextReview": "2026-06-29",
     "reviewHistory": [],
     "rot": 0,
-    "tags": []
+    "tags": [],
+    "state": "new",
+    "interval": 0,
+    "ease": 2.5,
+    "due": "2026-06-29",
+    "lapses": 0,
+    "reps": 0,
+    "lastReview": null
   }
 ]

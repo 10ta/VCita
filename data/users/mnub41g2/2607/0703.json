@@ -6,11 +6,17 @@
     "translation2": "Rehabilitations are limited in scope",
     "deckId": "default",
     "createdAt": "2026-07-03",
-    "reviewStage": 0,
     "nextReview": "2026-07-03",
     "reviewHistory": [],
     "rot": 0,
-    "tags": []
+    "tags": [],
+    "state": "new",
+    "interval": 0,
+    "ease": 2.5,
+    "due": "2026-07-03",
+    "lapses": 0,
+    "reps": 0,
+    "lastReview": null
   },
   {
     "id": "mr50o4l65rig",
@@ -19,11 +25,17 @@
     "translation2": "consensus",
     "deckId": "default",
     "createdAt": "2026-07-03",
-    "reviewStage": 0,
     "nextReview": "2026-07-03",
     "reviewHistory": [],
     "rot": 0,
-    "tags": []
+    "tags": [],
+    "state": "new",
+    "interval": 0,
+    "ease": 2.5,
+    "due": "2026-07-03",
+    "lapses": 0,
+    "reps": 0,
+    "lastReview": null
   },
   {
     "id": "mr50ygx6fr9l",
@@ -32,11 +44,17 @@
     "translation2": "To vary the concert repertoire.",
     "deckId": "default",
     "createdAt": "2026-07-03",
-    "reviewStage": 0,
     "nextReview": "2026-07-03",
     "reviewHistory": [],
     "rot": 0,
-    "tags": []
+    "tags": [],
+    "state": "new",
+    "interval": 0,
+    "ease": 2.5,
+    "due": "2026-07-03",
+    "lapses": 0,
+    "reps": 0,
+    "lastReview": null
   },
   {
     "id": "mr51dx6bv794",
@@ -45,10 +63,16 @@
     "translation2": "perception",
     "deckId": "default",
     "createdAt": "2026-07-03",
-    "reviewStage": 0,
     "nextReview": "2026-07-03",
     "reviewHistory": [],
     "rot": 0,
-    "tags": []
+    "tags": [],
+    "state": "new",
+    "interval": 0,
+    "ease": 2.5,
+    "due": "2026-07-03",
+    "lapses": 0,
+    "reps": 0,
+    "lastReview": null
   }
 ]

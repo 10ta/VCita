@@ -6,11 +6,25 @@
     "translation2": "writing",
     "deckId": "default",
     "createdAt": "2026-05-05",
-    "reviewStage": 0,
-    "nextReview": "2026-05-05",
-    "reviewHistory": [],
+    "nextReview": "2026-10-02",
+    "reviewHistory": [
+      {
+        "date": "2026-10-01",
+        "rating": 3,
+        "remembered": true,
+        "interval": 1,
+        "wasNew": true
+      }
+    ],
     "rot": 0,
-    "tags": []
+    "tags": [],
+    "state": "review",
+    "interval": 1,
+    "ease": 2.5,
+    "due": "2026-10-02",
+    "lapses": 0,
+    "reps": 1,
+    "lastReview": "2026-10-01"
   },
   {
     "id": "moslhrfhvwlp",
@@ -19,12 +33,18 @@
     "translation2": "“so that Marie Trintignant ends up in a coma in the hospital?”",
     "deckId": "default",
     "createdAt": "2026-05-05",
-    "reviewStage": 0,
     "nextReview": "2026-05-05",
     "reviewHistory": [],
     "rot": 0,
     "tags": [
       "médecine"
-    ]
+    ],
+    "state": "new",
+    "interval": 0,
+    "ease": 2.5,
+    "due": "2026-05-05",
+    "lapses": 0,
+    "reps": 0,
+    "lastReview": null
   }
 ]
