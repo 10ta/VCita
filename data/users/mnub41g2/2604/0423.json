@@ -134,7 +134,7 @@
     "translation2": "He was still renowned for being an excellent litigator.",
     "deckId": "default",
     "createdAt": "2026-04-23",
-    "nextReview": "2026-05-01",
+    "nextReview": "2026-11-16",
     "reviewHistory": [
       {
         "date": "2026-04-23",
@@ -155,6 +155,12 @@
         "date": "2026-04-30",
         "remembered": false,
         "rating": 1
+      },
+      {
+        "date": "2026-10-02",
+        "rating": 2,
+        "remembered": true,
+        "interval": 45
       }
     ],
     "rot": 1,
@@ -162,12 +168,12 @@
       "Police et Justice"
     ],
     "state": "review",
-    "interval": 1,
-    "ease": 1.9,
-    "due": "2026-05-01",
+    "interval": 45,
+    "ease": 1.75,
+    "due": "2026-11-16",
     "lapses": 3,
-    "reps": 4,
-    "lastReview": "2026-04-30"
+    "reps": 5,
+    "lastReview": "2026-10-02"
   },
   {
     "id": "mob7vn96qtob",
@@ -300,7 +306,7 @@
     "translation2": "the soldiers are ready to fight",
     "deckId": "default",
     "createdAt": "2026-04-23",
-    "nextReview": "2026-05-01",
+    "nextReview": "2026-11-19",
     "reviewHistory": [
       {
         "date": "2026-04-23",
@@ -321,17 +327,23 @@
         "date": "2026-04-30",
         "remembered": false,
         "rating": 1
+      },
+      {
+        "date": "2026-10-02",
+        "rating": 2,
+        "remembered": true,
+        "interval": 48
       }
     ],
     "rot": 1,
     "tags": [],
     "state": "review",
-    "interval": 1,
-    "ease": 1.9,
-    "due": "2026-05-01",
+    "interval": 48,
+    "ease": 1.75,
+    "due": "2026-11-19",
     "lapses": 3,
-    "reps": 4,
-    "lastReview": "2026-04-30"
+    "reps": 5,
+    "lastReview": "2026-10-02"
   },
   {
     "id": "mob849vwch5e",
@@ -1460,7 +1472,7 @@
     "translation2": "grotesque",
     "deckId": "default",
     "createdAt": "2026-04-23",
-    "nextReview": "2026-05-01",
+    "nextReview": "2027-03-02",
     "reviewHistory": [
       {
         "date": "2026-04-23",
@@ -1481,17 +1493,23 @@
         "date": "2026-04-30",
         "remembered": false,
         "rating": 1
+      },
+      {
+        "date": "2026-10-01",
+        "rating": 3,
+        "remembered": true,
+        "interval": 152
       }
     ],
     "rot": 1,
     "tags": [],
     "state": "review",
-    "interval": 1,
+    "interval": 152,
     "ease": 1.9,
-    "due": "2026-05-01",
+    "due": "2027-03-02",
     "lapses": 3,
-    "reps": 4,
-    "lastReview": "2026-04-30"
+    "reps": 5,
+    "lastReview": "2026-10-01"
   },
   {
     "id": "mobjdyd5z0e3",
@@ -1540,7 +1558,7 @@
     "translation2": "phantasmagoria",
     "deckId": "default",
     "createdAt": "2026-04-23",
-    "nextReview": "2026-05-01",
+    "nextReview": "2027-02-22",
     "reviewHistory": [
       {
         "date": "2026-04-23",
@@ -1561,17 +1579,23 @@
         "date": "2026-04-30",
         "remembered": false,
         "rating": 1
+      },
+      {
+        "date": "2026-10-01",
+        "rating": 3,
+        "remembered": true,
+        "interval": 144
       }
     ],
     "rot": 1,
     "tags": [],
     "state": "review",
-    "interval": 1,
+    "interval": 144,
     "ease": 1.9,
-    "due": "2026-05-01",
+    "due": "2027-02-22",
     "lapses": 3,
-    "reps": 4,
-    "lastReview": "2026-04-30"
+    "reps": 5,
+    "lastReview": "2026-10-01"
   },
   {
     "id": "mobjhews4xov",
@@ -1740,7 +1764,7 @@
     "translation2": "retraction",
     "deckId": "default",
     "createdAt": "2026-04-23",
-    "nextReview": "2026-05-01",
+    "nextReview": "2027-02-23",
     "reviewHistory": [
       {
         "date": "2026-04-23",
@@ -1761,17 +1785,23 @@
         "date": "2026-04-30",
         "remembered": false,
         "rating": 1
+      },
+      {
+        "date": "2026-10-01",
+        "rating": 3,
+        "remembered": true,
+        "interval": 145
       }
     ],
     "rot": 1,
     "tags": [],
     "state": "review",
-    "interval": 1,
+    "interval": 145,
     "ease": 1.9,
-    "due": "2026-05-01",
+    "due": "2027-02-23",
     "lapses": 3,
-    "reps": 4,
-    "lastReview": "2026-04-30"
+    "reps": 5,
+    "lastReview": "2026-10-01"
   },
   {
     "id": "mobkn3572ujc",
@@ -1820,7 +1850,7 @@
     "translation2": "mess",
     "deckId": "default",
     "createdAt": "2026-04-23",
-    "nextReview": "2026-05-01",
+    "nextReview": "2026-11-17",
     "reviewHistory": [
       {
         "date": "2026-04-23",
@@ -1841,17 +1871,23 @@
         "date": "2026-04-30",
         "remembered": false,
         "rating": 1
+      },
+      {
+        "date": "2026-10-01",
+        "rating": 2,
+        "remembered": true,
+        "interval": 47
       }
     ],
     "rot": 1,
     "tags": [],
     "state": "review",
-    "interval": 1,
-    "ease": 1.9,
-    "due": "2026-05-01",
+    "interval": 47,
+    "ease": 1.75,
+    "due": "2026-11-17",
     "lapses": 3,
-    "reps": 4,
-    "lastReview": "2026-04-30"
+    "reps": 5,
+    "lastReview": "2026-10-01"
   },
   {
     "id": "mobkp2rigp6h",
@@ -1900,7 +1936,7 @@
     "translation2": "upheaval",
     "deckId": "default",
     "createdAt": "2026-04-23",
-    "nextReview": "2026-05-01",
+    "nextReview": "2026-11-16",
     "reviewHistory": [
       {
         "date": "2026-04-23",
@@ -1921,17 +1957,23 @@
         "date": "2026-04-30",
         "remembered": false,
         "rating": 1
+      },
+      {
+        "date": "2026-10-01",
+        "rating": 2,
+        "remembered": true,
+        "interval": 46
       }
     ],
     "rot": 1,
     "tags": [],
     "state": "review",
-    "interval": 1,
-    "ease": 1.9,
-    "due": "2026-05-01",
+    "interval": 46,
+    "ease": 1.75,
+    "due": "2026-11-16",
     "lapses": 3,
-    "reps": 4,
-    "lastReview": "2026-04-30"
+    "reps": 5,
+    "lastReview": "2026-10-01"
   },
   {
     "id": "mobkw1y9ol52",
@@ -1940,7 +1982,7 @@
     "translation2": "odious",
     "deckId": "default",
     "createdAt": "2026-04-23",
-    "nextReview": "2026-05-01",
+    "nextReview": "2027-02-24",
     "reviewHistory": [
       {
         "date": "2026-04-23",
@@ -1961,17 +2003,23 @@
         "date": "2026-04-30",
         "remembered": false,
         "rating": 1
+      },
+      {
+        "date": "2026-10-01",
+        "rating": 3,
+        "remembered": true,
+        "interval": 146
       }
     ],
     "rot": 1,
     "tags": [],
     "state": "review",
-    "interval": 1,
+    "interval": 146,
     "ease": 1.9,
-    "due": "2026-05-01",
+    "due": "2027-02-24",
     "lapses": 3,
-    "reps": 4,
-    "lastReview": "2026-04-30"
+    "reps": 5,
+    "lastReview": "2026-10-01"
   },
   {
     "id": "mobkxvoktue2",
