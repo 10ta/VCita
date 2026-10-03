@@ -1,5 +1,9 @@
-node_modules/
-dist/
-.vite/
-*.log
+node_modules
+dist
 .DS_Store
+*.local
+# 旧版服务器的数据目录，不要进代码仓库
+data/
+data.json
+.vercel
+.wrangler
