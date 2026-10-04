@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useCards, useDecks, useOnboarded, useSettings, useTodayLogs } from './db/hooks';
 import { ensureDeck } from './db/actions';
+import { useSyncConfig } from './sync/engine';
 import { buildQueue } from './srs/queue';
 import { usePrefs, setPrefs } from './ui/prefs';
 import { useHotkeys, useNow } from './ui/hooks';
@@ -11,6 +12,7 @@ import { ReviewPage } from './features/review/ReviewPage';
 import { LibraryPage } from './features/library/LibraryPage';
 import { AddPage } from './features/add/AddPage';
 import { DecksPage } from './features/decks/DecksPage';
+import { StatsPage } from './features/stats/StatsPage';
 import { SettingsPage } from './features/settings/SettingsPage';
 import { Onboarding } from './features/Onboarding';
 import { Help } from './features/Help';
@@ -19,6 +21,7 @@ const NAV = [
   { key: 'review', label: '复习' },
   { key: 'library', label: '词库' },
   { key: 'add', label: '添加' },
+  { key: 'stats', label: '统计' },
   { key: 'decks', label: '牌组' },
   { key: 'settings', label: '设置' },
 ] as const;
@@ -50,9 +53,6 @@ export function App() {
   const [help, setHelp] = useState(false);
 
   const deckId = decks?.find((d) => d.id === prefs.deckId)?.id ?? decks?.[0]?.id ?? null;
-  useEffect(() => {
-    if (onboarded && decks && decks.length === 0) void ensureDeck();
-  }, [onboarded, decks]);
 
   const counts = useMemo(
     () => (s && cards && logs && deckId ? buildQueue({ cards, todayLogs: logs, deckId, now: Date.now(), settings: s }).counts : null),
@@ -100,15 +100,32 @@ export function App() {
       <ErrorBoundary area="自动同步"><AutoSync /></ErrorBoundary>
       <main>
         <ErrorBoundary key={route} area="页面">
-          {route === 'settings' ? <SettingsPage /> : !deckId ? null
+          {route === 'settings' ? <SettingsPage /> : !deckId ? <NoDeck />
             : route === 'review' ? <ReviewPage deckId={deckId} />
             : route === 'library' ? <LibraryPage deckId={deckId} />
             : route === 'add' ? <AddPage deckId={deckId} />
+            : route === 'stats' ? <StatsPage deckId={deckId} />
             : <DecksPage deckId={deckId} />}
         </ErrorBoundary>
       </main>
       {help && <Help onClose={() => setHelp(false)} />}
       <Toaster />
+    </div>
+  );
+}
+
+/** 还没有牌组：多半是刚连上 GitHub、第一次同步还没完成 */
+function NoDeck() {
+  const cfg = useSyncConfig();
+  return (
+    <div className="empty">
+      <p>还没有牌组</p>
+      {cfg ? <p className="muted small">已连接 GitHub：同步完成后牌组会出现在这里。也可以在设置里点"立即同步"。</p>
+        : <p className="muted small">在设置里连接 GitHub 数据仓库并同步，或者新建一个牌组。</p>}
+      <div className="row" style={{ justifyContent: 'center' }}>
+        <a className="btn" href="#/settings">去设置</a>
+        <button type="button" className="btn" onClick={() => void ensureDeck()}>新建牌组</button>
+      </div>
     </div>
   );
 }

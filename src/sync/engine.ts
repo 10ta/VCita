@@ -28,6 +28,16 @@ export interface SyncState {
 const CONFIG_KEY = 'syncConfig';
 const STATE_KEY = 'syncState';
 export const DEFAULT_DIR = 'VCita';
+/** 拉取时同时下载的文件数 */
+const PULL_CONCURRENCY = 8;
+
+async function mapPool<T, R>(items: T[], limit: number, fn: (x: T) => Promise<R>): Promise<R[]> {
+  const out = new Array<R>(items.length);
+  let next = 0;
+  const worker = async () => { while (next < items.length) { const i = next++; out[i] = await fn(items[i]); } };
+  await Promise.all(Array.from({ length: Math.min(limit, items.length) }, worker));
+  return out;
+}
 
 export async function getSyncConfig(): Promise<SyncConfig | null> {
   return ((await db.meta.get(CONFIG_KEY))?.value as SyncConfig | undefined) ?? null;
@@ -147,13 +157,12 @@ async function attempt(gh: GitHub, cfg: SyncConfig): Promise<SyncResult | 'retry
     }
   }
 
-  // 2. 拉取：自上次同步以来远端变过的文件，合并进本地
-  let pulled = 0;
-  for (const [rel, sha] of remote) {
-    if (state.fileShas[rel] === sha) continue;
-    await applyRemoteFile(rel, await gh.getBlobText(sha));
-    pulled++;
-  }
+  // 2. 拉取：自上次同步以来远端变过的文件。并发下载（每个请求约 0.5–1 秒，逐个下载时 50 个文件要将近一分钟），
+  //    全部下载完再按顺序合并进本地
+  const toPull = [...remote].filter(([rel, sha]) => state.fileShas[rel] !== sha);
+  const texts = await mapPool(toPull, PULL_CONCURRENCY, ([, sha]) => gh.getBlobText(sha));
+  for (let i = 0; i < toPull.length; i++) await applyRemoteFile(toPull[i][0], texts[i]);
+  const pulled = toPull.length;
 
   // 3. 对比：合并后的本地文件 vs 远端
   const local = await buildLocalFiles();

@@ -8,10 +8,24 @@ import { langLabel } from '../../ui/langs';
 import { usePrefs, setPrefs } from '../../ui/prefs';
 import { toast } from '../../ui/toast';
 import { ThemePicker } from '../NoteEditor';
+import { BulkImport } from './BulkImport';
 
 const todayInput = () => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`; };
 
 export function AddPage({ deckId }: { deckId: string }) {
+  const [tab, setTab] = useState<'one' | 'bulk'>('one');
+  return (
+    <div className="page add">
+      <div className="toolbar">
+        <button type="button" className={`pill${tab === 'one' ? ' is-on' : ''}`} onClick={() => setTab('one')}>单个添加</button>
+        <button type="button" className={`pill${tab === 'bulk' ? ' is-on' : ''}`} onClick={() => setTab('bulk')}>批量导入</button>
+      </div>
+      {tab === 'one' ? <AddOne deckId={deckId} /> : <BulkImport deckId={deckId} />}
+    </div>
+  );
+}
+
+function AddOne({ deckId }: { deckId: string }) {
   const s = useSettings();
   const notes = useNotes();
   const prefs = usePrefs();
@@ -51,7 +65,7 @@ export function AddPage({ deckId }: { deckId: string }) {
   };
 
   return (
-    <div className="page add">
+    <div>
       <p className="muted small">{langLabel(s.sourceLang)} → {langLabel(s.targetLang1)} + {langLabel(s.targetLang2)}（翻译在后台完成，可以连续输入）</p>
       <div className="add-row">
         <input ref={input} className="word-input" autoFocus placeholder={`输入${langLabel(s.sourceLang)}单词或短语，回车添加`} value={word}

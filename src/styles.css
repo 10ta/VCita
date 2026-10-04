@@ -160,3 +160,34 @@ main { padding-top: 14px; }
   .grades { grid-template-columns: repeat(2, 1fr); }
   .help-row span:first-child { flex-basis: 96px; }
 }
+
+/* 卡型、产出、预览 */
+.badge.is-type.t-recognition { border-color: #33333a; }
+.badge.is-type.t-production { border-color: #16a34a66; color: var(--green); }
+.badge.is-type.t-cloze { border-color: #2563eb66; color: var(--blue); }
+.badge.is-core { border-color: #e8440066; color: var(--accent); }
+.blank { display: inline-block; min-width: 3em; border-bottom: 2px solid var(--accent); color: transparent; }
+.type-in { width: 100%; margin-top: 16px; padding: 10px 12px; font-size: 16px; text-align: center; }
+.typed { font-family: var(--mono); color: var(--warn); }
+fieldset.prod { border: 1px solid var(--border); border-radius: 10px; padding: 8px 12px 4px; margin-bottom: 10px; }
+fieldset.prod legend { font-family: var(--mono); font-size: 11px; color: var(--green); padding: 0 6px; }
+.previews { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 8px; margin: 6px 0 12px; }
+.mini { border: 1px solid var(--border); border-radius: 10px; padding: 8px; font-size: 13px; text-align: center; display: flex; flex-direction: column; gap: 4px; }
+.mini-q { font-family: var(--serif); font-size: 15px; font-weight: 600; }
+.mini-a { border-top: 1px dashed var(--border); padding-top: 4px; color: var(--dim); }
+textarea.bulk { width: 100%; font-family: var(--mono); font-size: 13px; line-height: 1.6; }
+code { font-family: var(--mono); background: var(--surface2); padding: 0 4px; border-radius: 4px; }
+
+/* 统计 */
+.stats-page section { margin-bottom: 26px; }
+.stats-page h2 small { font-family: var(--sans); font-size: 12px; font-weight: 400; margin-left: 6px; }
+.kpis { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; margin-bottom: 8px; }
+.kpi { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 12px; display: flex; flex-direction: column; gap: 2px; }
+.kpi b { font-family: var(--mono); font-size: 24px; color: var(--accent); }
+.kpi span { font-size: 12px; color: var(--dim); }
+.kpi.ok b { color: var(--green); } .kpi.warn b { color: var(--warn); }
+.green { color: var(--green); }
+.forecast { display: grid; grid-template-columns: repeat(30, 1fr); gap: 2px; height: 120px; align-items: end; padding-bottom: 16px; }
+.forecast .bar { position: relative; height: 100%; display: flex; align-items: flex-end; }
+.forecast .bar span { width: 100%; background: var(--accent); opacity: .75; border-radius: 2px 2px 0 0; min-height: 1px; }
+.forecast .bar small { position: absolute; bottom: -16px; left: 0; font-family: var(--mono); font-size: 9px; color: var(--dim); }

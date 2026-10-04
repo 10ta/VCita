@@ -102,6 +102,28 @@ describe('GitHub 同步', () => {
     expect(final.notes.find((n: { id: string }) => n.id === 'n_old2').meaningZh).toBe('远端修改');
   });
 
+  it('新设备首次同步：并发下载（最多 8 个同时），不产生任何新提交', async () => {
+    await seed();
+    await syncNow();
+    const head = gh.head;
+    await newDevice();
+    let inFlight = 0, maxInFlight = 0, blobs = 0;
+    const inner = gh.fetch;
+    globalThis.fetch = (async (url: RequestInfo | URL, init?: RequestInit) => {
+      if (!String(url).includes('/git/blobs/')) return inner(url, init);
+      blobs++; inFlight++; maxInFlight = Math.max(maxInFlight, inFlight);
+      await new Promise((r) => setTimeout(r, 15));
+      try { return await inner(url, init); } finally { inFlight--; }
+    }) as typeof fetch;
+    const r = await syncNow();
+    expect(blobs).toBe(r.pulled);
+    expect(r.pulled).toBeGreaterThan(8);
+    expect(maxInFlight).toBe(8);
+    expect(r.pushed).toBe(0);
+    expect(gh.head).toBe(head);
+    expect((await db.decks.toArray()).map((d) => d.name).sort()).toEqual(['A2', 'B1']);
+  });
+
   it('只改数据目录：仓库里其他 app 的文件原样保留', async () => {
     await gh.commitFiles({ 'TimeEncre/profile.json': '{"x":1}\n' });
     await seed();

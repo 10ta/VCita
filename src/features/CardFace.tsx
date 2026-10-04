@@ -34,6 +34,41 @@ export function quizSplit(note: Note, s: Settings, quizType: number, labels: [st
   return { question: f[q], answers: f.filter((_, i) => i !== q) };
 }
 
+export const TYPE_LABEL: Record<Card['type'], string> = { recognition: '认读', production: '产出', cloze: '挖空' };
+
+export interface CardView {
+  question: Face;
+  hint: string | null;
+  answers: Face[];
+  /** 背面的线索：认读、挖空显示词族 / 出处 / 补充；产出只显示补充 */
+  cues: 'all' | 'extra';
+}
+
+/** 三种卡的正反面。旋转和题面切换只作用于认读卡 */
+export function cardView(type: Card['type'], note: Note, s: Settings, quizType: number, labels: [string, string, string]): CardView {
+  if (type === 'production') {
+    const q = note.intentZh ?? '';
+    const a = note.answerFr ?? '';
+    return {
+      question: { text: q, speakText: q, lang: s.targetLang1, label: '中文意图' },
+      hint: note.hint, cues: 'extra',
+      answers: [{ text: a, speakText: a, lang: s.sourceLang, label: labels[0] }],
+    };
+  }
+  if (type === 'cloze') {
+    const plain = plainSentence(note.sentence);
+    return {
+      question: { text: renderSentence(note.sentence, 'blank'), speakText: '', lang: s.sourceLang, label: labels[0] },
+      hint: null, cues: 'all',
+      answers: [
+        { text: renderSentence(note.sentence), speakText: plain, lang: s.sourceLang, label: labels[0] },
+        { text: note.meaningZh, speakText: note.meaningZh, lang: s.targetLang1, label: labels[1] },
+      ],
+    };
+  }
+  return { ...quizSplit(note, s, quizType, labels), hint: null, cues: 'all' };
+}
+
 export function SpeakBtn({ text, lang, size = 14 }: { text: string; lang: string; size?: number }) {
   if (!text) return null;
   return (
@@ -44,8 +79,8 @@ export function SpeakBtn({ text, lang, size = 14 }: { text: string; lang: string
 }
 
 /** 线索行：词族 · 出处 / 补充 */
-export function Cues({ note }: { note: Note }) {
-  const line1 = [note.cueFamily, note.source].filter(Boolean).join(' · ');
+export function Cues({ note, only }: { note: Note; only?: 'extra' }) {
+  const line1 = only ? '' : [note.cueFamily, note.source].filter(Boolean).join(' · ');
   return (
     <>
       {line1 && <div className="cue">{line1}</div>}

@@ -7,12 +7,15 @@ import { usePrefs, setPrefs } from '../../ui/prefs';
 import { Modal } from '../../ui/Modal';
 import { toast } from '../../ui/toast';
 import { langLabel } from '../../ui/langs';
-import { CardStats, Cues, renderSentence, SpeakBtn } from '../CardFace';
+import { CardStats, Cues, renderSentence, SpeakBtn, TYPE_LABEL } from '../CardFace';
 import { NoteEditor, ThemePicker } from '../NoteEditor';
 
-type Status = 'all' | 'new' | 'learning' | 'due' | 'leech' | 'suspended' | 'nosentence';
-const STATUS: Array<[Status, string]> = [
-  ['all', '全部'], ['due', '到期'], ['new', '新卡'], ['learning', '学习中'], ['leech', '待改造'], ['suspended', '已暂停'], ['nosentence', '待补句子'],
+type Status = 'all' | 'new' | 'learning' | 'due' | 'leech' | 'suspended' | 'nosentence' | 'stable' | 'core' | 'needprod';
+// 后半部分是"分拣"用的筛选（改造方案 §6）：已稳定的保留；同源词选中后批量暂停；顽固卡补句子、加线索；核心词补产出卡
+const STATUS: Array<[Status, string, string?]> = [
+  ['all', '全部'], ['due', '到期'], ['new', '新卡'], ['learning', '学习中'], ['suspended', '已暂停'],
+  ['stable', '已稳定', '间隔超过 30 天且遗忘不超过 1 次'], ['leech', '待改造', '遗忘达到阈值，已自动暂停'],
+  ['nosentence', '待补句子', '迁移来的旧卡，还没有例句'], ['core', '核心'], ['needprod', '待补产出', '核心词还没有产出卡'],
 ];
 const PAGE_SIZES = [10, 30, 50, 100];
 
@@ -56,6 +59,9 @@ export function LibraryPage({ deckId }: { deckId: string }) {
           case 'leech': return cs.some((c) => c.isLeech);
           case 'suspended': return cs.some((c) => c.suspended);
           case 'nosentence': return !n.sentence;
+          case 'stable': return cs.length > 0 && cs.every((c) => c.state === 'review' && c.interval > 30 && c.lapses <= 1);
+          case 'core': return n.layer === 'core';
+          case 'needprod': return n.layer === 'core' && !cs.some((c) => c.type === 'production');
         }
       })
       .sort((a, b) => (a.createdAt < b.createdAt ? 1 : a.createdAt > b.createdAt ? -1 : a.id < b.id ? 1 : -1));
@@ -82,8 +88,8 @@ export function LibraryPage({ deckId }: { deckId: string }) {
         {day && <button type="button" className="pill" onClick={() => setDay('')}>✕</button>}
       </div>
       <div className="toolbar">
-        {STATUS.map(([k, label]) => (
-          <button key={k} type="button" className={`pill${status === k ? ' is-on' : ''}`} onClick={() => { setStatus(k); resetPage(); }}>{label}</button>
+        {STATUS.map(([k, label, tip]) => (
+          <button key={k} type="button" title={tip} className={`pill${status === k ? ' is-on' : ''}`} onClick={() => { setStatus(k); resetPage(); }}>{label}</button>
         ))}
         <span className="grow" />
         <span className="muted small">{list.length} 条</span>
@@ -106,6 +112,8 @@ export function LibraryPage({ deckId }: { deckId: string }) {
           <button type="button" className="pill" onClick={() => setBatch('date')}>改日期</button>
           <button type="button" className="pill" onClick={() => void setSuspended(ids, true).then(() => done(`已暂停 ${ids.length} 条`))}>暂停</button>
           <button type="button" className="pill" onClick={() => void setSuspended(ids, false).then(() => done(`已恢复 ${ids.length} 条`))}>恢复</button>
+          <button type="button" className="pill" title="只改层级；产出卡要在编辑里补上中文意图和答案后勾选" onClick={() => void updateNotes(ids, () => ({ layer: 'core' })).then(() => done(`已设为核心 ${ids.length} 条`))}>设为核心</button>
+          <button type="button" className="pill" onClick={() => void updateNotes(ids, () => ({ layer: 'mid' })).then(() => done(`已设为中频 ${ids.length} 条`))}>设为中频</button>
           <button type="button" className="pill" onClick={() => void resetNotes(ids).then(() => done(`已重置 ${ids.length} 条为新卡`))}>重置为新卡</button>
           <button type="button" className="pill is-danger" onClick={() => setBatch('delete')}>删除</button>
         </div>
@@ -139,6 +147,9 @@ export function LibraryPage({ deckId }: { deckId: string }) {
                   {card && <CardStats card={card} s={s} />}
                   {n.tags.map((t) => <span key={t} className="badge is-theme">{t}</span>)}
                   {!n.sentence && <span className="badge">待补句子</span>}
+                  {n.layer === 'core' && <span className="badge is-core">核心</span>}
+                  {cs.filter((c) => c.type !== 'recognition').map((c) => <span key={c.id} className={`badge is-type t-${c.type}`}>{TYPE_LABEL[c.type]}</span>)}
+                  {n.usedCount > 0 && <span className="badge" title="写作、口语里用上的次数">用上 {n.usedCount}</span>}
                 </div>
               </div>
               <div className="note-actions">

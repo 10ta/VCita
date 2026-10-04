@@ -1,3 +1,4 @@
+import { db } from '../db/db';
 import { useState } from 'react';
 import {
   DEFAULT_DIR,
@@ -66,6 +67,8 @@ function SyncForm({
         autoSync: initial?.autoSync ?? false,
       });
       onDone();
+      // 本地还是空的（新设备 / 刚清空）：直接从仓库恢复，不用再手动点"立即同步"
+      if ((await db.notes.count()) === 0 && (await db.decks.count()) === 0) void syncNow().catch(() => undefined);
     } catch (e) {
       setError((e as Error).message);
     } finally {

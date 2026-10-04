@@ -20,7 +20,7 @@ export function Onboarding() {
         </button>
         <button type="button" className="choice" onClick={() => ref.current?.click()}>
           <b>导入旧版备份</b>
-          <span>服务器版 VCita 在"备份"页导出的 vcita-日期.json。复习进度完整保留。</span>
+          <span>旧的服务器版在"备份"页导出的 vocabforge-日期.json。复习进度完整保留。</span>
         </button>
         <button type="button" className="choice" onClick={() => void ensureDeck().then(markOnboarded)}>
           <b>从空白开始</b>

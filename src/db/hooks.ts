@@ -11,6 +11,9 @@ export const useCards = () => useLiveQuery(async () => (await db.cards.toArray()
 /** 当前学习日的日志（含墓碑，由调用方过滤） */
 export const useTodayLogs = (dayStartHour: number | undefined, now: number) => {
   const day = dayStartHour === undefined ? null : studyDay(now, dayStartHour);
-  return useLiveQuery(async () => (day ? db.logs.where('day').equals(day).toArray() : []), [day]);
+  // 带上查询的是哪一天：设置还没加载完、或刚跨过切换时间时，useLiveQuery 会先返回上一次的结果，
+  // 不能把它当成"今天没有日志"（否则出题会忽略"同笔记当天只出一张"等规则）
+  const r = useLiveQuery(async () => (day ? { day, logs: await db.logs.where('day').equals(day).toArray() } : null), [day]);
+  return r && r.day === day ? r.logs : undefined;
 };
 export const useOnboarded = () => useLiveQuery(async () => !!(await db.meta.get(ONBOARDED_KEY))?.value || (await db.notes.count()) > 0, []);

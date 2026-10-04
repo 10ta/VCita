@@ -44,6 +44,8 @@ export const NoteV2 = z.looseObject({
   cardTypes: z.array(z.enum(CARD_TYPES)).default(['recognition']),
   tags: z.array(ThemeV2).default([]),
   usedCount: z.number().int().min(0).default(0),
+  /** 每次"用上了"的时间，用于统计最近两周的使用次数 */
+  usedAt: z.array(IsoTime).default([]),
   /** 卡片旋转：题面在 法语 / 翻译1 / 翻译2 之间轮换 */
   rot: z.number().int().min(0).max(2).default(0),
   /** 迁移时原样保存的旧卡对象 */
@@ -124,7 +126,7 @@ export const NotesFileV2 = file('notes', { month: z.string(), notes: z.array(Not
 export const CardsFileV2 = file('cards', { month: z.string(), cards: z.array(CardV2) });
 export const LogsFileV2 = file('logs', { day: Day, logs: z.array(ReviewLogV2) });
 export const BundleFileV2 = file('bundle', {
-  app: z.literal('VCita'),
+  app: z.enum(['VCita', 'VocabForge']),
   exportedAt: IsoTime,
   decks: z.array(DeckV2),
   settings: SettingsV2,

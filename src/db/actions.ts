@@ -1,6 +1,6 @@
 // 所有写操作。每次修改都更新 updatedAt（严格递增），删除一律打墓碑。
 import { db } from './db';
-import { SettingsSchema, type Card, type Deck, type Note, type ReviewLog, type Settings, type Theme } from '../schema';
+import { SettingsSchema, type Card, type Deck, type Note, type ReviewLog, type Settings } from '../schema';
 import { bumpIso, studyDay, toIso } from '../lib/time';
 import { newId } from '../lib/id';
 import { schedule, type Rating } from '../srs/scheduler';
@@ -54,14 +54,8 @@ export async function ensureDeck(): Promise<string> {
 
 // ---------- 笔记与卡片 ----------
 
-export interface NewNoteInput {
-  deckId: string;
-  lemma: string;
-  createdAtMs?: number;
-  tags?: Theme[];
-  meaningZh?: string;
-  meaningEn?: string;
-}
+type NoteContent = Pick<Note, 'lemma' | 'sentence' | 'meaningZh' | 'meaningEn' | 'cueFamily' | 'intentZh' | 'hint' | 'answerFr' | 'extra' | 'source' | 'layer' | 'cardTypes' | 'tags'>;
+export type NewNoteInput = { deckId: string; createdAtMs?: number } & Partial<NoteContent>;
 
 export function blankCard(note: Pick<Note, 'id' | 'deckId' | 'createdAt'>, type: Card['type'], s: Settings, stamp: string): Card {
   return {
@@ -72,36 +66,75 @@ export function blankCard(note: Pick<Note, 'id' | 'deckId' | 'createdAt'>, type:
 }
 
 export async function addNote(input: NewNoteInput): Promise<{ noteId: string; cardId: string }> {
+  const ids = await addNotes([input]);
+  return ids[0];
+}
+
+/** 新建笔记，并按 cardTypes 生成卡片 */
+export async function addNotes(inputs: NewNoteInput[]): Promise<Array<{ noteId: string; cardId: string }>> {
   const s = await getSettings();
   const now = Date.now();
   const stamp = toIso(now);
-  const note: Note = {
-    id: newId(), deckId: input.deckId, createdAt: toIso(input.createdAtMs ?? now),
-    lemma: input.lemma.trim(), sentence: '', meaningZh: input.meaningZh ?? '', meaningEn: input.meaningEn ?? '',
-    cueFamily: null, intentZh: null, hint: null, answerFr: null, extra: null, source: null,
-    layer: 'mid', cardTypes: ['recognition'], tags: input.tags ?? [], usedCount: 0, rot: 0, legacy: null,
-    updatedAt: stamp, deleted: false,
-  };
-  const card = blankCard(note, 'recognition', s, stamp);
+  const notes: Note[] = [];
+  const cards: Card[] = [];
+  for (const input of inputs) {
+    const note: Note = {
+      id: newId(), deckId: input.deckId, createdAt: toIso(input.createdAtMs ?? now),
+      lemma: (input.lemma ?? '').trim(), sentence: (input.sentence ?? '').trim(),
+      meaningZh: input.meaningZh ?? '', meaningEn: input.meaningEn ?? '',
+      cueFamily: input.cueFamily ?? null, intentZh: input.intentZh ?? null, hint: input.hint ?? null, answerFr: input.answerFr ?? null,
+      extra: input.extra ?? null, source: input.source ?? null,
+      layer: input.layer ?? 'mid', cardTypes: input.cardTypes ?? ['recognition'], tags: input.tags ?? [],
+      usedCount: 0, usedAt: [], rot: 0, legacy: null, updatedAt: stamp, deleted: false,
+    };
+    notes.push(note);
+    for (const t of note.cardTypes) cards.push(blankCard(note, t, s, stamp));
+  }
   await db.transaction('rw', [db.notes, db.cards], async () => {
-    await db.notes.put(note);
-    await db.cards.put(card);
+    await db.notes.bulkPut(notes);
+    await db.cards.bulkPut(cards);
   });
-  return { noteId: note.id, cardId: card.id };
+  return notes.map((n) => ({ noteId: n.id, cardId: cards.find((c) => c.noteId === n.id)!.id }));
 }
 
-/** 修改笔记；牌组或创建时间变了，同步到它的卡片 */
+/**
+ * 让笔记的卡片和 cardTypes 一致：缺的补上（之前删掉过的同类卡直接恢复，进度保留），多的打墓碑；
+ * 牌组、创建时间同步到卡片。必须在包含 notes、cards、meta 的事务里调用。
+ */
+async function reconcileCards(note: Note) {
+  const s = await getSettings();
+  const cards = await db.cards.where('noteId').equals(note.id).toArray();
+  const puts: Card[] = [];
+  for (const type of note.cardTypes) {
+    const live = cards.find((c) => c.type === type && !c.deleted);
+    const dead = cards.find((c) => c.type === type && c.deleted);
+    if (!live) puts.push(dead ? { ...dead, deleted: false, updatedAt: bumpIso(dead.updatedAt) } : blankCard(note, type, s, toIso(Date.now())));
+  }
+  for (const c of cards) {
+    if (c.deleted) continue;
+    const keep = note.cardTypes.includes(c.type);
+    const moved = c.deckId !== note.deckId || c.createdAt !== note.createdAt;
+    if (!keep || moved) puts.push({ ...c, deleted: !keep, deckId: note.deckId, createdAt: note.createdAt, updatedAt: bumpIso(c.updatedAt) });
+  }
+  for (const p of puts) { p.deckId = note.deckId; p.createdAt = note.createdAt; }
+  if (puts.length) await db.cards.bulkPut(puts);
+}
+
+/** 修改笔记；卡型、牌组、创建时间的变化同步到它的卡片 */
 export async function updateNote(id: string, patch: Partial<Omit<Note, 'id' | 'updatedAt' | 'deleted'>>) {
-  await db.transaction('rw', [db.notes, db.cards], async () => {
+  await db.transaction('rw', [db.notes, db.cards, db.meta], async () => {
     const n = await db.notes.get(id);
     if (!n) return;
     const next = { ...n, ...patch, updatedAt: bumpIso(n.updatedAt) };
     await db.notes.put(next);
-    if (next.deckId !== n.deckId || next.createdAt !== n.createdAt) {
-      const cards = await db.cards.where('noteId').equals(id).toArray();
-      await db.cards.bulkPut(cards.map((c) => ({ ...c, deckId: next.deckId, createdAt: next.createdAt, updatedAt: bumpIso(c.updatedAt) })));
-    }
+    if (next.deckId !== n.deckId || next.createdAt !== n.createdAt || next.cardTypes.join() !== n.cardTypes.join()) await reconcileCards(next);
   });
+}
+
+/** 产出表达在写作、口语里用上了一次 */
+export async function bumpUsed(noteId: string) {
+  const n = await db.notes.get(noteId);
+  if (n) await updateNote(noteId, { usedCount: n.usedCount + 1, usedAt: [...(n.usedAt ?? []), toIso(Date.now())] });
 }
 
 export async function updateNotes(ids: string[], fn: (n: Note) => Partial<Note>) {

@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useCards, useNotes, useSettings, useTodayLogs } from '../../db/hooks';
-import { answerCard, setSuspended, undoAnswer, type AnswerResult } from '../../db/actions';
+import { answerCard, bumpUsed, setSuspended, undoAnswer, type AnswerResult } from '../../db/actions';
 import { buildQueue } from '../../srs/queue';
 import { fmtNextIn, preview, type Rating } from '../../srs/scheduler';
 import { fmtDays, fmtMinutes } from '../../lib/time';
@@ -10,7 +10,7 @@ import { useHotkeys, useNow } from '../../ui/hooks';
 import { toast } from '../../ui/toast';
 import { langLabel } from '../../ui/langs';
 import { syncIfAuto } from '../../sync/engine';
-import { CardStats, Cues, quizSplit, SpeakBtn } from '../CardFace';
+import { CardStats, cardView, Cues, SpeakBtn, TYPE_LABEL } from '../CardFace';
 import { NoteEditor } from '../NoteEditor';
 
 const RATINGS: Array<{ r: Rating; label: string; cls: string }> = [
@@ -69,7 +69,10 @@ export function ReviewPage({ deckId }: { deckId: string }) {
   }, [q, currentId]);
 
   const labels: [string, string, string] = s ? [langLabel(s.sourceLang), langLabel(s.targetLang1), langLabel(s.targetLang2)] : ['', '', ''];
-  const split = note && s ? quizSplit(note, s, prefs.quizType, labels) : null;
+  const split = note && s && card ? cardView(card.type, note, s, prefs.quizType, labels) : null;
+  // 产出卡可以先写出答案，揭示后和标准答案并排对照（不自动判对错）
+  const [typed, setTyped] = useState('');
+  useEffect(() => setTyped(''), [currentId]);
 
   // 自动发音：新卡出现时读题面
   const lastSpoken = useRef<string | null>(null);
@@ -167,26 +170,38 @@ export function ReviewPage({ deckId }: { deckId: string }) {
           </div>
           <div className="review-card" key={card.id}>
             <div className="badges">
-              {!note.sentence && <span className="badge">待补句子</span>}
+              <span className={`badge is-type t-${card.type}`}>{TYPE_LABEL[card.type]}</span>
+              {card.type === 'recognition' && !note.sentence && <span className="badge">待补句子</span>}
               {note.tags.map((t) => <span key={t} className="badge is-theme">{t}</span>)}
             </div>
             <div className="question">
               <span>{split.question.text || <i className="muted">（{split.question.label}为空）</i>}</span>
               <SpeakBtn text={split.question.speakText} lang={split.question.lang} size={20} />
             </div>
+            {split.hint && <div className="cue">提示：{split.hint}</div>}
             <CardStats card={card} s={s} center />
+            {card.type === 'production' && !revealed && (
+              <input className="type-in" value={typed} placeholder="先写出法语（可选），回车显示答案" onChange={(e) => setTyped(e.target.value)}
+                onKeyDown={(e) => { if (e.key === 'Enter' && !e.nativeEvent.isComposing) { e.preventDefault(); setRevealed(true); (e.target as HTMLInputElement).blur(); } }} />
+            )}
             {!revealed ? (
               <button type="button" className="show-btn" onClick={() => setRevealed(true)}>显示答案 <kbd>空格</kbd></button>
             ) : (
               <>
                 <div className="answer">
+                  {card.type === 'production' && typed.trim() && <div className="typed">你写的：{typed}</div>}
                   {split.answers.map((a, i) => (
                     <div key={i} className={i === 0 ? 'a1' : 'a2'}>
                       <span>{a.text || <i className="muted">（{a.label}为空）</i>}</span>
                       <SpeakBtn text={a.speakText} lang={a.lang} />
                     </div>
                   ))}
-                  <Cues note={note} />
+                  <Cues note={note} only={split.cues === 'extra' ? 'extra' : undefined} />
+                  {card.type === 'production' && (
+                    <button type="button" className="pill" title="这个表达在写作或口语里用上了一次" onClick={() => void bumpUsed(note.id).then(() => toast(`已记录，累计用上 ${note.usedCount + 1} 次`))}>
+                      用上了 +1（{note.usedCount}）
+                    </button>
+                  )}
                 </div>
                 <div className="grades">
                   {RATINGS.map(({ r, label, cls }) => (
