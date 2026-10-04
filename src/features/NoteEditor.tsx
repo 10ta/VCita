@@ -1,12 +1,12 @@
 import { useState } from 'react';
 import { Modal } from '../ui/Modal';
-import { THEMES, type Card, type Note, type Theme } from '../schema';
+import { THEMES, type Note, type Theme } from '../schema';
 import { defaultCardTypes, noteErrors } from '../schema/validate';
 import { bumpUsed, updateNote } from '../db/actions';
 import { useDecks, useSettings } from '../db/hooks';
 import { langLabel } from '../ui/langs';
 import { noonIso } from '../lib/time';
-import { cardView, Cues } from './CardFace';
+import { CardPreviews, CARD_TYPES, ClozeMarker } from './NoteParts';
 import { toast } from '../ui/toast';
 
 export function ThemePicker({ value, onChange }: { value: Theme[]; onChange: (v: Theme[]) => void }) {
@@ -20,11 +20,7 @@ export function ThemePicker({ value, onChange }: { value: Theme[]; onChange: (v:
   );
 }
 
-const TYPES: Array<[Card['type'], string, string]> = [
-  ['recognition', '认读', '看句子（或单词）想意思'],
-  ['production', '产出', '看中文意图写出法语'],
-  ['cloze', '挖空', '句子里挖掉 {{…}}，填出来'],
-];
+const TYPES = CARD_TYPES;
 
 export function NoteEditor({ note, onClose }: { note: Note; onClose: () => void }) {
   const s = useSettings();
@@ -83,6 +79,7 @@ export function NoteEditor({ note, onClose }: { note: Note; onClose: () => void 
         </div>
       </div>
       {text('sentence', '例句', '用 {{…}} 标出要考的部分，例如：les enfants ont perdu leurs {{repères}}')}
+      {f.sentence.trim() && <><ClozeMarker value={f.sentence} onChange={(v) => set('sentence', v)} /><p className="muted small" style={{ marginTop: -6, marginBottom: 10 }}>点词标记 / 取消考查部分（认读卡加粗、挖空卡挖掉）</p></>}
       {text('lemma', `单词（${labels[0]}）`, '旧卡的正面；有例句时可留空')}
       {text('meaningZh', `意思（${labels[1]}）`)}
       {text('meaningEn', `意思（${labels[2]}）`)}
@@ -102,21 +99,7 @@ export function NoteEditor({ note, onClose }: { note: Note; onClose: () => void 
         </fieldset>
       )}
       {errors.map((e) => <p key={e} className="form-error">{e}</p>)}
-      {s && f.cardTypes.length > 0 && errors.length === 0 && (
-        <div className="previews">
-          {TYPES.filter(([t]) => f.cardTypes.includes(t)).map(([t, label]) => {
-            const v = cardView(t, draft, s, 0, labels);
-            return (
-              <div key={t} className="mini">
-                <span className={`badge is-type t-${t}`}>{label}</span>
-                <div className="mini-q">{v.question.text || <i className="muted">（空）</i>}</div>
-                {v.hint && <div className="cue">提示：{v.hint}</div>}
-                <div className="mini-a">{v.answers.map((a, i) => <div key={i}>{a.text}</div>)}<Cues note={draft} only={v.cues === 'extra' ? 'extra' : undefined} /></div>
-              </div>
-            );
-          })}
-        </div>
-      )}
+      {s && errors.length === 0 && <CardPreviews draft={draft} s={s} labels={labels} />}
       <div className="field"><span className="field-label">主题</span><ThemePicker value={f.tags} onChange={(v) => set('tags', v)} /></div>
       <div className="row">
         <label className="field"><span className="field-label">牌组</span>
