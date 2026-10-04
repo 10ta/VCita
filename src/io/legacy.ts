@@ -1,5 +1,5 @@
-// 一次性导入旧版（服务器版）VocabForge 的备份：
-//   备份页导出的 vocabforge-YYYY-MM-DD.json：{ version, files: { "users/<uid>/YYMM/MMDD.json": [卡片…], "users/<uid>/meta.json": {...}, "global.json": {...} } }
+// 一次性导入旧版（服务器版）VCita 的备份：
+//   备份页导出的 vcita-YYYY-MM-DD.json：{ version, files: { "users/<uid>/YYMM/MMDD.json": [卡片…], "users/<uid>/meta.json": {...}, "global.json": {...} } }
 //   更早的格式：{ decks, cards }
 // 每张旧卡 → 一条笔记 + 一张认读卡；reviewHistory → 复习日志。调度字段原样保留。
 // id 由旧 id 派生、updatedAt 取备份导出时间：同一份备份重复导入不会产生任何变化，也不会覆盖之后的复习进度。

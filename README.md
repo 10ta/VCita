@@ -1,7 +1,7 @@
-# 🔥 VocabForge
+# 🔥 VCita
 
 单用户的间隔重复背词 Web App。纯静态站点，数据存在浏览器本地（IndexedDB），
-可同步到你自己的**私有** GitHub 数据仓库的 `VocabForge/` 目录。同步机制与 TimeEncre 相同，两个 app 可以共用一个数据仓库。
+可同步到你自己的**私有** GitHub 数据仓库的 `VCita/` 目录。同步机制与 TimeEncre 相同，两个 app 可以共用一个数据仓库。
 
 ## 功能
 
@@ -40,12 +40,12 @@ npm run build    # 产物在 dist/
 | 选项 | 什么时候用 |
 |---|---|
 | **从 GitHub 数据仓库恢复** | 已经在别的设备上用过。连接同一个仓库后点"立即同步"。**不要**先导入备份，否则同一批词会变成两份 |
-| **导入旧版备份** | 从服务器版 VocabForge 迁移过来（见下文） |
+| **导入旧版备份** | 从服务器版 VCita 迁移过来（见下文） |
 | **从空白开始** | 全新使用 |
 
 ## 连接 GitHub 数据仓库
 
-1. 建一个**私有**仓库（公开仓库会被拒绝），或者直接用 TimeEncre 的数据仓库。VocabForge 只读写其中的数据目录（默认 `VocabForge/`）。
+1. 建一个**私有**仓库（公开仓库会被拒绝），或者直接用 TimeEncre 的数据仓库。VCita 只读写其中的数据目录（默认 `VCita/`）。
 2. 生成 **fine-grained personal access token**：Repository access 只选这个仓库，Permissions 只开 `Contents: Read and write`，设置过期时间。不要用 classic token。
 3. 打开 app → 设置 → GitHub 同步，填仓库（`owner/repo` 或完整网址）、数据目录和令牌，点"检查并保存"。
 4. 打开"自动同步"：打开 app 时、停止改动 3 分钟后、切到后台时、一轮复习结束时各同步一次。
@@ -59,7 +59,7 @@ npm run build    # 产物在 dist/
 2. 打开新版 → "导入旧版备份" → 选择这个文件
    - 旧版有多个用户时，选择要导入的那一个（新版是单用户）
    - 旧标签逐个映射到 8 个主题（已按名称自动猜好，例如 Police et Justice → SOCIÉTÉ、médecine → SANTÉ）
-3. 设置 → 连接 GitHub → 立即同步，确认仓库里出现 `VocabForge/` 目录
+3. 设置 → 连接 GitHub → 立即同步，确认仓库里出现 `VCita/` 目录
 4. 其他设备选"从 GitHub 数据仓库恢复"，**不要**再导入一次
 5. 核对卡片数和复习进度
 
@@ -106,7 +106,7 @@ npm run build    # 产物在 dist/
 数据仓库中的布局：
 
 ```
-VocabForge/
+VCita/
   profile.json              牌组、设置
   notes/2026-09.json        笔记，按创建月份
   cards/2026-09.json        卡片调度状态，按所属笔记的创建月份

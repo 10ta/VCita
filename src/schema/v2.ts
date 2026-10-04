@@ -124,7 +124,7 @@ export const NotesFileV2 = file('notes', { month: z.string(), notes: z.array(Not
 export const CardsFileV2 = file('cards', { month: z.string(), cards: z.array(CardV2) });
 export const LogsFileV2 = file('logs', { day: Day, logs: z.array(ReviewLogV2) });
 export const BundleFileV2 = file('bundle', {
-  app: z.literal('VocabForge'),
+  app: z.literal('VCita'),
   exportedAt: IsoTime,
   decks: z.array(DeckV2),
   settings: SettingsV2,

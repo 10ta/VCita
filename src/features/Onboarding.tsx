@@ -11,7 +11,7 @@ export function Onboarding() {
   const [legacy, setLegacy] = useState<LegacyBackup | null>(null);
   return (
     <div className="page onboarding">
-      <h1>VocabForge</h1>
+      <h1>VCita</h1>
       <p className="muted">数据只保存在这台设备的浏览器和你自己的私有 GitHub 仓库里。先选一种开始方式：</p>
       <div className="choices">
         <button type="button" className="choice" onClick={() => void markOnboarded().then(() => { location.hash = '#/settings'; })}>
@@ -20,7 +20,7 @@ export function Onboarding() {
         </button>
         <button type="button" className="choice" onClick={() => ref.current?.click()}>
           <b>导入旧版备份</b>
-          <span>服务器版 VocabForge 在"备份"页导出的 vocabforge-日期.json。复习进度完整保留。</span>
+          <span>服务器版 VCita 在"备份"页导出的 vcita-日期.json。复习进度完整保留。</span>
         </button>
         <button type="button" className="choice" onClick={() => void ensureDeck().then(markOnboarded)}>
           <b>从空白开始</b>

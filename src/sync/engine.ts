@@ -1,5 +1,5 @@
 // 同步引擎：拉取远端有变化的文件 → 按 LWW 合并进本地 → 把与远端不同的本地文件打成一个提交推上去。
-// 只读写数据目录（默认 VocabForge/）下的文件；其他 app 在同一仓库里的文件原样保留。
+// 只读写数据目录（默认 VCita/）下的文件；其他 app 在同一仓库里的文件原样保留。
 // 推送时如果远端被别人抢先更新（非快进，422），重新拉取合并后重试。
 import { useSyncExternalStore } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
@@ -12,7 +12,7 @@ export interface SyncConfig {
   /** "owner/repo" */
   repo: string;
   branch: string;
-  /** 仓库内的数据目录，默认 VocabForge */
+  /** 仓库内的数据目录，默认 VCita */
   dir: string;
   token: string;
   autoSync: boolean;
@@ -27,7 +27,7 @@ export interface SyncState {
 
 const CONFIG_KEY = 'syncConfig';
 const STATE_KEY = 'syncState';
-export const DEFAULT_DIR = 'VocabForge';
+export const DEFAULT_DIR = 'VCita';
 
 export async function getSyncConfig(): Promise<SyncConfig | null> {
   return ((await db.meta.get(CONFIG_KEY))?.value as SyncConfig | undefined) ?? null;

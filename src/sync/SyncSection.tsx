@@ -55,7 +55,7 @@ function SyncForm({
     try {
       const info = await githubFor({ repo, token: tok }).getRepo();
       if (!info.private) {
-        setError('这是一个公开仓库。词库和复习记录属于私人数据，VocabForge 拒绝同步到公开仓库，请换成私有仓库。');
+        setError('这是一个公开仓库。词库和复习记录属于私人数据，VCita 拒绝同步到公开仓库，请换成私有仓库。');
         return;
       }
       await saveSyncConfig({

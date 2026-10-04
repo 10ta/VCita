@@ -10,7 +10,7 @@ export async function exportBundle(): Promise<BundleFile> {
     db.decks.toArray(), db.notes.toArray(), db.cards.toArray(), db.logs.toArray(), getSettings(),
   ]);
   // 墓碑也导出，合并时才能正确传播删除
-  return { schemaVersion: CURRENT_SCHEMA_VERSION as 2, kind: 'bundle', app: 'VocabForge', exportedAt: toIso(Date.now()), decks, settings, notes, cards, logs };
+  return { schemaVersion: CURRENT_SCHEMA_VERSION as 2, kind: 'bundle', app: 'VCita', exportedAt: toIso(Date.now()), decks, settings, notes, cards, logs };
 }
 
 export async function importBundle(raw: unknown): Promise<Record<'decks' | 'notes' | 'cards' | 'logs', MergeCount>> {

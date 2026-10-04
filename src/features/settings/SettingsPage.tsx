@@ -97,7 +97,7 @@ function DataSection() {
       <h2>数据</h2>
       <p className="hint">数据保存在这台设备的浏览器里（IndexedDB）。连接 GitHub 后会同步到私有仓库；也可以手动导出一个 JSON 备份。</p>
       <div className="row">
-        <button type="button" className="btn" onClick={() => void exportBundle().then((b) => downloadJson(b, `vocabforge-${fileStamp(Date.now())}.json`))}>导出备份</button>
+        <button type="button" className="btn" onClick={() => void exportBundle().then((b) => downloadJson(b, `vcita-${fileStamp(Date.now())}.json`))}>导出备份</button>
         <button type="button" className="btn" onClick={() => pick(bundleRef)}>导入备份</button>
         <button type="button" className="btn" onClick={() => pick(legacyRef)}>导入旧版备份</button>
       </div>

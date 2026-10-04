@@ -1,7 +1,7 @@
 // 当前版本的类型出口 + 文件迁移框架（与 TimeEncre 相同）。
 // 以后出 v3：新建 v3.ts，把导出改指向它，在 migrations 里追加 { from: 2, to: 3, up }。
 // 遇到比程序新的 schemaVersion 拒绝写入，提示刷新。
-// 注：v1 是旧服务器版 VocabForge 的数据，不走文件迁移，由 io/legacy.ts 一次性导入。
+// 注：v1 是旧服务器版 VCita 的数据，不走文件迁移，由 io/legacy.ts 一次性导入。
 import { z } from 'zod';
 import {
   BundleFileV2, CardV2, CardsFileV2, DeckV2, LogsFileV2, NoteV2, NotesFileV2, ProfileFileV2, ReviewLogV2, SettingsV2,

@@ -15,7 +15,7 @@ class VocabDb extends Dexie {
   meta!: Table<MetaRow, string>;
 
   constructor() {
-    super('vocabforge');
+    super('vcita');
     // 本地索引结构的版本，和数据文件的 schemaVersion 是两回事
     this.version(1).stores({
       decks: 'id',

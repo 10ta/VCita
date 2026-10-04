@@ -60,7 +60,7 @@ export function App() {
   );
 
   useEffect(() => {
-    document.title = `${NAV.find((n) => n.key === route)?.label ?? ''} · VocabForge`;
+    document.title = `${NAV.find((n) => n.key === route)?.label ?? ''} · VCita`;
   }, [route]);
 
   // 鼠标点按钮时不让按钮拿到焦点，之后按空格就不会误触这个按钮
@@ -79,7 +79,7 @@ export function App() {
   return (
     <div className="app">
       <header className="top">
-        <a className="brand" href="#/review"><span className="mark">鍛</span>VocabForge</a>
+        <a className="brand" href="#/review"><span className="mark">鍛</span>VCita</a>
         {decks && decks.length > 0 && (
           <select className="deck-select" value={deckId ?? ''} onChange={(e) => setPrefs({ deckId: e.target.value })} aria-label="当前牌组">
             {decks.map((d) => <option key={d.id} value={d.id}>{d.name}</option>)}

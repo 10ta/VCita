@@ -9,7 +9,7 @@ import { makeLegacyBackup } from './legacyData';
 import { FakeGitHub } from './fakeGithub';
 
 let gh: FakeGitHub;
-const CFG = { repo: 'me/data', branch: 'main', dir: 'VocabForge', token: 't', autoSync: false };
+const CFG = { repo: 'me/data', branch: 'main', dir: 'VCita', token: 't', autoSync: false };
 
 /** 换一台"设备"：清空本地库，连接同一个仓库 */
 async function newDevice() {
@@ -38,10 +38,10 @@ describe('GitHub 同步', () => {
     const r = await syncNow();
     expect(r.pushed).toBeGreaterThan(0);
     const paths = Object.keys(gh.files());
-    expect(paths).toContain('VocabForge/profile.json');
-    expect(paths.some((p) => /^VocabForge\/notes\/\d{4}-\d{2}\.json$/.test(p))).toBe(true);
-    expect(paths.some((p) => /^VocabForge\/cards\/\d{4}-\d{2}\.json$/.test(p))).toBe(true);
-    expect(paths.some((p) => /^VocabForge\/logs\/\d{4}-\d{2}\/\d{2}\.json$/.test(p))).toBe(true);
+    expect(paths).toContain('VCita/profile.json');
+    expect(paths.some((p) => /^VCita\/notes\/\d{4}-\d{2}\.json$/.test(p))).toBe(true);
+    expect(paths.some((p) => /^VCita\/cards\/\d{4}-\d{2}\.json$/.test(p))).toBe(true);
+    expect(paths.some((p) => /^VCita\/logs\/\d{4}-\d{2}\/\d{2}\.json$/.test(p))).toBe(true);
     expect(await pendingFiles()).toBe(0);
     const head = gh.head;
     expect((await syncNow()).pushed).toBe(0);
@@ -65,7 +65,7 @@ describe('GitHub 同步', () => {
     expect(await pendingFiles()).toBe(2);
     await syncNow();
     const files = gh.files();
-    const today = Object.keys(files).filter((p) => p.startsWith('VocabForge/logs/'));
+    const today = Object.keys(files).filter((p) => p.startsWith('VCita/logs/'));
     expect(today.length).toBeGreaterThan(0);
   });
 
