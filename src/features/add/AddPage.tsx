@@ -36,7 +36,9 @@ function AddOne({ deckId }: { deckId: string }) {
   const [day, setDay] = useState(todayInput);
   const [tags, setTags] = useState<Theme[]>([]);
   const [types, setTypes] = useState<Card['type'][]>(['recognition']);
-  const [more, setMore] = useState(false);
+  // 默认展开与否看设置；本页内手动点过"收起 / 更多字段"后以手动为准
+  const [moreOverride, setMore] = useState<boolean | null>(null);
+  const more = moreOverride ?? s?.addShowMore ?? true;
   const [f, setF] = useState(EMPTY);
   const [pending, setPending] = useState<Set<string>>(new Set());
   const [dupWarned, setDupWarned] = useState<string | null>(null);

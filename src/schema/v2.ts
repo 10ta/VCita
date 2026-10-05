@@ -116,6 +116,8 @@ export const SettingsV2 = z.looseObject({
   leechThreshold: z.number().int().min(0).default(8),
   dayStartHour: z.number().int().min(0).max(23).default(4),
   fuzz: z.boolean().default(true),
+  /** 添加页的"更多字段"（例句、词族线索、出处、补充）默认是否展开 */
+  addShowMore: z.boolean().default(true),
 });
 
 const file = <K extends string, S extends z.ZodRawShape>(kind: K, shape: S) =>

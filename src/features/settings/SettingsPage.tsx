@@ -44,6 +44,11 @@ export function SettingsPage() {
         </div>
         <p className="hint">新词按这里的设置自动翻译；复习时的题面在复习页顶部切换。</p>
       </section>
+      <section>
+        <h2>添加</h2>
+        <label className="toggle"><input type="checkbox" checked={s.addShowMore} onChange={(e) => void updateSettings({ addShowMore: e.target.checked })} />
+          <span>默认展开"更多字段"<small>添加页里的例句、词族线索、出处、补充。关闭后需要时点"更多字段"展开</small></span></label>
+      </section>
       <SrsForm s={s} />
       <SyncSection />
       <DataSection />
