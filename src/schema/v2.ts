@@ -116,6 +116,12 @@ export const SettingsV2 = z.looseObject({
   leechThreshold: z.number().int().min(0).default(8),
   dayStartHour: z.number().int().min(0).max(23).default(4),
   fuzz: z.boolean().default(true),
+  /** 新卡出现时机：mix = 均匀穿插在复习中；after = 复习完才出新卡 */
+  newReviewOrder: z.enum(['mix', 'after']).default('mix'),
+  /** 复习卡顺序：overdue = 相对逾期（逾期天数 ÷ 间隔）最大的先出；due = 按到期时间 */
+  reviewSort: z.enum(['overdue', 'due']).default('overdue'),
+  /** 逾期答对时，因逾期多给的天数上限；0 = 不加成 */
+  overdueBonusMaxDays: z.number().int().min(0).default(30),
   /** 添加页的"更多字段"（例句、词族线索、出处、补充）默认是否展开 */
   addShowMore: z.boolean().default(true),
 });

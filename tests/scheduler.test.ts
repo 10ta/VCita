@@ -35,6 +35,25 @@ describe('文档 §9 调度验收（interval=10, ease=2.5, 关闭扰动）', () 
   });
 });
 
+describe('逾期答对加成（带上限）', () => {
+  const DAY = 86400000;
+  it('逾期 8 天：困难 +2、良好 +10、容易 +26（未超上限）', () => {
+    const c = reviewCard({ due: toIso(NOW - 8 * DAY) });
+    // 困难 (10+2)*1.2=14.4→14；良好 (10+4)*2.5=35；容易 (10+8)*2.5*1.3=58.5→59
+    expect([2, 3, 4].map((r) => schedule(c, r as 2 | 3 | 4, NOW, P).card.interval)).toEqual([14, 35, 59]);
+    const pv = preview(c, P, NOW);
+    expect([pv[2], pv[3], pv[4]]).toEqual([{ days: 14 }, { days: 35 }, { days: 59 }]);
+  });
+  it('额外天数不超过上限；上限 0 = 不加成；忘了不受影响', () => {
+    const c = reviewCard({ due: toIso(NOW - 158 * DAY), interval: 1, ease: 1.9 });
+    // 无加成：困难 2、良好 3、容易 4；良好有加成 (1+79)*1.9=152 → 封顶 3+30
+    expect(schedule(c, 3, NOW, P).card.interval).toBe(33);
+    expect(schedule(c, 3, NOW, { ...P, overdueBonusMaxDays: 0 }).card.interval).toBe(3);
+    expect(schedule(c, 3, NOW, { ...P, overdueBonusMaxDays: 5 }).card.interval).toBe(8);
+    expect(schedule(c, 1, NOW, P).card.interval).toBe(1);
+  });
+});
+
 describe('学习步骤', () => {
   it('新卡：良好 → 10 分钟 → 良好 → 第二天 4 点 → 良好 → 毕业 3 天', () => {
     const a = schedule(newCard(), 3, NOW, P);
@@ -56,7 +75,7 @@ describe('学习步骤', () => {
     expect(a.card.due).toBe(toIso(new Date(2026, 9, 4, 4).getTime()));
   });
   it('预览与实际一致', () => {
-    const pv = preview(reviewCard(), P);
+    const pv = preview(reviewCard(), P, NOW);
     expect(pv).toEqual({ 1: { minutes: 10 }, 2: { days: 12 }, 3: { days: 25 }, 4: { days: 33 } });
   });
 });

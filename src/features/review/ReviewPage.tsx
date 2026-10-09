@@ -133,7 +133,7 @@ export function ReviewPage({ deckId }: { deckId: string }) {
     toast('已暂停这张卡，可在词库"已暂停"里恢复');
   };
 
-  const pv = card ? preview(card, s) : null;
+  const pv = card ? preview(card, s, now) : null;
   const limitLine = `今日已学：新卡 ${q.done.newDone}/${s.newPerDay} · 复习 ${q.done.reviewDone}${s.reviewsPerDay ? `/${s.reviewsPerDay}` : ''}`;
 
   return (

@@ -17,10 +17,33 @@ const log = (c: Card, prevState: Card['state']): ReviewLog => ({
 });
 
 describe('出题队列', () => {
-  it('有到期复习卡时不出新卡；复习完才出新卡', () => {
-    const r = card({}), nw = card({ state: 'new' });
-    expect(buildQueue({ cards: [nw, r], todayLogs: [], deckId: 'd', now: NOW, settings: S }).next?.id).toBe(r.id);
-    expect(buildQueue({ cards: [nw], todayLogs: [log(r, 'review')], deckId: 'd', now: NOW, settings: S }).next?.id).toBe(nw.id);
+  it('after 模式：有到期复习卡时不出新卡；复习完才出新卡', () => {
+    const A = { ...S, newReviewOrder: 'after' as const };
+    const r = card({}), r2 = card({}), nw = card({ state: 'new' });
+    expect(buildQueue({ cards: [nw, r, r2], todayLogs: [], deckId: 'd', now: NOW, settings: A }).next?.id).toBe(r.id);
+    expect(buildQueue({ cards: [nw, r2], todayLogs: [log(r, 'review')], deckId: 'd', now: NOW, settings: A }).next?.id).toBe(r2.id);
+    expect(buildQueue({ cards: [nw], todayLogs: [log(r, 'review'), log(r2, 'review')], deckId: 'd', now: NOW, settings: A }).next?.id).toBe(nw.id);
+  });
+  it('mix 模式（默认）：新卡按比例均匀穿插在复习中', () => {
+    const reviews = Array.from({ length: 10 }, () => card({}));
+    const news = [card({ state: 'new' }), card({ state: 'new' })];
+    let cards = [...news, ...reviews];
+    const logs: ReviewLog[] = [];
+    const order: string[] = [];
+    while (true) {
+      const q = buildQueue({ cards, todayLogs: logs, deckId: 'd', now: NOW, settings: S });
+      if (!q.next) break;
+      order.push(q.next.state === 'new' ? 'N' : 'R');
+      logs.push(log(q.next, q.next.state));
+      cards = cards.filter((c) => c.id !== q.next!.id);
+    }
+    expect(order.join('')).toBe('RNRRRRRNRRRR');
+  });
+  it('相对逾期排序：逾期天数 ÷ 间隔大的先出；due 模式按到期时间', () => {
+    const a = card({ due: toIso(NOW - 86400000 * 30), interval: 100 }); // 0.3
+    const b = card({ due: toIso(NOW - 86400000 * 5), interval: 1 }); // 5
+    expect(buildQueue({ cards: [a, b], todayLogs: [], deckId: 'd', now: NOW, settings: S }).next?.id).toBe(b.id);
+    expect(buildQueue({ cards: [a, b], todayLogs: [], deckId: 'd', now: NOW, settings: { ...S, reviewSort: 'due' } }).next?.id).toBe(a.id);
   });
   it('到期的学习卡最优先', () => {
     const r = card({}), l = card({ state: 'learning', due: toIso(NOW - 1000) });

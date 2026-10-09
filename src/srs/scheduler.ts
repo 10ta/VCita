@@ -1,16 +1,17 @@
 // SM-2 调度（纯函数）。规则见 README「复习算法」。
 //  - 新卡：按学习步骤（默认 10 分钟、1 天）走完后毕业，毕业间隔 3 天；"容易"直接毕业 4 天
 //  - 复习卡：困难 ×1.2 / 良好 ×ease / 容易 ×ease×1.3；忘了 → 重学步骤，结束后间隔 ×0.5
+//  - 逾期答对（困难/良好/容易）按逾期天数加成，但额外天数不超过 overdueBonusMaxDays
 //  - 1 天以上的步骤和所有复习间隔都对齐到学习日开始（默认凌晨 4 点）
 import type { Card, CardState, Settings } from '../schema';
-import { addDaysToDay, dayStartMs, fromIso, studyDay, toIso } from '../lib/time';
+import { addDaysToDay, dayStartMs, daysBetween, fromIso, studyDay, toIso } from '../lib/time';
 
 export type Rating = 1 | 2 | 3 | 4;
 export type SrsParams = Pick<
   Settings,
   | 'learningSteps' | 'relearnSteps' | 'graduatingInterval' | 'easyInterval' | 'startingEase' | 'minEase'
   | 'hardFactor' | 'easyBonus' | 'lapseFactor' | 'maxInterval' | 'leechThreshold' | 'dayStartHour' | 'fuzz'
->;
+> & Partial<Pick<Settings, 'overdueBonusMaxDays'>>;
 
 type Sched = Pick<Card, 'state' | 'due' | 'interval' | 'ease' | 'reps' | 'lapses' | 'step' | 'lastReviewedAt' | 'isLeech' | 'suspended'>;
 
@@ -35,19 +36,32 @@ export function fuzzInterval(ivl: number, p: SrsParams, rand: () => number): num
   return Math.min(p.maxInterval, ivl - f + Math.floor(rand() * (2 * f + 1)));
 }
 
-/** 复习卡四个评分的新间隔（不含扰动） */
-function reviewIntervals(card: Sched, p: SrsParams) {
+/** 复习卡逾期了几个学习日（未到期为 0） */
+export function overdueDays(card: Pick<Card, 'due'>, now: number, dayStartHour: number): number {
+  return Math.max(0, daysBetween(studyDay(fromIso(card.due), dayStartHour), studyDay(now, dayStartHour)));
+}
+
+/** 复习卡四个评分的新间隔（不含扰动）。
+ *  逾期加成同 Anki：困难 +逾期/4、良好 +逾期/2、容易 +逾期 天参与计算，
+ *  但每个按钮因逾期多出的天数最多 overdueBonusMaxDays（0 = 不加成） */
+function reviewIntervals(card: Sched, p: SrsParams, now?: number) {
   const ivl = Math.max(1, card.interval);
   const cap = (x: number) => Math.min(p.maxInterval, x);
-  const hard = cap(Math.max(ivl + 1, Math.round(ivl * p.hardFactor)));
-  const good = cap(Math.max(hard + 1, Math.round(ivl * card.ease)));
-  const easy = cap(Math.max(good + 1, Math.round(ivl * card.ease * p.easyBonus)));
+  const maxBonus = p.overdueBonusMaxDays ?? 30;
+  const delay = now === undefined || maxBonus <= 0 ? 0 : overdueDays(card, now, p.dayStartHour);
+  const extra = (base: number, withDelay: number) => Math.min(maxBonus, Math.max(0, Math.round(withDelay) - base));
+  const hard0 = Math.max(ivl + 1, Math.round(ivl * p.hardFactor));
+  const good0 = Math.max(hard0 + 1, Math.round(ivl * card.ease));
+  const easy0 = Math.max(good0 + 1, Math.round(ivl * card.ease * p.easyBonus));
+  const hard = cap(hard0 + extra(hard0, (ivl + delay / 4) * p.hardFactor));
+  const good = cap(Math.max(hard + 1, good0 + extra(good0, (ivl + delay / 2) * card.ease)));
+  const easy = cap(Math.max(good + 1, easy0 + extra(easy0, (ivl + delay) * card.ease * p.easyBonus)));
   const lapse = Math.max(1, Math.round(ivl * p.lapseFactor));
   return { hard, good, easy, lapse };
 }
 
 /** 四个按钮上显示的"多久后再见" */
-export function preview(card: Sched, p: SrsParams): Record<Rating, NextIn> {
+export function preview(card: Sched, p: SrsParams, now: number): Record<Rating, NextIn> {
   const steps = p.learningSteps;
   if (card.state === 'new' || card.state === 'learning') {
     const cur = card.state === 'new' ? 0 : card.step;
@@ -69,7 +83,7 @@ export function preview(card: Sched, p: SrsParams): Record<Rating, NextIn> {
       4: { days: Math.max(1, card.interval) },
     };
   }
-  const r = reviewIntervals(card, p);
+  const r = reviewIntervals(card, p, now);
   return { 1: p.relearnSteps.length ? { minutes: p.relearnSteps[0] } : { days: r.lapse }, 2: { days: r.hard }, 3: { days: r.good }, 4: { days: r.easy } };
 }
 
@@ -112,7 +126,7 @@ export function schedule<C extends Sched>(card: C, rating: Rating, now: number, 
     else if (card.step + 1 < rs.length) toStep('relearning', rs, card.step + 1);
     else graduate(keep);
   } else {
-    const r = reviewIntervals(card, p);
+    const r = reviewIntervals(card, p, now);
     if (rating === 1) {
       c.lapses = card.lapses + 1;
       c.ease = round2(Math.max(p.minEase, card.ease - 0.2));

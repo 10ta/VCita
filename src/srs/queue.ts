@@ -1,8 +1,10 @@
 // 出题队列（纯函数）。每答一张重新计算，不冻结。
 // 规则：
 //  1. 到期的学习 / 重学卡优先（时间敏感）
-//  2. 然后是到期的复习卡；有到期复习卡时不出新卡
-//  3. 最后是新卡，受每日上限约束
+//  2. 到期的复习卡与新卡（受每日上限约束）：
+//     mix   = 新卡按比例均匀穿插在复习中（Anki 的 Mix with reviews）
+//     after = 复习完才出新卡
+//     复习卡顺序：overdue = 相对逾期（逾期时长 ÷ 间隔）大的先出；due = 按到期时间
 //  4. 同一条笔记的卡当天只出一张（今天已答过这条笔记的其他卡，推到明天）
 //  5. 都没有时，20 分钟内到期的学习卡提前出（Anki 的 learn ahead）
 import type { Card, ReviewLog, Settings } from '../schema';
@@ -16,7 +18,7 @@ export interface QueueInput {
   todayLogs: ReviewLog[];
   deckId: string;
   now: number;
-  settings: Pick<Settings, 'newPerDay' | 'reviewsPerDay' | 'dayStartHour'>;
+  settings: Pick<Settings, 'newPerDay' | 'reviewsPerDay' | 'dayStartHour'> & Partial<Pick<Settings, 'newReviewOrder' | 'reviewSort'>>;
   /** 本轮跳过的卡 */
   skipped?: Set<string>;
 }
@@ -31,6 +33,9 @@ export interface QueueState {
 }
 
 const byDue = (a: Card, b: Card) => fromIso(a.due) - fromIso(b.due) || (a.id < b.id ? -1 : 1);
+const DAY = 86_400_000;
+/** 相对逾期：逾期时长 ÷ 间隔，越大越可能已忘 */
+export const relativeOverdue = (c: Card, now: number) => (now - fromIso(c.due)) / (Math.max(1, c.interval) * DAY);
 const byCreated = (a: Card, b: Card) => (a.createdAt < b.createdAt ? -1 : a.createdAt > b.createdAt ? 1 : a.id < b.id ? -1 : 1);
 
 export function buildQueue(q: QueueInput): QueueState {
@@ -56,7 +61,11 @@ export function buildQueue(q: QueueInput): QueueState {
   const learningDue = learningAll.filter((c) => fromIso(c.due) <= q.now);
 
   const reviewLimit = q.settings.reviewsPerDay > 0 ? Math.max(0, q.settings.reviewsPerDay - revSeen.size) : Infinity;
-  const reviews = pool.filter((c) => c.state === 'review' && fromIso(c.due) <= q.now).sort(byDue).slice(0, reviewLimit);
+  const sortOverdue = (q.settings.reviewSort ?? 'overdue') === 'overdue';
+  const reviews = pool
+    .filter((c) => c.state === 'review' && fromIso(c.due) <= q.now)
+    .sort(sortOverdue ? (a, b) => relativeOverdue(b, q.now) - relativeOverdue(a, q.now) || byDue(a, b) : byDue)
+    .slice(0, reviewLimit);
 
   const newLimit = Math.max(0, q.settings.newPerDay - newSeen.size);
   const newNotes = new Set<string>();
@@ -68,7 +77,14 @@ export function buildQueue(q: QueueInput): QueueState {
     news.push(c);
   }
 
-  let next: Card | null = learningDue[0] ?? reviews[0] ?? news[0] ?? null;
+  // 穿插：新卡的完成进度落后于复习的完成进度时出新卡，新卡就均匀分布在复习中
+  let mixNew = false;
+  if ((q.settings.newReviewOrder ?? 'mix') === 'mix' && reviews.length && news.length) {
+    const totalNew = newSeen.size + news.length;
+    const totalRev = revSeen.size + reviews.length;
+    mixNew = newSeen.size / totalNew < revSeen.size / totalRev;
+  }
+  let next: Card | null = learningDue[0] ?? (mixNew ? news[0] : reviews[0]) ?? news[0] ?? null;
   const ahead = learningAll.find((c) => fromIso(c.due) <= q.now + LEARN_AHEAD_MS);
   if (!next && ahead) next = ahead;
   const laterLearning = learningAll.find((c) => fromIso(c.due) > q.now);

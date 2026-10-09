@@ -1,7 +1,8 @@
 // 所有写操作。每次修改都更新 updatedAt（严格递增），删除一律打墓碑。
 import { db } from './db';
 import { SettingsSchema, type Card, type Deck, type Note, type ReviewLog, type Settings } from '../schema';
-import { bumpIso, studyDay, toIso } from '../lib/time';
+import { addDaysToDay, bumpIso, dayStartMs, fromIso, studyDay, toIso } from '../lib/time';
+import { relativeOverdue } from '../srs/queue';
 import { newId } from '../lib/id';
 import { schedule, type Rating } from '../srs/scheduler';
 
@@ -175,6 +176,23 @@ export async function setSuspended(noteIds: string[], suspended: boolean) {
   const cards = await cardsOfNotes(noteIds);
   // 解除暂停时一并移出"待改造"
   await updateCards(cards.map((c) => c.id), () => (suspended ? { suspended } : { suspended, isLeech: false }));
+}
+
+/** 分散积压：把今天之前就到期的复习卡，均匀改到「今天起 days 天」内到期。
+ *  最危险的（遗忘多、倍率低、相对逾期大）排在最前面；间隔和倍率不变。返回改动张数。 */
+export async function spreadBacklog(days: number, deckId?: string, now = Date.now()): Promise<number> {
+  const s = await getSettings();
+  const today = studyDay(now, s.dayStartHour);
+  const todayStart = dayStartMs(today, s.dayStartHour);
+  const all = await db.cards.toArray();
+  const backlog = all
+    .filter((c) => !c.deleted && !c.suspended && c.state === 'review' && fromIso(c.due) < todayStart && (!deckId || c.deckId === deckId))
+    .sort((a, b) => b.lapses - a.lapses || a.ease - b.ease || relativeOverdue(b, now) - relativeOverdue(a, now));
+  const n = backlog.length;
+  const span = Math.max(1, Math.floor(days));
+  const dueOf = new Map(backlog.map((c, i) => [c.id, toIso(dayStartMs(addDaysToDay(today, Math.floor((i * span) / n)), s.dayStartHour))]));
+  await updateCards([...dueOf.keys()], (c) => ({ due: dueOf.get(c.id)! }));
+  return n;
 }
 
 // ---------- 复习 ----------

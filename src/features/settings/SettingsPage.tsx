@@ -1,17 +1,17 @@
 import { useEffect, useRef, useState } from 'react';
-import { useSettings } from '../../db/hooks';
-import { clearAllLocalData, updateSettings } from '../../db/actions';
+import { useCards, useSettings } from '../../db/hooks';
+import { clearAllLocalData, spreadBacklog, updateSettings } from '../../db/actions';
 import { exportBundle, importBundle } from '../../io/bundle';
 import { readLegacyBackup, type LegacyBackup } from '../../io/legacy';
 import { downloadJson, readJsonFile } from '../../io/download';
-import { fileStamp } from '../../lib/time';
+import { dayStartMs, fileStamp, fromIso, studyDay } from '../../lib/time';
 import { SyncSection } from '../../sync/SyncSection';
 import { LANGS } from '../../ui/langs';
 import { toast } from '../../ui/toast';
 import type { Settings } from '../../schema';
 import { LegacyImport } from './LegacyImport';
 
-type NumKey = 'newPerDay' | 'reviewsPerDay' | 'graduatingInterval' | 'easyInterval' | 'startingEase' | 'hardFactor' | 'easyBonus' | 'lapseFactor' | 'leechThreshold' | 'dayStartHour';
+type NumKey = 'newPerDay' | 'reviewsPerDay' | 'graduatingInterval' | 'easyInterval' | 'startingEase' | 'hardFactor' | 'easyBonus' | 'lapseFactor' | 'overdueBonusMaxDays' | 'leechThreshold' | 'dayStartHour';
 const NUMS: Array<[NumKey, string, string]> = [
   ['newPerDay', '每日新卡上限', ''],
   ['reviewsPerDay', '每日复习上限', '0 = 不限'],
@@ -21,6 +21,7 @@ const NUMS: Array<[NumKey, string, string]> = [
   ['hardFactor', '"困难"间隔倍数', ''],
   ['easyBonus', '"容易"奖励倍数', ''],
   ['lapseFactor', '遗忘后间隔倍数', '忘了之后：新间隔 = 原间隔 × 它，最少 1 天'],
+  ['overdueBonusMaxDays', '逾期加成上限（天）', '逾期后答对，因逾期多给的天数最多这么多，0 = 不加成'],
   ['leechThreshold', '顽固卡阈值（遗忘次数）', '达到后自动暂停，0 = 不暂停'],
   ['dayStartHour', '每日切换时间（点）', '在这之前学习仍算前一天'],
 ];
@@ -60,7 +61,7 @@ function SrsForm({ s }: { s: Settings }) {
   const [f, setF] = useState(() => ({ ...s, learning: s.learningSteps.join(' '), relearn: s.relearnSteps.join(' ') }));
   useEffect(() => setF({ ...s, learning: s.learningSteps.join(' '), relearn: s.relearnSteps.join(' ') }), [s]);
   const save = async () => {
-    const patch: Partial<Settings> = { fuzz: f.fuzz, learningSteps: parseSteps(f.learning), relearnSteps: parseSteps(f.relearn) };
+    const patch: Partial<Settings> = { fuzz: f.fuzz, newReviewOrder: f.newReviewOrder, reviewSort: f.reviewSort, learningSteps: parseSteps(f.learning), relearnSteps: parseSteps(f.relearn) };
     for (const [k] of NUMS) patch[k] = Number(f[k]);
     try {
       await updateSettings(patch);
@@ -73,6 +74,16 @@ function SrsForm({ s }: { s: Settings }) {
     <section>
       <h2>复习</h2>
       <div className="grid2">
+        <label className="field"><span className="field-label">新卡出现时机</span>
+          <select value={f.newReviewOrder} onChange={(e) => setF({ ...f, newReviewOrder: e.target.value as Settings['newReviewOrder'] })}>
+            <option value="mix">穿插在复习中</option>
+            <option value="after">复习完再出</option>
+          </select><small className="muted">穿插：复习积压时新卡也照常出现</small></label>
+        <label className="field"><span className="field-label">复习卡顺序</span>
+          <select value={f.reviewSort} onChange={(e) => setF({ ...f, reviewSort: e.target.value as Settings['reviewSort'] })}>
+            <option value="overdue">相对逾期（最可能忘的先出）</option>
+            <option value="due">按到期时间</option>
+          </select><small className="muted">相对逾期 = 逾期天数 ÷ 间隔</small></label>
         {NUMS.map(([k, label, hint]) => (
           <label key={k} className="field" title={hint}><span className="field-label">{label}</span>
             <input type="number" step="any" value={f[k]} onChange={(e) => setF({ ...f, [k]: e.target.value as unknown as number })} />
@@ -87,7 +98,33 @@ function SrsForm({ s }: { s: Settings }) {
       <label className="toggle"><input type="checkbox" checked={f.fuzz} onChange={(e) => setF({ ...f, fuzz: e.target.checked })} />
         <span>间隔随机扰动 ±5%<small>避免同一天加的卡永远挤在同一天到期</small></span></label>
       <div className="row"><button type="button" className="btn is-primary" onClick={() => void save()}>保存复习参数</button></div>
+      <Backlog s={s} />
     </section>
+  );
+}
+
+/** 分散积压：把今天之前就到期的复习卡摊到未来 N 天 */
+function Backlog({ s }: { s: Settings }) {
+  const cards = useCards();
+  const [days, setDays] = useState('10');
+  const todayStart = dayStartMs(studyDay(Date.now(), s.dayStartHour), s.dayStartHour);
+  const n = cards?.filter((c) => c.state === 'review' && !c.suspended && fromIso(c.due) < todayStart).length ?? 0;
+  const d = Math.floor(Number(days));
+  const run = async () => {
+    if (!(d >= 1)) return toast('天数至少 1', true);
+    if (!window.confirm(`把 ${n} 张积压的复习卡分散到今天起 ${d} 天内（每天约 ${Math.ceil(n / d)} 张）？间隔和倍率不变。`)) return;
+    toast(`已分散 ${await spreadBacklog(d)} 张`);
+  };
+  return (
+    <div className="backlog" style={{ marginTop: "1.5rem" }}>
+      <h3>分散积压</h3>
+      <p className="hint">今天之前就到期、还没复习的卡：<b>{n}</b> 张。可以一次性把它们均匀改到未来几天到期，遗忘次数多、倍率低的排在前面。只改到期日，不改间隔和倍率。</p>
+      <div className="row" style={{ alignItems: 'flex-end' }}>
+        <label className="field" style={{ maxWidth: '10rem' }}><span className="field-label">分散到几天</span>
+          <input type="number" min={1} value={days} onChange={(e) => setDays(e.target.value)} /></label>
+        <button type="button" className="btn" disabled={!n} onClick={() => void run()}>分散积压</button>
+      </div>
+    </div>
   );
 }
 
