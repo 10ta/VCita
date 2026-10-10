@@ -108,7 +108,7 @@ export function convertLegacy(u: LegacyUser, exportedAt: string, themeMap: Recor
     const note: Note = {
       id: `n_${o.id}`, deckId: `d_${deckKey}`, createdAt,
       lemma: o.word ?? '', sentence: '', meaningZh: o.translation ?? '', meaningEn: o.translation2 ?? '',
-      cueFamily: null, intentZh: null, hint: null, answerFr: null, extra: null, source: null,
+      cueFamily: null, intentZh: null, hint: null, clozeHint: null, answerFr: null, extra: null, source: null,
       layer: 'mid', cardTypes: ['recognition'], tags, usedCount: 0, usedAt: [], rot: ((o.rot ?? 0) % 3 + 3) % 3, legacy: o,
       updatedAt: stamp, deleted: false,
     };

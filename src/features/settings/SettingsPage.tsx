@@ -50,6 +50,11 @@ export function SettingsPage() {
         <label className="toggle"><input type="checkbox" checked={s.addShowMore} onChange={(e) => void updateSettings({ addShowMore: e.target.checked })} />
           <span>默认展开"更多字段"<small>添加页里的例句、词族线索、出处、补充。关闭后需要时点"更多字段"展开</small></span></label>
       </section>
+      <section>
+        <h2>挖空卡</h2>
+        <label className="toggle"><input type="checkbox" checked={s.clozeLetters} onChange={(e) => void updateSettings({ clozeLetters: e.target.checked })} />
+          <span>横线处显示首字母和字母数<small>例如 s _ _ _ _ _ _ _。横线处的中文提示在编辑笔记的"挖空提示"里填，没填时正面显示中文意思</small></span></label>
+      </section>
       <SrsForm s={s} />
       <SyncSection />
       <DataSection />

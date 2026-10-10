@@ -197,3 +197,5 @@ code { font-family: var(--mono); background: var(--surface2); padding: 0 4px; bo
 .marker .tok { background: transparent; border: none; border-radius: 4px; padding: 0 1px; cursor: pointer; font: inherit; color: var(--text); }
 .marker .tok:hover { background: var(--surface2); }
 .marker .tok.is-on { background: var(--accent-dim); color: var(--accent); font-weight: 700; }
+
+.blank.has-hint { color: var(--muted); font-size: .8em; padding: 0 .3em; min-width: 0; white-space: pre-wrap; }

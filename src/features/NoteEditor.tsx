@@ -28,7 +28,7 @@ export function NoteEditor({ note, onClose }: { note: Note; onClose: () => void 
   const [f, setF] = useState({
     lemma: note.lemma, sentence: note.sentence, meaningZh: note.meaningZh, meaningEn: note.meaningEn,
     cueFamily: note.cueFamily ?? '', source: note.source ?? '', extra: note.extra ?? '',
-    intentZh: note.intentZh ?? '', hint: note.hint ?? '', answerFr: note.answerFr ?? '',
+    intentZh: note.intentZh ?? '', hint: note.hint ?? '', clozeHint: note.clozeHint ?? '', answerFr: note.answerFr ?? '',
     layer: note.layer, cardTypes: note.cardTypes, tags: note.tags, deckId: note.deckId, day: note.createdAt.slice(0, 10),
   });
   const set = <K extends keyof typeof f>(k: K, v: (typeof f)[K]) => setF((x) => ({ ...x, [k]: v }));
@@ -39,7 +39,7 @@ export function NoteEditor({ note, onClose }: { note: Note; onClose: () => void 
     await updateNote(note.id, {
       lemma: f.lemma.trim(), sentence: f.sentence.trim(), meaningZh: f.meaningZh.trim(), meaningEn: f.meaningEn.trim(),
       cueFamily: nul(f.cueFamily), source: nul(f.source), extra: nul(f.extra),
-      intentZh: nul(f.intentZh), hint: nul(f.hint), answerFr: nul(f.answerFr),
+      intentZh: nul(f.intentZh), hint: nul(f.hint), clozeHint: nul(f.clozeHint), answerFr: nul(f.answerFr),
       layer: f.layer, cardTypes: TYPES.map(([t]) => t).filter((t) => f.cardTypes.includes(t)),
       tags: f.tags, deckId: f.deckId,
       ...(f.day !== note.createdAt.slice(0, 10) ? { createdAt: noonIso(f.day) } : {}),
@@ -47,7 +47,7 @@ export function NoteEditor({ note, onClose }: { note: Note; onClose: () => void 
     toast('已保存');
     onClose();
   };
-  type TextKey = 'lemma' | 'sentence' | 'meaningZh' | 'meaningEn' | 'cueFamily' | 'source' | 'extra' | 'intentZh' | 'hint' | 'answerFr';
+  type TextKey = 'lemma' | 'sentence' | 'meaningZh' | 'meaningEn' | 'cueFamily' | 'source' | 'extra' | 'intentZh' | 'hint' | 'clozeHint' | 'answerFr';
   const text = (k: TextKey, label: string, ph = '') => (
     <label className="field">
       <span className="field-label">{label}</span>
@@ -56,7 +56,7 @@ export function NoteEditor({ note, onClose }: { note: Note; onClose: () => void 
     </label>
   );
   // 预览用编辑中的内容
-  const draft: Note = { ...note, ...f, cueFamily: f.cueFamily || null, source: f.source || null, extra: f.extra || null, intentZh: f.intentZh || null, hint: f.hint || null, answerFr: f.answerFr || null };
+  const draft: Note = { ...note, ...f, cueFamily: f.cueFamily || null, source: f.source || null, extra: f.extra || null, intentZh: f.intentZh || null, hint: f.hint || null, clozeHint: f.clozeHint || null, answerFr: f.answerFr || null };
   const labels: [string, string, string] = s ? [langLabel(s.sourceLang), langLabel(s.targetLang1), langLabel(s.targetLang2)] : ['', '', ''];
   const wantProd = f.cardTypes.includes('production');
   return (
@@ -86,6 +86,7 @@ export function NoteEditor({ note, onClose }: { note: Note; onClose: () => void 
       {text('cueFamily', '词族线索', '例如：repérer 找出、标出')}
       {text('source', '出处', '例如：InnerFrench · 第 12 集')}
       {text('extra', '补充', '例如：≠ se tenir à 扶住')}
+      {f.cardTypes.includes('cloze') && text('clozeHint', '挖空提示（可选，横线处显示）', `例如：飞越。留空时正面显示${labels[1]}意思`)}
       {wantProd && (
         <fieldset className="prod">
           <legend>产出卡</legend>

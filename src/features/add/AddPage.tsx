@@ -91,7 +91,7 @@ function AddOne({ deckId }: { deckId: string }) {
     const nul = (x: string) => (x.trim() ? x.trim() : null);
     const { noteId } = await addNote({
       deckId, createdAtMs: created, lemma, sentence, tags, cardTypes: types, layer: has('production') ? 'core' : 'mid',
-      intentZh: nul(f.intentZh), hint: nul(f.hint), answerFr: nul(f.answerFr), cueFamily: nul(f.cueFamily), source: nul(f.source), extra: nul(f.extra),
+      intentZh: nul(f.intentZh), hint: nul(f.hint), clozeHint: nul(f.clozeHint), answerFr: nul(f.answerFr), cueFamily: nul(f.cueFamily), source: nul(f.source), extra: nul(f.extra),
     });
     const toTranslate = target || plain;
     setText(''); setF(EMPTY); setTypes(['recognition']); setTried(false);
@@ -112,7 +112,7 @@ function AddOne({ deckId }: { deckId: string }) {
   );
   const draft = {
     ...BLANK_NOTE, lemma, sentence, cardTypes: types, meaningZh: '', meaningEn: '',
-    intentZh: f.intentZh || null, hint: f.hint || null, answerFr: f.answerFr || null,
+    intentZh: f.intentZh || null, hint: f.hint || null, clozeHint: f.clozeHint || null, answerFr: f.answerFr || null,
     cueFamily: f.cueFamily || null, source: f.source || null, extra: f.extra || null,
   };
 
@@ -146,6 +146,7 @@ function AddOne({ deckId }: { deckId: string }) {
           {f.sentence.trim() && <><ClozeMarker value={f.sentence} onChange={(v) => set('sentence', v)} /><p className="muted small">点词标记考查部分</p></>}
         </>
       )}
+      {has('cloze') && field('clozeHint', '挖空提示（可选，横线处显示）', `例如：飞越。留空时正面显示${labels[1]}意思`)}
       {has('production') && (
         <fieldset className="prod">
           <legend>产出卡</legend>
@@ -183,9 +184,9 @@ function AddOne({ deckId }: { deckId: string }) {
   );
 }
 
-const EMPTY = { sentence: '', intentZh: '', hint: '', answerFr: '', cueFamily: '', source: '', extra: '' };
+const EMPTY = { sentence: '', intentZh: '', hint: '', clozeHint: '', answerFr: '', cueFamily: '', source: '', extra: '' };
 const BLANK_NOTE: Note = {
   id: 'draft', deckId: '', createdAt: '2026-01-01T00:00:00.000Z', lemma: '', sentence: '', meaningZh: '', meaningEn: '',
-  cueFamily: null, intentZh: null, hint: null, answerFr: null, extra: null, source: null, layer: 'mid', cardTypes: ['recognition'],
+  cueFamily: null, intentZh: null, hint: null, clozeHint: null, answerFr: null, extra: null, source: null, layer: 'mid', cardTypes: ['recognition'],
   tags: [], usedCount: 0, usedAt: [], rot: 0, legacy: null, updatedAt: '2026-01-01T00:00:00.000Z', deleted: false,
 };

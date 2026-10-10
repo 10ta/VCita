@@ -37,6 +37,8 @@ export const NoteV2 = z.looseObject({
   cueFamily: z.string().nullable().default(null),
   intentZh: z.string().nullable().default(null),
   hint: z.string().nullable().default(null),
+  /** 挖空卡横线处显示的提示（同 Anki 的 {{c1::答案::提示}}），例如"飞越" */
+  clozeHint: z.string().nullable().default(null),
   answerFr: z.string().nullable().default(null),
   extra: z.string().nullable().default(null),
   source: z.string().nullable().default(null),
@@ -124,6 +126,8 @@ export const SettingsV2 = z.looseObject({
   overdueBonusMaxDays: z.number().int().min(0).default(30),
   /** 添加页的"更多字段"（例句、词族线索、出处、补充）默认是否展开 */
   addShowMore: z.boolean().default(true),
+  /** 挖空卡横线处显示首字母和字母数：s _ _ _ _ _ _ _ */
+  clozeLetters: z.boolean().default(false),
 });
 
 const file = <K extends string, S extends z.ZodRawShape>(kind: K, shape: S) =>

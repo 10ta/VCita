@@ -5,12 +5,19 @@ import type { Card, Note, Settings } from '../schema';
 import { dayStartMs, daysBetween, fmtDays, fromIso, studyDay } from '../lib/time';
 import { speak } from '../lib/speech';
 
-/** "a {{b}} c" → a <b>b</b> c */
-export function renderSentence(s: string, mode: 'bold' | 'blank' = 'bold'): ReactNode[] {
+/** "survoler la Sibérie" → "s _ _ _ _ _ _ _   l _" ：每个词的首字母 + 其余字母数，标点和省音号原样 */
+export function letterPattern(t: string): string {
+  return t.split(/(\s+)/).map((w) => (/^\s+$/.test(w) ? '   ' : w.replace(/\p{L}/gu, (ch, i) => (i === 0 || !/\p{L}/u.test(w.slice(0, i)) ? ch : ' _')).replace(/^ /, ''))).join('');
+}
+
+/** "a {{b}} c" → a <b>b</b> c；挖空模式下横线处显示提示 / 首字母 */
+export function renderSentence(s: string, mode: 'bold' | 'blank' = 'bold', blank?: { hint?: string | null; letters?: boolean }): ReactNode[] {
   return s.split(/(\{\{.*?\}\})/g).map((part, i) => {
     const m = /^\{\{(.*)\}\}$/.exec(part);
     if (!m) return part;
-    return mode === 'bold' ? <b key={i} className="cloze">{m[1]}</b> : <span key={i} className="blank">___</span>;
+    if (mode === 'bold') return <b key={i} className="cloze">{m[1]}</b>;
+    const label = [blank?.hint?.trim() ? `[${blank.hint.trim()}]` : '', blank?.letters ? letterPattern(m[1]) : ''].filter(Boolean).join(' ');
+    return label ? <span key={i} className="blank has-hint">{label}</span> : <span key={i} className="blank">___</span>;
   });
 }
 export const plainSentence = (s: string) => s.replace(/\{\{(.*?)\}\}/g, '$1');
@@ -57,9 +64,11 @@ export function cardView(type: Card['type'], note: Note, s: Settings, quizType: 
   }
   if (type === 'cloze') {
     const plain = plainSentence(note.sentence);
+    // 横线处有专门的挖空提示时就不再另给；没有时用中文意思当提示，避免横线处有多种填法
+    const hint = note.clozeHint?.trim() ? null : note.meaningZh.trim() || null;
     return {
-      question: { text: renderSentence(note.sentence, 'blank'), speakText: '', lang: s.sourceLang, label: labels[0] },
-      hint: null, cues: 'all',
+      question: { text: renderSentence(note.sentence, 'blank', { hint: note.clozeHint, letters: s.clozeLetters }), speakText: '', lang: s.sourceLang, label: labels[0] },
+      hint, cues: 'all',
       answers: [
         { text: renderSentence(note.sentence), speakText: plain, lang: s.sourceLang, label: labels[0] },
         { text: note.meaningZh, speakText: note.meaningZh, lang: s.targetLang1, label: labels[1] },
