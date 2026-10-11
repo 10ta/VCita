@@ -17,3 +17,9 @@ export const useTodayLogs = (dayStartHour: number | undefined, now: number) => {
   return r && r.day === day ? r.logs : undefined;
 };
 export const useOnboarded = () => useLiveQuery(async () => !!(await db.meta.get(ONBOARDED_KEY))?.value || (await db.notes.count()) > 0, []);
+/** 某个学习日起至今的日志（不含墓碑） */
+export const useLogsSince = (fromDay: string | null) =>
+  useLiveQuery(async () => (fromDay ? (await db.logs.where('day').aboveOrEqual(fromDay).toArray()).filter((l) => !l.deleted) : []), [fromDay]);
+/** 一条笔记的全部日志，新的在前 */
+export const useNoteLogs = (noteId: string) =>
+  useLiveQuery(async () => (await db.logs.where('noteId').equals(noteId).toArray()).filter((l) => !l.deleted).sort((a, b) => (a.ts < b.ts ? 1 : -1)), [noteId]);
