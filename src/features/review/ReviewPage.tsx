@@ -4,7 +4,7 @@ import { answerCard, bumpUsed, setSuspended, undoAnswer, type AnswerResult } fro
 import { buildQueue } from '../../srs/queue';
 import { fmtNextIn, preview, type Rating } from '../../srs/scheduler';
 import { fmtDays, fmtMinutes, fromIso } from '../../lib/time';
-import { answerCustom, endCustom, nextQueue, restoreCustom, useCustom, type CustomSession } from '../../srs/custom';
+import { answerCustom, endCustom, nextQueue, pickCustom, restoreCustom, useCustom, type CustomSession } from '../../srs/custom';
 import { speak } from '../../lib/speech';
 import { usePrefs, setPrefs } from '../../ui/prefs';
 import { useHotkeys, useNow } from '../../ui/hooks';
@@ -39,7 +39,9 @@ export function ReviewPage({ deckId }: { deckId: string }) {
   const shownAt = useRef(Date.now());
   const answeredThisSession = useRef(0);
   /** 刚答过的卡：等数据库更新到这个版本后再选下一张，避免读到旧数据又选中它 */
-  const waitFor = useRef<{ id: string; updatedAt: string } | null>(null);
+  const waitFor = useRef<{ id: string; updatedAt: string; logId: string; at: number } | null>(null);
+  /** 自定义学习里最近作答的笔记，用来把兄弟卡隔开 */
+  const recentNotes = useRef<string[]>([]);
 
   const noteMap = useMemo(() => new Map((notes ?? []).map((n) => [n.id, n])), [notes]);
   const q = useMemo(
@@ -48,7 +50,7 @@ export function ReviewPage({ deckId }: { deckId: string }) {
   );
   const card = currentId ? cards?.find((c) => c.id === currentId) ?? null : null;
   const cardById = useMemo(() => new Map((cards ?? []).map((c) => [c.id, c])), [cards]);
-  const customNext = custom ? custom.queue.find((id) => { const c = cardById.get(id); return c && !c.suspended; }) ?? null : null;
+  const customNext = custom ? pickCustom(custom.queue, cardById, recentNotes.current) : null;
   const nextId = custom ? customNext : q?.next?.id ?? null;
   const note = card ? noteMap.get(card.noteId) ?? null : null;
 
@@ -59,6 +61,9 @@ export function ReviewPage({ deckId }: { deckId: string }) {
     if (w) {
       const c = cards.find((x) => x.id === w.id);
       if (c && c.updatedAt === w.updatedAt) return; // 数据库里还是作答前的版本，继续等
+      // 卡片和日志是两个独立的实时查询，可能一先一后更新：日志还没到时出题会漏掉"同笔记当天只出一张"，
+      // 刚答完产出卡紧接着就出同一条笔记的挖空卡。等日志也到了再选（最多等 3 秒）
+      if (!logs?.some((l) => l.id === w.logId) && Date.now() - w.at < 3000) return;
       waitFor.current = null;
     }
     const valid = card && !card.suspended && (custom ? custom.queue.includes(card.id) : card.deckId === deckId);
@@ -67,7 +72,7 @@ export function ReviewPage({ deckId }: { deckId: string }) {
       setRevealed(false);
       shownAt.current = Date.now();
     }
-  }, [q, cards, card, deckId, custom, nextId]);
+  }, [q, cards, logs, card, deckId, custom, nextId]);
 
   // 一轮结束：自动同步打开时立即同步一次
   useEffect(() => {
@@ -117,11 +122,14 @@ export function ReviewPage({ deckId }: { deckId: string }) {
     undo.current.push({ cardId: card.id, res, custom });
     if (undo.current.length > 30) undo.current.shift();
     setUndoCount(undo.current.length);
-    if (custom) answerCustom(card.id, r);
+    if (custom) {
+      answerCustom(card.id, r);
+      recentNotes.current = [...recentNotes.current.slice(-9), card.noteId];
+    }
     if (res) {
       answeredThisSession.current++;
       if (res.leechNow) toast(`遗忘达到 ${s.leechThreshold} 次，已自动暂停，放进"待改造"`, true);
-      waitFor.current = { id: card.id, updatedAt: card.updatedAt };
+      waitFor.current = { id: card.id, updatedAt: card.updatedAt, logId: res.logId, at: Date.now() };
     }
     setCurrentId(null);
     setRevealed(false);

@@ -40,6 +40,23 @@ export const endCustom = () => set(null);
 export const restoreCustom = (s: CustomSession) => set(s);
 
 export const RELEARN_GAP = 3;
+/** 同一条笔记的卡至少隔几张再出（产出卡刚揭示过答案，紧跟着的挖空卡就没意义了） */
+export const SIBLING_GAP = 3;
+
+/** 纯函数：选下一张。跳过最近 SIBLING_GAP 次作答里出现过的笔记；实在没有别的卡时才出兄弟卡 */
+export function pickCustom<C extends { id: string; noteId: string; suspended: boolean }>(
+  queue: string[], cardById: Map<string, C>, recentNotes: string[],
+): string | null {
+  const recent = new Set(recentNotes.slice(-SIBLING_GAP));
+  let fallback: string | null = null;
+  for (const id of queue) {
+    const c = cardById.get(id);
+    if (!c || c.suspended) continue;
+    if (!recent.has(c.noteId)) return id;
+    fallback ??= id;
+  }
+  return fallback;
+}
 
 /** 纯函数：作答后的队列 */
 export function nextQueue(s: CustomSession, cardId: string, rating: 1 | 2 | 3 | 4): CustomSession {
