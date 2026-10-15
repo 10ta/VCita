@@ -9,7 +9,7 @@
 //   logs/2026-10/02.json      复习日志，按学习日。每次同步只会改当天这一个日志文件
 import { db } from '../db/db';
 import { getSettings, putSettingsRaw } from '../db/actions';
-import { CURRENT_SCHEMA_VERSION, parseCardsFile, parseLogsFile, parseNotesFile, parseProfileFile } from '../schema';
+import { CURRENT_SCHEMA_VERSION, parseCardsFile, parseLogsFile, parseNotesFile, parseProfileFile, type Card, type Deck, type Note, type ReviewLog, type Settings } from '../schema';
 import { mergeLww } from '../io/merge';
 import { fromIso, monthOf } from '../lib/time';
 import { sha1Hex } from '../lib/sha1';
@@ -75,21 +75,62 @@ function group<T>(list: T[], keyOf: (x: T) => string): Map<string, T[]> {
   return m;
 }
 
-/** 把本地数据序列化成仓库文件（路径相对于数据目录） */
-export async function buildLocalFiles(): Promise<Map<string, string>> {
+export interface LocalFile { text: string; sha: string }
+export interface LocalData {
+  decks: Deck[]; notes: Note[]; cards: Card[]; logs: ReviewLog[]; settings: Settings;
+}
+
+/**
+ * 每个文件上次序列化的结果。签名 = 文件里所有对象的 id + updatedAt：任何修改都会更新 updatedAt
+ * （合并只接受更新的 updatedAt），签名没变内容就没变，可以跳过序列化和哈希。
+ * 一次作答通常只改一个卡片月份文件和当天的日志文件，其余几十个文件直接用缓存。
+ */
+const fileCache = new Map<string, { sig: string } & LocalFile>();
+/** 测试用：清空缓存，下次全部重新序列化 */
+export const clearFileCache = () => fileCache.clear();
+const sigOf = (list: Array<{ id: string; updatedAt: string }>) => {
+  let s = '';
+  for (const x of list) s += x.id + x.updatedAt + '|';
+  return s;
+};
+
+export const readLocalData = async (): Promise<LocalData> => {
   const [decks, notes, cards, logs, settings] = await Promise.all([
     db.decks.toArray(), db.notes.toArray(), db.cards.toArray(), db.logs.toArray(), getSettings(),
   ]);
+  return { decks, notes, cards, logs, settings };
+};
+
+/** 把本地数据序列化成仓库文件（路径相对于数据目录），带 blob SHA */
+export async function localFiles(data?: LocalData): Promise<Map<string, LocalFile>> {
+  const { decks, notes, cards, logs, settings } = data ?? (await readLocalData());
   const v = CURRENT_SCHEMA_VERSION;
-  const files = new Map<string, string>();
-  files.set(PROFILE_PATH, serialize({ schemaVersion: v, kind: 'profile', decks: decks.sort((a, b) => a.order - b.order || byId(a, b)), settings }));
+  const out = new Map<string, LocalFile>();
+  const put = async (rel: string, sig: string, make: () => unknown) => {
+    let e = fileCache.get(rel);
+    if (!e || e.sig !== sig) {
+      const text = serialize(make());
+      e = { sig, text, sha: await gitBlobSha(text) };
+      fileCache.set(rel, e);
+    }
+    out.set(rel, { text: e.text, sha: e.sha });
+  };
+  // profile 很小，直接用内容当签名
+  const profile = serialize({ schemaVersion: v, kind: 'profile', decks: [...decks].sort((a, b) => a.order - b.order || byId(a, b)), settings });
+  await put(PROFILE_PATH, profile, () => JSON.parse(profile));
   for (const [month, list] of [...group(notes, (n) => monthOf(n.createdAt))].sort())
-    files.set(`notes/${month}.json`, serialize({ schemaVersion: v, kind: 'notes', month, notes: sorted(list, 'createdAt') }));
+    await put(`notes/${month}.json`, sigOf(list), () => ({ schemaVersion: v, kind: 'notes', month, notes: sorted(list, 'createdAt') }));
   for (const [month, list] of [...group(cards, (c) => monthOf(c.createdAt))].sort())
-    files.set(`cards/${month}.json`, serialize({ schemaVersion: v, kind: 'cards', month, cards: sorted(list, 'createdAt') }));
+    await put(`cards/${month}.json`, sigOf(list), () => ({ schemaVersion: v, kind: 'cards', month, cards: sorted(list, 'createdAt') }));
   for (const [day, list] of [...group(logs, (l) => l.day)].sort())
-    files.set(`logs/${day.slice(0, 7)}/${day.slice(8)}.json`, serialize({ schemaVersion: v, kind: 'logs', day, logs: sorted(list, 'ts') }));
-  return files;
+    await put(`logs/${day.slice(0, 7)}/${day.slice(8)}.json`, sigOf(list), () => ({ schemaVersion: v, kind: 'logs', day, logs: sorted(list, 'ts') }));
+  for (const rel of fileCache.keys()) if (!out.has(rel)) fileCache.delete(rel);
+  return out;
+}
+
+/** 只要文本（测试和导出用） */
+export async function buildLocalFiles(): Promise<Map<string, string>> {
+  return new Map([...(await localFiles())].map(([rel, f]) => [rel, f.text]));
 }
 
 /** 把远端文件按"较新者胜出"合并进本地 */

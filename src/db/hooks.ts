@@ -2,12 +2,17 @@ import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from './db';
 import { getSettings, ONBOARDED_KEY } from './actions';
 import { studyDay } from '../lib/time';
+import { liveStore, useLiveStore } from './live';
 
-export const useSettings = () => useLiveQuery(getSettings, []);
-export const useDecks = () =>
-  useLiveQuery(async () => (await db.decks.toArray()).filter((d) => !d.deleted).sort((a, b) => a.order - b.order), []);
-export const useNotes = () => useLiveQuery(async () => (await db.notes.toArray()).filter((n) => !n.deleted), []);
-export const useCards = () => useLiveQuery(async () => (await db.cards.toArray()).filter((c) => !c.deleted), []);
+// 整表查询由所有页面共用（见 live.ts）：作答后卡片表只读一次，切换页面不用重新读
+const settingsStore = liveStore(getSettings);
+const decksStore = liveStore(async () => (await db.decks.toArray()).filter((d) => !d.deleted).sort((a, b) => a.order - b.order));
+const notesStore = liveStore(async () => (await db.notes.toArray()).filter((n) => !n.deleted));
+const cardsStore = liveStore(async () => (await db.cards.toArray()).filter((c) => !c.deleted));
+export const useSettings = () => useLiveStore(settingsStore);
+export const useDecks = () => useLiveStore(decksStore);
+export const useNotes = () => useLiveStore(notesStore);
+export const useCards = () => useLiveStore(cardsStore);
 /** 当前学习日的日志（含墓碑，由调用方过滤） */
 export const useTodayLogs = (dayStartHour: number | undefined, now: number) => {
   const day = dayStartHour === undefined ? null : studyDay(now, dayStartHour);

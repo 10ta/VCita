@@ -133,16 +133,14 @@ export async function updateNote(id: string, patch: Partial<Omit<Note, 'id' | 'u
 }
 
 /** 产出表达在写作、口语里用上了一次 */
-export async function bumpUsed(noteId: string) {
-  const n = await db.notes.get(noteId);
-  if (n) await updateNote(noteId, { usedCount: n.usedCount + 1, usedAt: [...(n.usedAt ?? []), toIso(Date.now())] });
-}
+export const bumpUsed = (noteId: string) =>
+  updateNotes([noteId], (n) => ({ usedCount: n.usedCount + 1, usedAt: [...(n.usedAt ?? []), toIso(Date.now())] }));
 
+/** 批量修改：放在一个事务里，界面和同步计数只刷新一次（原来每条笔记各一次） */
 export async function updateNotes(ids: string[], fn: (n: Note) => Partial<Note>) {
-  for (const id of ids) {
-    const n = await db.notes.get(id);
-    if (n) await updateNote(id, fn(n));
-  }
+  await db.transaction('rw', [db.notes, db.cards, db.meta], async () => {
+    for (const n of await db.notes.bulkGet(ids)) if (n) await updateNote(n.id, fn(n));
+  });
 }
 
 async function tombstoneNotes(ids: string[]) {

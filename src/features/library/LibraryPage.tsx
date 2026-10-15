@@ -84,7 +84,7 @@ export function LibraryPage({ deckId }: { deckId: string }) {
 
   const cardsByNote = useMemo(() => {
     const m = new Map<string, Card[]>();
-    for (const c of cards ?? []) m.set(c.noteId, [...(m.get(c.noteId) ?? []), c]);
+    for (const c of cards ?? []) { const arr = m.get(c.noteId); if (arr) arr.push(c); else m.set(c.noteId, [c]); }
     return m;
   }, [cards]);
 

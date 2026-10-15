@@ -3,9 +3,10 @@
 // 推送时如果远端被别人抢先更新（非快进，422），重新拉取合并后重试。
 import { useSyncExternalStore } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
+import Dexie from 'dexie';
 import { db } from '../db/db';
 import { GitHub, GitHubError, parseRepo } from './github';
-import { applyRemoteFile, buildLocalFiles, gitBlobSha, isOurFile } from './files';
+import { applyRemoteFile, isOurFile, localFiles, type LocalData } from './files';
 import { toIso } from '../lib/time';
 
 export interface SyncConfig {
@@ -161,14 +162,17 @@ async function attempt(gh: GitHub, cfg: SyncConfig): Promise<SyncResult | 'retry
   //    全部下载完再按顺序合并进本地
   const toPull = [...remote].filter(([rel, sha]) => state.fileShas[rel] !== sha);
   const texts = await mapPool(toPull, PULL_CONCURRENCY, ([, sha]) => gh.getBlobText(sha));
-  for (let i = 0; i < toPull.length; i++) await applyRemoteFile(toPull[i][0], texts[i]);
+  // 全部放在一个事务里合并：界面只刷新一次，而不是每个文件刷新一次
+  if (toPull.length)
+    await db.transaction('rw', [db.decks, db.notes, db.cards, db.logs, db.meta], async () => {
+      for (let i = 0; i < toPull.length; i++) await applyRemoteFile(toPull[i][0], texts[i]);
+    });
   const pulled = toPull.length;
 
-  // 3. 对比：合并后的本地文件 vs 远端
-  const local = await buildLocalFiles();
-  const localShas = new Map<string, string>();
-  for (const [rel, text] of local) localShas.set(rel, await gitBlobSha(text));
-  const changed = [...local].filter(([rel]) => localShas.get(rel) !== remote.get(rel));
+  // 3. 对比：合并后的本地文件 vs 远端（没变的文件直接用上次的序列化结果和 SHA）
+  const files = await localFiles();
+  const localShas = new Map([...files].map(([rel, f]) => [rel, f.sha]));
+  const changed = [...files].filter(([rel, f]) => f.sha !== remote.get(rel)).map(([rel, f]) => [rel, f.text] as const);
 
   const finish = async (commit: string | null, pushed: number): Promise<SyncResult> => {
     await setSyncState({
@@ -208,24 +212,57 @@ async function attempt(gh: GitHub, cfg: SyncConfig): Promise<SyncResult | 'retry
 // ---------- 待同步计数 ----------
 
 /** 自上次同步以来本地改动过的文件数；未配置同步时为 null */
-export async function pendingFiles(): Promise<number | null> {
-  // 先完成所有数据库读取，再做哈希计算（liveQuery 依赖读取来追踪变化）
-  const [cfg, state, local] = await Promise.all([getSyncConfig(), getSyncState(), buildLocalFiles()]);
+export async function pendingFiles(data?: LocalData): Promise<number | null> {
+  const [cfg, state] = await Promise.all([getSyncConfig(), getSyncState()]);
   if (!cfg) return null;
   let n = 0;
-  for (const [rel, text] of local) if ((await gitBlobSha(text)) !== state.fileShas[rel]) n++;
+  for (const [rel, f] of await localFiles(data)) if (f.sha !== state.fileShas[rel]) n++;
   return n;
 }
 
-export const usePendingFiles = () => useLiveQuery(pendingFiles, []);
-/** 本地数据每变一次就变一次的值（用于"停手一段时间后再同步"） */
+/**
+ * 待同步文件数（全局只算一份，所有组件共用）。
+ * 本地数据一变就要重算；连续作答时合并成一次：最后一次改动后 400ms 再算，算的时候只重新序列化变了的文件。
+ */
+const PENDING_DEBOUNCE_MS = 400;
+let pending: number | null | undefined;
+const pendingListeners = new Set<() => void>();
+let pendingTimer: number | undefined;
+let pendingRun = 0;
+function schedulePending() {
+  if (!pendingListeners.size) return;
+  window.clearTimeout(pendingTimer);
+  pendingTimer = window.setTimeout(async () => {
+    const run = ++pendingRun;
+    try {
+      const v = await pendingFiles();
+      if (run !== pendingRun) return; // 算的过程中又有新改动，以后面那次为准
+      if (v !== pending) { pending = v; pendingListeners.forEach((l) => l()); }
+    } catch { /* 下次改动再算 */ }
+  }, pending === undefined ? 0 : PENDING_DEBOUNCE_MS);
+}
+function subscribePending(l: () => void) {
+  pendingListeners.add(l);
+  if (pendingListeners.size === 1) schedulePending();
+  return () => { pendingListeners.delete(l); };
+}
+export const usePendingFiles = () => useSyncExternalStore(subscribePending, () => pending);
+
+/** 本地数据每变一次就加一（用于"停手一段时间后再同步"）。不读数据，只听 Dexie 的变更通知 */
+let dataVersion = 0;
+const versionListeners = new Set<() => void>();
+// Dexie 在本标签页和其他标签页写入后都会发这个事件，键形如 idb://vcita/cards/索引名
+Dexie.on('storagemutated', (parts) => {
+  const keys = Object.keys(parts).filter((k) => k.startsWith(`idb://${db.name}/`));
+  if (!keys.length) return;
+  schedulePending(); // 同步状态、设置（meta 表）变了也要重算
+  if (keys.some((k) => /\/(decks|notes|cards|logs)\//.test(k))) {
+    dataVersion++;
+    versionListeners.forEach((l) => l());
+  }
+});
 export const useChangeTick = () =>
-  useLiveQuery(async () => {
-    const [n, c, l, d] = await Promise.all([db.notes.toArray(), db.cards.toArray(), db.logs.count(), db.decks.toArray()]);
-    let m = 0;
-    for (const x of [...n, ...c, ...d]) { const t = Date.parse(x.updatedAt); if (t > m) m = t; }
-    return `${m}:${l}`;
-  }, []);
+  useSyncExternalStore((l) => { versionListeners.add(l); return () => versionListeners.delete(l); }, () => dataVersion);
 
 /** 自动同步打开时立即同步一次（复习一轮结束时调用） */
 export async function syncIfAuto() {
