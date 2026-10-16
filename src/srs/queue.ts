@@ -6,7 +6,8 @@
 //     after = 复习完才出新卡
 //     复习卡顺序：overdue = 相对逾期（逾期时长 ÷ 间隔）大的先出；due = 按到期时间
 //  4. 同一条笔记的卡当天只出一张（今天已答过这条笔记的其他卡，推到明天）
-//  5. 都没有时，20 分钟内到期的学习卡提前出（Anki 的 learn ahead）
+//  5. 都没有时，20 分钟内到期的学习卡提前出（Anki 的 learn ahead）；但刚答完的那张不提前，
+//     否则只剩它时会立刻重复出现（例如重学卡点"困难"= 10 分钟后，却马上又出来）
 import type { Card, ReviewLog, Settings } from '../schema';
 import { fromIso, studyDay } from '../lib/time';
 
@@ -21,6 +22,8 @@ export interface QueueInput {
   settings: Pick<Settings, 'newPerDay' | 'reviewsPerDay' | 'dayStartHour'> & Partial<Pick<Settings, 'newReviewOrder' | 'reviewSort'>>;
   /** 本轮跳过的卡 */
   skipped?: Set<string>;
+  /** 用户点了"提前复习"：刚答完的那张也可以提前出 */
+  learnAheadAll?: boolean;
 }
 
 export interface QueueState {
@@ -30,6 +33,8 @@ export interface QueueState {
   done: { newDone: number; reviewDone: number };
   /** 队列为空时，下一张学习卡的到期时间 */
   nextLearningAt: number | null;
+  /** 队列为空、但有刚答完的学习卡在 20 分钟内到期，可以手动提前复习 */
+  canLearnAhead: boolean;
 }
 
 const byDue = (a: Card, b: Card) => fromIso(a.due) - fromIso(b.due) || (a.id < b.id ? -1 : 1);
@@ -85,7 +90,11 @@ export function buildQueue(q: QueueInput): QueueState {
     mixNew = newSeen.size / totalNew < revSeen.size / totalRev;
   }
   let next: Card | null = learningDue[0] ?? (mixNew ? news[0] : reviews[0]) ?? news[0] ?? null;
-  const ahead = learningAll.find((c) => fromIso(c.due) <= q.now + LEARN_AHEAD_MS);
+  // 今天最后答的那张卡
+  let lastId: string | null = null, lastTs = '';
+  for (const l of logs) if (l.ts > lastTs) { lastTs = l.ts; lastId = l.cardId; }
+  const aheadAll = learningAll.filter((c) => fromIso(c.due) <= q.now + LEARN_AHEAD_MS);
+  const ahead = q.learnAheadAll ? aheadAll[0] : aheadAll.find((c) => c.id !== lastId);
   if (!next && ahead) next = ahead;
   const laterLearning = learningAll.find((c) => fromIso(c.due) > q.now);
 
@@ -98,5 +107,6 @@ export function buildQueue(q: QueueInput): QueueState {
     },
     done: { newDone: newSeen.size, reviewDone: revSeen.size },
     nextLearningAt: next ? null : laterLearning ? fromIso(laterLearning.due) : null,
+    canLearnAhead: !next && aheadAll.length > 0,
   };
 }

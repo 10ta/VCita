@@ -74,3 +74,16 @@ describe('出题队列', () => {
     expect([q.next, q.nextLearningAt]).toEqual([null, NOW + 60 * 60000]);
   });
 });
+
+describe('提前学习（learn ahead）', () => {
+  it('刚答完的学习卡不立刻重复出现；有别的学习卡时先出别的；点了"提前复习"才出', () => {
+    const a = card({ state: 'relearning', due: toIso(NOW + 10 * 60000) });
+    const la = { ...log(a, 'relearning'), ts: toIso(NOW - 1000) };
+    const q = buildQueue({ cards: [a], todayLogs: [la], deckId: 'd', now: NOW, settings: S });
+    expect([q.next, q.canLearnAhead, q.nextLearningAt]).toEqual([null, true, NOW + 10 * 60000]);
+    expect(buildQueue({ cards: [a], todayLogs: [la], deckId: 'd', now: NOW, settings: S, learnAheadAll: true }).next?.id).toBe(a.id);
+    const b = card({ state: 'learning', due: toIso(NOW + 15 * 60000) });
+    const lb = { ...log(b, 'learning'), ts: toIso(NOW - 60000) };
+    expect(buildQueue({ cards: [a, b], todayLogs: [la, lb], deckId: 'd', now: NOW, settings: S }).next?.id).toBe(b.id);
+  });
+});

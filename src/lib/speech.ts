@@ -45,17 +45,49 @@ function playUrl(url: string): Promise<void> {
   });
 }
 
-function speakNative(text: string, lang: string) {
+/** 浏览器自带语音：必须找到对应语言的声音才读。刚打开页面时声音列表还是空的，等它加载（最多 1.5 秒）；
+ *  找不到就不读——否则会用默认的英语声音去读法语 */
+async function speakNative(text: string, lang: string) {
   const s = globalThis.speechSynthesis;
   if (!s) return;
+  let voices = s.getVoices();
+  if (!voices.length) {
+    voices = await new Promise<SpeechSynthesisVoice[]>((res) => {
+      const done = () => res(s.getVoices());
+      s.addEventListener('voiceschanged', done, { once: true });
+      setTimeout(done, 1500);
+    });
+  }
+  const base = lang.toLowerCase().split('-')[0];
+  const voice = voices.find((v) => v.lang.toLowerCase() === lang.toLowerCase()) ?? voices.find((v) => v.lang.toLowerCase().split(/[-_]/)[0] === base);
+  if (!voice) return;
   s.cancel();
   const u = new SpeechSynthesisUtterance(text);
-  u.lang = lang;
+  u.lang = voice.lang;
+  u.voice = voice;
   s.speak(u);
 }
 
+/**
+ * 刷新页面后、用户还没点过或按过任何键时，浏览器不允许自动播放声音（NotAllowedError）。
+ * 这时不换来源、也不退回自带语音，而是记下来，等用户第一次按键 / 点击时再播。
+ */
+let pendingAuto: { text: string; lang: string } | null = null;
+// 模块加载时就注册（早于复习页的快捷键监听，后者会拦住按键事件）
+const onGesture = () => {
+  const p = pendingAuto;
+  pendingAuto = null;
+  if (p) void speak(p.text, p.lang);
+};
+if (typeof window !== 'undefined') {
+  window.addEventListener('keydown', onGesture, true);
+  window.addEventListener('pointerdown', onGesture, true);
+}
+const playAfterGesture = (text: string, lang: string) => { pendingAuto = { text, lang }; };
+
 export async function speak(text: string, lang: string) {
   if (!text) return;
+  pendingAuto = null;
   const order = working === null ? sources.map((_, i) => i) : [working];
   for (const i of order) {
     try {
@@ -63,9 +95,11 @@ export async function speak(text: string, lang: string) {
       working = i;
       return;
     } catch (e) {
-      if ((e as Error).name === 'AbortError') return; // 被下一次播放打断，不算失败
+      const name = (e as Error).name;
+      if (name === 'AbortError') return; // 被下一次播放打断，不算失败
+      if (name === 'NotAllowedError') return playAfterGesture(text, lang); // 来源没问题，只是还不允许自动播放
     }
   }
   working = null;
-  speakNative(text, lang);
+  await speakNative(text, lang);
 }

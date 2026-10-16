@@ -32,6 +32,7 @@ export function ReviewPage({ deckId }: { deckId: string }) {
   const [revealed, setRevealed] = useState(false);
   const [editing, setEditing] = useState(false);
   const [skipped, setSkipped] = useState(() => new Set<string>());
+  const [learnAheadAll, setLearnAheadAll] = useState(false);
   const [undoCount, setUndoCount] = useState(0);
   /** 撤销栈：正常调度的作答有 res；自定义学习另存作答前的队列 */
   const undo = useRef<Array<{ cardId: string; res: AnswerResult | null; custom: CustomSession | null }>>([]);
@@ -45,8 +46,8 @@ export function ReviewPage({ deckId }: { deckId: string }) {
 
   const noteMap = useMemo(() => new Map((notes ?? []).map((n) => [n.id, n])), [notes]);
   const q = useMemo(
-    () => (s && cards && logs ? buildQueue({ cards, todayLogs: logs, deckId, now, settings: s, skipped }) : null),
-    [s, cards, logs, deckId, now, skipped],
+    () => (s && cards && logs ? buildQueue({ cards, todayLogs: logs, deckId, now, settings: s, skipped, learnAheadAll }) : null),
+    [s, cards, logs, deckId, now, skipped, learnAheadAll],
   );
   const card = currentId ? cards?.find((c) => c.id === currentId) ?? null : null;
   const cardById = useMemo(() => new Map((cards ?? []).map((c) => [c.id, c])), [cards]);
@@ -118,6 +119,7 @@ export function ReviewPage({ deckId }: { deckId: string }) {
   const scheduled = !custom || (!!card && card.state !== 'new' && fromIso(card.due) <= Date.now());
   const answer = async (r: Rating) => {
     if (!card || !revealed) return;
+    setLearnAheadAll(false);
     const res = scheduled ? await answerCard(card.id, r, { elapsedMs: Date.now() - shownAt.current }) : null;
     undo.current.push({ cardId: card.id, res, custom });
     if (undo.current.length > 30) undo.current.shift();
@@ -203,6 +205,7 @@ export function ReviewPage({ deckId }: { deckId: string }) {
           <div className="big-check">✓</div>
           <p>{answeredThisSession.current || undoCount ? '这一轮完成了' : '现在没有要学的卡片'}</p>
           {q.nextLearningAt && <p className="muted">还有学习中的卡，{new Date(q.nextLearningAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} 到期</p>}
+          {q.canLearnAhead && <button type="button" className="pill" onClick={() => setLearnAheadAll(true)}>现在就提前复习</button>}
           <p className="muted small">{limitLine}</p>
           {undoCount > 0 && <button type="button" className="pill" onClick={() => void doUndo()}>撤销上一次</button>}
         </div>
