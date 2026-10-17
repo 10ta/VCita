@@ -87,3 +87,12 @@ describe('提前学习（learn ahead）', () => {
     expect(buildQueue({ cards: [a, b], todayLogs: [la, lb], deckId: 'd', now: NOW, settings: S }).next?.id).toBe(b.id);
   });
 });
+
+describe('学习中计数', () => {
+  it('只算本学习日内到期的学习卡（明天 4 点到期的不算）', () => {
+    const soon = card({ state: 'learning', due: toIso(NOW + 10 * 60000) });
+    const tomorrow4 = card({ state: 'learning', due: toIso(new Date(2026, 9, 4, 4, 0).getTime()) });
+    const q = buildQueue({ cards: [soon, tomorrow4], todayLogs: [], deckId: 'd', now: NOW, settings: S });
+    expect(q.counts.learning).toBe(1);
+  });
+});

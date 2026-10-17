@@ -9,7 +9,7 @@
 //  5. 都没有时，20 分钟内到期的学习卡提前出（Anki 的 learn ahead）；但刚答完的那张不提前，
 //     否则只剩它时会立刻重复出现（例如重学卡点"困难"= 10 分钟后，却马上又出来）
 import type { Card, ReviewLog, Settings } from '../schema';
-import { fromIso, studyDay } from '../lib/time';
+import { addDaysToDay, dayStartMs, fromIso, studyDay } from '../lib/time';
 
 export const LEARN_AHEAD_MS = 20 * 60_000;
 
@@ -28,7 +28,7 @@ export interface QueueInput {
 
 export interface QueueState {
   next: Card | null;
-  /** 当前还剩：学习中（今天内到期）、复习、新卡 */
+  /** 当前还剩：学习中（本学习日内到期）、复习、新卡 */
   counts: { learning: number; review: number; new: number };
   done: { newDone: number; reviewDone: number };
   /** 队列为空时，下一张学习卡的到期时间 */
@@ -61,7 +61,8 @@ export function buildQueue(q: QueueInput): QueueState {
   const skipped = q.skipped ?? new Set<string>();
   const pool = q.cards.filter((c) => c.deckId === q.deckId && !c.deleted && !c.suspended && !skipped.has(c.id) && !sibling(c));
 
-  const endOfToday = q.now + 24 * 3_600_000;
+  // 本学习日结束（下一个切换时间，默认凌晨 4 点）：明天才到期的学习卡不算进"今天还要学"
+  const endOfToday = dayStartMs(addDaysToDay(today, 1), q.settings.dayStartHour);
   const learningAll = pool.filter((c) => c.state === 'learning' || c.state === 'relearning').sort(byDue);
   const learningDue = learningAll.filter((c) => fromIso(c.due) <= q.now);
 
@@ -101,7 +102,7 @@ export function buildQueue(q: QueueInput): QueueState {
   return {
     next,
     counts: {
-      learning: learningAll.filter((c) => fromIso(c.due) <= endOfToday).length,
+      learning: learningAll.filter((c) => fromIso(c.due) < endOfToday).length,
       review: reviews.length,
       new: news.length,
     },

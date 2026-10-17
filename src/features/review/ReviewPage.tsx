@@ -185,7 +185,7 @@ export function ReviewPage({ deckId }: { deckId: string }) {
         </div>
       ) : (
         <div className="counts">
-          <span className="c-learn" title="学习中 / 重学（今天内到期）">{q.counts.learning}</span>
+          <span className="c-learn" title="学习中 / 重学（本学习日内到期，默认到凌晨 4 点）">{q.counts.learning}</span>
           <span className="c-review" title="到期复习">{q.counts.review}</span>
           <span className="c-new" title="今天还能学的新卡">{q.counts.new}</span>
         </div>
