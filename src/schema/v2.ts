@@ -39,6 +39,10 @@ export const NoteV2 = z.looseObject({
   hint: z.string().nullable().default(null),
   /** 挖空卡横线处显示的提示（同 Anki 的 {{c1::答案::提示}}），例如"飞越" */
   clozeHint: z.string().nullable().default(null),
+  /** 挖空卡专用的例句（同样用 {{…}} 标出）；不填就用 sentence。和认读卡用不同的句子，避免背的是整句而不是词 */
+  clozeSentence: z.string().nullable().default(null),
+  /** 词源 / 词根的极简讲解，认读卡和挖空卡背面显示，例如：tentacule 触手 + -aire → 像触手一样四处伸展的 */
+  etymology: z.string().nullable().default(null),
   answerFr: z.string().nullable().default(null),
   extra: z.string().nullable().default(null),
   source: z.string().nullable().default(null),

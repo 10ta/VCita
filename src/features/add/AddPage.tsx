@@ -54,7 +54,7 @@ function AddOne({ deckId }: { deckId: string }) {
   const sentence = isSentence ? (hasCloze(text) ? text.trim() : '') : f.sentence.trim();
   const target = sentence ? clozeTarget(sentence) : '';
   const lemma = isSentence ? (hasCloze(text) ? target : plain) : plain;
-  const draftFields = { lemma, sentence, cardTypes: types, intentZh: f.intentZh || null, answerFr: f.answerFr || null };
+  const draftFields = { lemma, sentence, cardTypes: types, intentZh: f.intentZh || null, answerFr: f.answerFr || null, clozeSentence: f.clozeSentence || null };
   const errors = plain ? noteErrors(draftFields) : [];
   const has = (t: Card['type']) => types.includes(t);
 
@@ -91,7 +91,7 @@ function AddOne({ deckId }: { deckId: string }) {
     const nul = (x: string) => (x.trim() ? x.trim() : null);
     const { noteId } = await addNote({
       deckId, createdAtMs: created, lemma, sentence, tags, cardTypes: types, layer: has('production') ? 'core' : 'mid',
-      intentZh: nul(f.intentZh), hint: nul(f.hint), clozeHint: nul(f.clozeHint), answerFr: nul(f.answerFr), cueFamily: nul(f.cueFamily), source: nul(f.source), extra: nul(f.extra),
+      intentZh: nul(f.intentZh), hint: nul(f.hint), clozeHint: nul(f.clozeHint), clozeSentence: nul(f.clozeSentence), etymology: nul(f.etymology), answerFr: nul(f.answerFr), cueFamily: nul(f.cueFamily), source: nul(f.source), extra: nul(f.extra),
     });
     const toTranslate = target || plain;
     setText(''); setF(EMPTY); setTypes(['recognition']); setTried(false);
@@ -112,7 +112,7 @@ function AddOne({ deckId }: { deckId: string }) {
   );
   const draft = {
     ...BLANK_NOTE, lemma, sentence, cardTypes: types, meaningZh: '', meaningEn: '',
-    intentZh: f.intentZh || null, hint: f.hint || null, clozeHint: f.clozeHint || null, answerFr: f.answerFr || null,
+    intentZh: f.intentZh || null, hint: f.hint || null, clozeHint: f.clozeHint || null, clozeSentence: f.clozeSentence || null, etymology: f.etymology || null, answerFr: f.answerFr || null,
     cueFamily: f.cueFamily || null, source: f.source || null, extra: f.extra || null,
   };
 
@@ -146,6 +146,7 @@ function AddOne({ deckId }: { deckId: string }) {
           {f.sentence.trim() && <><ClozeMarker value={f.sentence} onChange={(v) => set('sentence', v)} /><p className="muted small">点词标记考查部分</p></>}
         </>
       )}
+      {has('cloze') && field('clozeSentence', '挖空例句（可选，和认读卡不同的句子）', '用 {{…}} 标出挖掉的部分；不填就用上面的例句')}
       {has('cloze') && field('clozeHint', '挖空提示（可选，横线处显示）', `例如：飞越。留空时正面显示${labels[1]}意思`)}
       {has('production') && (
         <fieldset className="prod">
@@ -160,6 +161,7 @@ function AddOne({ deckId }: { deckId: string }) {
           {field('cueFamily', '词族线索', '例如：repérer 找出、标出')}
           {field('source', '出处', '例如：InnerFrench · 第 12 集')}
           {field('extra', '补充', '例如：≠ se tenir à 扶住')}
+          {field('etymology', '词源（可选）', '例如：tentacule 触手 + -aire → 像触手一样伸展的')}
         </div>
       )}
       <div className="field"><span className="field-label">主题（对接下来添加的都生效）</span><ThemePicker value={tags} onChange={setTags} /></div>
@@ -184,9 +186,9 @@ function AddOne({ deckId }: { deckId: string }) {
   );
 }
 
-const EMPTY = { sentence: '', intentZh: '', hint: '', clozeHint: '', answerFr: '', cueFamily: '', source: '', extra: '' };
+const EMPTY = { sentence: '', intentZh: '', hint: '', clozeHint: '', clozeSentence: '', etymology: '', answerFr: '', cueFamily: '', source: '', extra: '' };
 const BLANK_NOTE: Note = {
   id: 'draft', deckId: '', createdAt: '2026-01-01T00:00:00.000Z', lemma: '', sentence: '', meaningZh: '', meaningEn: '',
-  cueFamily: null, intentZh: null, hint: null, clozeHint: null, answerFr: null, extra: null, source: null, layer: 'mid', cardTypes: ['recognition'],
+  cueFamily: null, intentZh: null, hint: null, clozeHint: null, clozeSentence: null, etymology: null, answerFr: null, extra: null, source: null, layer: 'mid', cardTypes: ['recognition'],
   tags: [], usedCount: 0, usedAt: [], rot: 0, legacy: null, updatedAt: '2026-01-01T00:00:00.000Z', deleted: false,
 };

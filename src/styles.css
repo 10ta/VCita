@@ -214,3 +214,5 @@ code { font-family: var(--mono); background: var(--surface2); padding: 0 4px; bo
 .nd-log th, .nd-log td { text-align: left; padding: 2px 10px 2px 0; white-space: nowrap; }
 .nd-log th { color: var(--dim); font-weight: normal; }
 .badge.is-dup { color: var(--warn); border-color: var(--warn); }
+.cue.etym { font-style: italic; opacity: .85; }
+.hint-btn { margin: 4px auto 0; display: block; }

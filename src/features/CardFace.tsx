@@ -4,6 +4,7 @@ import type { ReactNode } from 'react';
 import type { Card, Note, Settings } from '../schema';
 import { dayStartMs, daysBetween, fmtDays, fromIso, studyDay } from '../lib/time';
 import { speak } from '../lib/speech';
+import { hasCloze } from '../schema/validate';
 
 /** "survoler la Sibérie" → "s _ _ _ _ _ _ _   l _" ：每个词的首字母 + 其余字母数，标点和省音号原样 */
 export function letterPattern(t: string): string {
@@ -63,14 +64,16 @@ export function cardView(type: Card['type'], note: Note, s: Settings, quizType: 
     };
   }
   if (type === 'cloze') {
-    const plain = plainSentence(note.sentence);
+    // 有挖空专用例句就用它（和认读卡的句子不同），否则用主例句
+    const sent = note.clozeSentence?.trim() && hasCloze(note.clozeSentence) ? note.clozeSentence : note.sentence;
+    const plain = plainSentence(sent);
     // 横线处有专门的挖空提示时就不再另给；没有时用中文意思当提示，避免横线处有多种填法
     const hint = note.clozeHint?.trim() ? null : note.meaningZh.trim() || null;
     return {
-      question: { text: renderSentence(note.sentence, 'blank', { hint: note.clozeHint, letters: s.clozeLetters }), speakText: '', lang: s.sourceLang, label: labels[0] },
+      question: { text: renderSentence(sent, 'blank', { hint: note.clozeHint, letters: s.clozeLetters }), speakText: '', lang: s.sourceLang, label: labels[0] },
       hint, cues: 'all',
       answers: [
-        { text: renderSentence(note.sentence), speakText: plain, lang: s.sourceLang, label: labels[0] },
+        { text: renderSentence(sent), speakText: plain, lang: s.sourceLang, label: labels[0] },
         { text: note.meaningZh, speakText: note.meaningZh, lang: s.targetLang1, label: labels[1] },
       ],
     };
@@ -92,6 +95,7 @@ export function Cues({ note, only }: { note: Note; only?: 'extra' }) {
   const line1 = only ? '' : [note.cueFamily, note.source].filter(Boolean).join(' · ');
   return (
     <>
+      {!only && note.etymology && <div className="cue etym" title="词源">⌁ {note.etymology}</div>}
       {line1 && <div className="cue">{line1}</div>}
       {note.extra && <div className="cue">{note.extra}</div>}
     </>

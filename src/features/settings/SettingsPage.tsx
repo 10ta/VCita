@@ -133,6 +133,18 @@ function Backlog({ s }: { s: Settings }) {
   );
 }
 
+/** 从剪贴板导入备份 JSON：读不到、不是 JSON、不是备份时只给一条简短提示 */
+async function importFromClipboard() {
+  let text = '';
+  try { text = await navigator.clipboard.readText(); } catch { return toast('读不到剪贴板（浏览器未授权）', true); }
+  let raw: unknown;
+  try { raw = JSON.parse(text.trim()); } catch { return toast('剪贴板里没有备份 JSON', true); }
+  try {
+    const r = await importBundle(raw);
+    toast(`导入完成：笔记新增 ${r.notes.added}、更新 ${r.notes.updated}`);
+  } catch { toast('剪贴板里的内容不是 VCita 备份', true); }
+}
+
 function DataSection() {
   const bundleRef = useRef<HTMLInputElement>(null);
   const legacyRef = useRef<HTMLInputElement>(null);
@@ -146,6 +158,7 @@ function DataSection() {
       <div className="row">
         <button type="button" className="btn" onClick={() => void exportBundle().then((b) => downloadJson(b, `vcita-${fileStamp(Date.now())}.json`))}>导出备份</button>
         <button type="button" className="btn" onClick={() => pick(bundleRef)}>导入备份</button>
+        <button type="button" className="btn" title="复制了备份 JSON 后点这里直接导入" onClick={() => void importFromClipboard()}>从剪贴板导入</button>
         <button type="button" className="btn" onClick={() => pick(legacyRef)}>导入旧版备份</button>
       </div>
       <input ref={bundleRef} type="file" accept=".json,application/json" hidden onChange={async (e) => {

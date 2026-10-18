@@ -87,7 +87,9 @@ export function ReviewPage({ deckId }: { deckId: string }) {
   const split = note && s && card ? cardView(card.type, note, s, prefs.quizType, labels) : null;
   // 产出卡可以先写出答案，揭示后和标准答案并排对照（不自动判对错）
   const [typed, setTyped] = useState('');
-  useEffect(() => setTyped(''), [currentId]);
+  // 产出卡的首字母提示默认收起，想不出来时再点开（H），否则一眼看到就失去了回忆的意义
+  const [showHint, setShowHint] = useState(false);
+  useEffect(() => { setTyped(''); setShowHint(false); }, [currentId]);
 
   // 自动发音：新卡出现时读题面
   const lastSpoken = useRef<string | null>(null);
@@ -109,6 +111,7 @@ export function ReviewPage({ deckId }: { deckId: string }) {
     if (k === 's' || k === 'S') return skip();
     if (k === 'p' || k === 'P') return void suspend();
     if (k === 'e' || k === 'E') return setEditing(true);
+    if ((k === 'h' || k === 'H') && card.type === 'production' && !revealed) return setShowHint(true);
     if (k === 'l' || k === 'L') return openInLibrary(card.noteId);
     return false;
   });
@@ -228,7 +231,9 @@ export function ReviewPage({ deckId }: { deckId: string }) {
               <span>{split.question.text || <i className="muted">（{split.question.label}为空）</i>}</span>
               <SpeakBtn text={split.question.speakText} lang={split.question.lang} size={20} />
             </div>
-            {split.hint && <div className="cue">提示：{split.hint}</div>}
+            {split.hint && (card.type !== 'production' || showHint || revealed
+              ? <div className="cue">提示：{split.hint}</div>
+              : <button type="button" className="pill hint-btn" onClick={() => setShowHint(true)} title="首字母提示 (H)">提示 <kbd>H</kbd></button>)}
             <CardStats card={card} s={s} center />
             {card.type === 'production' && !revealed && (
               <input className="type-in" value={typed} placeholder="先写出法语（可选），回车显示答案" onChange={(e) => setTyped(e.target.value)}
@@ -266,7 +271,7 @@ export function ReviewPage({ deckId }: { deckId: string }) {
             )}
           </div>
           <p className="keys muted small">
-            <kbd>空格</kbd> 显示答案 / 良好　<kbd>1</kbd>–<kbd>4</kbd> 评分　<kbd>U</kbd> 撤销　<kbd>S</kbd> 跳过　<kbd>P</kbd> 暂停　<kbd>E</kbd> 编辑　<kbd>L</kbd> 词库<br />{limitLine}
+            <kbd>空格</kbd> 显示答案 / 良好　<kbd>1</kbd>–<kbd>4</kbd> 评分　<kbd>U</kbd> 撤销　<kbd>S</kbd> 跳过　<kbd>P</kbd> 暂停　<kbd>E</kbd> 编辑　<kbd>L</kbd> 词库　<kbd>H</kbd> 提示<br />{limitLine}
           </p>
         </>
       )}

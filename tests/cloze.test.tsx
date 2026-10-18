@@ -35,3 +35,20 @@ describe('挖空提示', () => {
     expect(blankText(v)).toBe('[飞越] s _ _ _ _ _ _ _');
   });
 });
+
+describe('挖空专用例句', () => {
+  it('有 clozeSentence 时挖空卡用它，认读卡仍用主例句', () => {
+    const n = note({ clozeSentence: "Le drone doit {{survoler}} la zone avant l'aube.", clozeHint: '飞越' });
+    const v = cardView('cloze', n, S, 0, L);
+    expect(blankText(v)).toBe('[飞越]');
+    expect((v.question.text as unknown[]).filter((x) => typeof x === 'string').join('')).toContain('Le drone doit');
+    const r = cardView('recognition', n, S, 0, L);
+    expect(JSON.stringify(r.question.text)).toContain("l'avion doit");
+  });
+  it('校验：挖空例句必须带 {{…}}；只有挖空例句时也能做挖空卡', async () => {
+    const { noteErrors } = await import('../src/schema/validate');
+    const base = { lemma: 'x', sentence: '', cardTypes: ['cloze'] as const, intentZh: null, answerFr: null };
+    expect(noteErrors({ ...base, cardTypes: [...base.cardTypes], clozeSentence: 'sans marque' })).toContain('挖空例句里要用 {{…}} 标出挖掉的部分');
+    expect(noteErrors({ ...base, cardTypes: [...base.cardTypes], clozeSentence: 'avec {{marque}}' })).toEqual([]);
+  });
+});
