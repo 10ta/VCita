@@ -11,7 +11,6 @@ import { AutoSync, SyncBadge } from './sync/SyncBadge';
 import { ReviewPage } from './features/review/ReviewPage';
 import { LibraryPage } from './features/library/LibraryPage';
 import { AddPage } from './features/add/AddPage';
-import { DecksPage } from './features/decks/DecksPage';
 import { StatsPage } from './features/stats/StatsPage';
 import { SettingsPage } from './features/settings/SettingsPage';
 import { Onboarding } from './features/Onboarding';
@@ -22,13 +21,17 @@ const NAV = [
   { key: 'library', label: '词库' },
   { key: 'add', label: '添加' },
   { key: 'stats', label: '统计' },
-  { key: 'decks', label: '牌组' },
   { key: 'settings', label: '设置' },
 ] as const;
 type RouteKey = (typeof NAV)[number]['key'];
 
 function readRoute(): RouteKey {
   const key = location.hash.replace(/^#\/?/, '').split(/[/?]/)[0];
+  // 牌组管理并进了设置：旧链接跳到设置里的牌组分类
+  if (key === 'decks') {
+    history.replaceState(null, '', '#/settings?s=decks');
+    return 'settings';
+  }
   return (NAV.find((n) => n.key === key)?.key ?? 'review') as RouteKey;
 }
 function useRoute(): RouteKey {
@@ -104,8 +107,7 @@ export function App() {
             : route === 'review' ? <ReviewPage deckId={deckId} />
             : route === 'library' ? <LibraryPage deckId={deckId} />
             : route === 'add' ? <AddPage deckId={deckId} />
-            : route === 'stats' ? <StatsPage deckId={deckId} />
-            : <DecksPage deckId={deckId} />}
+            : <StatsPage deckId={deckId} />}
         </ErrorBoundary>
       </main>
       {help && <Help onClose={() => setHelp(false)} />}
