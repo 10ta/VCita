@@ -1,7 +1,7 @@
 // 设置 → 牌组：牌组增删改频率很低，从独立页面并到设置里
 import { useState } from 'react';
 import { useCards, useDecks, useNotes } from '../../db/hooks';
-import { createDeck, deleteDeck, renameDeck } from '../../db/actions';
+import { createDeck, deleteDeck, mergeDeck, renameDeck } from '../../db/actions';
 import { setPrefs, usePrefs } from '../../ui/prefs';
 import { Modal } from '../../ui/Modal';
 import { fromIso } from '../../lib/time';
@@ -15,6 +15,7 @@ export function DeckSection() {
   const [name, setName] = useState('');
   const [renaming, setRenaming] = useState<{ id: string; name: string } | null>(null);
   const [deleting, setDeleting] = useState<string | null>(null);
+  const [merging, setMerging] = useState<{ from: string; to: string } | null>(null);
   if (!decks || !notes || !cards) return <section id="decks"><h2>牌组</h2></section>;
   const current = decks.find((d) => d.id === prefs.deckId)?.id ?? decks[0]?.id;
   const now = Date.now();
@@ -47,6 +48,7 @@ export function DeckSection() {
               <div className="deck-ops">
                 {!on && <button type="button" className="btn" onClick={() => setPrefs({ deckId: d.id })}>设为当前</button>}
                 <button type="button" className="icon" title="重命名" aria-label={`重命名 ${d.name}`} onClick={() => setRenaming({ id: d.id, name: d.name })}>✎</button>
+                {decks.length > 1 && <button type="button" className="btn" title="把这个牌组的笔记和卡片并入另一个牌组，复习进度保留" onClick={() => setMerging({ from: d.id, to: decks.find((x) => x.id !== d.id)!.id })}>合并到…</button>}
                 {decks.length > 1 && <button type="button" className="icon is-danger" title="删除" aria-label={`删除 ${d.name}`} onClick={() => setDeleting(d.id)}>🗑</button>}
               </div>
             </li>
@@ -62,6 +64,21 @@ export function DeckSection() {
         <Modal title="重命名牌组" onClose={() => setRenaming(null)} footer={<button type="button" className="btn is-primary" onClick={() => void renameDeck(renaming.id, renaming.name).then(() => setRenaming(null))}>保存</button>}>
           <input value={renaming.name} autoFocus onChange={(e) => setRenaming({ ...renaming, name: e.target.value })}
             onKeyDown={(e) => { if (e.key === 'Enter' && !e.nativeEvent.isComposing) void renameDeck(renaming.id, renaming.name).then(() => setRenaming(null)); }} />
+        </Modal>
+      )}
+      {merging && (
+        <Modal title="合并牌组" onClose={() => setMerging(null)} footer={<>
+          <button type="button" className="btn" onClick={() => setMerging(null)}>取消</button>
+          <button type="button" className="btn is-primary" onClick={() => void mergeDeck(merging.from, merging.to).then((n) => {
+            if (prefs.deckId === merging.from) setPrefs({ deckId: merging.to });
+            setMerging(null); toast(`已合并 ${n} 条笔记`);
+          }, (e: Error) => toast(e.message, true))}>合并</button>
+        </>}>
+          <p>把"{decks.find((d) => d.id === merging.from)?.name}"的 {stat(merging.from).notes} 条笔记并入：</p>
+          <select value={merging.to} onChange={(e) => setMerging({ ...merging, to: e.target.value })} aria-label="目标牌组">
+            {decks.filter((d) => d.id !== merging.from).map((d) => <option key={d.id} value={d.id}>{d.name}</option>)}
+          </select>
+          <p className="muted">复习进度和日志都保留，合并后原牌组删除。</p>
         </Modal>
       )}
       {deleting && (

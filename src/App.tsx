@@ -83,7 +83,7 @@ export function App() {
     <div className="app">
       <header className="top">
         <a className="brand" href="#/review"><span className="mark">鍛</span>VCita</a>
-        {decks && decks.length > 0 && (
+        {decks && decks.length > 1 && (
           <select className="deck-select" value={deckId ?? ''} onChange={(e) => setPrefs({ deckId: e.target.value })} aria-label="当前牌组">
             {decks.map((d) => <option key={d.id} value={d.id}>{d.name}</option>)}
           </select>

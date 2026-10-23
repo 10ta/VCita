@@ -47,6 +47,24 @@ export async function deleteDeck(id: string) {
   });
 }
 
+/**
+ * 把一个牌组合并进另一个：笔记和卡片改归属（调度进度、日志原样保留），源牌组打墓碑。
+ * 返回移动的笔记数。
+ */
+export async function mergeDeck(fromId: string, toId: string): Promise<number> {
+  if (fromId === toId) return 0;
+  return db.transaction('rw', [db.decks, db.notes, db.cards], async () => {
+    const [from, to] = await db.decks.bulkGet([fromId, toId]);
+    if (!from || !to || to.deleted) throw new Error('目标牌组不存在');
+    const notes = await db.notes.where('deckId').equals(fromId).toArray();
+    await db.notes.bulkPut(notes.map((n) => ({ ...n, deckId: toId, updatedAt: bumpIso(n.updatedAt) })));
+    const cards = await db.cards.where('deckId').equals(fromId).toArray();
+    await db.cards.bulkPut(cards.map((c) => ({ ...c, deckId: toId, updatedAt: bumpIso(c.updatedAt) })));
+    await db.decks.put({ ...from, deleted: true, updatedAt: bumpIso(from.updatedAt) });
+    return notes.filter((n) => !n.deleted).length;
+  });
+}
+
 /** 没有任何牌组时建一个默认牌组 */
 export async function ensureDeck(): Promise<string> {
   const live = (await db.decks.toArray()).filter((d) => !d.deleted).sort((a, b) => a.order - b.order);
