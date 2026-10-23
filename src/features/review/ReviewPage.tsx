@@ -46,8 +46,8 @@ export function ReviewPage({ deckId }: { deckId: string }) {
 
   const noteMap = useMemo(() => new Map((notes ?? []).map((n) => [n.id, n])), [notes]);
   const q = useMemo(
-    () => (s && cards && logs ? buildQueue({ cards, todayLogs: logs, deckId, now, settings: s, skipped, learnAheadAll }) : null),
-    [s, cards, logs, deckId, now, skipped, learnAheadAll],
+    () => (s && cards && logs ? buildQueue({ cards, todayLogs: logs, deckId, now, settings: s, skipped, learnAheadAll, notes: noteMap }) : null),
+    [s, cards, logs, deckId, now, skipped, learnAheadAll, noteMap],
   );
   const card = currentId ? cards?.find((c) => c.id === currentId) ?? null : null;
   const cardById = useMemo(() => new Map((cards ?? []).map((c) => [c.id, c])), [cards]);
@@ -166,7 +166,8 @@ export function ReviewPage({ deckId }: { deckId: string }) {
   const pv = card ? preview(card, s, now) : null;
   const PRACTICE: Record<Rating, string> = { 1: '稍后再练', 2: '本轮最后', 3: '本轮完成', 4: '本轮完成' };
   const btnNote = (r: Rating) => (!scheduled ? PRACTICE[r] : pv ? `${fmtNextIn(pv[r], fmtMinutes, fmtDays)}后` : '');
-  const limitLine = `今日已学：新卡 ${q.done.newDone}/${s.newPerDay} · 复习 ${q.done.reviewDone}${s.reviewsPerDay ? `/${s.reviewsPerDay}` : ''}`;
+  const limitLine = `今日已学：新卡 ${q.done.newDone}/${s.newPerDay} · 复习 ${q.done.reviewDone}${s.reviewsPerDay ? `/${s.reviewsPerDay}` : ''}`
+    + (q.reviewBacklog > 0 ? ` · 超出上限 ${q.reviewBacklog}` : '');
 
   return (
     <div className="page review">
@@ -210,6 +211,7 @@ export function ReviewPage({ deckId }: { deckId: string }) {
           {q.nextLearningAt && <p className="muted">还有学习中的卡，{new Date(q.nextLearningAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} 到期</p>}
           {q.canLearnAhead && <button type="button" className="pill" onClick={() => setLearnAheadAll(true)}>现在就提前复习</button>}
           <p className="muted small">{limitLine}</p>
+          {q.reviewBacklog > 0 && <p className="muted small">还有 {q.reviewBacklog} 张到期的复习卡被每日复习上限挡住，拖到明天会更难记、越积越多。建议把复习上限设为 0（不限），觉得量大就减少每日新卡。</p>}
           {undoCount > 0 && <button type="button" className="pill" onClick={() => void doUndo()}>撤销上一次</button>}
         </div>
       ) : (

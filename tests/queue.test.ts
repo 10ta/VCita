@@ -95,4 +95,33 @@ describe('学习中计数', () => {
     const q = buildQueue({ cards: [soon, tomorrow4], todayLogs: [], deckId: 'd', now: NOW, settings: S });
     expect(q.counts.learning).toBe(1);
   });
+  it('新卡顺序：重点主题 → 核心 → 中频 → 添加时间；created 只按添加时间', () => {
+    const at = (d: number) => toIso(NOW - 86400000 * d);
+    const a = card({ state: 'new', createdAt: at(9) }); // 中频
+    const b = card({ state: 'new', createdAt: at(8) }); // 核心
+    const c = card({ state: 'new', createdAt: at(7) }); // 中频 + 重点主题
+    const notes = new Map([
+      [a.noteId, { layer: 'mid' as const, tags: ['GÉNÉRAL' as const] }],
+      [b.noteId, { layer: 'core' as const, tags: ['GÉNÉRAL' as const] }],
+      [c.noteId, { layer: 'mid' as const, tags: ['SANTÉ' as const] }],
+    ]);
+    const S3 = { ...S, newPerDay: 3 };
+    const order = (settings: typeof S3 & { newSort?: 'layer' | 'created'; focusTags?: ('SANTÉ')[] }) => {
+      let cards = [a, b, c];
+      const logs: ReviewLog[] = [], ids: string[] = [];
+      for (let q = buildQueue({ cards, todayLogs: logs, deckId: 'd', now: NOW, settings, notes }); q.next; q = buildQueue({ cards, todayLogs: logs, deckId: 'd', now: NOW, settings, notes })) {
+        ids.push(q.next.id); logs.push(log(q.next, 'new')); cards = cards.filter((x) => x.id !== q.next!.id);
+      }
+      return ids;
+    };
+    expect(order(S3)).toEqual([b.id, a.id, c.id]);
+    expect(order({ ...S3, focusTags: ['SANTÉ'] })).toEqual([c.id, b.id, a.id]);
+    expect(order({ ...S3, newSort: 'created' })).toEqual([a.id, b.id, c.id]);
+  });
+  it('复习上限挡住的到期复习卡计入积压', () => {
+    const rs = Array.from({ length: 5 }, () => card({}));
+    const q = buildQueue({ cards: rs, todayLogs: [log(card({}), 'review')], deckId: 'd', now: NOW, settings: { ...S, reviewsPerDay: 3 } });
+    expect([q.counts.review, q.reviewBacklog]).toEqual([2, 3]);
+    expect(buildQueue({ cards: rs, todayLogs: [], deckId: 'd', now: NOW, settings: S }).reviewBacklog).toBe(0);
+  });
 });

@@ -126,6 +126,10 @@ export const SettingsV2 = z.looseObject({
   newReviewOrder: z.enum(['mix', 'after']).default('mix'),
   /** 复习卡顺序：overdue = 相对逾期（逾期天数 ÷ 间隔）最大的先出；due = 按到期时间 */
   reviewSort: z.enum(['overdue', 'due']).default('overdue'),
+  /** 新卡顺序：layer = 重点主题 → 核心 → 中频 → 添加时间；created = 只按添加时间 */
+  newSort: z.enum(['layer', 'created']).default('layer'),
+  /** 重点主题：这些主题的新卡最先出 */
+  focusTags: z.array(ThemeV2).default([]),
   /** 逾期答对时，因逾期多给的天数上限；0 = 不加成 */
   overdueBonusMaxDays: z.number().int().min(0).default(30),
   /** 添加页的"更多字段"（例句、词族线索、出处、补充）默认是否展开 */

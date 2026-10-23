@@ -7,6 +7,7 @@ import { dayStartMs, fileStamp, fromIso, studyDay } from '../../lib/time';
 import { SyncSection } from '../../sync/SyncSection';
 import { LANGS } from '../../ui/langs';
 import { toast } from '../../ui/toast';
+import { THEMES } from '../../schema';
 import type { Settings } from '../../schema';
 import { DeckSection } from './DeckSection';
 
@@ -152,7 +153,7 @@ type NumKey = 'newPerDay' | 'reviewsPerDay' | 'graduatingInterval' | 'easyInterv
 type Num = [NumKey, string, string, string?];
 const DAILY: Num[] = [
   ['newPerDay', '每日新卡上限', '', '张'],
-  ['reviewsPerDay', '每日复习上限', '0 = 不限', '张'],
+  ['reviewsPerDay', '每日复习上限', '0 = 不限（推荐）。到期的复习拖到明天会更难记、越积越多；量大时减少每日新卡', '张'],
   ['dayStartHour', '每日切换时间', '在这之前学习仍算前一天', '点'],
 ];
 const INTERVALS: Num[] = [
@@ -173,7 +174,7 @@ const parseSteps = (s: string) => s.split(/[\s,，]+/).filter(Boolean).map(Numbe
 type Form = Settings & { learning: string; relearn: string };
 const toForm = (s: Settings): Form => ({ ...s, learning: s.learningSteps.join(' '), relearn: s.relearnSteps.join(' ') });
 function toPatch(f: Form): Partial<Settings> {
-  const patch: Partial<Settings> = { fuzz: f.fuzz, newReviewOrder: f.newReviewOrder, reviewSort: f.reviewSort, learningSteps: parseSteps(f.learning), relearnSteps: parseSteps(f.relearn) };
+  const patch: Partial<Settings> = { fuzz: f.fuzz, newReviewOrder: f.newReviewOrder, reviewSort: f.reviewSort, newSort: f.newSort, focusTags: f.focusTags, learningSteps: parseSteps(f.learning), relearnSteps: parseSteps(f.relearn) };
   for (const [k] of ALL_NUMS) patch[k] = Number(f[k]);
   return patch;
 }
@@ -210,6 +211,23 @@ function SrsForm({ s }: { s: Settings }) {
           <option value="after">复习完再出</option>
         </select>
       </SetRow>
+      <SetRow label="新卡顺序" hint="核心 = 要用出来的词（有产出卡）">
+        <select value={f.newSort} onChange={(e) => setF({ ...f, newSort: e.target.value as Settings['newSort'] })}>
+          <option value="layer">重点主题 → 核心 → 中频 → 添加时间</option>
+          <option value="created">按添加时间</option>
+        </select>
+      </SetRow>
+      {f.newSort === 'layer' && (
+        <SetRow label="重点主题" hint="这些主题的新卡最先出，例如考试写作里容易卡住的主题。不选 = 不区分主题">
+          <div className="chips">
+            {THEMES.map((t) => {
+              const on = f.focusTags.includes(t);
+              return <button key={t} type="button" className={`chip${on ? ' is-on' : ''}`} aria-pressed={on}
+                onClick={() => setF({ ...f, focusTags: on ? f.focusTags.filter((x) => x !== t) : [...f.focusTags, t] })}>{t}</button>;
+            })}
+          </div>
+        </SetRow>
+      )}
       <SetRow label="复习卡顺序" hint="相对逾期 = 逾期天数 ÷ 间隔">
         <select value={f.reviewSort} onChange={(e) => setF({ ...f, reviewSort: e.target.value as Settings['reviewSort'] })}>
           <option value="overdue">相对逾期（最可能忘的先出）</option>

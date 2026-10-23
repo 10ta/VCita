@@ -5,10 +5,11 @@
 //     mix   = 新卡按比例均匀穿插在复习中（Anki 的 Mix with reviews）
 //     after = 复习完才出新卡
 //     复习卡顺序：overdue = 相对逾期（逾期时长 ÷ 间隔）大的先出；due = 按到期时间
+//  3. 新卡顺序（newSort = layer）：重点主题 → 核心 → 中频 → 添加时间；created = 只按添加时间
 //  4. 同一条笔记的卡当天只出一张（今天已答过这条笔记的其他卡，推到明天）
 //  5. 都没有时，20 分钟内到期的学习卡提前出（Anki 的 learn ahead）；但刚答完的那张不提前，
 //     否则只剩它时会立刻重复出现（例如重学卡点"困难"= 10 分钟后，却马上又出来）
-import type { Card, ReviewLog, Settings } from '../schema';
+import type { Card, Note, ReviewLog, Settings } from '../schema';
 import { addDaysToDay, dayStartMs, fromIso, studyDay } from '../lib/time';
 
 export const LEARN_AHEAD_MS = 20 * 60_000;
@@ -19,7 +20,9 @@ export interface QueueInput {
   todayLogs: ReviewLog[];
   deckId: string;
   now: number;
-  settings: Pick<Settings, 'newPerDay' | 'reviewsPerDay' | 'dayStartHour'> & Partial<Pick<Settings, 'newReviewOrder' | 'reviewSort'>>;
+  settings: Pick<Settings, 'newPerDay' | 'reviewsPerDay' | 'dayStartHour'> & Partial<Pick<Settings, 'newReviewOrder' | 'reviewSort' | 'newSort' | 'focusTags'>>;
+  /** 新卡排序要用笔记的层级和主题；不传时只按添加时间 */
+  notes?: ReadonlyMap<string, Pick<Note, 'layer' | 'tags'>>;
   /** 本轮跳过的卡 */
   skipped?: Set<string>;
   /** 用户点了"提前复习"：刚答完的那张也可以提前出 */
@@ -31,6 +34,8 @@ export interface QueueState {
   /** 当前还剩：学习中（本学习日内到期）、复习、新卡 */
   counts: { learning: number; review: number; new: number };
   done: { newDone: number; reviewDone: number };
+  /** 已到期、但因每日复习上限今天出不了的复习卡 */
+  reviewBacklog: number;
   /** 队列为空时，下一张学习卡的到期时间 */
   nextLearningAt: number | null;
   /** 队列为空、但有刚答完的学习卡在 20 分钟内到期，可以手动提前复习 */
@@ -42,6 +47,19 @@ const DAY = 86_400_000;
 /** 相对逾期：逾期时长 ÷ 间隔，越大越可能已忘 */
 export const relativeOverdue = (c: Card, now: number) => (now - fromIso(c.due)) / (Math.max(1, c.interval) * DAY);
 const byCreated = (a: Card, b: Card) => (a.createdAt < b.createdAt ? -1 : a.createdAt > b.createdAt ? 1 : a.id < b.id ? -1 : 1);
+
+/** 新卡排序：重点主题 → 核心 → 中频 → 添加时间 */
+function newCardSort(q: QueueInput): (a: Card, b: Card) => number {
+  if ((q.settings.newSort ?? 'layer') !== 'layer' || !q.notes) return byCreated;
+  const focus = new Set<string>(q.settings.focusTags ?? []);
+  const notes = q.notes;
+  const rank = (c: Card) => {
+    const n = notes.get(c.noteId);
+    if (!n) return 3;
+    return (n.tags.some((t) => focus.has(t)) ? 0 : 2) + (n.layer === 'core' ? 0 : 1);
+  };
+  return (a, b) => rank(a) - rank(b) || byCreated(a, b);
+}
 
 export function buildQueue(q: QueueInput): QueueState {
   const today = studyDay(q.now, q.settings.dayStartHour);
@@ -68,15 +86,16 @@ export function buildQueue(q: QueueInput): QueueState {
 
   const reviewLimit = q.settings.reviewsPerDay > 0 ? Math.max(0, q.settings.reviewsPerDay - revSeen.size) : Infinity;
   const sortOverdue = (q.settings.reviewSort ?? 'overdue') === 'overdue';
-  const reviews = pool
+  const dueReviews = pool
     .filter((c) => c.state === 'review' && fromIso(c.due) <= q.now)
-    .sort(sortOverdue ? (a, b) => relativeOverdue(b, q.now) - relativeOverdue(a, q.now) || byDue(a, b) : byDue)
-    .slice(0, reviewLimit);
+    .sort(sortOverdue ? (a, b) => relativeOverdue(b, q.now) - relativeOverdue(a, q.now) || byDue(a, b) : byDue);
+  const reviews = dueReviews.slice(0, reviewLimit);
 
   const newLimit = Math.max(0, q.settings.newPerDay - newSeen.size);
   const newNotes = new Set<string>();
   const news: Card[] = [];
-  for (const c of pool.filter((c) => c.state === 'new' && studyDay(fromIso(c.createdAt), q.settings.dayStartHour) <= today).sort(byCreated)) {
+  const newSort = newCardSort(q);
+  for (const c of pool.filter((c) => c.state === 'new' && studyDay(fromIso(c.createdAt), q.settings.dayStartHour) <= today).sort(newSort)) {
     if (news.length >= newLimit) break;
     if (newNotes.has(c.noteId)) continue; // 同一条笔记的新卡也只出一张
     newNotes.add(c.noteId);
@@ -107,6 +126,7 @@ export function buildQueue(q: QueueInput): QueueState {
       new: news.length,
     },
     done: { newDone: newSeen.size, reviewDone: revSeen.size },
+    reviewBacklog: dueReviews.length - reviews.length,
     nextLearningAt: next ? null : laterLearning ? fromIso(laterLearning.due) : null,
     canLearnAhead: !next && aheadAll.length > 0,
   };
