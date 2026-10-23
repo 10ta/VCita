@@ -30,3 +30,22 @@ describe('例句 / 产出场景轮换', () => {
     expect([v2.question.text, v2.answers[0].text, v2.hint]).toEqual(['意图1', 'R1', 'h1']);
   });
 });
+
+describe('内联提示与听力认读', () => {
+  it('{{答案::提示}}：认读只显示答案，挖空横线显示提示，朗读只读答案', async () => {
+    const { plainSentence } = await import('../src/features/CardFace');
+    const { clozeTarget } = await import('../src/schema/validate');
+    expect(plainSentence('Les prix ont {{dégringolé::dégringoler · 复合过去时}}.')).toBe('Les prix ont dégringolé.');
+    expect(clozeTarget('Les prix ont {{dégringolé::dégringoler}}.')).toBe('dégringolé');
+    const n = note({ altSentences: ['Les prix ont {{dégringolé::dégringoler · 复合过去时}}.'] });
+    const v = cardView('cloze', n, S, 0, L, 1);
+    const blank = (v.question.text as Array<string | { props: { children: string } }>).map((x) => (typeof x === 'string' ? '' : x.props.children)).join('');
+    expect(blank).toBe('[dégringoler · 复合过去时]');
+    expect(v.hint).toBeNull();
+  });
+  it('听力认读：题面没有文字，有朗读内容；答案是句子和两个翻译', () => {
+    const v = cardView('recognition', note(), S, 1, L, 0, true);
+    expect([v.listen, v.question.text, v.question.speakText, v.answers.length]).toEqual([true, '', 'A x.', 3]);
+    expect(cardView('production', note(), S, 0, L, 0, true).listen).toBeUndefined();
+  });
+});

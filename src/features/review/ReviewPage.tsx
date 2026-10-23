@@ -84,7 +84,9 @@ export function ReviewPage({ deckId }: { deckId: string }) {
   }, [q, currentId]);
 
   const labels: [string, string, string] = s ? [langLabel(s.sourceLang), langLabel(s.targetLang1), langLabel(s.targetLang2)] : ['', '', ''];
-  const split = note && s && card ? cardView(card.type, note, s, prefs.quizType, labels, card.reps) : null;
+  const listenMode = prefs.listenMode ?? 'core';
+  const listen = !!note && (listenMode === 'all' || (listenMode === 'core' && note.layer === 'core'));
+  const split = note && s && card ? cardView(card.type, note, s, prefs.quizType, labels, card.reps, listen) : null;
   // 产出卡可以先写出答案，揭示后和标准答案并排对照（不自动判对错）
   const [typed, setTyped] = useState('');
   // 产出卡的首字母提示默认收起，想不出来时再点开（H），否则一眼看到就失去了回忆的意义
@@ -94,8 +96,8 @@ export function ReviewPage({ deckId }: { deckId: string }) {
   // 自动发音：新卡出现时读题面
   const lastSpoken = useRef<string | null>(null);
   useEffect(() => {
-    if (!prefs.autoPlay || !split || revealed || !card) return;
-    const key = `${card.id}:${prefs.quizType}`;
+    if (!split || revealed || !card || (!prefs.autoPlay && !split.listen)) return;
+    const key = `${card.id}:${prefs.quizType}:${split.listen ? 'l' : ''}`;
     if (lastSpoken.current === key) return;
     lastSpoken.current = key;
     void speak(split.question.speakText, split.question.lang);
@@ -113,6 +115,7 @@ export function ReviewPage({ deckId }: { deckId: string }) {
     if (k === 'e' || k === 'E') return setEditing(true);
     if ((k === 'h' || k === 'H') && card.type === 'production' && !revealed) return setShowHint(true);
     if (k === 'l' || k === 'L') return openInLibrary(card.noteId);
+    if ((k === 'r' || k === 'R') && split?.question.speakText) return void speak(split.question.speakText, split.question.lang);
     return false;
   });
 
@@ -177,6 +180,10 @@ export function ReviewPage({ deckId }: { deckId: string }) {
           <button key={i} type="button" className={`pill${prefs.quizType === i ? ' is-on' : ''}`} onClick={() => setPrefs({ quizType: i as 0 | 1 | 2 })}>{l}</button>
         ))}
         <span className="grow" />
+        <button type="button" className={`pill${listenMode !== 'off' ? ' is-on' : ''}`} title="听力认读：认读卡正面只播放句子，闭眼听懂再翻面"
+          onClick={() => setPrefs({ listenMode: listenMode === 'core' ? 'all' : listenMode === 'all' ? 'off' : 'core' })}>
+          听：{listenMode === 'core' ? '核心词' : listenMode === 'all' ? '全部' : '关'}
+        </button>
         <button type="button" className={`pill${prefs.autoPlay ? ' is-on' : ''}`} onClick={() => setPrefs({ autoPlay: !prefs.autoPlay })}>自动发音</button>
       </div>
       {custom ? (
@@ -230,7 +237,9 @@ export function ReviewPage({ deckId }: { deckId: string }) {
               {note.tags.map((t) => <span key={t} className="badge is-theme">{t}</span>)}
             </div>
             <div className="question">
-              <span>{split.question.text || <i className="muted">（{split.question.label}为空）</i>}</span>
+              {split.listen
+                ? <span className="muted">闭眼听，听懂了再翻面（<kbd>R</kbd> 再听一遍）</span>
+                : <span>{split.question.text || <i className="muted">（{split.question.label}为空）</i>}</span>}
               <SpeakBtn text={split.question.speakText} lang={split.question.lang} size={20} />
             </div>
             {split.hint && (card.type !== 'production' || showHint || revealed
@@ -260,6 +269,11 @@ export function ReviewPage({ deckId }: { deckId: string }) {
                     </button>
                   )}
                 </div>
+                {(card.type !== 'recognition' || split.listen) && (
+                  <p className="muted small grade-guide">
+                    {split.listen ? '2–3 秒内没听懂 → 困难；听不出来 → 忘了' : '表达想出来了、只是形式错 → 困难；表达想不出来 → 忘了'}
+                  </p>
+                )}
                 <div className="grades">
                   {RATINGS.map(({ r, label, cls }) => (
                     <button key={r} type="button" className={`grade ${cls}`} onClick={() => void answer(r)}>
@@ -273,7 +287,7 @@ export function ReviewPage({ deckId }: { deckId: string }) {
             )}
           </div>
           <p className="keys muted small">
-            <kbd>空格</kbd> 显示答案 / 良好　<kbd>1</kbd>–<kbd>4</kbd> 评分　<kbd>U</kbd> 撤销　<kbd>S</kbd> 跳过　<kbd>P</kbd> 暂停　<kbd>E</kbd> 编辑　<kbd>L</kbd> 词库　<kbd>H</kbd> 提示<br />{limitLine}
+            <kbd>空格</kbd> 显示答案 / 良好　<kbd>1</kbd>–<kbd>4</kbd> 评分　<kbd>U</kbd> 撤销　<kbd>S</kbd> 跳过　<kbd>P</kbd> 暂停　<kbd>E</kbd> 编辑　<kbd>L</kbd> 词库　<kbd>H</kbd> 提示　<kbd>R</kbd> 重听<br />{limitLine}
           </p>
         </>
       )}

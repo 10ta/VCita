@@ -2,8 +2,10 @@
 import type { Note } from './index';
 
 export const hasCloze = (s: string) => /\{\{.+?\}\}/.test(s);
-/** 句子里第一个 {{…}} 的内容 */
-export const clozeTarget = (s: string) => /\{\{(.+?)\}\}/.exec(s)?.[1].trim() ?? '';
+/** 句子里第一个 {{…}} 的内容（{{答案::提示}} 只取答案） */
+export const clozeTarget = (s: string) => /\{\{(.+?)\}\}/.exec(s)?.[1].split('::')[0].trim() ?? '';
+/** 句子里是否带内联提示 {{答案::提示}} */
+export const hasInlineHint = (s: string) => /\{\{[^}]*?::[^}]+?\}\}/.test(s);
 
 export const defaultCardTypes = (layer: Note['layer']): Note['cardTypes'] =>
   layer === 'core' ? ['recognition', 'production'] : ['recognition'];

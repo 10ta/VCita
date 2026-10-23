@@ -261,3 +261,5 @@ code { font-family: var(--mono); background: var(--surface2); padding: 0 4px; bo
 .badge.is-dup { color: var(--warn); border-color: var(--warn); }
 .cue.etym { font-style: italic; opacity: .85; }
 .hint-btn { margin: 4px auto 0; display: block; }
+
+.grade-guide { text-align: center; margin: 8px 0 4px; }

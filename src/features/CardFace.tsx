@@ -4,24 +4,26 @@ import type { ReactNode } from 'react';
 import type { Card, Note, Settings } from '../schema';
 import { dayStartMs, daysBetween, fmtDays, fromIso, studyDay } from '../lib/time';
 import { speak } from '../lib/speech';
-import { hasCloze } from '../schema/validate';
+import { hasCloze, hasInlineHint } from '../schema/validate';
 
 /** "survoler la Sibérie" → "s _ _ _ _ _ _ _   l _" ：每个词的首字母 + 其余字母数，标点和省音号原样 */
 export function letterPattern(t: string): string {
   return t.split(/(\s+)/).map((w) => (/^\s+$/.test(w) ? '   ' : w.replace(/\p{L}/gu, (ch, i) => (i === 0 || !/\p{L}/u.test(w.slice(0, i)) ? ch : ' _')).replace(/^ /, ''))).join('');
 }
 
-/** "a {{b}} c" → a <b>b</b> c；挖空模式下横线处显示提示 / 首字母 */
+/** "a {{b}} c" → a <b>b</b> c；挖空模式下横线处显示提示 / 首字母。{{答案::提示}} 的提示只在挖空时显示，优先于笔记的挖空提示 */
 export function renderSentence(s: string, mode: 'bold' | 'blank' = 'bold', blank?: { hint?: string | null; letters?: boolean }): ReactNode[] {
   return s.split(/(\{\{.*?\}\})/g).map((part, i) => {
     const m = /^\{\{(.*)\}\}$/.exec(part);
     if (!m) return part;
-    if (mode === 'bold') return <b key={i} className="cloze">{m[1]}</b>;
-    const label = [blank?.hint?.trim() ? `[${blank.hint.trim()}]` : '', blank?.letters ? letterPattern(m[1]) : ''].filter(Boolean).join(' ');
+    const [ans, inline] = m[1].split('::');
+    if (mode === 'bold') return <b key={i} className="cloze">{ans}</b>;
+    const hint = inline?.trim() || blank?.hint?.trim() || '';
+    const label = [hint ? `[${hint}]` : '', blank?.letters ? letterPattern(ans) : ''].filter(Boolean).join(' ');
     return label ? <span key={i} className="blank has-hint">{label}</span> : <span key={i} className="blank">___</span>;
   });
 }
-export const plainSentence = (s: string) => s.replace(/\{\{(.*?)\}\}/g, '$1');
+export const plainSentence = (s: string) => s.replace(/\{\{(.*?)\}\}/g, (_, x: string) => x.split('::')[0]);
 
 export interface Face { text: ReactNode; speakText: string; lang: string; label: string }
 
@@ -68,11 +70,18 @@ export interface CardView {
   answers: Face[];
   /** 背面的线索：认读、挖空显示词族 / 出处 / 补充；产出只显示补充 */
   cues: 'all' | 'extra';
+  /** 听力认读：题面不显示文字 */
+  listen?: boolean;
 }
 
 /** 三种卡的正反面。旋转和题面切换只作用于认读卡 */
 /** variant：第几个版本，复习时传卡片的复习次数，每次复习轮换一个句子 / 场景 */
-export function cardView(type: Card['type'], note: Note, s: Settings, quizType: number, labels: [string, string, string], variant = 0): CardView {
+export function cardView(type: Card['type'], note: Note, s: Settings, quizType: number, labels: [string, string, string], variant = 0, listen = false): CardView {
+  // 听力认读：正面只有声音，翻面显示句子和两个翻译
+  if (listen && type === 'recognition' && note.sentence) {
+    const f = faces(note, s, labels, variant);
+    return { question: { ...f[0], text: '', label: '听' }, hint: null, cues: 'all', answers: f, listen: true };
+  }
   if (type === 'production') {
     const it = pickIntent(note, variant);
     const q = it.intentZh;
@@ -88,7 +97,7 @@ export function cardView(type: Card['type'], note: Note, s: Settings, quizType: 
     const sent = pickSentence(note, 'cloze', variant);
     const plain = plainSentence(sent);
     // 横线处有专门的挖空提示时就不再另给；没有时用中文意思当提示，避免横线处有多种填法
-    const hint = note.clozeHint?.trim() ? null : note.meaningZh.trim() || null;
+    const hint = note.clozeHint?.trim() || hasInlineHint(sent) ? null : note.meaningZh.trim() || null;
     return {
       question: { text: renderSentence(sent, 'blank', { hint: note.clozeHint, letters: s.clozeLetters }), speakText: '', lang: s.sourceLang, label: labels[0] },
       hint, cues: 'all',

@@ -6,12 +6,14 @@ export interface Prefs {
   /** 题面：0 法语 / 1 翻译1 / 2 翻译2（再叠加每张卡自己的旋转） */
   quizType: 0 | 1 | 2;
   autoPlay: boolean;
+  /** 听力认读：认读卡正面只播放句子、不显示文字。core = 只对核心词 */
+  listenMode: 'off' | 'core' | 'all';
   showT1: boolean;
   showT2: boolean;
   pageSize: number;
 }
 const KEY = 'vf_prefs';
-const DEFAULTS: Prefs = { deckId: null, quizType: 0, autoPlay: false, showT1: true, showT2: false, pageSize: 30 };
+const DEFAULTS: Prefs = { deckId: null, quizType: 0, autoPlay: false, listenMode: 'core', showT1: true, showT2: false, pageSize: 30 };
 
 let cache: Prefs = (() => {
   try { return { ...DEFAULTS, ...JSON.parse(localStorage.getItem(KEY) || '{}') }; } catch { return DEFAULTS; }
