@@ -4,8 +4,7 @@ import { db } from '../src/db/db';
 import { answerCard, clearAllLocalData, undoAnswer, updateNote } from '../src/db/actions';
 import { disconnectSync, pendingFiles, saveSyncConfig, syncNow } from '../src/sync/engine';
 import { gitBlobSha } from '../src/sync/files';
-import { importLegacy, readLegacyBackup } from '../src/io/legacy';
-import { makeLegacyBackup } from './legacyData';
+import { seedData } from './seedData';
 import { FakeGitHub } from './fakeGithub';
 
 let gh: FakeGitHub;
@@ -24,7 +23,7 @@ beforeEach(async () => {
   await newDevice();
 });
 
-const seed = async () => importLegacy(readLegacyBackup(makeLegacyBackup(40)), 'zzz', {});
+const seed = async () => seedData(40);
 
 describe('git blob sha', () => {
   it('与 git hash-object 一致', async () => {

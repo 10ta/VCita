@@ -3,7 +3,21 @@
 // 后四项可以省略；主题可以写多个（逗号或空格分隔），写不全时按名称猜。以 # 开头的行是注释。
 import { THEMES, type Theme } from '../schema';
 import { clozeTarget, hasCloze } from '../schema/validate';
-import { guessTheme } from './legacy';
+
+/** 按名称猜主题 */
+export function guessTheme(tag: string): Theme {
+  const t = tag.toLowerCase();
+  const rules: Array<[RegExp, Theme]> = [
+    [/police|justice|loi|droit|politi|société|social|crime|tribunal/, 'SOCIÉTÉ'],
+    [/médec|santé|sante|maladie|hôpital|corps|medic/, 'SANTÉ'],
+    [/travail|emploi|boulot|entreprise|économ|métier/, 'TRAVAIL'],
+    [/techn|numérique|informati|internet|science/, 'TECHNOLOGIE'],
+    [/environ|écolog|climat|nature|énergie/, 'ENVIRONNEMENT'],
+    [/média|presse|journal|télé|réseau/, 'MÉDIAS'],
+    [/éduc|école|université|étud|enseign/, 'ÉDUCATION'],
+  ];
+  return rules.find(([re]) => re.test(t))?.[1] ?? 'GÉNÉRAL';
+}
 
 export interface ParsedLine {
   line: number;

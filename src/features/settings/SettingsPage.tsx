@@ -2,14 +2,12 @@ import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { useCards, useDecks, useNotes, useSettings } from '../../db/hooks';
 import { clearAllLocalData, spreadBacklog, updateSettings } from '../../db/actions';
 import { exportBundle, importBundle } from '../../io/bundle';
-import { readLegacyBackup, type LegacyBackup } from '../../io/legacy';
 import { downloadJson, readJsonFile } from '../../io/download';
 import { dayStartMs, fileStamp, fromIso, studyDay } from '../../lib/time';
 import { SyncSection } from '../../sync/SyncSection';
 import { LANGS } from '../../ui/langs';
 import { toast } from '../../ui/toast';
 import type { Settings } from '../../schema';
-import { LegacyImport } from './LegacyImport';
 import { DeckSection } from './DeckSection';
 
 /** 设置页的分类，顺序即页面顺序：常用的在上面 */
@@ -116,8 +114,6 @@ async function importFile(file: File) {
 
 function DataSection() {
   const bundleRef = useRef<HTMLInputElement>(null);
-  const legacyRef = useRef<HTMLInputElement>(null);
-  const [legacy, setLegacy] = useState<LegacyBackup | null>(null);
   const [over, setOver] = useState(false);
   const decks = useDecks();
   const notes = useNotes();
@@ -142,19 +138,10 @@ function DataSection() {
       <SetRow label="导出备份" hint={decks && notes && cards ? `本机：${decks.length} 个牌组 · ${notes.length} 条笔记 · ${cards.length} 张卡` : '数据保存在这台设备的浏览器里'}>
         <button type="button" className="btn" onClick={() => void exportBundle().then((b) => downloadJson(b, `vcita-${fileStamp(Date.now())}.json`))}>导出 JSON</button>
       </SetRow>
-      <SetRow label="导入旧版备份" hint="旧版（服务器版）导出的 vocabforge-*.json，导入时选择用户并把标签映射到主题">
-        <button type="button" className="btn" onClick={() => legacyRef.current?.click()}>选择文件</button>
-      </SetRow>
       <input ref={bundleRef} type="file" accept=".json,application/json" hidden onChange={(e) => {
         const file = e.target.files?.[0]; e.target.value = '';
         if (file) void importFile(file);
       }} />
-      <input ref={legacyRef} type="file" accept=".json,application/json" hidden onChange={async (e) => {
-        const file = e.target.files?.[0]; e.target.value = '';
-        if (!file) return;
-        try { setLegacy(readLegacyBackup(await readJsonFile(file))); } catch (err) { toast((err as Error).message, true); }
-      }} />
-      {legacy && <LegacyImport backup={legacy} onClose={() => setLegacy(null)} onDone={(m) => { setLegacy(null); toast(m); }} />}
     </section>
   );
 }

@@ -3,8 +3,7 @@ import { beforeEach, describe, expect, it } from 'vitest';
 import { db } from '../src/db/db';
 import { answerCard, clearAllLocalData, deleteNotes, undoAnswer, updateNote, updateNotes } from '../src/db/actions';
 import { clearFileCache, localFiles } from '../src/sync/files';
-import { importLegacy, readLegacyBackup } from '../src/io/legacy';
-import { makeLegacyBackup } from './legacyData';
+import { seedData } from './seedData';
 
 beforeEach(async () => { await clearAllLocalData(); clearFileCache(); });
 
@@ -19,7 +18,7 @@ async function expectSameAsFresh() {
 
 describe('同步文件缓存', () => {
   it('作答、撤销、编辑、批量修改、删除之后，缓存结果与重新序列化一致', async () => {
-    await importLegacy(readLegacyBackup(makeLegacyBackup(40)), 'zzz', {});
+    await seedData(40);
     await localFiles(); // 建立缓存
     const cards = await db.cards.toArray();
     const res = await answerCard(cards[0].id, 3);
