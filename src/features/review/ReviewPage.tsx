@@ -84,7 +84,7 @@ export function ReviewPage({ deckId }: { deckId: string }) {
   }, [q, currentId]);
 
   const labels: [string, string, string] = s ? [langLabel(s.sourceLang), langLabel(s.targetLang1), langLabel(s.targetLang2)] : ['', '', ''];
-  const split = note && s && card ? cardView(card.type, note, s, prefs.quizType, labels) : null;
+  const split = note && s && card ? cardView(card.type, note, s, prefs.quizType, labels, card.reps) : null;
   // 产出卡可以先写出答案，揭示后和标准答案并排对照（不自动判对错）
   const [typed, setTyped] = useState('');
   // 产出卡的首字母提示默认收起，想不出来时再点开（H），否则一眼看到就失去了回忆的意义

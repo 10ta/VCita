@@ -25,9 +25,27 @@ export const plainSentence = (s: string) => s.replace(/\{\{(.*?)\}\}/g, '$1');
 
 export interface Face { text: ReactNode; speakText: string; lang: string; label: string }
 
-export function faces(note: Note, s: Settings, labels: [string, string, string]): Face[] {
-  const front: Face = note.sentence
-    ? { text: renderSentence(note.sentence), speakText: plainSentence(note.sentence), lang: s.sourceLang, label: labels[0] }
+/** 第 variant 个版本（按复习次数轮换）：主句 / 主挖空句之后接备用例句 */
+export function pickSentence(note: Note, kind: 'recognition' | 'cloze', variant = 0): string {
+  const main = kind === 'cloze' && note.clozeSentence?.trim() && hasCloze(note.clozeSentence) ? note.clozeSentence : note.sentence;
+  if (!main) return main;
+  const pool = [main, ...(note.altSentences ?? []).filter((x) => hasCloze(x))];
+  return pool[variant % pool.length];
+}
+export function pickIntent(note: Note, variant = 0): { intentZh: string; answerFr: string; hint: string | null } {
+  const pool = [{ intentZh: note.intentZh ?? '', answerFr: note.answerFr ?? '', hint: note.hint }, ...(note.altIntents ?? []).filter((x) => x.intentZh.trim() && x.answerFr.trim())];
+  return pool[variant % pool.length];
+}
+/** 这条笔记有几个轮换版本（认读 / 挖空 / 产出） */
+export const variantCount = (note: Note) => ({
+  sentences: 1 + (note.altSentences ?? []).filter((x) => hasCloze(x)).length,
+  intents: 1 + (note.altIntents ?? []).filter((x) => x.intentZh.trim() && x.answerFr.trim()).length,
+});
+
+export function faces(note: Note, s: Settings, labels: [string, string, string], variant = 0): Face[] {
+  const sentence = pickSentence(note, 'recognition', variant);
+  const front: Face = sentence
+    ? { text: renderSentence(sentence), speakText: plainSentence(sentence), lang: s.sourceLang, label: labels[0] }
     : { text: note.lemma, speakText: note.lemma, lang: s.sourceLang, label: labels[0] };
   return [
     front,
@@ -36,8 +54,8 @@ export function faces(note: Note, s: Settings, labels: [string, string, string])
   ];
 }
 
-export function quizSplit(note: Note, s: Settings, quizType: number, labels: [string, string, string]) {
-  const f = faces(note, s, labels);
+export function quizSplit(note: Note, s: Settings, quizType: number, labels: [string, string, string], variant = 0) {
+  const f = faces(note, s, labels, variant);
   const q = (note.rot + quizType) % 3;
   return { question: f[q], answers: f.filter((_, i) => i !== q) };
 }
@@ -53,19 +71,21 @@ export interface CardView {
 }
 
 /** 三种卡的正反面。旋转和题面切换只作用于认读卡 */
-export function cardView(type: Card['type'], note: Note, s: Settings, quizType: number, labels: [string, string, string]): CardView {
+/** variant：第几个版本，复习时传卡片的复习次数，每次复习轮换一个句子 / 场景 */
+export function cardView(type: Card['type'], note: Note, s: Settings, quizType: number, labels: [string, string, string], variant = 0): CardView {
   if (type === 'production') {
-    const q = note.intentZh ?? '';
-    const a = note.answerFr ?? '';
+    const it = pickIntent(note, variant);
+    const q = it.intentZh;
+    const a = it.answerFr;
     return {
       question: { text: q, speakText: q, lang: s.targetLang1, label: '中文意图' },
-      hint: note.hint, cues: 'extra',
+      hint: it.hint, cues: 'extra',
       answers: [{ text: a, speakText: a, lang: s.sourceLang, label: labels[0] }],
     };
   }
   if (type === 'cloze') {
     // 有挖空专用例句就用它（和认读卡的句子不同），否则用主例句
-    const sent = note.clozeSentence?.trim() && hasCloze(note.clozeSentence) ? note.clozeSentence : note.sentence;
+    const sent = pickSentence(note, 'cloze', variant);
     const plain = plainSentence(sent);
     // 横线处有专门的挖空提示时就不再另给；没有时用中文意思当提示，避免横线处有多种填法
     const hint = note.clozeHint?.trim() ? null : note.meaningZh.trim() || null;
@@ -78,7 +98,7 @@ export function cardView(type: Card['type'], note: Note, s: Settings, quizType: 
       ],
     };
   }
-  return { ...quizSplit(note, s, quizType, labels), hint: null, cues: 'all' };
+  return { ...quizSplit(note, s, quizType, labels, variant), hint: null, cues: 'all' };
 }
 
 export function SpeakBtn({ text, lang, size = 14 }: { text: string; lang: string; size?: number }) {

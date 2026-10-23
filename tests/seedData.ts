@@ -17,7 +17,7 @@ export async function seedData(total = 40) {
     const reviewed = n % 3 !== 0;
     const note: Note = {
       id: `n_old${n}`, deckId: 'd_default', createdAt, lemma: `mot${n}`, sentence: '', meaningZh: `词${n}`, meaningEn: `word${n}`,
-      cueFamily: null, intentZh: null, hint: null, clozeHint: null, clozeSentence: null, etymology: null, answerFr: null, extra: null, source: null,
+      cueFamily: null, intentZh: null, hint: null, clozeHint: null, clozeSentence: null, etymology: null, answerFr: null, extra: null, source: null, altSentences: [], altIntents: [],
       layer: 'mid', cardTypes: ['recognition'], tags: n % 4 === 0 ? ['SOCIÉTÉ'] : [], usedCount: 0, usedAt: [], rot: n % 3, legacy: null,
       updatedAt: STAMP, deleted: false,
     };

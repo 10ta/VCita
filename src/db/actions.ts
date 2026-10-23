@@ -73,7 +73,7 @@ export async function ensureDeck(): Promise<string> {
 
 // ---------- 笔记与卡片 ----------
 
-type NoteContent = Pick<Note, 'lemma' | 'sentence' | 'meaningZh' | 'meaningEn' | 'cueFamily' | 'intentZh' | 'hint' | 'clozeHint' | 'clozeSentence' | 'etymology' | 'answerFr' | 'extra' | 'source' | 'layer' | 'cardTypes' | 'tags'>;
+type NoteContent = Pick<Note, 'lemma' | 'sentence' | 'meaningZh' | 'meaningEn' | 'cueFamily' | 'intentZh' | 'hint' | 'clozeHint' | 'clozeSentence' | 'etymology' | 'answerFr' | 'extra' | 'source' | 'layer' | 'cardTypes' | 'tags' | 'altSentences' | 'altIntents'>;
 export type NewNoteInput = { deckId: string; createdAtMs?: number } & Partial<NoteContent>;
 
 export function blankCard(note: Pick<Note, 'id' | 'deckId' | 'createdAt'>, type: Card['type'], s: Settings, stamp: string): Card {
@@ -103,6 +103,7 @@ export async function addNotes(inputs: NewNoteInput[]): Promise<Array<{ noteId: 
       meaningZh: input.meaningZh ?? '', meaningEn: input.meaningEn ?? '',
       cueFamily: input.cueFamily ?? null, intentZh: input.intentZh ?? null, hint: input.hint ?? null, clozeHint: input.clozeHint ?? null, clozeSentence: input.clozeSentence?.trim() || null, etymology: input.etymology ?? null, answerFr: input.answerFr ?? null,
       extra: input.extra ?? null, source: input.source ?? null,
+      altSentences: input.altSentences ?? [], altIntents: input.altIntents ?? [],
       layer: input.layer ?? 'mid', cardTypes: input.cardTypes ?? ['recognition'], tags: input.tags ?? [],
       usedCount: 0, usedAt: [], rot: 0, legacy: null, updatedAt: stamp, deleted: false,
     };

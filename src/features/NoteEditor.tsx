@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Modal } from '../ui/Modal';
 import { THEMES, type Note, type Theme } from '../schema';
-import { defaultCardTypes, noteErrors } from '../schema/validate';
+import { defaultCardTypes, hasCloze, noteErrors } from '../schema/validate';
 import { bumpUsed, updateNote } from '../db/actions';
 import { useDecks, useSettings } from '../db/hooks';
 import { langLabel } from '../ui/langs';
@@ -30,9 +30,20 @@ export function NoteEditor({ note, onClose }: { note: Note; onClose: () => void 
     cueFamily: note.cueFamily ?? '', source: note.source ?? '', extra: note.extra ?? '',
     intentZh: note.intentZh ?? '', hint: note.hint ?? '', clozeHint: note.clozeHint ?? '', clozeSentence: note.clozeSentence ?? '', etymology: note.etymology ?? '', answerFr: note.answerFr ?? '',
     layer: note.layer, cardTypes: note.cardTypes, tags: note.tags, deckId: note.deckId, day: note.createdAt.slice(0, 10),
+    alts: (note.altSentences ?? []).join('\n'),
+    altIntents: (note.altIntents ?? []).map((x) => [x.intentZh, x.answerFr, x.hint ?? ''].join(' | ').replace(/ \| $/, '')).join('\n'),
   });
   const set = <K extends keyof typeof f>(k: K, v: (typeof f)[K]) => setF((x) => ({ ...x, [k]: v }));
-  const errors = noteErrors(f);
+  const altSentences = f.alts.split('\n').map((x) => x.trim()).filter(Boolean);
+  const altIntents = f.altIntents.split('\n').map((x) => x.trim()).filter(Boolean).map((line) => {
+    const [intentZh = '', answerFr = '', hint = ''] = line.split('|').map((x) => x.trim());
+    return { intentZh, answerFr, hint: hint || null };
+  });
+  const errors = [
+    ...noteErrors(f),
+    ...(altSentences.some((x) => !hasCloze(x)) ? ['备用例句每句都要用 {{…}} 标出考查部分'] : []),
+    ...(altIntents.some((x) => !x.intentZh || !x.answerFr) ? ['备用产出题每行写成：中文意图 | 法语答案 | 提示（可选）'] : []),
+  ];
   const save = async () => {
     if (errors.length) return;
     const nul = (x: string) => (x.trim() ? x.trim() : null);
@@ -41,7 +52,7 @@ export function NoteEditor({ note, onClose }: { note: Note; onClose: () => void 
       cueFamily: nul(f.cueFamily), source: nul(f.source), extra: nul(f.extra),
       intentZh: nul(f.intentZh), hint: nul(f.hint), clozeHint: nul(f.clozeHint), clozeSentence: nul(f.clozeSentence), etymology: nul(f.etymology), answerFr: nul(f.answerFr),
       layer: f.layer, cardTypes: TYPES.map(([t]) => t).filter((t) => f.cardTypes.includes(t)),
-      tags: f.tags, deckId: f.deckId,
+      tags: f.tags, deckId: f.deckId, altSentences, altIntents,
       ...(f.day !== note.createdAt.slice(0, 10) ? { createdAt: noonIso(f.day) } : {}),
     });
     toast('已保存');
@@ -56,7 +67,7 @@ export function NoteEditor({ note, onClose }: { note: Note; onClose: () => void 
     </label>
   );
   // 预览用编辑中的内容
-  const draft: Note = { ...note, ...f, cueFamily: f.cueFamily || null, source: f.source || null, extra: f.extra || null, intentZh: f.intentZh || null, hint: f.hint || null, clozeHint: f.clozeHint || null, clozeSentence: f.clozeSentence || null, etymology: f.etymology || null, answerFr: f.answerFr || null };
+  const draft: Note = { ...note, ...f, altSentences, altIntents, cueFamily: f.cueFamily || null, source: f.source || null, extra: f.extra || null, intentZh: f.intentZh || null, hint: f.hint || null, clozeHint: f.clozeHint || null, clozeSentence: f.clozeSentence || null, etymology: f.etymology || null, answerFr: f.answerFr || null };
   const labels: [string, string, string] = s ? [langLabel(s.sourceLang), langLabel(s.targetLang1), langLabel(s.targetLang2)] : ['', '', ''];
   const wantProd = f.cardTypes.includes('production');
   return (
@@ -91,6 +102,12 @@ export function NoteEditor({ note, onClose }: { note: Note; onClose: () => void 
         {text('clozeSentence', '挖空例句（可选，和上面的例句不同更好记）', '同样用 {{…}} 标出挖掉的部分；不填就用上面的例句')}
         {f.clozeSentence.trim() && <ClozeMarker value={f.clozeSentence} onChange={(v) => set('clozeSentence', v)} />}
       </>}
+      {(f.cardTypes.includes('recognition') || f.cardTypes.includes('cloze')) && (
+        <label className="field">
+          <span className="field-label">备用例句（可选，每行一句，用 {'{{…}}'} 标出；认读 / 挖空卡每次复习轮换）</span>
+          <textarea className="bulk" rows={3} value={f.alts} placeholder="Elle a fini par {{trouver preneur}} pour son vieux vélo." onChange={(e) => set('alts', e.target.value)} />
+        </label>
+      )}
       {f.cardTypes.includes('cloze') && text('clozeHint', '挖空提示（可选，横线处显示）', `例如：飞越。留空时正面显示${labels[1]}意思`)}
       {wantProd && (
         <fieldset className="prod">
@@ -98,6 +115,10 @@ export function NoteEditor({ note, onClose }: { note: Note; onClose: () => void 
           {text('intentZh', '中文意图（正面）', '例如：搬家后孩子们失去了熟悉的依靠')}
           {text('hint', '提示（可选）', '例如：首字母 p… r…')}
           {text('answerFr', `${labels[0]}答案（背面）`, '例如：perdre ses repères')}
+          <label className="field">
+            <span className="field-label">备用产出题（可选，每行：中文意图 | {labels[0]}答案 | 提示；每次复习轮换场景）</span>
+            <textarea className="bulk" rows={3} value={f.altIntents} placeholder="讲搬家：'刚到法国时我完全失去了方向' | En arrivant en France, j'avais perdu mes repères." onChange={(e) => set('altIntents', e.target.value)} />
+          </label>
           <div className="row">
             <span className="muted small">写作、口语里用上 {note.usedCount} 次</span>
             <button type="button" className="pill" onClick={() => void bumpUsed(note.id).then(() => toast('已记录'))}>用上了 +1</button>

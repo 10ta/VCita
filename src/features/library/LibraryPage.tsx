@@ -97,7 +97,7 @@ export function LibraryPage({ deckId }: { deckId: string }) {
       .filter((n) => n.deckId === deckId)
       .filter((n) => !theme || n.tags.includes(theme))
       .filter((n) => !day || n.createdAt.slice(0, 10) === day)
-      .filter((n) => !k || [n.lemma, n.sentence, n.meaningZh, n.meaningEn, n.source ?? ''].some((x) => x.toLowerCase().includes(k)))
+      .filter((n) => !k || [n.lemma, n.sentence, n.meaningZh, n.meaningEn, n.source ?? '', ...(n.altSentences ?? [])].some((x) => x.toLowerCase().includes(k)))
       .filter((n) => {
         const cs = cardsByNote.get(n.id) ?? [];
         switch (status) {

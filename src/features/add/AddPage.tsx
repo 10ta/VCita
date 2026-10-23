@@ -189,6 +189,6 @@ function AddOne({ deckId }: { deckId: string }) {
 const EMPTY = { sentence: '', intentZh: '', hint: '', clozeHint: '', clozeSentence: '', etymology: '', answerFr: '', cueFamily: '', source: '', extra: '' };
 const BLANK_NOTE: Note = {
   id: 'draft', deckId: '', createdAt: '2026-01-01T00:00:00.000Z', lemma: '', sentence: '', meaningZh: '', meaningEn: '',
-  cueFamily: null, intentZh: null, hint: null, clozeHint: null, clozeSentence: null, etymology: null, answerFr: null, extra: null, source: null, layer: 'mid', cardTypes: ['recognition'],
+  cueFamily: null, intentZh: null, hint: null, clozeHint: null, clozeSentence: null, etymology: null, answerFr: null, extra: null, source: null, altSentences: [], altIntents: [], layer: 'mid', cardTypes: ['recognition'],
   tags: [], usedCount: 0, usedAt: [], rot: 0, legacy: null, updatedAt: '2026-01-01T00:00:00.000Z', deleted: false,
 };

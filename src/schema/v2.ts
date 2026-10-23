@@ -46,6 +46,10 @@ export const NoteV2 = z.looseObject({
   answerFr: z.string().nullable().default(null),
   extra: z.string().nullable().default(null),
   source: z.string().nullable().default(null),
+  /** 备用例句（同样用 {{…}} 标出）：认读卡和挖空卡每次复习轮换，避免记住的是句子而不是词 */
+  altSentences: z.array(z.string()).default([]),
+  /** 备用产出题：同一个表达换一个场景，产出卡每次复习轮换 */
+  altIntents: z.array(z.looseObject({ intentZh: z.string(), answerFr: z.string(), hint: z.string().nullable().default(null) })).default([]),
   layer: z.enum(['core', 'mid']).default('mid'),
   cardTypes: z.array(z.enum(CARD_TYPES)).default(['recognition']),
   tags: z.array(ThemeV2).default([]),
