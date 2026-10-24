@@ -79,9 +79,10 @@ function useActiveSection() {
 }
 
 /** 一行设置：左边名称和说明，右边控件 */
-export function SetRow({ label, hint, children }: { label: ReactNode; hint?: ReactNode; children: ReactNode }) {
+/** stack：控件太宽（一排主题等）时放到说明下面，不跟左边抢宽度 */
+export function SetRow({ label, hint, children, stack }: { label: ReactNode; hint?: ReactNode; children: ReactNode; stack?: boolean }) {
   return (
-    <div className="set-row">
+    <div className={`set-row${stack ? ' is-stack' : ''}`}>
       <div className="set-text"><span>{label}</span>{hint && <small>{hint}</small>}</div>
       <div className="set-ctl">{children}</div>
     </div>
@@ -218,7 +219,7 @@ function SrsForm({ s }: { s: Settings }) {
         </select>
       </SetRow>
       {f.newSort === 'layer' && (
-        <SetRow label="重点主题" hint="这些主题的新卡最先出，例如考试写作里容易卡住的主题。不选 = 不区分主题">
+        <SetRow stack label="重点主题" hint="这些主题的新卡最先出，例如考试写作里容易卡住的主题。不选 = 不区分主题">
           <div className="chips">
             {THEMES.map((t) => {
               const on = f.focusTags.includes(t);

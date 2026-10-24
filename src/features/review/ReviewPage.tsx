@@ -21,6 +21,11 @@ const RATINGS: Array<{ r: Rating; label: string; cls: string }> = [
 /** 跳到词库，只显示这条笔记并打开编辑；词库里有"返回复习" */
 const openInLibrary = (noteId: string) => { location.hash = `#/library?note=${encodeURIComponent(noteId)}&edit=1`; };
 
+/** 复习页发音开关：点一下换一档，从轻到重 */
+const AUDIO_LABEL = { off: '关', read: '自动读', core: '听·核心词', all: '听·全部' } as const;
+const AUDIO_NEXT = { off: 'read', read: 'core', core: 'all', all: 'off' } as const;
+const AUDIO_TITLE = '关 → 自动读（只读法语：法语题面出题时读，中文题面 / 挖空翻面后读答案）→ 听·核心词 / 听·全部（再加上认读卡正面只放声音，闭眼听懂再翻面）';
+
 export function ReviewPage({ deckId }: { deckId: string }) {
   const s = useSettings();
   const cards = useCards();
@@ -84,8 +89,8 @@ export function ReviewPage({ deckId }: { deckId: string }) {
   }, [q, currentId]);
 
   const labels: [string, string, string] = s ? [langLabel(s.sourceLang), langLabel(s.targetLang1), langLabel(s.targetLang2)] : ['', '', ''];
-  const listenMode = prefs.listenMode ?? 'core';
-  const listen = !!note && (listenMode === 'all' || (listenMode === 'core' && note.layer === 'core'));
+  const audio = prefs.audio ?? 'core';
+  const listen = !!note && (audio === 'all' || (audio === 'core' && note.layer === 'core'));
   const split = note && s && card ? cardView(card.type, note, s, prefs.quizType, labels, card.reps, listen) : null;
   // 产出卡可以先写出答案，揭示后和标准答案并排对照（不自动判对错）
   const [typed, setTyped] = useState('');
@@ -93,14 +98,18 @@ export function ReviewPage({ deckId }: { deckId: string }) {
   const [showHint, setShowHint] = useState(false);
   useEffect(() => { setTyped(''); setShowHint(false); }, [currentId]);
 
-  // 自动发音：新卡出现时读题面
+  // 自动发音只读学习语言（法语）：题面是法语就出题时读；题面是中文 / 英文 / 挖空，就翻面后读法语答案
+  const frontIsSource = !!split && !!s && split.question.lang === s.sourceLang && !!split.question.speakText;
+  const sourceAnswer = split && s ? split.answers.find((a) => a.lang === s.sourceLang && a.speakText) : undefined;
   const lastSpoken = useRef<string | null>(null);
   useEffect(() => {
-    if (!split || revealed || !card || (!prefs.autoPlay && !split.listen)) return;
-    const key = `${card.id}:${prefs.quizType}:${split.listen ? 'l' : ''}`;
+    if (!split || !card || audio === 'off') return;
+    const target = !revealed ? (frontIsSource ? split.question : null) : (frontIsSource ? null : sourceAnswer ?? null);
+    if (!target) return;
+    const key = `${card.id}:${prefs.quizType}:${split.listen ? 'l' : ''}:${revealed ? 'b' : 'f'}`;
     if (lastSpoken.current === key) return;
     lastSpoken.current = key;
-    void speak(split.question.speakText, split.question.lang);
+    void speak(target.speakText, target.lang);
   });
 
   // 必须在提前 return 之前注册；按键时才调用下面定义的函数
@@ -115,7 +124,11 @@ export function ReviewPage({ deckId }: { deckId: string }) {
     if (k === 'e' || k === 'E') return setEditing(true);
     if ((k === 'h' || k === 'H') && card.type === 'production' && !revealed) return setShowHint(true);
     if (k === 'l' || k === 'L') return openInLibrary(card.noteId);
-    if ((k === 'r' || k === 'R') && split?.question.speakText) return void speak(split.question.speakText, split.question.lang);
+    // R：重听法语。题面不是法语时，翻面后读答案；没翻面就读题面（手动按的，读什么都行）
+    if (k === 'r' || k === 'R') {
+      const t = revealed && !frontIsSource && sourceAnswer ? sourceAnswer : split?.question;
+      return t?.speakText ? void speak(t.speakText, t.lang) : false;
+    }
     return false;
   });
 
@@ -180,11 +193,10 @@ export function ReviewPage({ deckId }: { deckId: string }) {
           <button key={i} type="button" className={`pill${prefs.quizType === i ? ' is-on' : ''}`} onClick={() => setPrefs({ quizType: i as 0 | 1 | 2 })}>{l}</button>
         ))}
         <span className="grow" />
-        <button type="button" className={`pill${listenMode !== 'off' ? ' is-on' : ''}`} title="听力认读：认读卡正面只播放句子，闭眼听懂再翻面"
-          onClick={() => setPrefs({ listenMode: listenMode === 'core' ? 'all' : listenMode === 'all' ? 'off' : 'core' })}>
-          听：{listenMode === 'core' ? '核心词' : listenMode === 'all' ? '全部' : '关'}
+        <button type="button" className={`pill${audio !== 'off' ? ' is-on' : ''}`} title={AUDIO_TITLE}
+          onClick={() => setPrefs({ audio: AUDIO_NEXT[audio] })}>
+          发音：{AUDIO_LABEL[audio]}
         </button>
-        <button type="button" className={`pill${prefs.autoPlay ? ' is-on' : ''}`} onClick={() => setPrefs({ autoPlay: !prefs.autoPlay })}>自动发音</button>
       </div>
       {custom ? (
         <div className="custom-bar">
