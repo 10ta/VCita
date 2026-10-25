@@ -17,9 +17,11 @@ export interface Prefs {
   showT1: boolean;
   showT2: boolean;
   pageSize: number;
+  /** 添加页：新笔记的来源类型（挖矿 / 词表），记住上次的选择 */
+  addOrigin: 'mined' | 'list';
 }
 const KEY = 'vf_prefs';
-const DEFAULTS: Prefs = { deckId: null, quizType: 0, autoPlay: false, audio: 'core', showT1: true, showT2: false, pageSize: 30 };
+const DEFAULTS: Prefs = { deckId: null, quizType: 0, autoPlay: false, audio: 'core', showT1: true, showT2: false, pageSize: 30, addOrigin: 'mined' };
 
 let cache: Prefs = (() => {
   try {

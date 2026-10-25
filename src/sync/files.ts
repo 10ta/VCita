@@ -17,7 +17,7 @@ import { sha1Hex } from '../lib/sha1';
 const KEY_ORDER = [
   'schemaVersion', 'kind', 'month', 'day', 'id', 'name', 'order',
   'deckId', 'noteId', 'cardId', 'type', 'createdAt',
-  'lemma', 'sentence', 'clozeSentence', 'meaningZh', 'meaningEn', 'etymology', 'cueFamily', 'intentZh', 'hint', 'clozeHint', 'answerFr', 'extra', 'source', 'altSentences', 'altIntents',
+  'lemma', 'sentence', 'clozeSentence', 'meaningZh', 'meaningEn', 'etymology', 'cueFamily', 'intentZh', 'hint', 'clozeHint', 'answerFr', 'extra', 'source', 'origin', 'altSentences', 'altIntents',
   'layer', 'cardTypes', 'tags', 'usedCount', 'rot',
   'state', 'due', 'interval', 'ease', 'reps', 'lapses', 'step', 'lastReviewedAt', 'isLeech', 'suspended',
   'ts', 'rating', 'prevState', 'newState', 'prevInterval', 'newInterval', 'prevEase', 'newEase', 'prevDue', 'newDue', 'elapsedMs',

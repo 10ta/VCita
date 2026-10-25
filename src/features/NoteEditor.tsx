@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Modal } from '../ui/Modal';
-import { THEMES, type Note, type Theme } from '../schema';
+import { THEMES, noteOrigin, type Note, type NoteOrigin, type Theme } from '../schema';
 import { defaultCardTypes, hasCloze, noteErrors } from '../schema/validate';
 import { bumpUsed, updateNote } from '../db/actions';
 import { useDecks, useSettings } from '../db/hooks';
@@ -20,6 +20,22 @@ export function ThemePicker({ value, onChange }: { value: Theme[]; onChange: (v:
   );
 }
 
+/** 来源类型：挖矿卡 = 从自己的输入（视频、阅读、对话、写作）里摘的；词表卡 = 批量导入的词表 */
+export const ORIGINS: [NoteOrigin, string, string][] = [
+  ['mined', '挖矿', '从自己的输入里摘的（视频、阅读、对话、写作）：语境越新越好记，新卡额度按来源拆分时最新的先出'],
+  ['list', '词表', '批量导入的词表（B1 / B2 等）：哪天学都一样，按核心 → 中频慢慢消化'],
+];
+
+export function OriginPicker({ value, onChange }: { value: NoteOrigin; onChange: (v: NoteOrigin) => void }) {
+  return (
+    <div className="chips" role="radiogroup" aria-label="来源">
+      {ORIGINS.map(([o, label, tip]) => (
+        <button key={o} type="button" role="radio" title={tip} className={`chip${value === o ? ' is-on' : ''}`} aria-checked={value === o} onClick={() => onChange(o)}>{label}</button>
+      ))}
+    </div>
+  );
+}
+
 const TYPES = CARD_TYPES;
 
 export function NoteEditor({ note, onClose }: { note: Note; onClose: () => void }) {
@@ -29,7 +45,7 @@ export function NoteEditor({ note, onClose }: { note: Note; onClose: () => void 
     lemma: note.lemma, sentence: note.sentence, meaningZh: note.meaningZh, meaningEn: note.meaningEn,
     cueFamily: note.cueFamily ?? '', source: note.source ?? '', extra: note.extra ?? '',
     intentZh: note.intentZh ?? '', hint: note.hint ?? '', clozeHint: note.clozeHint ?? '', clozeSentence: note.clozeSentence ?? '', etymology: note.etymology ?? '', answerFr: note.answerFr ?? '',
-    layer: note.layer, cardTypes: note.cardTypes, tags: note.tags, deckId: note.deckId, day: note.createdAt.slice(0, 10),
+    layer: note.layer, origin: noteOrigin(note), cardTypes: note.cardTypes, tags: note.tags, deckId: note.deckId, day: note.createdAt.slice(0, 10),
     alts: (note.altSentences ?? []).join('\n'),
     altIntents: (note.altIntents ?? []).map((x) => [x.intentZh, x.answerFr, x.hint ?? ''].join(' | ').replace(/ \| $/, '')).join('\n'),
   });
@@ -53,6 +69,8 @@ export function NoteEditor({ note, onClose }: { note: Note; onClose: () => void 
       intentZh: nul(f.intentZh), hint: nul(f.hint), clozeHint: nul(f.clozeHint), clozeSentence: nul(f.clozeSentence), etymology: nul(f.etymology), answerFr: nul(f.answerFr),
       layer: f.layer, cardTypes: TYPES.map(([t]) => t).filter((t) => f.cardTypes.includes(t)),
       tags: f.tags, deckId: f.deckId, altSentences, altIntents,
+      // 没标过、也没改的保持"按出处推断"
+      origin: note.origin == null && f.origin === noteOrigin(note) ? null : f.origin,
       ...(f.day !== note.createdAt.slice(0, 10) ? { createdAt: noonIso(f.day) } : {}),
     });
     toast('已保存');
@@ -80,6 +98,7 @@ export function NoteEditor({ note, onClose }: { note: Note; onClose: () => void 
             <option value="core">核心（要用出来）</option>
           </select>
         </label>
+        <div className="field"><span className="field-label">来源</span><OriginPicker value={f.origin} onChange={(v) => set('origin', v)} /></div>
         <div className="field"><span className="field-label">生成哪些卡</span>
           <div className="chips">
             {TYPES.map(([t, label, tip]) => (

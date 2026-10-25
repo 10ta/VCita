@@ -18,6 +18,9 @@ export type ReviewLog = z.infer<typeof ReviewLogV2>;
 export type Settings = z.infer<typeof SettingsV2>;
 export type Theme = Note['tags'][number];
 export type CardState = Card['state'];
+export type NoteOrigin = NonNullable<Note['origin']>;
+/** 笔记的来源类型：标过就用标的；没标过时填了"出处"算挖矿卡，否则算词表卡 */
+export const noteOrigin = (n: Partial<Pick<Note, 'origin' | 'source'>>): NoteOrigin => n.origin ?? (n.source?.trim() ? 'mined' : 'list');
 export type BundleFile = z.infer<typeof BundleFileV2>;
 
 type AnyFile = { schemaVersion: number; kind: string; [k: string]: unknown };

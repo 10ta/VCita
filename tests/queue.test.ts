@@ -125,3 +125,82 @@ describe('学习中计数', () => {
     expect(buildQueue({ cards: rs, todayLogs: [], deckId: 'd', now: NOW, settings: S }).reviewBacklog).toBe(0);
   });
 });
+
+describe('新卡额度拆分', () => {
+  const at = (d: number) => toIso(NOW - 86400000 * d);
+  type Meta = { layer: 'core' | 'mid'; tags: []; origin?: 'mined' | 'list' | null; source?: string | null };
+  /** 一直答新卡直到队列空，返回出卡顺序 */
+  const run = (cards: Card[], notes: Map<string, Meta>, settings: Record<string, unknown>, logs: ReviewLog[] = []) => {
+    const ids: string[] = [];
+    const st = { ...S, ...settings } as typeof S;
+    for (let q = buildQueue({ cards, todayLogs: logs, deckId: 'd', now: NOW, settings: st, notes }); q.next; q = buildQueue({ cards, todayLogs: logs, deckId: 'd', now: NOW, settings: st, notes })) {
+      // 和应用里一样：答过的卡留在卡片列表里，只是变成复习卡（明天到期）
+      const id = q.next.id;
+      ids.push(id); logs.push(log(q.next, 'new')); cards = cards.map((x) => (x.id === id ? { ...x, state: 'review' as const, due: toIso(NOW + 86400000) } : x));
+    }
+    return ids;
+  };
+
+  it('按来源：挖矿卡占 freshShare%，越新越先；词表卡按核心度消化积压', () => {
+    const minedOld = card({ state: 'new', createdAt: at(30) });
+    const minedNew = card({ state: 'new', createdAt: at(1) });
+    const minedMid = card({ state: 'new', createdAt: at(5) });
+    const listCore = card({ state: 'new', createdAt: at(20) });
+    const listMid = card({ state: 'new', createdAt: at(40) });
+    const listMid2 = card({ state: 'new', createdAt: at(10) });
+    const notes = new Map<string, Meta>([
+      [minedOld.noteId, { layer: 'mid', tags: [], origin: 'mined' }],
+      [minedNew.noteId, { layer: 'mid', tags: [], source: 'InnerFrench · 第 12 集' }], // 没标过、填了出处 → 挖矿
+      [minedMid.noteId, { layer: 'mid', tags: [], origin: 'mined' }],
+      [listCore.noteId, { layer: 'core', tags: [], origin: 'list' }],
+      [listMid.noteId, { layer: 'mid', tags: [] }], // 没标过、没出处 → 词表
+      [listMid2.noteId, { layer: 'mid', tags: [], origin: 'list', source: 'B2 词表' }], // 标过的以标的为准
+    ]);
+    const all = [minedOld, minedNew, minedMid, listCore, listMid, listMid2];
+    // 4 张：60% → 挖矿 2 张（最新的两张），词表 2 张（核心先）
+    expect(run(all, notes, { newPerDay: 4, newSplit: 'source', freshShare: 60 })).toEqual([minedNew.id, minedMid.id, listCore.id, listMid.id]);
+    // 不拆：按核心 → 添加时间
+    expect(run(all, notes, { newPerDay: 4, newSplit: 'off' })).toEqual([listCore.id, listMid.id, minedOld.id, listMid2.id]);
+  });
+
+  it('一份不够时额度让给另一份', () => {
+    const mined = card({ state: 'new', createdAt: at(1) });
+    const lists = Array.from({ length: 5 }, (_, i) => card({ state: 'new', createdAt: at(10 + i) }));
+    const notes = new Map<string, Meta>([[mined.noteId, { layer: 'mid', tags: [], origin: 'mined' }], ...lists.map((c) => [c.noteId, { layer: 'mid' as const, tags: [] as [] }] as const)]);
+    const order = run([mined, ...lists], notes, { newPerDay: 4, newSplit: 'source', freshShare: 75 });
+    expect(order).toHaveLength(4);
+    expect(order[0]).toBe(mined.id);
+    // 反过来：词表卡没有了，挖矿卡把整份额度用掉
+    const ms = Array.from({ length: 5 }, (_, i) => card({ state: 'new', createdAt: at(i + 1) }));
+    const notes2 = new Map<string, Meta>(ms.map((c) => [c.noteId, { layer: 'mid', tags: [], origin: 'mined' }]));
+    expect(run(ms, notes2, { newPerDay: 4, newSplit: 'source', freshShare: 50 })).toEqual(ms.slice(0, 4).map((c) => c.id));
+  });
+
+  it('当天已学的新卡按各自那份扣额度', () => {
+    const done = card({ state: 'review', createdAt: at(1), due: toIso(NOW + 86400000) }); // 今天学过的挖矿卡
+    const m = card({ state: 'new', createdAt: at(2) });
+    const l1 = card({ state: 'new', createdAt: at(20) }), l2 = card({ state: 'new', createdAt: at(21) });
+    const notes = new Map<string, Meta>([
+      [done.noteId, { layer: 'mid', tags: [], origin: 'mined' }], [m.noteId, { layer: 'mid', tags: [], origin: 'mined' }],
+      [l1.noteId, { layer: 'mid', tags: [], origin: 'list' }], [l2.noteId, { layer: 'mid', tags: [], origin: 'list' }],
+    ]);
+    // 上限 2、挖矿 50%：挖矿那份已用完，剩下 1 张给词表
+    expect(run([done, m, l1, l2], notes, { newPerDay: 2, newSplit: 'source', freshShare: 50 }, [log(done, 'new')])).toEqual([l2.id]); // 词表按添加时间，旧的先
+  });
+
+  it('按添加时间：最近 N 天的卡越新越先，更早的按核心度', () => {
+    const recent1 = card({ state: 'new', createdAt: at(2) });
+    const recent0 = card({ state: 'new', createdAt: at(0) });
+    const oldCore = card({ state: 'new', createdAt: at(30) });
+    const oldMid = card({ state: 'new', createdAt: at(60) });
+    const notes = new Map<string, Meta>([
+      [recent1.noteId, { layer: 'mid', tags: [] }], [recent0.noteId, { layer: 'mid', tags: [] }],
+      [oldCore.noteId, { layer: 'core', tags: [] }], [oldMid.noteId, { layer: 'mid', tags: [] }],
+    ]);
+    expect(run([recent1, recent0, oldCore, oldMid], notes, { newPerDay: 4, newSplit: 'recent', freshDays: 7, freshShare: 50 }))
+      .toEqual([recent0.id, recent1.id, oldCore.id, oldMid.id]);
+    // 窗口只有 1 天：两天前的卡算旧卡
+    expect(run([recent1, recent0, oldCore, oldMid], notes, { newPerDay: 2, newSplit: 'recent', freshDays: 1, freshShare: 50 }))
+      .toEqual([recent0.id, oldCore.id]);
+  });
+});

@@ -7,7 +7,7 @@ import { dayStartMs, fileStamp, fromIso, studyDay } from '../../lib/time';
 import { SyncSection } from '../../sync/SyncSection';
 import { LANGS } from '../../ui/langs';
 import { toast } from '../../ui/toast';
-import { THEMES } from '../../schema';
+import { THEMES, noteOrigin } from '../../schema';
 import type { Settings } from '../../schema';
 import { DeckSection } from './DeckSection';
 
@@ -175,7 +175,7 @@ const parseSteps = (s: string) => s.split(/[\s,，]+/).filter(Boolean).map(Numbe
 type Form = Settings & { learning: string; relearn: string };
 const toForm = (s: Settings): Form => ({ ...s, learning: s.learningSteps.join(' '), relearn: s.relearnSteps.join(' ') });
 function toPatch(f: Form): Partial<Settings> {
-  const patch: Partial<Settings> = { fuzz: f.fuzz, newReviewOrder: f.newReviewOrder, reviewSort: f.reviewSort, newSort: f.newSort, focusTags: f.focusTags, learningSteps: parseSteps(f.learning), relearnSteps: parseSteps(f.relearn) };
+  const patch: Partial<Settings> = { fuzz: f.fuzz, newReviewOrder: f.newReviewOrder, reviewSort: f.reviewSort, newSort: f.newSort, focusTags: f.focusTags, newSplit: f.newSplit, freshShare: Number(f.freshShare), freshDays: Number(f.freshDays), learningSteps: parseSteps(f.learning), relearnSteps: parseSteps(f.relearn) };
   for (const [k] of ALL_NUMS) patch[k] = Number(f[k]);
   return patch;
 }
@@ -229,6 +229,14 @@ function SrsForm({ s }: { s: Settings }) {
           </div>
         </SetRow>
       )}
+      <SetRow label="新卡额度拆分" hint="把每日新卡上限分成两份，一份留给新鲜的卡（越新越先出），另一份按上面的顺序消化积压；一份用不完的让给另一份">
+        <select value={f.newSplit} onChange={(e) => setF({ ...f, newSplit: e.target.value as Settings['newSplit'] })}>
+          <option value="source">按来源：挖矿卡 / 词表卡</option>
+          <option value="recent">按添加时间：最近几天 / 更早</option>
+          <option value="off">不拆分</option>
+        </select>
+      </SetRow>
+      {f.newSplit !== 'off' && <SplitRows f={f} setF={setF} />}
       <SetRow label="复习卡顺序" hint="相对逾期 = 逾期天数 ÷ 间隔">
         <select value={f.reviewSort} onChange={(e) => setF({ ...f, reviewSort: e.target.value as Settings['reviewSort'] })}>
           <option value="overdue">相对逾期（最可能忘的先出）</option>
@@ -260,6 +268,45 @@ function SrsForm({ s }: { s: Settings }) {
 
       <Backlog s={s} />
     </section>
+  );
+}
+
+/** 拆分比例、最近天数，以及按当前设置每天大约怎么分 */
+function SplitRows({ f, setF }: { f: Form; setF: (f: Form) => void }) {
+  const notes = useNotes();
+  const cards = useCards();
+  const per = Math.max(0, Math.floor(Number(f.newPerDay)) || 0);
+  const share = Math.min(100, Math.max(0, Number(f.freshShare) || 0));
+  const fresh = Math.round((per * share) / 100);
+  const label = f.newSplit === 'source' ? ['挖矿卡', '词表卡'] : ['最近添加', '更早添加'];
+  // 待学新卡里各有多少条笔记（同一条笔记一天只出一张，所以按笔记算）
+  let counts: [number, number] | null = null;
+  if (notes && cards) {
+    const newNotes = new Set(cards.filter((c) => c.state === 'new' && !c.deleted && !c.suspended).map((c) => c.noteId));
+    const days = Math.max(1, Math.floor(Number(f.freshDays)) || 1);
+    const from = Date.now() - days * 86_400_000;
+    counts = [0, 0];
+    for (const n of notes) {
+      if (n.deleted || !newNotes.has(n.id)) continue;
+      const isFresh = f.newSplit === 'source' ? noteOrigin(n) === 'mined' : fromIso(n.createdAt) >= from;
+      counts[isFresh ? 0 : 1]++;
+    }
+  }
+  return (
+    <>
+      <SetRow label={`${label[0]}占比`} hint={`每天约 ${fresh} 张${label[0]} + ${per - fresh} 张${label[1]}${counts ? `；待学：${label[0]} ${counts[0]} 条 · ${label[1]} ${counts[1]} 条` : ''}`}>
+        <span className="num-unit">
+          <input type="number" min={0} max={100} aria-label={`${label[0]}占比`} value={f.freshShare} onChange={(e) => setF({ ...f, freshShare: e.target.value as unknown as number })} /><em>%</em>
+        </span>
+      </SetRow>
+      {f.newSplit === 'recent' && (
+        <SetRow label="最近几天" hint="这几天内添加的新卡算新鲜的">
+          <span className="num-unit">
+            <input type="number" min={1} aria-label="最近几天" value={f.freshDays} onChange={(e) => setF({ ...f, freshDays: e.target.value as unknown as number })} /><em>天</em>
+          </span>
+        </SetRow>
+      )}
+    </>
   );
 }
 

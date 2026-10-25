@@ -46,6 +46,9 @@ export const NoteV2 = z.looseObject({
   answerFr: z.string().nullable().default(null),
   extra: z.string().nullable().default(null),
   source: z.string().nullable().default(null),
+  /** 来源类型：mined = 挖矿卡（从自己的输入里摘的，越新越该先学）；list = 词表卡（批量导入，按核心度慢慢消化）。
+   *  null = 没标过，按"出处"推断：填了出处算挖矿，没填算词表（见 noteOrigin） */
+  origin: z.enum(['mined', 'list']).nullable().default(null),
   /** 备用例句（同样用 {{…}} 标出）：认读卡和挖空卡每次复习轮换，避免记住的是句子而不是词 */
   altSentences: z.array(z.string()).default([]),
   /** 备用产出题：同一个表达换一个场景，产出卡每次复习轮换 */
@@ -132,6 +135,12 @@ export const SettingsV2 = z.looseObject({
   reviewSort: z.enum(['overdue', 'due']).default('overdue'),
   /** 新卡顺序：layer = 重点主题 → 核心 → 中频 → 添加时间；created = 只按添加时间 */
   newSort: z.enum(['layer', 'created']).default('layer'),
+  /** 新卡额度怎么拆：source = 按来源（挖矿卡 / 词表卡）；recent = 按添加时间（最近 N 天 / 更早）；off = 不拆 */
+  newSplit: z.enum(['source', 'recent', 'off']).default('source'),
+  /** 每日新卡上限里留给"新鲜"那一份（挖矿卡 / 最近添加）的百分比；一份用不完的额度让给另一份 */
+  freshShare: z.number().int().min(0).max(100).default(60),
+  /** recent 模式下"最近"的天数 */
+  freshDays: z.number().int().min(1).default(7),
   /** 重点主题：这些主题的新卡最先出 */
   focusTags: z.array(ThemeV2).default([]),
   /** 逾期答对时，因逾期多给的天数上限；0 = 不加成 */

@@ -9,7 +9,7 @@ import { translate, speak } from '../../lib/speech';
 import { langLabel } from '../../ui/langs';
 import { usePrefs, setPrefs } from '../../ui/prefs';
 import { toast } from '../../ui/toast';
-import { ThemePicker } from '../NoteEditor';
+import { OriginPicker, ThemePicker } from '../NoteEditor';
 import { BulkImport } from './BulkImport';
 
 const todayInput = () => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`; };
@@ -90,7 +90,7 @@ function AddOne({ deckId }: { deckId: string }) {
     const created = new Date(y, m - 1, d, new Date().getHours(), new Date().getMinutes()).getTime();
     const nul = (x: string) => (x.trim() ? x.trim() : null);
     const { noteId } = await addNote({
-      deckId, createdAtMs: created, lemma, sentence, tags, cardTypes: types, layer: has('production') ? 'core' : 'mid',
+      deckId, createdAtMs: created, lemma, sentence, tags, origin: prefs.addOrigin, cardTypes: types, layer: has('production') ? 'core' : 'mid',
       intentZh: nul(f.intentZh), hint: nul(f.hint), clozeHint: nul(f.clozeHint), clozeSentence: nul(f.clozeSentence), etymology: nul(f.etymology), answerFr: nul(f.answerFr), cueFamily: nul(f.cueFamily), source: nul(f.source), extra: nul(f.extra),
     });
     const toTranslate = target || plain;
@@ -111,7 +111,7 @@ function AddOne({ deckId }: { deckId: string }) {
       <input value={f[k]} placeholder={ph} onChange={(e) => set(k, e.target.value)} onKeyDown={onEnter} /></label>
   );
   const draft = {
-    ...BLANK_NOTE, lemma, sentence, cardTypes: types, meaningZh: '', meaningEn: '',
+    ...BLANK_NOTE, lemma, sentence, cardTypes: types, origin: prefs.addOrigin, meaningZh: '', meaningEn: '',
     intentZh: f.intentZh || null, hint: f.hint || null, clozeHint: f.clozeHint || null, clozeSentence: f.clozeSentence || null, etymology: f.etymology || null, answerFr: f.answerFr || null,
     cueFamily: f.cueFamily || null, source: f.source || null, extra: f.extra || null,
   };
@@ -164,6 +164,7 @@ function AddOne({ deckId }: { deckId: string }) {
           {field('etymology', '词源（可选）', '例如：tentacule 触手 + -aire → 像触手一样伸展的')}
         </div>
       )}
+      <div className="field"><span className="field-label">来源（记住上次的选择）</span><OriginPicker value={prefs.addOrigin} onChange={(v) => setPrefs({ addOrigin: v })} /></div>
       <div className="field"><span className="field-label">主题（对接下来添加的都生效）</span><ThemePicker value={tags} onChange={setTags} /></div>
       {tried && errors.map((e) => <p key={e} className="form-error">{e}</p>)}
       {plain && !errors.length && (has('production') || has('cloze') || sentence) && <CardPreviews draft={draft} s={s} labels={labels} />}
@@ -189,6 +190,6 @@ function AddOne({ deckId }: { deckId: string }) {
 const EMPTY = { sentence: '', intentZh: '', hint: '', clozeHint: '', clozeSentence: '', etymology: '', answerFr: '', cueFamily: '', source: '', extra: '' };
 const BLANK_NOTE: Note = {
   id: 'draft', deckId: '', createdAt: '2026-01-01T00:00:00.000Z', lemma: '', sentence: '', meaningZh: '', meaningEn: '',
-  cueFamily: null, intentZh: null, hint: null, clozeHint: null, clozeSentence: null, etymology: null, answerFr: null, extra: null, source: null, altSentences: [], altIntents: [], layer: 'mid', cardTypes: ['recognition'],
+  cueFamily: null, intentZh: null, hint: null, clozeHint: null, clozeSentence: null, etymology: null, answerFr: null, extra: null, source: null, origin: null, altSentences: [], altIntents: [], layer: 'mid', cardTypes: ['recognition'],
   tags: [], usedCount: 0, usedAt: [], rot: 0, legacy: null, updatedAt: '2026-01-01T00:00:00.000Z', deleted: false,
 };

@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useCards, useDecks, useLogsSince, useNotes, useSettings } from '../../db/hooks';
 import { deleteNotes, resetNotes, setSuspended, updateNote, updateNotes } from '../../db/actions';
-import { THEMES, type Card, type Note, type Theme } from '../../schema';
+import { THEMES, noteOrigin, type Card, type Note, type NoteOrigin, type Theme } from '../../schema';
 import { addDaysToDay, fromIso, noonIso, studyDay } from '../../lib/time';
 import { findDuplicates } from '../../srs/dups';
 import { startCustom } from '../../srs/custom';
@@ -50,6 +50,7 @@ export function LibraryPage({ deckId }: { deckId: string }) {
   const prefs = usePrefs();
   const [kw, setKw] = useState('');
   const [theme, setTheme] = useState<Theme | ''>('');
+  const [origin, setOrigin] = useState<NoteOrigin | ''>('');
   const [status, setStatus] = useState<Status>('all');
   const [day, setDay] = useState('');
   const [page, setPage] = useState(0);
@@ -96,6 +97,7 @@ export function LibraryPage({ deckId }: { deckId: string }) {
     return notes
       .filter((n) => n.deckId === deckId)
       .filter((n) => !theme || n.tags.includes(theme))
+      .filter((n) => !origin || noteOrigin(n) === origin)
       .filter((n) => !day || n.createdAt.slice(0, 10) === day)
       .filter((n) => !k || [n.lemma, n.sentence, n.meaningZh, n.meaningEn, n.source ?? '', ...(n.altSentences ?? [])].some((x) => x.toLowerCase().includes(k)))
       .filter((n) => {
@@ -125,7 +127,7 @@ export function LibraryPage({ deckId }: { deckId: string }) {
         }
         return a.createdAt < b.createdAt ? 1 : a.createdAt > b.createdAt ? -1 : a.id < b.id ? 1 : -1;
       });
-  }, [notes, deckId, theme, day, kw, status, cardsByNote, focus.note, sort, forgotNotes, dups]);
+  }, [notes, deckId, theme, origin, day, kw, status, cardsByNote, focus.note, sort, forgotNotes, dups]);
 
   if (!s || !notes || !cards) return null;
   const pages = Math.max(1, Math.ceil(list.length / prefs.pageSize));
@@ -151,6 +153,11 @@ export function LibraryPage({ deckId }: { deckId: string }) {
         <select value={theme} onChange={(e) => { setTheme(e.target.value as Theme | ''); resetPage(); }}>
           <option value="">全部主题</option>
           {THEMES.map((t) => <option key={t} value={t}>{t}</option>)}
+        </select>
+        <select value={origin} title="挖矿卡：从自己输入里摘的；词表卡：批量导入的。没标过的按有没有填出处推断" onChange={(e) => { setOrigin(e.target.value as NoteOrigin | ''); resetPage(); }}>
+          <option value="">全部来源</option>
+          <option value="mined">挖矿卡</option>
+          <option value="list">词表卡</option>
         </select>
         <input type="date" value={day} onChange={(e) => { setDay(e.target.value); resetPage(); }} title="按创建日期筛选" />
         {day && <button type="button" className="pill" onClick={() => setDay('')}>✕</button>}
@@ -188,6 +195,8 @@ export function LibraryPage({ deckId }: { deckId: string }) {
           <button type="button" className="pill" onClick={() => void setSuspended(ids, false).then(() => done(`已恢复 ${ids.length} 条`))}>恢复</button>
           <button type="button" className="pill" title="只改层级；产出卡要在编辑里补上中文意图和答案后勾选" onClick={() => void updateNotes(ids, () => ({ layer: 'core' })).then(() => done(`已设为核心 ${ids.length} 条`))}>设为核心</button>
           <button type="button" className="pill" onClick={() => void updateNotes(ids, () => ({ layer: 'mid' })).then(() => done(`已设为中频 ${ids.length} 条`))}>设为中频</button>
+          <button type="button" className="pill" title="从自己输入里摘的：新卡额度按来源拆分时最新的先出" onClick={() => void updateNotes(ids, () => ({ origin: 'mined' })).then(() => done(`已设为挖矿 ${ids.length} 条`))}>设为挖矿</button>
+          <button type="button" className="pill" title="批量导入的词表：按核心 → 中频慢慢消化" onClick={() => void updateNotes(ids, () => ({ origin: 'list' })).then(() => done(`已设为词表 ${ids.length} 条`))}>设为词表</button>
           <button type="button" className="pill" onClick={() => void resetNotes(ids).then(() => done(`已重置 ${ids.length} 条为新卡`))}>重置为新卡</button>
           <button type="button" className="pill is-danger" onClick={() => setBatch('delete')}>删除</button>
         </div>
@@ -222,6 +231,7 @@ export function LibraryPage({ deckId }: { deckId: string }) {
                   {n.tags.map((t) => <span key={t} className="badge is-theme">{t}</span>)}
                   {!n.sentence && <span className="badge">待补句子</span>}
                   {n.layer === 'core' && <span className="badge is-core">核心</span>}
+                  <span className="badge" title={n.origin ? undefined : '没标过，按有没有填出处推断'}>{noteOrigin(n) === 'mined' ? '挖矿' : '词表'}{n.origin ? '' : '?'}</span>
                   {cs.filter((c) => c.type !== 'recognition').map((c) => <span key={c.id} className={`badge is-type t-${c.type}`}>{TYPE_LABEL[c.type]}</span>)}
                   {n.usedCount > 0 && <span className="badge" title="写作、口语里用上的次数">用上 {n.usedCount}</span>}
                   {dups.has(n.id) && <span className="badge is-dup" title="同组的笔记疑似重复，可以删掉或暂停其中一条">重复组 {dups.get(n.id)}</span>}
