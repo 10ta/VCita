@@ -73,7 +73,8 @@ main { padding-top: 14px; }
 .review-card { position: relative; background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 22px 20px 26px; text-align: center; }
 .badges { display: flex; justify-content: center; gap: 6px; min-height: 18px; margin-bottom: 6px; }
 .question { font-family: var(--serif); font-size: 30px; font-weight: 700; margin: 6px 0 10px; display: flex; justify-content: center; align-items: center; gap: 8px; flex-wrap: wrap; }
-.question b.cloze, .note-front b.cloze, .preview b.cloze { color: var(--accent); }
+/* 考查部分：和编辑页标记一样的橙色底，正面、答案、词库、预览统一 */
+b.cloze { color: var(--accent); background: var(--accent-dim); border-radius: 4px; padding: 0 3px; font-weight: 700; -webkit-box-decoration-break: clone; box-decoration-break: clone; }
 .show-btn { width: 100%; margin-top: 22px; padding: 13px; border-radius: 10px; border: 1px solid var(--border); background: var(--surface2); cursor: pointer; font-family: var(--mono); }
 .answer { border-top: 1px solid var(--border); margin-top: 18px; padding-top: 14px; display: flex; flex-direction: column; gap: 6px; align-items: center; }
 .answer .a1 { font-size: 20px; font-weight: 500; } .answer .a2 { font-family: var(--mono); color: #999; }
