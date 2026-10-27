@@ -12,7 +12,7 @@ export const defaultCardTypes = (layer: Note['layer']): Note['cardTypes'] =>
   layer === 'core' ? ['recognition', 'production'] : ['recognition'];
 
 // 不算"泄露"的虚词：提示里出现 de、à、le 不等于给出了答案（除非答案本身就只有这些词）
-const FUNC = new Set('a à au aux de des du d le la les l un une en et ou y ne pas se s me m te t nous vous il ils elle elles on je j que qu qui ce c ça est sont être avoir pour par sur dans avec sans plus très'.split(' '));
+const FUNC = new Set('a à au aux de des du d le la les l un une en et ou y ne pas se s me m te t sa son ses ma mon mes ta ton tes leur leurs nous vous il ils elle elles on je j que qu qui ce c ça est sont être avoir pour par sur dans avec sans plus très'.split(' '));
 const words = (x: string) => x.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().split(/[^a-z]+/).filter(Boolean);
 /** 同词根：都 ≥5 个字母且前 5 个字母相同（changement / changements、motif / motiver） */
 const sameStem = (a: string, b: string) => a === b || (a.length >= 5 && b.length >= 5 && a.slice(0, 5) === b.slice(0, 5));
