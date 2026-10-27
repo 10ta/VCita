@@ -4,7 +4,7 @@ import { cardView, Cues } from './CardFace';
 
 export const CARD_TYPES: Array<[Card['type'], string, string]> = [
   ['recognition', '认读', '看句子（或单词）想意思'],
-  ['production', '产出', '看中文意图写出法语'],
+  ['production', '产出', '看法语题面里高亮的简单说法，换成目标表达'],
   ['cloze', '挖空', '句子里挖掉考查部分，填出来'],
 ];
 

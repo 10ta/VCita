@@ -10,6 +10,7 @@ import { toast } from '../../ui/toast';
 import { THEMES, noteOrigin } from '../../schema';
 import type { Settings } from '../../schema';
 import { DeckSection } from './DeckSection';
+import { Modal } from '../../ui/Modal';
 
 /** 设置页的分类，顺序即页面顺序：常用的在上面 */
 const SECTIONS = [
@@ -97,15 +98,42 @@ function Switch({ checked, onChange, label }: { checked: boolean; onChange: (v: 
 
 const importedMsg = (r: Awaited<ReturnType<typeof importBundle>>) => `导入完成：笔记新增 ${r.notes.added}、更新 ${r.notes.updated}`;
 
-/** 从剪贴板导入备份 JSON：读不到、不是 JSON、不是备份时只给一条简短提示 */
-async function importFromClipboard() {
-  let text = '';
-  try { text = await navigator.clipboard.readText(); } catch { return toast('读不到剪贴板（浏览器未授权）', true); }
+/** 导入一段备份 JSON 文本：不是 JSON、不是备份时只给一条简短提示。成功返回 true */
+async function importText(text: string): Promise<boolean> {
   let raw: unknown;
-  try { raw = JSON.parse(text.trim()); } catch { return toast('剪贴板里没有备份 JSON', true); }
+  try { raw = JSON.parse(text.trim()); } catch { toast('剪贴板里没有备份 JSON', true); return false; }
   try {
     toast(importedMsg(await importBundle(raw)));
-  } catch { toast('剪贴板里的内容不是 VCita 备份', true); }
+    return true;
+  } catch { toast('剪贴板里的内容不是 VCita 备份', true); return false; }
+}
+
+// Firefox 的 clipboard.readText() 不走网站授权，而是在鼠标处弹一个"粘贴"小按钮，点别处就失败。
+// 所以 Firefox 直接用粘贴框（Ctrl+V 触发 paste 事件，不需要任何授权）；其他浏览器先试 readText，读不到也退回粘贴框
+const isFirefox = typeof navigator !== 'undefined' && /firefox/i.test(navigator.userAgent);
+
+/** 从剪贴板导入：能直接读就直接导入，否则打开粘贴框。返回 true 表示需要粘贴框 */
+async function importFromClipboard(): Promise<boolean> {
+  if (isFirefox || !navigator.clipboard?.readText) return true;
+  let text = '';
+  try { text = await navigator.clipboard.readText(); } catch { return true; }
+  await importText(text);
+  return false;
+}
+
+/** 粘贴框：在这里按 Ctrl+V（手机上长按 → 粘贴），粘进来就导入 */
+function PasteBox({ onClose }: { onClose: () => void }) {
+  return (
+    <Modal title="从剪贴板导入" onClose={onClose}>
+      <p className="muted small">按 <kbd>Ctrl</kbd>+<kbd>V</kbd>（Mac 上 <kbd>⌘</kbd>+<kbd>V</kbd>，手机上长按 → 粘贴），粘进来就自动导入。</p>
+      <textarea className="bulk" rows={4} autoFocus placeholder="在这里粘贴备份 JSON" value=""
+        onChange={() => undefined}
+        onPaste={(e) => {
+          e.preventDefault();
+          void importText(e.clipboardData.getData('text')).then((ok) => { if (ok) onClose(); });
+        }} />
+    </Modal>
+  );
 }
 
 async function importFile(file: File) {
@@ -117,6 +145,7 @@ async function importFile(file: File) {
 function DataSection() {
   const bundleRef = useRef<HTMLInputElement>(null);
   const [over, setOver] = useState(false);
+  const [pasting, setPasting] = useState(false);
   const decks = useDecks();
   const notes = useNotes();
   const cards = useCards();
@@ -133,7 +162,7 @@ function DataSection() {
         }}>
         <div className="drop-actions">
           <button type="button" className="btn is-primary" onClick={() => bundleRef.current?.click()}>导入备份</button>
-          <button type="button" className="btn is-primary" title="复制了备份 JSON 后点这里直接导入" onClick={() => void importFromClipboard()}>从剪贴板导入</button>
+          <button type="button" className="btn is-primary" title="复制了备份 JSON 后点这里直接导入" onClick={() => void importFromClipboard().then((box) => box && setPasting(true))}>从剪贴板导入</button>
         </div>
         <small>也可以把备份 JSON 文件拖到这里。导入按"较新者胜出"逐条合并，可以重复导入。</small>
       </div>
@@ -144,6 +173,7 @@ function DataSection() {
         const file = e.target.files?.[0]; e.target.value = '';
         if (file) void importFile(file);
       }} />
+      {pasting && <PasteBox onClose={() => setPasting(false)} />}
     </section>
   );
 }

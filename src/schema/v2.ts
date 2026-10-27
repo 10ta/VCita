@@ -35,6 +35,9 @@ export const NoteV2 = z.looseObject({
   meaningZh: z.string().default(''),
   meaningEn: z.string().default(''),
   cueFamily: z.string().nullable().default(null),
+  /** 产出卡正面：法语句子，{{…}} 高亮一个更简单的说法，要换成目标表达（answerFr）。没有时正面退回中文意图 */
+  promptFr: z.string().nullable().default(null),
+  /** 产出卡的中文意图：有法语题面时作为背面的中文注释；也可用 {{…}} 高亮考点 */
   intentZh: z.string().nullable().default(null),
   hint: z.string().nullable().default(null),
   /** 挖空卡横线处显示的提示（同 Anki 的 {{c1::答案::提示}}），例如"飞越" */
@@ -52,7 +55,7 @@ export const NoteV2 = z.looseObject({
   /** 备用例句（同样用 {{…}} 标出）：认读卡和挖空卡每次复习轮换，避免记住的是句子而不是词 */
   altSentences: z.array(z.string()).default([]),
   /** 备用产出题：同一个表达换一个场景，产出卡每次复习轮换 */
-  altIntents: z.array(z.looseObject({ intentZh: z.string(), answerFr: z.string(), hint: z.string().nullable().default(null) })).default([]),
+  altIntents: z.array(z.looseObject({ promptFr: z.string().nullable().default(null), intentZh: z.string().default(''), answerFr: z.string(), hint: z.string().nullable().default(null) })).default([]),
   layer: z.enum(['core', 'mid']).default('mid'),
   cardTypes: z.array(z.enum(CARD_TYPES)).default(['recognition']),
   tags: z.array(ThemeV2).default([]),

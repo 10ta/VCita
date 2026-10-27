@@ -242,7 +242,6 @@ export function ReviewPage({ deckId }: { deckId: string }) {
             <button type="button" className="pill" onClick={() => setEditing(true)} title="编辑 (E)">编辑</button>
           </div>
           <div className="review-card" key={card.id}>
-            <button type="button" className="icon card-lib" title="在词库中打开并编辑 (L)" onClick={() => openInLibrary(card.noteId)}>✎ 词库</button>
             <div className="badges">
               <span className={`badge is-type t-${card.type}`}>{TYPE_LABEL[card.type]}</span>
               {card.type === 'recognition' && !note.sentence && <span className="badge">待补句子</span>}
@@ -250,7 +249,7 @@ export function ReviewPage({ deckId }: { deckId: string }) {
             </div>
             <div className="question">
               {split.listen
-                ? <span className="muted">闭眼听，听懂了再翻面（<kbd>R</kbd> 再听一遍）</span>
+                ? <span className="muted">闭眼听，听懂了再翻面</span>
                 : <span>{split.question.text || <i className="muted">（{split.question.label}为空）</i>}</span>}
               <SpeakBtn text={split.question.speakText} lang={split.question.lang} size={20} />
             </div>

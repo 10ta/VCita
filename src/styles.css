@@ -42,6 +42,8 @@ main { padding-top: 14px; }
 .btn:disabled { opacity: .45; cursor: default; }
 .btn.is-primary { background: var(--accent); border-color: var(--accent); color: #fff; }
 .btn.is-danger { background: #b91c1c; border-color: #b91c1c; color: #fff; }
+.btn.is-danger-ghost { border-color: #dc262666; color: var(--red); }
+.footer-left { margin-right: auto; }
 .btn.is-ghost-danger { background: transparent; border-color: #dc262666; color: var(--red); }
 .icon { background: transparent; border: none; color: var(--dim); cursor: pointer; padding: 4px 6px; font-size: 14px; border-radius: 6px; }
 .icon:hover { color: var(--accent); background: var(--surface2); } .icon.is-danger:hover { color: var(--red); }
@@ -247,8 +249,7 @@ code { font-family: var(--mono); background: var(--surface2); padding: 0 4px; bo
 .marker .tok.is-on { background: var(--accent-dim); color: var(--accent); font-weight: 700; }
 
 .blank.has-hint { color: var(--muted); font-size: .8em; padding: 0 .3em; min-width: 0; white-space: pre-wrap; }
-.card-lib { position: absolute; top: 12px; right: 12px; font-size: .78rem; opacity: .55; width: auto; padding: 2px 8px; }
-.card-lib:hover { opacity: 1; }
+.nowrap { white-space: nowrap; }
 .focus-bar { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 10px; }
 .custom-bar { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; padding: 8px 12px; margin: 6px 0 10px; border: 1px solid var(--accent); border-radius: 10px; }
 .stat.is-green { color: var(--green); }

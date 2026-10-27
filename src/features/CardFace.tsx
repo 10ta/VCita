@@ -11,17 +11,29 @@ export function letterPattern(t: string): string {
   return t.split(/(\s+)/).map((w) => (/^\s+$/.test(w) ? '   ' : w.replace(/\p{L}/gu, (ch, i) => (i === 0 || !/\p{L}/u.test(w.slice(0, i)) ? ch : ' _')).replace(/^ /, ''))).join('');
 }
 
-/** "a {{b}} c" → a <b>b</b> c；挖空模式下横线处显示提示 / 首字母。{{答案::提示}} 的提示只在挖空时显示，优先于笔记的挖空提示 */
+/** "a {{b}} c" → a <b>b</b> c；挖空模式下横线处显示提示 / 首字母。{{答案::提示}} 的提示只在挖空时显示，优先于笔记的挖空提示。
+ *  可以有多处 {{…}}（分开的表达：{{avoir}} ces idées {{en tête}}）：笔记的挖空提示只显示在第一处，其余只有横线 / 首字母。
+ *  横线后紧跟的标点和横线粘在一起，不会单独折到下一行 */
 export function renderSentence(s: string, mode: 'bold' | 'blank' = 'bold', blank?: { hint?: string | null; letters?: boolean }): ReactNode[] {
-  return s.split(/(\{\{.*?\}\})/g).map((part, i) => {
+  const parts = s.split(/(\{\{.*?\}\})/g);
+  const out: ReactNode[] = [];
+  let n = 0;
+  for (let i = 0; i < parts.length; i++) {
+    const part = parts[i];
     const m = /^\{\{(.*)\}\}$/.exec(part);
-    if (!m) return part;
+    if (!m) { if (part) out.push(part); continue; }
     const [ans, inline] = m[1].split('::');
-    if (mode === 'bold') return <b key={i} className="cloze">{ans}</b>;
-    const hint = inline?.trim() || blank?.hint?.trim() || '';
+    if (mode === 'bold') { out.push(<b key={i} className="cloze">{ans}</b>); continue; }
+    const hint = inline?.trim() || (n === 0 ? blank?.hint?.trim() : '') || '';
+    n++;
     const label = [hint ? `[${hint}]` : '', blank?.letters ? letterPattern(ans) : ''].filter(Boolean).join(' ');
-    return label ? <span key={i} className="blank has-hint">{label}</span> : <span key={i} className="blank">___</span>;
-  });
+    const el = label ? <span key={i} className="blank has-hint">{label}</span> : <span key={i} className="blank">___</span>;
+    // 下一段以标点开头（含法语标点前的空格）：把标点并进来，一起不换行
+    const punct = /^[\s\u00a0\u202f]?[.,;:!?…»)]+/.exec(parts[i + 1] ?? '')?.[0];
+    if (punct) { out.push(<span key={`${i}p`} className="nowrap">{el}{punct}</span>); parts[i + 1] = parts[i + 1].slice(punct.length); }
+    else out.push(el);
+  }
+  return out;
 }
 export const plainSentence = (s: string) => s.replace(/\{\{(.*?)\}\}/g, (_, x: string) => x.split('::')[0]);
 
@@ -34,14 +46,17 @@ export function pickSentence(note: Note, kind: 'recognition' | 'cloze', variant 
   const pool = [main, ...(note.altSentences ?? []).filter((x) => hasCloze(x))];
   return pool[variant % pool.length];
 }
-export function pickIntent(note: Note, variant = 0): { intentZh: string; answerFr: string; hint: string | null } {
-  const pool = [{ intentZh: note.intentZh ?? '', answerFr: note.answerFr ?? '', hint: note.hint }, ...(note.altIntents ?? []).filter((x) => x.intentZh.trim() && x.answerFr.trim())];
+export interface Intent { promptFr: string | null; intentZh: string; answerFr: string; hint: string | null }
+const usable = (x: { promptFr?: string | null; intentZh?: string | null; answerFr?: string | null }) => !!(x.answerFr?.trim() && (x.promptFr?.trim() || x.intentZh?.trim()));
+export function pickIntent(note: Note, variant = 0): Intent {
+  const main: Intent = { promptFr: note.promptFr?.trim() || null, intentZh: note.intentZh ?? '', answerFr: note.answerFr ?? '', hint: note.hint };
+  const pool = [main, ...(note.altIntents ?? []).filter(usable).map((x) => ({ promptFr: x.promptFr?.trim() || null, intentZh: x.intentZh ?? '', answerFr: x.answerFr, hint: x.hint ?? null }))];
   return pool[variant % pool.length];
 }
 /** 这条笔记有几个轮换版本（认读 / 挖空 / 产出） */
 export const variantCount = (note: Note) => ({
   sentences: 1 + (note.altSentences ?? []).filter((x) => hasCloze(x)).length,
-  intents: 1 + (note.altIntents ?? []).filter((x) => x.intentZh.trim() && x.answerFr.trim()).length,
+  intents: 1 + (note.altIntents ?? []).filter(usable).length,
 });
 
 export function faces(note: Note, s: Settings, labels: [string, string, string], variant = 0): Face[] {
@@ -83,13 +98,23 @@ export function cardView(type: Card['type'], note: Note, s: Settings, quizType: 
     return { question: { ...f[0], text: '', label: '听' }, hint: null, cues: 'all', answers: f, listen: true };
   }
   if (type === 'production') {
+    // 正面：法语题面（高亮的是要换掉的简单说法）；没有法语题面的旧题退回中文意图（也可以 {{…}} 高亮考点）
+    // 背面：法语答案（{{…}} 高亮目标表达），有法语题面时中文意图作为注释
     const it = pickIntent(note, variant);
-    const q = it.intentZh;
     const a = it.answerFr;
+    const answer: Face = { text: hasCloze(a) ? renderSentence(a) : a, speakText: plainSentence(a), lang: s.sourceLang, label: labels[0] };
+    if (it.promptFr) {
+      return {
+        question: { text: renderSentence(it.promptFr), speakText: plainSentence(it.promptFr), lang: s.sourceLang, label: '法语题面' },
+        hint: it.hint, cues: 'extra',
+        answers: it.intentZh.trim() ? [answer, { text: plainSentence(it.intentZh), speakText: plainSentence(it.intentZh), lang: s.targetLang1, label: labels[1] }] : [answer],
+      };
+    }
+    const q = it.intentZh;
     return {
-      question: { text: q, speakText: q, lang: s.targetLang1, label: '中文意图' },
+      question: { text: hasCloze(q) ? renderSentence(q) : q, speakText: plainSentence(q), lang: s.targetLang1, label: '中文意图' },
       hint: it.hint, cues: 'extra',
-      answers: [{ text: a, speakText: a, lang: s.sourceLang, label: labels[0] }],
+      answers: [answer],
     };
   }
   if (type === 'cloze') {

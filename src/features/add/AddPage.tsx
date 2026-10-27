@@ -54,7 +54,7 @@ function AddOne({ deckId }: { deckId: string }) {
   const sentence = isSentence ? (hasCloze(text) ? text.trim() : '') : f.sentence.trim();
   const target = sentence ? clozeTarget(sentence) : '';
   const lemma = isSentence ? (hasCloze(text) ? target : plain) : plain;
-  const draftFields = { lemma, sentence, cardTypes: types, intentZh: f.intentZh || null, answerFr: f.answerFr || null, clozeSentence: f.clozeSentence || null };
+  const draftFields = { lemma, sentence, cardTypes: types, promptFr: f.promptFr || null, intentZh: f.intentZh || null, answerFr: f.answerFr || null, clozeSentence: f.clozeSentence || null, clozeHint: f.clozeHint || null };
   const errors = plain ? noteErrors(draftFields) : [];
   const has = (t: Card['type']) => types.includes(t);
 
@@ -91,7 +91,7 @@ function AddOne({ deckId }: { deckId: string }) {
     const nul = (x: string) => (x.trim() ? x.trim() : null);
     const { noteId } = await addNote({
       deckId, createdAtMs: created, lemma, sentence, tags, origin: prefs.addOrigin, cardTypes: types, layer: has('production') ? 'core' : 'mid',
-      intentZh: nul(f.intentZh), hint: nul(f.hint), clozeHint: nul(f.clozeHint), clozeSentence: nul(f.clozeSentence), etymology: nul(f.etymology), answerFr: nul(f.answerFr), cueFamily: nul(f.cueFamily), source: nul(f.source), extra: nul(f.extra),
+      promptFr: nul(f.promptFr), intentZh: nul(f.intentZh), hint: nul(f.hint), clozeHint: nul(f.clozeHint), clozeSentence: nul(f.clozeSentence), etymology: nul(f.etymology), answerFr: nul(f.answerFr), cueFamily: nul(f.cueFamily), source: nul(f.source), extra: nul(f.extra),
     });
     const toTranslate = target || plain;
     setText(''); setF(EMPTY); setTypes(['recognition']); setTried(false);
@@ -112,7 +112,7 @@ function AddOne({ deckId }: { deckId: string }) {
   );
   const draft = {
     ...BLANK_NOTE, lemma, sentence, cardTypes: types, origin: prefs.addOrigin, meaningZh: '', meaningEn: '',
-    intentZh: f.intentZh || null, hint: f.hint || null, clozeHint: f.clozeHint || null, clozeSentence: f.clozeSentence || null, etymology: f.etymology || null, answerFr: f.answerFr || null,
+    promptFr: f.promptFr || null, intentZh: f.intentZh || null, hint: f.hint || null, clozeHint: f.clozeHint || null, clozeSentence: f.clozeSentence || null, etymology: f.etymology || null, answerFr: f.answerFr || null,
     cueFamily: f.cueFamily || null, source: f.source || null, extra: f.extra || null,
   };
 
@@ -151,8 +151,9 @@ function AddOne({ deckId }: { deckId: string }) {
       {has('production') && (
         <fieldset className="prod">
           <legend>产出卡</legend>
-          {field('intentZh', '中文意图（正面，已自动翻译，可改）', '想表达的意思，例如：要考虑居民的意见')}
-          {field('answerFr', `${labels[0]}答案（背面）`, '例如：tenir compte de l’avis')}
+          {field('promptFr', `${labels[0]}题面（正面，用 {{…}} 高亮一个更简单的说法，不能用答案里的词）`, 'Le maire doit {{écouter ce que pensent}} les habitants.')}
+          {field('answerFr', `${labels[0]}答案（背面，可用 {{…}} 高亮目标表达）`, 'Le maire doit {{tenir compte de l’avis}} des habitants.')}
+          {field('intentZh', `${labels[1]}注释（背面，已自动翻译，可改；没有${labels[0]}题面时作为正面）`, '例如：考虑……的意见')}
           {field('hint', '提示（可选）', '例如：首字母 t… c… d…')}
         </fieldset>
       )}
@@ -187,9 +188,9 @@ function AddOne({ deckId }: { deckId: string }) {
   );
 }
 
-const EMPTY = { sentence: '', intentZh: '', hint: '', clozeHint: '', clozeSentence: '', etymology: '', answerFr: '', cueFamily: '', source: '', extra: '' };
+const EMPTY = { sentence: '', promptFr: '', intentZh: '', hint: '', clozeHint: '', clozeSentence: '', etymology: '', answerFr: '', cueFamily: '', source: '', extra: '' };
 const BLANK_NOTE: Note = {
   id: 'draft', deckId: '', createdAt: '2026-01-01T00:00:00.000Z', lemma: '', sentence: '', meaningZh: '', meaningEn: '',
-  cueFamily: null, intentZh: null, hint: null, clozeHint: null, clozeSentence: null, etymology: null, answerFr: null, extra: null, source: null, origin: null, altSentences: [], altIntents: [], layer: 'mid', cardTypes: ['recognition'],
+  cueFamily: null, promptFr: null, intentZh: null, hint: null, clozeHint: null, clozeSentence: null, etymology: null, answerFr: null, extra: null, source: null, origin: null, altSentences: [], altIntents: [], layer: 'mid', cardTypes: ['recognition'],
   tags: [], usedCount: 0, usedAt: [], rot: 0, legacy: null, updatedAt: '2026-01-01T00:00:00.000Z', deleted: false,
 };

@@ -73,7 +73,7 @@ export async function ensureDeck(): Promise<string> {
 
 // ---------- 笔记与卡片 ----------
 
-type NoteContent = Pick<Note, 'lemma' | 'sentence' | 'meaningZh' | 'meaningEn' | 'cueFamily' | 'intentZh' | 'hint' | 'clozeHint' | 'clozeSentence' | 'etymology' | 'answerFr' | 'extra' | 'source' | 'origin' | 'layer' | 'cardTypes' | 'tags' | 'altSentences' | 'altIntents'>;
+type NoteContent = Pick<Note, 'lemma' | 'sentence' | 'meaningZh' | 'meaningEn' | 'cueFamily' | 'promptFr' | 'intentZh' | 'hint' | 'clozeHint' | 'clozeSentence' | 'etymology' | 'answerFr' | 'extra' | 'source' | 'origin' | 'layer' | 'cardTypes' | 'tags' | 'altSentences' | 'altIntents'>;
 export type NewNoteInput = { deckId: string; createdAtMs?: number } & Partial<NoteContent>;
 
 export function blankCard(note: Pick<Note, 'id' | 'deckId' | 'createdAt'>, type: Card['type'], s: Settings, stamp: string): Card {
@@ -101,7 +101,7 @@ export async function addNotes(inputs: NewNoteInput[]): Promise<Array<{ noteId: 
       id: newId(), deckId: input.deckId, createdAt: toIso(input.createdAtMs ?? now),
       lemma: (input.lemma ?? '').trim(), sentence: (input.sentence ?? '').trim(),
       meaningZh: input.meaningZh ?? '', meaningEn: input.meaningEn ?? '',
-      cueFamily: input.cueFamily ?? null, intentZh: input.intentZh ?? null, hint: input.hint ?? null, clozeHint: input.clozeHint ?? null, clozeSentence: input.clozeSentence?.trim() || null, etymology: input.etymology ?? null, answerFr: input.answerFr ?? null,
+      cueFamily: input.cueFamily ?? null, promptFr: input.promptFr?.trim() || null, intentZh: input.intentZh ?? null, hint: input.hint ?? null, clozeHint: input.clozeHint ?? null, clozeSentence: input.clozeSentence?.trim() || null, etymology: input.etymology ?? null, answerFr: input.answerFr ?? null,
       extra: input.extra ?? null, source: input.source ?? null, origin: input.origin ?? null,
       altSentences: input.altSentences ?? [], altIntents: input.altIntents ?? [],
       layer: input.layer ?? 'mid', cardTypes: input.cardTypes ?? ['recognition'], tags: input.tags ?? [],

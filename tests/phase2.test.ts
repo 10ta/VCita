@@ -17,7 +17,7 @@ describe('卡型', () => {
     expect(noteErrors({ ...base, lemma: 'repère' })).toEqual([]); // 旧卡：只有单词也行
     expect(noteErrors({ ...base, sentence: 'perdu leurs repères' })).toContain('例句里要用 {{…}} 标出考查的部分');
     expect(noteErrors({ ...base, sentence: 'leurs {{repères}}', cardTypes: ['cloze'] })).toEqual([]);
-    expect(noteErrors({ ...base, lemma: 'x', cardTypes: ['production'] })).toContain('产出卡需要填写"中文意图"和"法语答案"');
+    expect(noteErrors({ ...base, lemma: 'x', cardTypes: ['production'] })).toContain('产出卡需要"法语题面"（或"中文意图"）和"法语答案"');
     expect(defaultCardTypes('core')).toEqual(['recognition', 'production']);
   });
 
