@@ -24,7 +24,8 @@ export function hintLeaks(answer: string, hint: string, stem = false): string[] 
   const same = stem ? sameStem : (a: string, b: string) => a === b;
   const aw = words(answer);
   const hw = words(hint);
-  const content = aw.filter((w) => !FUNC.has(w));
+  // 单个字母（convaincu(e) 里的 e）不算词
+  const content = aw.filter((w) => !FUNC.has(w) && w.length > 1);
   // 答案全是虚词（如只挖了 de）：提示里整串出现就算泄露
   if (!content.length) return aw.length && ` ${hw.join(' ')} `.includes(` ${aw.join(' ')} `) ? [aw.join(' ')] : [];
   return [...new Set(content.filter((w) => hw.some((h) => same(w, h))))];
