@@ -38,7 +38,19 @@ function clozeLeaks(sentence: string, clozeHint: string | null | undefined): str
   return hintLeaks(answer, `${clozeHint ?? ''} ${inline}`);
 }
 
-type Fields = Pick<Note, 'lemma' | 'sentence' | 'cardTypes' | 'intentZh' | 'answerFr'> & Partial<Pick<Note, 'clozeSentence' | 'clozeHint' | 'promptFr'>>;
+// 纯语法标签：只说了"是什么词 / 什么时态"，没说意思。去掉这些词和标点后什么都不剩，就是纯标签（「介词」「动词（复合过去时）」）
+const LABELS = '介词短语 介词 前置词 动词短语 动词 形容词 名词短语 名词 副词短语 副词 连词 关系代词 人称代词 指示代词 宾语代词 代词 宾语 主语 冠词 限定词 固定搭配 搭配 短语 表达 词组 习语 变位 原形 不定式 条件式现在时 条件式过去时 条件式 虚拟式现在时 虚拟式过去时 虚拟式 复合过去时 未完成过去时 愈过去时 简单将来时 先将来时 最近将来时 将来时 现在时 命令式 直陈式 过去分词 现在分词 副动词 被动态 被动 阴性 阳性 复数 单数 否定 强调句 时态 语式 一个词 两个词 填空 答案'
+  .split(' ').sort((a, b) => b.length - a.length);
+/** 提示只是语法标签、没有意思（「介词」「动词（复合过去时）」）：横线处有多种填法，答案不唯一 */
+export function labelOnlyHint(hint: string | null | undefined): boolean {
+  let x = hint?.trim() ?? '';
+  if (!x) return false;
+  for (const t of LABELS) x = x.split(t).join('');
+  return !/[\p{L}]/u.test(x.replace(/[\d_]/g, ''));
+}
+const inlineHints = (s: string) => [...s.matchAll(/\{\{[^}]*?::([^}]+?)\}\}/g)].map((m) => m[1]);
+
+type Fields = Pick<Note, 'lemma' | 'sentence' | 'cardTypes' | 'intentZh' | 'answerFr'> & Partial<Pick<Note, 'clozeSentence' | 'clozeHint' | 'promptFr' | 'altSentences'>>;
 
 export function noteErrors(n: Fields): string[] {
   const errs: string[] = [];
@@ -54,6 +66,8 @@ export function noteErrors(n: Fields): string[] {
   if (n.cardTypes.includes('cloze')) {
     const leak = clozeLeaks(cs && hasCloze(cs) ? cs : n.sentence, n.clozeHint);
     if (leak.length) errs.push(`挖空提示里出现了答案：${leak.join('、')}（提示只给意思，不给答案的词）`);
+    const labels = [n.clozeHint ?? '', ...[n.sentence, cs, ...(n.altSentences ?? [])].flatMap(inlineHints)].filter(labelOnlyHint);
+    if (labels.length) errs.push(`挖空提示只写了语法标签：${labels.map((x) => `「${x.trim()}」`).join('、')}（要写出横线处的意思，如"担心（+ 不定式）"，让答案唯一）`);
   }
   return errs;
 }

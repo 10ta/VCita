@@ -6,7 +6,7 @@ import { cardView, pickIntent } from '../src/features/CardFace';
 import { altIntentLine, parseAltIntent } from '../src/features/NoteEditor';
 import { SettingsSchema } from '../src/schema';
 import { NoteV2 } from '../src/schema/v2';
-import { clozeTarget, hintLeaks, noteErrors, promptErrors } from '../src/schema/validate';
+import { clozeTarget, hintLeaks, labelOnlyHint, noteErrors, promptErrors } from '../src/schema/validate';
 import { toIso } from '../src/lib/time';
 
 const S = SettingsSchema.parse({ updatedAt: toIso(0) });
@@ -77,5 +77,24 @@ describe('挖空：多处、提示不泄露答案', () => {
   it('提示给原形、考变位不算泄露', () => {
     expect(hintLeaks('dégringolé', 'dégringoler · 复合过去时')).toEqual([]);
     expect(noteErrors({ lemma: '', sentence: 'Les prix ont {{dégringolé::dégringoler · 复合过去时}}.', cardTypes: ['cloze'], intentZh: null, answerFr: null })).toEqual([]);
+  });
+});
+
+describe('挖空提示不能只是语法标签', () => {
+  it('识别纯标签', () => {
+    expect(labelOnlyHint('介词')).toBe(true);
+    expect(labelOnlyHint('动词（复合过去时）')).toBe(true);
+    expect(labelOnlyHint('关系代词，阴性复数')).toBe(true);
+    expect(labelOnlyHint('担心（+ 不定式）')).toBe(false);
+    expect(labelOnlyHint('飞越（复合过去时）')).toBe(false);
+    expect(labelOnlyHint('dégringoler · 复合过去时')).toBe(false);
+    expect(labelOnlyHint('')).toBe(false);
+  });
+  const base = { lemma: 'craindre de', cardTypes: ['cloze' as const], intentZh: null, answerFr: null };
+  it('笔记提示、主句内联提示、备用例句内联提示都检查', () => {
+    expect(noteErrors({ ...base, sentence: 'Je craignais {{de}} rater le métro.', clozeHint: '介词' }).join()).toContain('语法标签');
+    expect(noteErrors({ ...base, sentence: 'Je craignais {{de::介词}} rater le métro.' }).join()).toContain('语法标签');
+    expect(noteErrors({ ...base, sentence: 'Je {{craignais de}} rater le métro.', clozeHint: '担心（+ 不定式）', altSentences: ['Tu {{craignais de::动词}} partir.'] }).join()).toContain('语法标签');
+    expect(noteErrors({ ...base, sentence: 'Je {{craignais de}} rater le métro.', clozeHint: '担心（未完成过去时，后接不定式）' })).toEqual([]);
   });
 });

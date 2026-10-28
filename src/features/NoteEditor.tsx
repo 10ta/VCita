@@ -65,7 +65,7 @@ export function NoteEditor({ note, onClose }: { note: Note; onClose: () => void 
   const altSentences = f.alts.split('\n').map((x) => x.trim()).filter(Boolean);
   const altIntents = f.altIntents.split('\n').map((x) => x.trim()).filter(Boolean).map(parseAltIntent);
   const errors = [
-    ...noteErrors(f),
+    ...noteErrors({ ...f, altSentences }),
     ...(altSentences.some((x) => !hasCloze(x)) ? ['备用例句每句都要用 {{…}} 标出考查部分'] : []),
     ...(f.cardTypes.includes('production') ? altIntents.flatMap((x, i) => promptErrors(x.promptFr, x.intentZh, x.answerFr).map((e) => `备用产出题第 ${i + 1} 行：${e}`)) : []),
   ];
@@ -142,7 +142,7 @@ export function NoteEditor({ note, onClose }: { note: Note; onClose: () => void 
           <textarea className="bulk" rows={3} value={f.alts} placeholder="Elle a fini par {{trouver preneur}} pour son vieux vélo." onChange={(e) => set('alts', e.target.value)} />
         </label>
       )}
-      {f.cardTypes.includes('cloze') && text('clozeHint', '挖空提示（可选，横线处显示）', `例如：飞越。留空时正面显示${labels[1]}意思`)}
+      {f.cardTypes.includes('cloze') && text('clozeHint', '挖空提示（可选，横线处显示，只用于挖空主句）', `写横线处的意思，例如：飞越（复合过去时）；不要只写「介词」这类语法标签。备用例句各写各的：{{答案::提示}}。留空时正面显示${labels[1]}意思`)}
       {wantProd && (
         <fieldset className="prod">
           <legend>产出卡</legend>

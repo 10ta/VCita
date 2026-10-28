@@ -52,3 +52,24 @@ describe('挖空专用例句', () => {
     expect(noteErrors({ ...base, cardTypes: [...base.cardTypes], clozeSentence: 'avec {{marque}}' })).toEqual([]);
   });
 });
+
+describe('挖空提示只属于主挖空句', () => {
+  const n = note({
+    sentence: 'Je {{craignais de}} rater le métro.', clozeHint: '担心（未完成过去时，后接不定式）',
+    altSentences: ['{{Toi qui craignais de}} t\'ennuyer, tu as adoré le festival !', '{{Toi qui craignais de::原本还担心……的你}} rater le train, tu es arrivé en avance.'],
+    meaningZh: '原本还担心……的我',
+  });
+  it('主句用笔记的挖空提示', () => {
+    expect(blankText(cardView('cloze', n, S, 0, L))).toBe('[担心（未完成过去时，后接不定式）]');
+  });
+  it('备用例句没有内联提示：不借用主句的提示，提示行给中文意思', () => {
+    const v = cardView('cloze', n, S, 0, L, 1);
+    expect(blankText(v)).toBe('___');
+    expect(v.hint).toBe('原本还担心……的我');
+  });
+  it('备用例句有内联提示：横线处显示它', () => {
+    const v = cardView('cloze', n, S, 0, L, 2);
+    expect(blankText(v)).toBe('[原本还担心……的你]');
+    expect(v.hint).toBeNull();
+  });
+});

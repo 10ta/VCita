@@ -46,6 +46,8 @@ export function pickSentence(note: Note, kind: 'recognition' | 'cloze', variant 
   const pool = [main, ...(note.altSentences ?? []).filter((x) => hasCloze(x))];
   return pool[variant % pool.length];
 }
+/** 这次轮到的是不是主挖空句（笔记的挖空提示只为它写，备用例句挖的部分不同，用各自的 {{答案::提示}}） */
+const isMainCloze = (note: Note, variant: number) => variant % variantCount(note).sentences === 0;
 export interface Intent { promptFr: string | null; intentZh: string; answerFr: string; hint: string | null }
 const usable = (x: { promptFr?: string | null; intentZh?: string | null; answerFr?: string | null }) => !!(x.answerFr?.trim() && (x.promptFr?.trim() || x.intentZh?.trim()));
 export function pickIntent(note: Note, variant = 0): Intent {
@@ -121,10 +123,12 @@ export function cardView(type: Card['type'], note: Note, s: Settings, quizType: 
     // 有挖空专用例句就用它（和认读卡的句子不同），否则用主例句
     const sent = pickSentence(note, 'cloze', variant);
     const plain = plainSentence(sent);
+    // 笔记的挖空提示只用于主挖空句；备用例句挖的部分、时态、人称都可能不同，只用句中的 {{答案::提示}}
+    const noteHint = isMainCloze(note, variant) ? note.clozeHint?.trim() || null : null;
     // 横线处有专门的挖空提示时就不再另给；没有时用中文意思当提示，避免横线处有多种填法
-    const hint = note.clozeHint?.trim() || hasInlineHint(sent) ? null : note.meaningZh.trim() || null;
+    const hint = noteHint || hasInlineHint(sent) ? null : note.meaningZh.trim() || null;
     return {
-      question: { text: renderSentence(sent, 'blank', { hint: note.clozeHint, letters: s.clozeLetters }), speakText: '', lang: s.sourceLang, label: labels[0] },
+      question: { text: renderSentence(sent, 'blank', { hint: noteHint, letters: s.clozeLetters }), speakText: '', lang: s.sourceLang, label: labels[0] },
       hint, cues: 'all',
       answers: [
         { text: renderSentence(sent), speakText: plain, lang: s.sourceLang, label: labels[0] },
