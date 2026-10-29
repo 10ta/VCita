@@ -142,7 +142,7 @@ export function NoteEditor({ note, onClose }: { note: Note; onClose: () => void 
           <textarea className="bulk" rows={3} value={f.alts} placeholder="Elle a fini par {{trouver preneur}} pour son vieux vélo." onChange={(e) => set('alts', e.target.value)} />
         </label>
       )}
-      {f.cardTypes.includes('cloze') && text('clozeHint', '挖空提示（可选，横线处显示，只用于挖空主句）', `写横线处的意思，例如：飞越（复合过去时）；不要只写「介词」这类语法标签。备用例句各写各的：{{答案::提示}}。留空时正面显示${labels[1]}意思`)}
+      {f.cardTypes.includes('cloze') && text('clozeHint', '挖空提示（可选，横线处显示，只用于挖空主句）', `写横线处的意思，例如：飞越（复合过去时）；不写答案的词或原形，不只写「介词」这类标签；只挖介词、冠词等小词时留空即可（上下文决定答案）。备用例句各写各的：{{答案::提示}}。留空时正面显示${labels[1]}意思（只挖小词时不显示）`)}
       {wantProd && (
         <fieldset className="prod">
           <legend>产出卡</legend>

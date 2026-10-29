@@ -73,3 +73,18 @@ describe('挖空提示只属于主挖空句', () => {
     expect(v.hint).toBeNull();
   });
 });
+
+describe('只挖虚词：答案由上下文决定，不给提示', () => {
+  it('{{de}} 没有挖空提示时，不拿中文意思当提示', () => {
+    const v = cardView('cloze', note({ sentence: 'Il ne se rend pas compte {{de}} la chance qu\'il a.', meaningZh: '意识到（se rendre compte de qqch）' }), S, 0, L);
+    expect(blankText(v)).toBe('___');
+    expect(v.hint).toBeNull();
+  });
+  it('中文意思里写着答案时也不给', () => {
+    const v = cardView('cloze', note({ sentence: 'Ce jeu va {{à l\'inverse de}} tout.', meaningZh: '与……相反（aller à l\'inverse de）' }), S, 0, L);
+    expect(v.hint).toBeNull();
+  });
+  it('普通表达仍用中文意思当提示', () => {
+    expect(cardView('cloze', note(), S, 0, L).hint).toBe('飞越一个国家');
+  });
+});

@@ -37,14 +37,14 @@ describe('内联提示与听力认读', () => {
     const { clozeTarget } = await import('../src/schema/validate');
     expect(plainSentence('Les prix ont {{dégringolé::dégringoler · 复合过去时}}.')).toBe('Les prix ont dégringolé.');
     expect(clozeTarget('Les prix ont {{dégringolé::dégringoler}}.')).toBe('dégringolé');
-    const n = note({ altSentences: ['Les prix ont {{dégringolé::dégringoler · 复合过去时}}.'] });
+    const n = note({ altSentences: ['Les prix ont {{dégringolé::暴跌（复合过去时）}}.'] });
     const v = cardView('cloze', n, S, 0, L, 1);
     const { renderToStaticMarkup } = await import('react-dom/server');
     const { createElement, Fragment } = await import('react');
     const html = renderToStaticMarkup(createElement(Fragment, null, v.question.text));
-    expect(/<span class="blank has-hint">([^<]*)<\/span>/.exec(html)?.[1]).toBe('[dégringoler · 复合过去时]');
+    expect(/<span class="blank has-hint">([^<]*)<\/span>/.exec(html)?.[1]).toBe('[暴跌（复合过去时）]');
     // 句末标点和横线粘在一起
-    expect(html).toContain('<span class="nowrap"><span class="blank has-hint">[dégringoler · 复合过去时]</span>.</span>');
+    expect(html).toContain('<span class="nowrap"><span class="blank has-hint">[暴跌（复合过去时）]</span>.</span>');
     expect(v.hint).toBeNull();
   });
   it('听力认读：题面没有文字，有朗读内容；答案是句子和两个翻译', () => {

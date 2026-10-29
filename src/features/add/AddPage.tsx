@@ -147,7 +147,7 @@ function AddOne({ deckId }: { deckId: string }) {
         </>
       )}
       {has('cloze') && field('clozeSentence', '挖空例句（可选，和认读卡不同的句子）', '用 {{…}} 标出挖掉的部分；不填就用上面的例句')}
-      {has('cloze') && field('clozeHint', '挖空提示（可选，横线处显示，只用于挖空主句）', `写横线处的意思，例如：飞越（复合过去时）；不要只写「介词」这类语法标签。留空时正面显示${labels[1]}意思`)}
+      {has('cloze') && field('clozeHint', '挖空提示（可选，横线处显示，只用于挖空主句）', `写横线处的意思，例如：飞越（复合过去时）；不写答案的词或原形，不只写「介词」这类标签；只挖介词、冠词等小词时留空即可（上下文决定答案）。留空时正面显示${labels[1]}意思（只挖小词时不显示）`)}
       {has('production') && (
         <fieldset className="prod">
           <legend>产出卡</legend>

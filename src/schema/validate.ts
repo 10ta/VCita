@@ -18,8 +18,7 @@ const words = (x: string) => x.normalize('NFD').replace(/[\u0300-\u036f]/g, '').
 const sameStem = (a: string, b: string) => a === b || (a.length >= 5 && b.length >= 5 && a.slice(0, 5) === b.slice(0, 5));
 
 /** 提示里出现了答案的词，返回泄露的词，没有就是空数组。
- *  挖空提示（stem = false）：只查原样出现的词——提示给原形、考变位（{{dégringolé::dégringoler · 复合过去时}}）是正常用法；
- *  产出卡法语题面（stem = true）：换说法不能用同词根的词 */
+ *  stem = true：同词根也算（原形 dégringoler 泄露 dégringolé；产出卡的换说法也不能用同根词）。挖空提示和产出题面都用 stem = true */
 export function hintLeaks(answer: string, hint: string, stem = false): string[] {
   const same = stem ? sameStem : (a: string, b: string) => a === b;
   const aw = words(answer);
@@ -31,11 +30,16 @@ export function hintLeaks(answer: string, hint: string, stem = false): string[] 
   return [...new Set(content.filter((w) => hw.some((h) => same(w, h))))];
 }
 
-/** 挖空卡的提示（笔记的挖空提示 + 句中 {{答案::提示}}）有没有泄露答案 */
+/** 挖空卡的提示（笔记的挖空提示 + 句中 {{答案::提示}}）有没有泄露答案（含原形 / 同根词） */
 function clozeLeaks(sentence: string, clozeHint: string | null | undefined): string[] {
   const answer = clozeTargets(sentence).join(' ');
   const inline = [...sentence.matchAll(/\{\{[^}]*?::([^}]+?)\}\}/g)].map((m) => m[1]).join(' ');
-  return hintLeaks(answer, `${clozeHint ?? ''} ${inline}`);
+  return hintLeaks(answer, `${clozeHint ?? ''} ${inline}`, true);
+}
+/** 挖掉的只有虚词（介词、冠词、代词……如 se rend pas compte {{de}}）：答案由上下文决定，不需要提示，也不自动用中文意思当提示 */
+export function blankIsFunctionWords(sentence: string): boolean {
+  const aw = words(clozeTargets(sentence).join(' '));
+  return aw.length > 0 && aw.every((w) => FUNC.has(w) || w.length < 2);
 }
 
 // 纯语法标签：只说了"是什么词 / 什么时态"，没说意思。去掉这些词和标点后什么都不剩，就是纯标签（「介词」「动词（复合过去时）」）
@@ -65,7 +69,11 @@ export function noteErrors(n: Fields): string[] {
   if (n.cardTypes.includes('production')) errs.push(...promptErrors(n.promptFr ?? null, n.intentZh, n.answerFr));
   if (n.cardTypes.includes('cloze')) {
     const leak = clozeLeaks(cs && hasCloze(cs) ? cs : n.sentence, n.clozeHint);
-    if (leak.length) errs.push(`挖空提示里出现了答案：${leak.join('、')}（提示只给意思，不给答案的词）`);
+    if (leak.length) errs.push(`挖空提示里出现了答案：${leak.join('、')}（提示只给意思，不给答案的词或原形）`);
+    (n.altSentences ?? []).forEach((a, i) => {
+      const l = clozeLeaks(a, null);
+      if (l.length) errs.push(`备用例句第 ${i + 1} 句的提示里出现了答案：${l.join('、')}`);
+    });
     const labels = [n.clozeHint ?? '', ...[n.sentence, cs, ...(n.altSentences ?? [])].flatMap(inlineHints)].filter(labelOnlyHint);
     if (labels.length) errs.push(`挖空提示只写了语法标签：${labels.map((x) => `「${x.trim()}」`).join('、')}（要写出横线处的意思，如"担心（+ 不定式）"，让答案唯一）`);
   }

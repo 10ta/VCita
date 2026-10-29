@@ -74,9 +74,13 @@ describe('挖空：多处、提示不泄露答案', () => {
     // 正确写法：挖整个表达，提示只给意思和时态
     expect(errs('Il ne {{se rend}} pas {{compte de}} la chance qu’il a.', '意识到（现在时）')).toEqual([]);
   });
-  it('提示给原形、考变位不算泄露', () => {
-    expect(hintLeaks('dégringolé', 'dégringoler · 复合过去时')).toEqual([]);
-    expect(noteErrors({ lemma: '', sentence: 'Les prix ont {{dégringolé::dégringoler · 复合过去时}}.', cardTypes: ['cloze'], intentZh: null, answerFr: null })).toEqual([]);
+  it('提示给原形也算泄露：写意思 + 时态', () => {
+    expect(hintLeaks('dégringolé', 'dégringoler · 复合过去时', true)).toEqual(['degringole']);
+    expect(noteErrors({ lemma: '', sentence: 'Les prix ont {{dégringolé::dégringoler · 复合过去时}}.', cardTypes: ['cloze'], intentZh: null, answerFr: null }).join()).toContain('出现了答案');
+    expect(noteErrors({ lemma: '', sentence: 'Les prix ont {{dégringolé::暴跌（复合过去时）}}.', cardTypes: ['cloze'], intentZh: null, answerFr: null })).toEqual([]);
+  });
+  it('备用例句的内联提示也查泄露', () => {
+    expect(noteErrors({ lemma: '', sentence: 'Les prix ont {{dégringolé}}.', clozeHint: '暴跌（复合过去时）', cardTypes: ['cloze'], intentZh: null, answerFr: null, altSentences: ['Il ne se rend pas compte {{de::se rendre compte de · 现在时}} la chance.'] }).join()).toContain('备用例句第 1 句');
   });
 });
 
