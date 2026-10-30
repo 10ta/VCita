@@ -66,7 +66,7 @@ export function noteErrors(n: Fields): string[] {
   if (n.cardTypes.includes('cloze') && !cloze && !cs) errs.push('挖空卡需要带 {{…}} 的例句');
   // 迁移来的旧卡没有例句，允许只有单词
   if (n.cardTypes.includes('recognition') && !cloze && !n.lemma.trim()) errs.push('认读卡需要例句或单词');
-  if (n.cardTypes.includes('production')) errs.push(...promptErrors(n.promptFr ?? null, n.intentZh, n.answerFr));
+  if (n.cardTypes.includes('production')) errs.push(...promptErrors(n.promptFr ?? null, n.intentZh, n.answerFr, n.lemma));
   if (n.cardTypes.includes('cloze')) {
     const leak = clozeLeaks(cs && hasCloze(cs) ? cs : n.sentence, n.clozeHint);
     if (leak.length) errs.push(`挖空提示里出现了答案：${leak.join('、')}（提示只给意思，不给答案的词或原形）`);
@@ -80,13 +80,34 @@ export function noteErrors(n: Fields): string[] {
   return errs;
 }
 
-/** 一道产出题（主题或备用题）的校验：法语题面或中文意图至少一个，题面要用 {{…}} 标出要换掉的说法，且不能直接给出答案 */
-export function promptErrors(promptFr: string | null, intentZh: string | null, answerFr: string | null): string[] {
+/** 一道产出题（主题或备用题）的校验：法语题面或中文意图至少一个，题面要用 {{…}} 标出要换掉的说法，且不能直接给出答案；
+ *  传了 lemma 时，词条的实词不能留在高亮外面（否则考的是旁边的词：{{écopé d'}}une amende 考的是 écoper，不是 amende） */
+export function promptErrors(promptFr: string | null, intentZh: string | null, answerFr: string | null, lemma?: string | null): string[] {
   const p = promptFr?.trim() ?? '';
   if (!answerFr?.trim() || (!p && !intentZh?.trim())) return ['产出卡需要"法语题面"（或"中文意图"）和"法语答案"'];
   if (!p) return [];
   if (!hasCloze(p)) return ['法语题面要用 {{…}} 标出要换掉的说法'];
   const answer = hasCloze(answerFr) ? clozeTargets(answerFr).join(' ') : answerFr;
   const leak = hintLeaks(answer, clozeTargets(p).join(' '), true);
-  return leak.length ? [`法语题面的高亮部分直接给出了答案：${leak.join('、')}（换一个说法）`] : [];
+  const errs = leak.length ? [`法语题面的高亮部分直接给出了答案：${leak.join('、')}（换一个说法）`] : [];
+  const out = lemma ? lemmaOutside(p, answer, lemma) : [];
+  if (out.length) errs.push(`题面高亮外面直接露出了词条的词：${out.join('、')}（这样考的是别的词；高亮要把它包进去，题面换说法时也换掉它）`);
+  return errs;
+}
+
+/** 词条的实词：出现在题面高亮外、又不在答案高亮里 → 产出题没考到词条 */
+export function lemmaOutside(promptFr: string, answerTarget: string, lemma: string): string[] {
+  const lw = words(lemma).filter((w) => !FUNC.has(w) && w.length > 1);
+  const outside = words(promptFr.replace(/\{\{.+?\}\}/g, ' '));
+  const target = words(answerTarget);
+  return [...new Set(lw.filter((w) => outside.some((o) => sameStem(w, o)) && !target.some((t) => sameStem(w, t))))];
+}
+
+/** 一条笔记所有产出题（主题 + 备用题）的问题；词库"题面有误"筛选用 */
+export function productionErrors(n: Pick<Note, 'lemma' | 'cardTypes' | 'intentZh' | 'answerFr'> & Partial<Pick<Note, 'promptFr' | 'altIntents'>>): string[] {
+  if (!n.cardTypes.includes('production')) return [];
+  return [
+    ...promptErrors(n.promptFr ?? null, n.intentZh, n.answerFr, n.lemma),
+    ...(n.altIntents ?? []).flatMap((x, i) => promptErrors(x.promptFr ?? null, x.intentZh ?? null, x.answerFr, n.lemma).map((e) => `备用产出题第 ${i + 1} 行：${e}`)),
+  ];
 }

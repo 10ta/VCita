@@ -67,7 +67,7 @@ export function NoteEditor({ note, onClose }: { note: Note; onClose: () => void 
   const errors = [
     ...noteErrors({ ...f, altSentences }),
     ...(altSentences.some((x) => !hasCloze(x)) ? ['备用例句每句都要用 {{…}} 标出考查部分'] : []),
-    ...(f.cardTypes.includes('production') ? altIntents.flatMap((x, i) => promptErrors(x.promptFr, x.intentZh, x.answerFr).map((e) => `备用产出题第 ${i + 1} 行：${e}`)) : []),
+    ...(f.cardTypes.includes('production') ? altIntents.flatMap((x, i) => promptErrors(x.promptFr, x.intentZh, x.answerFr, f.lemma).map((e) => `备用产出题第 ${i + 1} 行：${e}`)) : []),
   ];
   const save = async () => {
     if (errors.length) return;

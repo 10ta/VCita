@@ -101,4 +101,13 @@ describe('挖空提示不能只是语法标签', () => {
     expect(noteErrors({ ...base, sentence: 'Je {{craignais de}} rater le métro.', clozeHint: '担心（+ 不定式）', altSentences: ['Tu {{craignais de::动词}} partir.'] }).join()).toContain('语法标签');
     expect(noteErrors({ ...base, sentence: 'Je {{craignais de}} rater le métro.', clozeHint: '担心（未完成过去时，后接不定式）' })).toEqual([]);
   });
+  it("校验：词条的词不能露在高亮外（{{écopé d'}}une amende 考的是 écoper）", () => {
+    const bad = ["J'ai {{reçu comme sanction}} une amende pour stationnement.", null, "J'ai {{écopé d'}}une amende pour stationnement."] as const;
+    expect(promptErrors(...bad, 'amende')[0]).toContain('amende');
+    expect(promptErrors(...bad, "écoper d'une amende").join()).toContain('amende');
+    expect(promptErrors(...bad, 'écoper de')).toEqual([]);
+    expect(promptErrors("J'ai {{reçu une sanction financière}} pour stationnement.", null, "J'ai {{écopé d'une amende}} pour stationnement.", 'amende')).toEqual([]);
+    // 答案高亮里有这个词、题面别处又出现同一个词，不算
+    expect(promptErrors('il faut {{affronter}} ce que les gens font', null, 'il faut {{faire face à}} ce que les gens font', 'faire face à')).toEqual([]);
+  });
 });

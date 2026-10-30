@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { useCards, useDecks, useLogsSince, useNotes, useSettings } from '../../db/hooks';
 import { deleteNotes, resetNotes, setSuspended, updateNote, updateNotes } from '../../db/actions';
 import { THEMES, noteOrigin, type Card, type Note, type NoteOrigin, type Theme } from '../../schema';
+import { productionErrors } from '../../schema/validate';
 import { addDaysToDay, fromIso, noonIso, studyDay } from '../../lib/time';
 import { findDuplicates } from '../../srs/dups';
 import { startCustom } from '../../srs/custom';
@@ -13,7 +14,7 @@ import { langLabel } from '../../ui/langs';
 import { CardStats, Cues, renderSentence, SpeakBtn, TYPE_LABEL } from '../CardFace';
 import { NoteEditor, ThemePicker } from '../NoteEditor';
 
-type Status = 'all' | 'new' | 'learning' | 'due' | 'leech' | 'suspended' | 'nosentence' | 'stable' | 'core' | 'needprod' | 'forgot' | 'lowease' | 'dup';
+type Status = 'all' | 'new' | 'learning' | 'due' | 'leech' | 'suspended' | 'nosentence' | 'stable' | 'core' | 'needprod' | 'forgot' | 'lowease' | 'dup' | 'badprompt';
 // 后半部分是"分拣"用的筛选（改造方案 §6）：已稳定的保留；同源词选中后批量暂停；顽固卡补句子、加线索；核心词补产出卡
 const STATUS: Array<[Status, string, string?]> = [
   ['all', '全部'], ['due', '到期'], ['new', '新卡'], ['learning', '学习中'], ['suspended', '已暂停'],
@@ -22,6 +23,7 @@ const STATUS: Array<[Status, string, string?]> = [
   // 弱项：在变成顽固卡之前先改句子、加线索
   ['forgot', '近 7 天忘过', '最近 7 个学习日里至少有一次评"忘了"'], ['lowease', '倍率 < 2', '有卡的倍率低于 2：经常答困难或忘了'],
   ['dup', '疑似重复', '单词、考查部分或整句相同，或例句高度相似；同组排在一起'],
+  ['badprompt', '题面有误', '产出题的高亮没包住词条（词条的词露在高亮外），或高亮直接给出了答案'],
 ];
 type Sort = 'created' | 'lapses' | 'ease' | 'due' | 'reviewed';
 const SORTS: Array<[Sort, string]> = [['created', '最新添加'], ['lapses', '遗忘最多'], ['ease', '倍率最低'], ['due', '最早到期'], ['reviewed', '最近复习']];
@@ -116,6 +118,7 @@ export function LibraryPage({ deckId }: { deckId: string }) {
           case 'forgot': return forgotNotes.has(n.id);
           case 'lowease': return cs.some((c) => c.state !== 'new' && c.ease < 2);
           case 'dup': return dups.has(n.id);
+          case 'badprompt': return productionErrors(n).length > 0;
         }
       })
       .sort((a, b) => {
