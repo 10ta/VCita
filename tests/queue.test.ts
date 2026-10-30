@@ -45,6 +45,14 @@ describe('出题队列', () => {
     expect(buildQueue({ cards: [a, b], todayLogs: [], deckId: 'd', now: NOW, settings: S }).next?.id).toBe(b.id);
     expect(buildQueue({ cards: [a, b], todayLogs: [], deckId: 'd', now: NOW, settings: { ...S, reviewSort: 'due' } }).next?.id).toBe(a.id);
   });
+  it('servable：明天才到期的学习卡、兄弟卡不在可出范围；计数为 0 时没有可出的卡', () => {
+    const tomorrow = card({ state: 'learning', step: 1, due: toIso(NOW + 86400000) });
+    const a = card({ noteId: 'sib' }), b = card({ noteId: 'sib', type: 'production', state: 'learning', due: toIso(NOW - 1000) });
+    const q = buildQueue({ cards: [tomorrow, b], todayLogs: [log(a, 'review')], deckId: 'd', now: NOW, settings: S });
+    expect(q.counts).toEqual({ learning: 0, review: 0, new: 0 });
+    expect(q.servable.size).toBe(0);
+    expect(q.next).toBeNull();
+  });
   it('到期的学习卡最优先', () => {
     const r = card({}), l = card({ state: 'learning', due: toIso(NOW - 1000) });
     expect(buildQueue({ cards: [r, l], todayLogs: [], deckId: 'd', now: NOW, settings: S }).next?.id).toBe(l.id);

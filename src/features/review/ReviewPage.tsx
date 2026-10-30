@@ -72,13 +72,15 @@ export function ReviewPage({ deckId }: { deckId: string }) {
       if (!logs?.some((l) => l.id === w.logId) && Date.now() - w.at < 3000) return;
       waitFor.current = null;
     }
-    const valid = card && !card.suspended && (custom ? custom.queue.includes(card.id) : card.deckId === deckId);
+    // 还没翻面的卡要仍在可出的范围里：导入 / 同步可能把它改成明天才到期，或今天已答过它的兄弟卡，
+    // 不检查的话它会一直挂着（计数 0 0 0 却还有卡）。翻面后（含撤销）不换，免得作答到一半被抽走
+    const valid = card && !card.suspended && (custom ? custom.queue.includes(card.id) : card.deckId === deckId && (revealed || q.servable.has(card.id)));
     if (!valid) {
       setCurrentId(nextId);
       setRevealed(false);
       shownAt.current = Date.now();
     }
-  }, [q, cards, logs, card, deckId, custom, nextId]);
+  }, [q, cards, logs, card, deckId, custom, nextId, revealed]);
 
   // 一轮结束：自动同步打开时立即同步一次
   useEffect(() => {

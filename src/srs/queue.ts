@@ -43,6 +43,9 @@ export interface QueueState {
   nextLearningAt: number | null;
   /** 队列为空、但有刚答完的学习卡在 20 分钟内到期，可以手动提前复习 */
   canLearnAhead: boolean;
+  /** 现在可以出的所有卡（到期学习卡、20 分钟内的提前学习卡、到期复习卡、今天的新卡）。
+   *  正在显示的卡不在这里面（导入 / 同步改了它的状态、兄弟卡已答等）就该换一张 */
+  servable: Set<string>;
 }
 
 const byDue = (a: Card, b: Card) => fromIso(a.due) - fromIso(b.due) || (a.id < b.id ? -1 : 1);
@@ -169,5 +172,6 @@ export function buildQueue(q: QueueInput): QueueState {
     reviewBacklog: dueReviews.length - reviews.length,
     nextLearningAt: next ? null : laterLearning ? fromIso(laterLearning.due) : null,
     canLearnAhead: !next && aheadAll.length > 0,
+    servable: new Set([...aheadAll, ...dueReviews, ...news].map((c) => c.id)),
   };
 }
