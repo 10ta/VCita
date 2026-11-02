@@ -211,4 +211,42 @@ describe('新卡额度拆分', () => {
     expect(run([recent1, recent0, oldCore, oldMid], notes, { newPerDay: 2, newSplit: 'recent', freshDays: 1, freshShare: 50 }))
       .toEqual([recent0.id, oldCore.id]);
   });
+  it('换日前 20 分钟：明天 4:00 才到期的"1 天"步骤学习卡不提前出（计数 0 0 0 时不能有卡）', () => {
+    const now = new Date(2026, 10, 2, 3, 42).getTime(); // 凌晨 3:42，学习日还是前一天
+    const tomorrow = card({ state: 'learning', step: 1, due: toIso(new Date(2026, 10, 2, 4, 0).getTime()) });
+    const q = buildQueue({ cards: [tomorrow], todayLogs: [], deckId: 'd', now, settings: S });
+    expect(q.counts).toEqual({ learning: 0, review: 0, new: 0 });
+    expect(q.next).toBeNull();
+    expect(q.servable.size).toBe(0);
+    expect(q.canLearnAhead).toBe(false);
+    expect(buildQueue({ cards: [tomorrow], todayLogs: [], deckId: 'd', now, settings: S, learnAheadAll: true }).next).toBeNull();
+    // 4:00 换日后正常出
+    const q2 = buildQueue({ cards: [tomorrow], todayLogs: [], deckId: 'd', now: new Date(2026, 10, 2, 4, 0).getTime(), settings: S });
+    expect(q2.next?.id).toBe(tomorrow.id);
+    expect(q2.counts.learning).toBe(1);
+  });
+  it('不变式：能出的卡一定在计数里（随机卡组 × 一天里每 7 分钟）', () => {
+    let seed = 7;
+    const rnd = () => ((seed = (seed * 1103515245 + 12345) % 2147483648) / 2147483648);
+    const base = new Date(2026, 10, 1, 4, 0).getTime();
+    const states: Card['state'][] = ['new', 'learning', 'relearning', 'review'];
+    for (let round = 0; round < 40; round++) {
+      const cards = Array.from({ length: 12 }, () => {
+        const state = states[Math.floor(rnd() * 4)];
+        const due = base + Math.floor((rnd() * 2.2 - 0.1) * 86400000);
+        return card({ state, due: toIso(due), createdAt: toIso(base - 86400000 * 3), noteId: `n${Math.floor(rnd() * 8)}` });
+      });
+      const settings = { ...S, newPerDay: Math.floor(rnd() * 3), reviewsPerDay: Math.floor(rnd() * 3) };
+      for (let t = base; t < base + 86400000; t += 7 * 60_000) {
+        for (const learnAheadAll of [false, true]) {
+          const q = buildQueue({ cards, todayLogs: [], deckId: 'd', now: t, settings, learnAheadAll });
+          const total = q.counts.learning + q.counts.review + q.counts.new;
+          if (q.next) expect(q.servable.has(q.next.id)).toBe(true);
+          expect(q.servable.size).toBeLessThanOrEqual(total);
+          if (total === 0) expect(q.next).toBeNull();
+        }
+      }
+    }
+  });
 });
+

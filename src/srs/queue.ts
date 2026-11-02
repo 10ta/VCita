@@ -10,7 +10,8 @@
 //       source = 挖矿卡算新鲜（从自己输入里摘的，语境越新越好记）；recent = 最近 freshDays 天添加的算新鲜；off = 不拆。
 //       一份用不完的额度让给另一份；出卡顺序：新鲜份额 → 其余份额 → 互相让出的部分
 //  4. 同一条笔记的卡当天只出一张（今天已答过这条笔记的其他卡，推到明天）
-//  5. 都没有时，20 分钟内到期的学习卡提前出（Anki 的 learn ahead）；但刚答完的那张不提前，
+//  5. 都没有时，20 分钟内到期的学习卡提前出（Anki 的 learn ahead）；只提前本学习日内到期的，
+//     跨过换日时间的不提前（凌晨 3:42 不能把"1 天"步骤、4:00 才到期的卡拿出来，它属于明天）；刚答完的那张不提前，
 //     否则只剩它时会立刻重复出现（例如重学卡点"困难"= 10 分钟后，却马上又出来）
 import { noteOrigin, type Card, type Note, type ReviewLog, type Settings } from '../schema';
 import { addDaysToDay, dayStartMs, fromIso, studyDay } from '../lib/time';
@@ -135,6 +136,8 @@ export function buildQueue(q: QueueInput): QueueState {
   const endOfToday = dayStartMs(addDaysToDay(today, 1), q.settings.dayStartHour);
   const learningAll = pool.filter((c) => c.state === 'learning' || c.state === 'relearning').sort(byDue);
   const learningDue = learningAll.filter((c) => fromIso(c.due) <= q.now);
+  // 本学习日内到期的学习卡：计数、提前学习都只看这些，保证屏幕上能出的卡一定算在计数里
+  const learningToday = learningAll.filter((c) => fromIso(c.due) < endOfToday);
 
   const reviewLimit = q.settings.reviewsPerDay > 0 ? Math.max(0, q.settings.reviewsPerDay - revSeen.size) : Infinity;
   const sortOverdue = (q.settings.reviewSort ?? 'overdue') === 'overdue';
@@ -156,15 +159,15 @@ export function buildQueue(q: QueueInput): QueueState {
   // 今天最后答的那张卡
   let lastId: string | null = null, lastTs = '';
   for (const l of logs) if (l.ts > lastTs) { lastTs = l.ts; lastId = l.cardId; }
-  const aheadAll = learningAll.filter((c) => fromIso(c.due) <= q.now + LEARN_AHEAD_MS);
+  const aheadAll = learningToday.filter((c) => fromIso(c.due) <= q.now + LEARN_AHEAD_MS);
   const ahead = q.learnAheadAll ? aheadAll[0] : aheadAll.find((c) => c.id !== lastId);
   if (!next && ahead) next = ahead;
-  const laterLearning = learningAll.find((c) => fromIso(c.due) > q.now);
+  const laterLearning = learningToday.find((c) => fromIso(c.due) > q.now);
 
   return {
     next,
     counts: {
-      learning: learningAll.filter((c) => fromIso(c.due) < endOfToday).length,
+      learning: learningToday.length,
       review: reviews.length,
       new: news.length,
     },
@@ -172,6 +175,7 @@ export function buildQueue(q: QueueInput): QueueState {
     reviewBacklog: dueReviews.length - reviews.length,
     nextLearningAt: next ? null : laterLearning ? fromIso(laterLearning.due) : null,
     canLearnAhead: !next && aheadAll.length > 0,
-    servable: new Set([...aheadAll, ...dueReviews, ...news].map((c) => c.id)),
+    // 只含计数里的卡（复习卡不含被每日上限挡住的）：servable ⊆ 计数，计数 0 0 0 时一定没有卡可出
+    servable: new Set([...learningDue, ...aheadAll, ...reviews, ...news].map((c) => c.id)),
   };
 }
