@@ -1,6 +1,9 @@
 import { useEffect, useMemo, useState } from 'react';
-import { useCards, useDecks, useLogsSince, useNotes, useSettings } from '../../db/hooks';
-import { deleteNotes, resetNotes, setSuspended, updateNote, updateNotes } from '../../db/actions';
+import { useCards, useDecks, useLogsSince, useMemories, useNotes, useSettings } from '../../db/hooks';
+import type { Memory } from '../../srs/fsrs';
+import { findConfusables } from '../../srs/confusable';
+import { Fr, useNoteFreqs } from '../FrText';
+import { deleteNotes, groupContrast, resetNotes, setSuspended, updateNote, updateNotes } from '../../db/actions';
 import { THEMES, noteOrigin, type Card, type Note, type NoteOrigin, type Theme } from '../../schema';
 import { productionErrors } from '../../schema/validate';
 import { addDaysToDay, fromIso, noonIso, studyDay } from '../../lib/time';
@@ -14,29 +17,34 @@ import { langLabel } from '../../ui/langs';
 import { CardStats, Cues, renderSentence, SpeakBtn, TYPE_LABEL } from '../CardFace';
 import { NoteEditor, ThemePicker } from '../NoteEditor';
 
-type Status = 'all' | 'new' | 'learning' | 'due' | 'leech' | 'suspended' | 'nosentence' | 'stable' | 'core' | 'needprod' | 'forgot' | 'lowease' | 'dup' | 'badprompt';
+type Status = 'all' | 'new' | 'learning' | 'due' | 'leech' | 'suspended' | 'nosentence' | 'stable' | 'core' | 'needprod' | 'forgot' | 'lowease' | 'dup' | 'badprompt' | 'contrast' | 'confusable';
 // 后半部分是"分拣"用的筛选（改造方案 §6）：已稳定的保留；同源词选中后批量暂停；顽固卡补句子、加线索；核心词补产出卡
 const STATUS: Array<[Status, string, string?]> = [
   ['all', '全部'], ['due', '到期'], ['new', '新卡'], ['learning', '学习中'], ['suspended', '已暂停'],
   ['stable', '已稳定', '间隔超过 30 天且遗忘不超过 1 次'], ['leech', '待改造', '遗忘达到阈值，已自动暂停'],
   ['nosentence', '待补句子', '迁移来的旧卡，还没有例句'], ['core', '核心'], ['needprod', '待补产出', '核心词还没有产出卡'],
   // 弱项：在变成顽固卡之前先改句子、加线索
-  ['forgot', '近 7 天忘过', '最近 7 个学习日里至少有一次评"忘了"'], ['lowease', '倍率 < 2', '有卡的倍率低于 2：经常答困难或忘了'],
+  ['forgot', '近 7 天忘过', '最近 7 个学习日里至少有一次评"忘了"'], ['lowease', '难记', '经常答困难或忘了的卡：FSRS 下难度 ≥ 7，SM-2 下倍率 < 2'],
   ['dup', '疑似重复', '单词、考查部分或整句相同，或例句高度相似；同组排在一起'],
   ['badprompt', '题面有误', '产出题的高亮没包住词条（词条的词露在高亮外），或高亮直接给出了答案'],
+  ['confusable', '可能易混', '意思相近（中文意思里有同一个不常见的词）或拼写只差一个字母；两两排在一起。选中后"设为易混组"，就会生成辨析卡'],
+  ['contrast', '易混组', '已经设成易混组的笔记，同组排在一起'],
 ];
-type Sort = 'created' | 'lapses' | 'ease' | 'due' | 'reviewed';
-const SORTS: Array<[Sort, string]> = [['created', '最新添加'], ['lapses', '遗忘最多'], ['ease', '倍率最低'], ['due', '最早到期'], ['reviewed', '最近复习']];
-/** 一条笔记用于排序的值：取它最"差"的那张卡 */
-function sortValue(cs: Card[], by: Sort): number {
+type Sort = 'created' | 'lapses' | 'ease' | 'due' | 'reviewed' | 'freq';
+const SORTS: Array<[Sort, string]> = [['created', '最新添加'], ['lapses', '遗忘最多'], ['ease', '最难记'], ['due', '最早到期'], ['reviewed', '最近复习'], ['freq', '最常用']];
+/** 一条笔记用于排序的值：取它最"差"的那张卡。FSRS 下"最难记"按难度，SM-2 下按倍率 */
+function sortValue(cs: Card[], by: Sort, mem?: Map<string, Memory>): number {
   const live = cs.filter((c) => c.state !== 'new');
   if (by === 'lapses') return -Math.max(0, ...cs.map((c) => c.lapses));
+  if (by === 'ease' && mem?.size) return live.length ? -Math.max(0, ...live.map((c) => mem.get(c.id)?.d ?? 0)) : Infinity;
   if (by === 'ease') return live.length ? Math.min(...live.map((c) => c.ease)) : Infinity;
   if (by === 'due') return live.length ? Math.min(...live.map((c) => fromIso(c.due))) : Infinity;
   if (by === 'reviewed') return -Math.max(0, ...cs.map((c) => (c.lastReviewedAt ? fromIso(c.lastReviewedAt) : 0)));
   return 0;
 }
 const PAGE_SIZES = [10, 30, 50, 100];
+/** 词频显示：≥ 10 取整，否则一位小数 */
+const fmtFreq = (f: number) => (f >= 10 ? String(Math.round(f)) : f.toFixed(1));
 
 /** #/library?note=ID&edit=1 → 只显示这条笔记（从复习页跳过来） */
 const readFocus = () => {
@@ -66,6 +74,19 @@ export function LibraryPage({ deckId }: { deckId: string }) {
   const since = s ? addDaysToDay(studyDay(Date.now(), s.dayStartHour), -6) : null;
   const recentLogs = useLogsSince(status === 'forgot' ? since : null);
   const forgotNotes = useMemo(() => new Set((recentLogs ?? []).filter((l) => l.rating === 1).map((l) => l.noteId)), [recentLogs]);
+  const memories = useMemories(s);
+  const freqs = useNoteFreqs();
+  const fsrs = s?.scheduler === 'fsrs';
+  // 可能易混：笔记 → [排序号, 原因]，同一对排在一起
+  const confusable = useMemo(() => {
+    const m = new Map<string, [number, string]>();
+    if (status !== 'confusable' || !notes) return m;
+    findConfusables(notes.filter((n) => n.deckId === deckId)).forEach((p, i) => {
+      if (!m.has(p.a)) m.set(p.a, [i, p.reason]);
+      if (!m.has(p.b)) m.set(p.b, [i + 0.5, p.reason]);
+    });
+    return m;
+  }, [status, notes, deckId]);
   const dups = useMemo(() => (status === 'dup' && notes ? findDuplicates(notes.filter((n) => n.deckId === deckId)) : new Map<string, number>()), [status, notes, deckId]);
   useEffect(() => {
     const on = () => setFocus(readFocus());
@@ -116,7 +137,9 @@ export function LibraryPage({ deckId }: { deckId: string }) {
           case 'core': return n.layer === 'core';
           case 'needprod': return n.layer === 'core' && !cs.some((c) => c.type === 'production');
           case 'forgot': return forgotNotes.has(n.id);
-          case 'lowease': return cs.some((c) => c.state !== 'new' && c.ease < 2);
+          case 'lowease': return cs.some((c) => c.state !== 'new' && (fsrs && memories?.size ? (memories.get(c.id)?.d ?? 0) >= 7 : c.ease < 2));
+          case 'contrast': return !!n.contrastGroup;
+          case 'confusable': return confusable.has(n.id);
           case 'dup': return dups.has(n.id);
           case 'badprompt': return productionErrors(n).length > 0;
         }
@@ -124,13 +147,16 @@ export function LibraryPage({ deckId }: { deckId: string }) {
       .sort((a, b) => {
         // 疑似重复：同组排在一起
         if (status === 'dup') { const d = dups.get(a.id)! - dups.get(b.id)!; if (d) return d; }
-        if (sort !== 'created') {
-          const d = sortValue(cardsByNote.get(a.id) ?? [], sort) - sortValue(cardsByNote.get(b.id) ?? [], sort);
+        if (status === 'confusable') { const d = confusable.get(a.id)![0] - confusable.get(b.id)![0]; if (d) return d; }
+        if (status === 'contrast' && a.contrastGroup !== b.contrastGroup) return (a.contrastGroup ?? '') < (b.contrastGroup ?? '') ? -1 : 1;
+        if (sort === 'freq') { const d = (freqs?.get(b.id) ?? -1) - (freqs?.get(a.id) ?? -1); if (d) return d; }
+        else if (sort !== 'created') {
+          const d = sortValue(cardsByNote.get(a.id) ?? [], sort, memories) - sortValue(cardsByNote.get(b.id) ?? [], sort, memories);
           if (d) return d;
         }
         return a.createdAt < b.createdAt ? 1 : a.createdAt > b.createdAt ? -1 : a.id < b.id ? 1 : -1;
       });
-  }, [notes, deckId, theme, origin, day, kw, status, cardsByNote, focus.note, sort, forgotNotes, dups]);
+  }, [notes, deckId, theme, origin, day, kw, status, cardsByNote, focus.note, sort, forgotNotes, dups, confusable, memories, freqs, fsrs]);
 
   if (!s || !notes || !cards) return null;
   const pages = Math.max(1, Math.ceil(list.length / prefs.pageSize));
@@ -200,6 +226,10 @@ export function LibraryPage({ deckId }: { deckId: string }) {
           <button type="button" className="pill" onClick={() => void updateNotes(ids, () => ({ layer: 'mid' })).then(() => done(`已设为中频 ${ids.length} 条`))}>设为中频</button>
           <button type="button" className="pill" title="从自己输入里摘的：新卡额度按来源拆分时最新的先出" onClick={() => void updateNotes(ids, () => ({ origin: 'mined' })).then(() => done(`已设为挖矿 ${ids.length} 条`))}>设为挖矿</button>
           <button type="button" className="pill" title="批量导入的词表：按核心 → 中频慢慢消化" onClick={() => void updateNotes(ids, () => ({ origin: 'list' })).then(() => done(`已设为词表 ${ids.length} 条`))}>设为词表</button>
+          {sel.size >= 2 && sel.size <= 5 && (
+            <button type="button" className="pill" title="这几个词容易混：每条笔记生成一张辨析卡（看句子选用哪个词）。已经在别的易混组里的会整组并进来；没有带 {{…}} 例句的笔记跳过"
+              onClick={() => void groupContrast(ids).then((k) => done(k ? `已设为易混组：${k} 条，各生成一张辨析卡` : '至少要两条带 {{…}} 例句的笔记'))}>设为易混组</button>
+          )}
           <button type="button" className="pill" onClick={() => void resetNotes(ids).then(() => done(`已重置 ${ids.length} 条为新卡`))}>重置为新卡</button>
           <button type="button" className="pill is-danger" onClick={() => setBatch('delete')}>删除</button>
         </div>
@@ -217,7 +247,7 @@ export function LibraryPage({ deckId }: { deckId: string }) {
               <input type="checkbox" checked={isSel} onChange={() => toggle(n.id)} aria-label="选择" />
               <div className="note-main">
                 <div className="note-front">
-                  <span>{n.sentence ? renderSentence(n.sentence) : n.lemma}</span>
+                  <span><Fr>{n.sentence ? renderSentence(n.sentence) : n.lemma}</Fr></span>
                   <SpeakBtn text={n.sentence ? n.sentence.replace(/\{\{|\}\}/g, '') : n.lemma} lang={s.sourceLang} />
                   {n.rot !== 0 && <span className="badge" title="卡片旋转：复习时题面换成别的字段">旋转{n.rot}</span>}
                 </div>
@@ -230,7 +260,10 @@ export function LibraryPage({ deckId }: { deckId: string }) {
                 )}
                 {(prefs.showT1 || prefs.showT2) && <Cues note={n} />}
                 <div className="note-meta">
-                  {card && <CardStats card={card} s={s} />}
+                  {card && <CardStats card={card} s={s} mem={memories?.get(card.id) ?? null} />}
+                  {freqs?.get(n.id) != null && <span className="badge" title="Lexique 词频：每百万词出现次数（短语取最不常用的词）">频 {fmtFreq(freqs.get(n.id)!)}</span>}
+                  {n.contrastGroup && <span className="badge t-contrast" title="易混组">易混：{notes.filter((x) => x.contrastGroup === n.contrastGroup && x.id !== n.id).map((x) => x.lemma).join(' / ')}</span>}
+                  {status === 'confusable' && confusable.get(n.id) && <span className="badge t-contrast">{confusable.get(n.id)![1]}</span>}
                   {n.tags.map((t) => <span key={t} className="badge is-theme">{t}</span>)}
                   {!n.sentence && <span className="badge">待补句子</span>}
                   {n.layer === 'core' && <span className="badge is-core">核心</span>}
@@ -310,7 +343,7 @@ function studyLabel(status: Status, theme: string, kw: string, selected: number)
 
 /** 开一轮自定义学习：选卡型、张数、顺序 */
 function StudyDialog({ notes, cardsByNote, label, onClose }: { notes: Note[]; cardsByNote: Map<string, Card[]>; label: string; onClose: () => void }) {
-  const [types, setTypes] = useState<Card['type'][]>(['recognition', 'production', 'cloze']);
+  const [types, setTypes] = useState<Card['type'][]>(['recognition', 'production', 'cloze', 'contrast']);
   const [limit, setLimit] = useState('50');
   const [shuffle, setShuffle] = useState(true);
   const pool = notes.flatMap((n) => (cardsByNote.get(n.id) ?? []).filter((c) => !c.suspended && types.includes(c.type)));
@@ -329,7 +362,7 @@ function StudyDialog({ notes, cardsByNote, label, onClose }: { notes: Note[]; ca
       <p className="hint">范围：{label}，{notes.length} 条笔记、{pool.length} 张卡（不含已暂停）。</p>
       <div className="field"><span className="field-label">卡型</span>
         <div className="chips">
-          {(['recognition', 'production', 'cloze'] as const).map((t) => (
+          {(['recognition', 'production', 'cloze', 'contrast'] as const).map((t) => (
             <button key={t} type="button" className={`chip${types.includes(t) ? ' is-on' : ''}`} aria-pressed={types.includes(t)}
               onClick={() => setTypes(types.includes(t) ? types.filter((x) => x !== t) : [...types, t])}>{TYPE_LABEL[t]}</button>
           ))}

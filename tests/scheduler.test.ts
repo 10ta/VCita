@@ -3,7 +3,7 @@ import { preview, schedule, type SrsParams } from '../src/srs/scheduler';
 import { SettingsSchema } from '../src/schema';
 import { studyDay, fromIso, toIso } from '../src/lib/time';
 
-const P: SrsParams = { ...SettingsSchema.parse({ updatedAt: toIso(0) }), fuzz: false };
+const P: SrsParams = { ...SettingsSchema.parse({ updatedAt: toIso(0) }), fuzz: false, scheduler: 'sm2' };
 const NOW = new Date(2026, 9, 3, 15, 0).getTime(); // 2026-10-03 15:00
 const reviewCard = (over = {}) => ({
   state: 'review' as const, due: toIso(NOW), interval: 10, ease: 2.5, reps: 5, lapses: 0, step: 0,

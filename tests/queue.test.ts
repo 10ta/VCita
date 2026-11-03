@@ -248,5 +248,32 @@ describe('新卡额度拆分', () => {
       }
     }
   });
+  it('新卡顺序：同一层里常用词先出；freq 模式不分核心 / 中频；查不到词频的排在最后', () => {
+    const mk = (noteId: string, created: number) => card({ state: 'new', noteId, createdAt: toIso(NOW - 86400000 * created) });
+    const a = mk('rare', 5), b = mk('common', 1), c = mk('unknown', 9), d = mk('midcommon', 3);
+    const notes = new Map([
+      ['rare', { layer: 'core' as const, tags: [] }], ['common', { layer: 'core' as const, tags: [] }],
+      ['unknown', { layer: 'core' as const, tags: [] }], ['midcommon', { layer: 'mid' as const, tags: [] }],
+    ]);
+    const freq = new Map<string, number | null>([['rare', 0.5], ['common', 300], ['unknown', null], ['midcommon', 900]]);
+    const order = (newSort: 'layer' | 'freq') => {
+      const ids: string[] = []; let cards = [a, b, c, d];
+      for (;;) {
+        const q = buildQueue({ cards, todayLogs: [], deckId: 'd', now: NOW, settings: { ...S, newPerDay: 9, newSort, newSplit: 'off' }, notes, freq });
+        if (!q.next) break;
+        ids.push(q.next.noteId); cards = cards.filter((x) => x.id !== q.next!.id);
+      }
+      return ids.join(' ');
+    };
+    expect(order('layer')).toBe('common rare unknown midcommon');
+    expect(order('freq')).toBe('midcommon common rare unknown');
+  });
+  it('同一个易混组的辨析卡当天只出一张', () => {
+    const a = card({ noteId: 'ga', type: 'contrast' }), b = card({ noteId: 'gb', type: 'contrast' }), other = card({ noteId: 'x' });
+    const notes = new Map([['ga', { layer: 'core' as const, tags: [], contrastGroup: 'g1' }], ['gb', { layer: 'core' as const, tags: [], contrastGroup: 'g1' }], ['x', { layer: 'core' as const, tags: [] }]]);
+    const answered = { ...a, due: toIso(NOW + 86400000 * 3) };
+    const q = buildQueue({ cards: [answered, b, other], todayLogs: [log(a, 'review')], deckId: 'd', now: NOW, settings: S, notes });
+    expect(q.counts.review).toBe(1);
+    expect(q.next?.id).toBe(other.id);
+  });
 });
-

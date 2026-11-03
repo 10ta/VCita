@@ -5,11 +5,13 @@
 //     mix   = 新卡按比例均匀穿插在复习中（Anki 的 Mix with reviews）
 //     after = 复习完才出新卡
 //     复习卡顺序：overdue = 相对逾期（逾期时长 ÷ 间隔）大的先出；due = 按到期时间
-//  3. 新卡顺序（newSort = layer）：重点主题 → 核心 → 中频 → 添加时间；created = 只按添加时间
+//  3. 新卡顺序（newSort = layer）：重点主题 → 核心 → 中频，同一层里常用词先出（Lexique 词频）→ 添加时间；
+//     freq = 重点主题 → 常用词先出（不分核心 / 中频）；created = 只按添加时间。
+//     依据：词汇覆盖率研究（Nation）——最常用的几千个词覆盖了绝大部分文本，先学常用词每张卡回报最高
 //     额度拆分（newSplit）：每日新卡上限的 freshShare% 留给"新鲜"的卡，越新越先出；其余额度按上面的顺序消化积压。
 //       source = 挖矿卡算新鲜（从自己输入里摘的，语境越新越好记）；recent = 最近 freshDays 天添加的算新鲜；off = 不拆。
 //       一份用不完的额度让给另一份；出卡顺序：新鲜份额 → 其余份额 → 互相让出的部分
-//  4. 同一条笔记的卡当天只出一张（今天已答过这条笔记的其他卡，推到明天）
+//  4. 同一条笔记的卡当天只出一张（今天已答过这条笔记的其他卡，推到明天）；同一个易混组的辨析卡当天也只出一张
 //  5. 都没有时，20 分钟内到期的学习卡提前出（Anki 的 learn ahead）；只提前本学习日内到期的，
 //     跨过换日时间的不提前（凌晨 3:42 不能把"1 天"步骤、4:00 才到期的卡拿出来，它属于明天）；刚答完的那张不提前，
 //     否则只剩它时会立刻重复出现（例如重学卡点"困难"= 10 分钟后，却马上又出来）
@@ -26,7 +28,9 @@ export interface QueueInput {
   now: number;
   settings: Pick<Settings, 'newPerDay' | 'reviewsPerDay' | 'dayStartHour'> & Partial<Pick<Settings, 'newReviewOrder' | 'reviewSort' | 'newSort' | 'focusTags' | 'newSplit' | 'freshShare' | 'freshDays'>>;
   /** 新卡排序要用笔记的层级和主题；不传时只按添加时间 */
-  notes?: ReadonlyMap<string, Pick<Note, 'layer' | 'tags'> & Partial<Pick<Note, 'origin' | 'source'>>>;
+  notes?: ReadonlyMap<string, Pick<Note, 'layer' | 'tags'> & Partial<Pick<Note, 'origin' | 'source' | 'contrastGroup'>>>;
+  /** 笔记的词频（每百万词，见 lib/gender/dict.ts 的 lemmaFreq）；查不到的排在同一层的最后。不传时按添加时间 */
+  freq?: ReadonlyMap<string, number | null>;
   /** 本轮跳过的卡 */
   skipped?: Set<string>;
   /** 用户点了"提前复习"：刚答完的那张也可以提前出 */
@@ -57,15 +61,17 @@ const byCreated = (a: Card, b: Card) => (a.createdAt < b.createdAt ? -1 : a.crea
 
 /** 新卡排序：重点主题 → 核心 → 中频 → 添加时间 */
 function newCardSort(q: QueueInput): (a: Card, b: Card) => number {
-  if ((q.settings.newSort ?? 'layer') !== 'layer' || !q.notes) return byCreated;
+  const mode = q.settings.newSort ?? 'layer';
+  if (mode === 'created' || !q.notes) return byCreated;
   const focus = new Set<string>(q.settings.focusTags ?? []);
   const notes = q.notes;
   const rank = (c: Card) => {
     const n = notes.get(c.noteId);
     if (!n) return 3;
-    return (n.tags.some((t) => focus.has(t)) ? 0 : 2) + (n.layer === 'core' ? 0 : 1);
+    return (n.tags.some((t) => focus.has(t)) ? 0 : 2) + (mode === 'freq' || n.layer === 'core' ? 0 : 1);
   };
-  return (a, b) => rank(a) - rank(b) || byCreated(a, b);
+  const f = (c: Card) => q.freq?.get(c.noteId) ?? -1;
+  return (a, b) => rank(a) - rank(b) || f(b) - f(a) || byCreated(a, b);
 }
 
 const newestFirst = (a: Card, b: Card) => -byCreated(a, b);
@@ -127,8 +133,11 @@ export function buildQueue(q: QueueInput): QueueState {
     notesToday.add(l.noteId);
     cardsToday.add(l.cardId);
   }
-  // 今天已答过这条笔记的另一张卡 → 兄弟卡今天不出
-  const sibling = (c: Card) => notesToday.has(c.noteId) && !cardsToday.has(c.id);
+  // 今天已答过这条笔记的另一张卡 → 兄弟卡今天不出；同一个易混组的辨析卡也一样
+  const typeOf = new Map(q.cards.map((c) => [c.id, c.type]));
+  const groupOf = (noteId: string) => q.notes?.get(noteId)?.contrastGroup ?? null;
+  const groupsToday = new Set(logs.filter((l) => typeOf.get(l.cardId) === 'contrast').map((l) => groupOf(l.noteId)).filter(Boolean));
+  const sibling = (c: Card) => !cardsToday.has(c.id) && (notesToday.has(c.noteId) || (c.type === 'contrast' && groupsToday.has(groupOf(c.noteId))));
   const skipped = q.skipped ?? new Set<string>();
   const pool = q.cards.filter((c) => c.deckId === q.deckId && !c.deleted && !c.suspended && !skipped.has(c.id) && !sibling(c));
 

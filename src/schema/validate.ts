@@ -67,6 +67,7 @@ export function noteErrors(n: Fields): string[] {
   // 迁移来的旧卡没有例句，允许只有单词
   if (n.cardTypes.includes('recognition') && !cloze && !n.lemma.trim()) errs.push('认读卡需要例句或单词');
   if (n.cardTypes.includes('production')) errs.push(...promptErrors(n.promptFr ?? null, n.intentZh, n.answerFr, n.lemma));
+  if (n.cardTypes.includes('contrast') && !cloze) errs.push('在易混组里的笔记需要带 {{…}} 的例句（辨析卡挖掉考查部分）');
   if (n.cardTypes.includes('cloze')) {
     const leak = clozeLeaks(cs && hasCloze(cs) ? cs : n.sentence, n.clozeHint);
     if (leak.length) errs.push(`挖空提示里出现了答案：${leak.join('、')}（提示只给意思，不给答案的词或原形）`);

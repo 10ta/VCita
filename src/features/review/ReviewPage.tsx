@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { useCards, useNotes, useSettings, useTodayLogs } from '../../db/hooks';
+import { useCards, useMemories, useNotes, useSettings, useTodayLogs } from '../../db/hooks';
 import { answerCard, bumpUsed, setSuspended, undoAnswer, type AnswerResult } from '../../db/actions';
 import { buildQueue } from '../../srs/queue';
 import { fmtNextIn, preview, type Rating } from '../../srs/scheduler';
@@ -13,6 +13,8 @@ import { langLabel } from '../../ui/langs';
 import { syncIfAuto } from '../../sync/engine';
 import { CardStats, cardView, Cues, SpeakBtn, TYPE_LABEL } from '../CardFace';
 import { NoteEditor } from '../NoteEditor';
+import { Fr, useNoteFreqs } from '../FrText';
+import { diffWords, pickReference, summarize, type DiffOp } from '../../lib/diff';
 
 const RATINGS: Array<{ r: Rating; label: string; cls: string }> = [
   { r: 1, label: '忘了', cls: 'r1' }, { r: 2, label: '困难', cls: 'r2' }, { r: 3, label: '良好', cls: 'r3' }, { r: 4, label: '容易', cls: 'r4' },
@@ -33,6 +35,8 @@ export function ReviewPage({ deckId }: { deckId: string }) {
   const prefs = usePrefs();
   const [now, refreshNow] = useNow(15_000);
   const logs = useTodayLogs(s?.dayStartHour, now);
+  const memories = useMemories(s);
+  const freq = useNoteFreqs();
   const [currentId, setCurrentId] = useState<string | null>(null);
   const [revealed, setRevealed] = useState(false);
   const [editing, setEditing] = useState(false);
@@ -51,8 +55,8 @@ export function ReviewPage({ deckId }: { deckId: string }) {
 
   const noteMap = useMemo(() => new Map((notes ?? []).map((n) => [n.id, n])), [notes]);
   const q = useMemo(
-    () => (s && cards && logs ? buildQueue({ cards, todayLogs: logs, deckId, now, settings: s, skipped, learnAheadAll, notes: noteMap }) : null),
-    [s, cards, logs, deckId, now, skipped, learnAheadAll, noteMap],
+    () => (s && cards && logs ? buildQueue({ cards, todayLogs: logs, deckId, now, settings: s, skipped, learnAheadAll, notes: noteMap, freq }) : null),
+    [s, cards, logs, deckId, now, skipped, learnAheadAll, noteMap, freq],
   );
   const card = currentId ? cards?.find((c) => c.id === currentId) ?? null : null;
   const cardById = useMemo(() => new Map((cards ?? []).map((c) => [c.id, c])), [cards]);
@@ -93,7 +97,8 @@ export function ReviewPage({ deckId }: { deckId: string }) {
   const labels: [string, string, string] = s ? [langLabel(s.sourceLang), langLabel(s.targetLang1), langLabel(s.targetLang2)] : ['', '', ''];
   const audio = prefs.audio ?? 'core';
   const listen = !!note && (audio === 'all' || (audio === 'core' && note.layer === 'core'));
-  const split = note && s && card ? cardView(card.type, note, s, prefs.quizType, labels, card.reps, listen) : null;
+  const group = useMemo(() => (note?.contrastGroup ? (notes ?? []).filter((n) => n.contrastGroup === note.contrastGroup && n.id !== note.id) : []), [note, notes]);
+  const split = note && s && card ? cardView(card.type, note, s, prefs.quizType, labels, card.reps, listen, group) : null;
   // 产出卡可以先写出答案，揭示后和标准答案并排对照（不自动判对错）
   const [typed, setTyped] = useState('');
   // 产出卡的首字母提示默认收起，想不出来时再点开（H），否则一眼看到就失去了回忆的意义
@@ -181,7 +186,8 @@ export function ReviewPage({ deckId }: { deckId: string }) {
     toast('已暂停这张卡，可在词库"已暂停"里恢复');
   };
 
-  const pv = card ? preview(card, s, now) : null;
+  const mem = card ? memories?.get(card.id) ?? null : null;
+  const pv = card ? preview(card, s, now, mem) : null;
   const PRACTICE: Record<Rating, string> = { 1: '稍后再练', 2: '本轮最后', 3: '本轮完成', 4: '本轮完成' };
   const btnNote = (r: Rating) => (!scheduled ? PRACTICE[r] : pv ? `${fmtNextIn(pv[r], fmtMinutes, fmtDays)}后` : '');
   const limitLine = `今日已学：新卡 ${q.done.newDone}/${s.newPerDay} · 复习 ${q.done.reviewDone}${s.reviewsPerDay ? `/${s.reviewsPerDay}` : ''}`
@@ -252,13 +258,14 @@ export function ReviewPage({ deckId }: { deckId: string }) {
             <div className="question">
               {split.listen
                 ? <span className="muted">闭眼听，听懂了再翻面</span>
-                : <span>{split.question.text || <i className="muted">（{split.question.label}为空）</i>}</span>}
+                : <span>{!split.question.text ? <i className="muted">（{split.question.label}为空）</i> : split.question.lang === s.sourceLang ? <Fr>{split.question.text}</Fr> : split.question.text}</span>}
               <SpeakBtn text={split.question.speakText} lang={split.question.lang} size={20} />
             </div>
+            {split.choices && <div className="cx-choices">{split.choices.map((c) => <span key={c} className="cx-choice">{c}</span>)}</div>}
             {split.hint && (card.type !== 'production' || showHint || revealed
-              ? <div className="cue">提示：{split.hint}</div>
+              ? <div className="cue">提示：{card.type === 'production' ? <Fr>{split.hint}</Fr> : split.hint}</div>
               : <button type="button" className="pill hint-btn" onClick={() => setShowHint(true)} title="首字母提示 (H)">提示 <kbd>H</kbd></button>)}
-            <CardStats card={card} s={s} center />
+            <CardStats card={card} s={s} center mem={mem} />
             {card.type === 'production' && !revealed && (
               <input className="type-in" value={typed} placeholder="先写出法语（可选），回车显示答案" onChange={(e) => setTyped(e.target.value)}
                 onKeyDown={(e) => { if (e.key === 'Enter' && !e.nativeEvent.isComposing) { e.preventDefault(); setRevealed(true); (e.target as HTMLInputElement).blur(); } }} />
@@ -268,10 +275,10 @@ export function ReviewPage({ deckId }: { deckId: string }) {
             ) : (
               <>
                 <div className="answer">
-                  {card.type === 'production' && typed.trim() && <div className="typed">你写的：{typed}</div>}
+                  {card.type === 'production' && typed.trim() && split.answerFr && <TypedDiff typed={typed} answerFr={split.answerFr} />}
                   {split.answers.map((a, i) => (
                     <div key={i} className={i === 0 ? 'a1' : 'a2'}>
-                      <span>{a.text || <i className="muted">（{a.label}为空）</i>}</span>
+                      <span>{a.text ? (a.lang === s.sourceLang ? <Fr>{a.text}</Fr> : a.text) : <i className="muted">（{a.label}为空）</i>}</span>
                       <SpeakBtn text={a.speakText} lang={a.lang} />
                     </div>
                   ))}
@@ -284,7 +291,9 @@ export function ReviewPage({ deckId }: { deckId: string }) {
                 </div>
                 {(card.type !== 'recognition' || split.listen) && (
                   <p className="muted small grade-guide">
-                    {split.listen ? '2–3 秒内没听懂 → 困难；听不出来 → 忘了' : '表达想出来了、只是形式错 → 困难；表达想不出来 → 忘了'}
+                    {split.listen ? '2–3 秒内没听懂 → 困难；听不出来 → 忘了'
+                      : card.type === 'contrast' ? '选对、说得出为什么 → 良好；选对但靠猜 → 困难；选错 → 忘了'
+                      : '表达想出来了、只是形式错 → 困难；表达想不出来 → 忘了'}
                   </p>
                 )}
                 <div className="grades">
@@ -305,6 +314,36 @@ export function ReviewPage({ deckId }: { deckId: string }) {
         </>
       )}
       {editing && note && <NoteEditor note={note} onClose={() => setEditing(false)} />}
+    </div>
+  );
+}
+
+const opText = (o: DiffOp) => (o.op === 'same' ? o.text : o.op === 'extra' ? o.typed : o.expected);
+
+/** 自己写的和标准答案逐词对照：绿 = 一样；删除线 = 你写的；下划线 = 答案；重音、阴阳性单独标出 */
+function TypedDiff({ typed, answerFr }: { typed: string; answerFr: string }) {
+  const { ref, whole } = pickReference(typed, answerFr);
+  const ops = diffWords(typed, ref);
+  const sum = summarize(ops);
+  const KIND = { accent: '重音', gender: '阴阳性', word: '' } as const;
+  return (
+    <div className="typed">
+      <div className="typed-line">
+        <span className="muted small">你写的{whole ? '' : '（对照高亮部分）'}：</span>
+        {ops.map((o, i) => {
+          // 句号、逗号前和 d' / l' 后不空格
+          const sp = i === 0 || /^[.,)…]$/.test(opText(o)) || /['(]$/.test(opText(ops[i - 1])) ? '' : ' ';
+          if (o.op === 'same') return <span key={i}>{sp}<span className="d-same">{o.text}</span></span>;
+          if (o.op === 'extra') return <span key={i}>{sp}<del className="d-del" title="多写的">{o.typed}</del></span>;
+          if (o.op === 'missing') return <span key={i}>{sp}<ins className="d-ins" title="漏写的">{o.expected}</ins></span>;
+          return (
+            <span key={i}>{sp}<span className={`d-sub is-${o.kind}`}><del>{o.typed}</del><ins>{o.expected}</ins>{KIND[o.kind] && <sup>{KIND[o.kind]}</sup>}</span></span>
+          );
+        })}
+      </div>
+      <div className={`small ${sum.total ? 'muted' : 'green'}`}>
+        {sum.total === 0 ? '✓ 和答案一样' : `${sum.total} 处不同${sum.accent ? ` · 重音 ${sum.accent}` : ''}${sum.gender ? ` · 阴阳性 ${sum.gender}` : ''}${sum.total === sum.accent ? '（只差重音 → 一般评"困难"）' : ''}`}
+      </div>
     </div>
   );
 }

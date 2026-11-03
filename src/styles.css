@@ -218,7 +218,14 @@ h2 + .set-sub { margin-top: 0; }
 .badge.is-core { border-color: #e8440066; color: var(--accent); }
 .blank { display: inline-block; min-width: 3em; border-bottom: 2px solid var(--accent); color: transparent; }
 .type-in { width: 100%; margin-top: 16px; padding: 10px 12px; font-size: 16px; text-align: center; }
-.typed { font-family: var(--mono); color: var(--warn); }
+.typed { display: grid; gap: 2px; margin-bottom: 6px; }
+.typed-line { font-size: 17px; line-height: 1.9; }
+.d-same { color: var(--green); }
+.d-del, .d-sub del { color: var(--red); text-decoration: line-through; text-decoration-thickness: 1.5px; }
+.d-ins, .d-sub ins { color: var(--text); text-decoration: underline wavy var(--warn); text-underline-offset: .2em; }
+.d-sub ins { margin-left: 3px; }
+.d-sub sup { font-size: 10px; color: var(--warn); margin-left: 2px; font-family: var(--sans); }
+.d-sub.is-gender ins { text-decoration-color: var(--g-f); } .d-sub.is-gender sup { color: var(--g-f); }
 fieldset.prod { border: 1px solid var(--border); border-radius: 10px; padding: 8px 12px 4px; margin-bottom: 10px; }
 fieldset.prod legend { font-family: var(--mono); font-size: 11px; color: var(--green); padding: 0 6px; }
 .previews { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 8px; margin: 6px 0 12px; }
@@ -267,3 +274,43 @@ code { font-family: var(--mono); background: var(--surface2); padding: 0 4px; bo
 .hint-btn { margin: 4px auto 0; display: block; }
 
 .grade-guide { text-align: center; margin: 8px 0 4px; }
+
+/* ---- 阴阳性：名词下划线颜色 + 悬停迷你条 ---- */
+:root { --g-m: #6ea8ff; --g-f: #ff6fae; }
+.fw { cursor: help; }
+.fw.g-m, .fw.g-f { text-decoration: underline; text-decoration-thickness: 2px; text-underline-offset: .2em; text-decoration-skip-ink: none; }
+.fw.g-m { text-decoration-color: color-mix(in srgb, var(--g-m) 70%, transparent); }
+.fw.g-f { text-decoration-color: color-mix(in srgb, var(--g-f) 70%, transparent); }
+.fw:hover { background: var(--surface2); border-radius: 3px; }
+b.g-m, .gp-g.g-m { color: var(--g-m); } b.g-f, .gp-g.g-f { color: var(--g-f); }
+.gender-pop { position: fixed; z-index: 50; width: 320px; max-width: calc(100vw - 16px); padding: 10px 12px; border-radius: 10px; border: 1px solid var(--border);
+  background: var(--surface2); box-shadow: 0 8px 30px #000a; font-size: 13px; line-height: 1.55; display: grid; gap: 4px; text-align: left; font-family: var(--sans); font-weight: 400; }
+.gender-pop.is-above { transform: translateY(-100%); }
+.gp-head { font-size: 15px; } .gp-head b { font-family: var(--serif); font-size: 17px; }
+.gp-g { font-size: 12px; margin-left: 4px; }
+.gp-homo .dim { opacity: .4; }
+.gp-rule { border-top: 1px solid var(--border); padding-top: 4px; }
+.gp-rule.is-ex { color: var(--warn); }
+.gp-rule .muted, .gp-rule.is-ex .muted { color: var(--dim); }
+.gp-special { color: var(--warn); }
+
+/* ---- 统计表、负荷预测 ---- */
+.stat-table { width: 100%; border-collapse: collapse; font-size: 13px; margin-bottom: 8px; }
+.stat-table th, .stat-table td { text-align: left; padding: 5px 8px; border-bottom: 1px solid var(--border); white-space: nowrap; }
+.stat-table th { color: var(--dim); font-weight: 400; font-size: 12px; }
+.stat-table td.ok { color: var(--green); } .stat-table td.warn { color: var(--warn); }
+.stat-table tr.is-cur td { color: var(--accent); }
+textarea.weights { width: 100%; font-family: var(--mono); font-size: 12px; }
+@media (max-width: 560px) { .stat-table th, .stat-table td { white-space: normal; padding: 4px 5px; } .gender-pop { width: 300px; } }
+
+/* ---- 辨析卡 ---- */
+.cx-choices { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; margin: 0 0 12px; font-size: 18px; }
+.cx-choice { padding: 3px 12px; border: 1px solid var(--border); border-radius: 20px; background: var(--surface2); font-family: var(--serif); }
+.contrast-table { display: grid; gap: 6px; text-align: left; font-size: 14px; margin-top: 6px; }
+.cmp { display: grid; grid-template-columns: minmax(90px, auto) 1fr; gap: 0 10px; padding: 6px 10px; border-radius: 8px; border: 1px solid var(--border); }
+.cmp b { font-family: var(--serif); font-size: 16px; }
+.cmp .muted { grid-column: 1 / -1; font-size: 13px; }
+.cmp.is-answer { border-color: var(--green); }
+.badge.t-contrast { color: #c084fc; border-color: #c084fc55; }
+.contrast-edit { display: grid; gap: 6px; padding: 10px; border: 1px solid #c084fc44; border-radius: 10px; margin: 8px 0; }
+.forecast-box { display: grid; gap: 4px; width: 100%; }

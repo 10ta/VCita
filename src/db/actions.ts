@@ -5,6 +5,7 @@ import { addDaysToDay, bumpIso, dayStartMs, fromIso, studyDay, toIso } from '../
 import { relativeOverdue } from '../srs/queue';
 import { newId } from '../lib/id';
 import { schedule, type Rating } from '../srs/scheduler';
+import { replayMemory, validWeights } from '../srs/fsrs';
 
 // ---------- 设置 ----------
 
@@ -73,7 +74,7 @@ export async function ensureDeck(): Promise<string> {
 
 // ---------- 笔记与卡片 ----------
 
-type NoteContent = Pick<Note, 'lemma' | 'sentence' | 'meaningZh' | 'meaningEn' | 'cueFamily' | 'promptFr' | 'intentZh' | 'hint' | 'clozeHint' | 'clozeSentence' | 'etymology' | 'answerFr' | 'extra' | 'source' | 'origin' | 'layer' | 'cardTypes' | 'tags' | 'altSentences' | 'altIntents'>;
+type NoteContent = Pick<Note, 'lemma' | 'sentence' | 'meaningZh' | 'meaningEn' | 'cueFamily' | 'promptFr' | 'intentZh' | 'hint' | 'clozeHint' | 'clozeSentence' | 'etymology' | 'answerFr' | 'extra' | 'source' | 'origin' | 'layer' | 'cardTypes' | 'tags' | 'altSentences' | 'altIntents' | 'contrastGroup' | 'contrastNote'>;
 export type NewNoteInput = { deckId: string; createdAtMs?: number } & Partial<NoteContent>;
 
 export function blankCard(note: Pick<Note, 'id' | 'deckId' | 'createdAt'>, type: Card['type'], s: Settings, stamp: string): Card {
@@ -105,7 +106,7 @@ export async function addNotes(inputs: NewNoteInput[]): Promise<Array<{ noteId: 
       extra: input.extra ?? null, source: input.source ?? null, origin: input.origin ?? null,
       altSentences: input.altSentences ?? [], altIntents: input.altIntents ?? [],
       layer: input.layer ?? 'mid', cardTypes: input.cardTypes ?? ['recognition'], tags: input.tags ?? [],
-      usedCount: 0, usedAt: [], rot: 0, legacy: null, updatedAt: stamp, deleted: false,
+      usedCount: 0, usedAt: [], rot: 0, contrastGroup: input.contrastGroup ?? null, contrastNote: input.contrastNote ?? null, legacy: null, updatedAt: stamp, deleted: false,
     };
     notes.push(note);
     for (const t of note.cardTypes) cards.push(blankCard(note, t, s, stamp));
@@ -151,6 +152,42 @@ export async function updateNote(id: string, patch: Partial<Omit<Note, 'id' | 'u
   });
 }
 
+// ---------- 易混组 ----------
+
+const withContrast = (types: Note['cardTypes'], on: boolean): Note['cardTypes'] =>
+  on ? (types.includes('contrast') ? types : [...types, 'contrast']) : types.filter((t) => t !== 'contrast');
+
+/** 把几条笔记设成一个易混组（已经在别的组里的，整组并进来）；每条笔记生成一张辨析卡。
+ *  没有带 {{…}} 例句的笔记出不了辨析卡，跳过。返回进组的笔记数 */
+export async function groupContrast(noteIds: string[]): Promise<number> {
+  return db.transaction('rw', [db.notes, db.cards, db.meta], async () => {
+    const picked = (await db.notes.bulkGet(noteIds)).filter((n): n is Note => !!n && !n.deleted && /\{\{.+?\}\}/.test(n.sentence));
+    const groups = new Set(picked.map((n) => n.contrastGroup).filter((g): g is string => !!g));
+    const members = new Map(picked.map((n) => [n.id, n]));
+    if (groups.size) for (const n of await db.notes.toArray()) if (!n.deleted && n.contrastGroup && groups.has(n.contrastGroup)) members.set(n.id, n);
+    if (members.size < 2) return 0;
+    const gid = [...groups][0] ?? newId();
+    for (const n of members.values()) await updateNote(n.id, { contrastGroup: gid, cardTypes: withContrast(n.cardTypes, true) });
+    return members.size;
+  });
+}
+
+/** 移出易混组；组里只剩一条时整组解散（辨析卡打墓碑，复习记录保留） */
+export async function leaveContrast(noteId: string) {
+  await db.transaction('rw', [db.notes, db.cards, db.meta], async () => {
+    const n = await db.notes.get(noteId);
+    if (!n?.contrastGroup) return;
+    const gid = n.contrastGroup;
+    await updateNote(noteId, { contrastGroup: null, cardTypes: withContrast(n.cardTypes, false) });
+    await dissolveIfAlone(gid);
+  });
+}
+
+async function dissolveIfAlone(gid: string) {
+  const rest = (await db.notes.toArray()).filter((x) => !x.deleted && x.contrastGroup === gid);
+  if (rest.length === 1) await updateNote(rest[0].id, { contrastGroup: null, cardTypes: withContrast(rest[0].cardTypes, false) });
+}
+
 /** 产出表达在写作、口语里用上了一次 */
 export const bumpUsed = (noteId: string) =>
   updateNotes([noteId], (n) => ({ usedCount: n.usedCount + 1, usedAt: [...(n.usedAt ?? []), toIso(Date.now())] }));
@@ -169,7 +206,12 @@ async function tombstoneNotes(ids: string[]) {
   await db.cards.bulkPut(cards.map((c) => ({ ...c, deleted: true, updatedAt: bumpIso(c.updatedAt) })));
 }
 
-export const deleteNotes = (ids: string[]) => db.transaction('rw', [db.notes, db.cards], () => tombstoneNotes(ids));
+/** 删除笔记；它所在的易混组只剩一条时解散 */
+export const deleteNotes = (ids: string[]) => db.transaction('rw', [db.notes, db.cards, db.meta], async () => {
+  const groups = new Set((await db.notes.bulkGet(ids)).map((n) => n?.contrastGroup).filter((g): g is string => !!g));
+  await tombstoneNotes(ids);
+  for (const g of groups) await dissolveIfAlone(g);
+});
 
 export async function updateCards(ids: string[], fn: (c: Card) => Partial<Card>) {
   await db.transaction('rw', db.cards, async () => {
@@ -227,7 +269,9 @@ export async function answerCard(cardId: string, rating: Rating, opts: { now?: n
   return db.transaction('rw', [db.cards, db.logs], async () => {
     const before = await db.cards.get(cardId);
     if (!before) throw new Error('卡片不存在');
-    const r = schedule(before, rating, now, s);
+    // FSRS：这张卡的记忆状态从它的全部日志重放
+    const mem = s.scheduler === 'fsrs' ? replayMemory(validWeights(s.fsrsWeights), await db.logs.where('cardId').equals(cardId).toArray(), before, s.dayStartHour) : null;
+    const r = schedule(before, rating, now, s, Math.random, mem);
     const after: Card = { ...r.card, updatedAt: bumpIso(before.updatedAt, now) };
     const log: ReviewLog = {
       id: newId(), cardId, noteId: before.noteId, ts: toIso(now), day: studyDay(now, s.dayStartHour), rating,

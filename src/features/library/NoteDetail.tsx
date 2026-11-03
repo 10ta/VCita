@@ -3,6 +3,7 @@ import { useNoteLogs } from '../../db/hooks';
 import type { Card, Settings } from '../../schema';
 import { fmtDays, fromIso } from '../../lib/time';
 import { CardStats, TYPE_LABEL } from '../CardFace';
+import { replayMemory, validWeights } from '../../srs/fsrs';
 
 const RATING = ['', '忘了', '困难', '良好', '容易'];
 const RCLS = ['', 'is-red', 'is-warn', 'is-green', 'is-blue'];
@@ -11,7 +12,7 @@ const fmtIvl = (d: number | null) => (d === null ? '—' : d === 0 ? '0' : fmtDa
 export function NoteDetail({ noteId, cards, s }: { noteId: string; cards: Card[]; s: Settings }) {
   const logs = useNoteLogs(noteId);
   const typeOf = new Map(cards.map((c) => [c.id, c.type]));
-  const sorted = [...cards].sort((a, b) => ['recognition', 'production', 'cloze'].indexOf(a.type) - ['recognition', 'production', 'cloze'].indexOf(b.type));
+  const sorted = [...cards].sort((a, b) => ['recognition', 'production', 'cloze', 'contrast'].indexOf(a.type) - ['recognition', 'production', 'cloze', 'contrast'].indexOf(b.type));
   return (
     <div className="note-detail">
       {sorted.map((c) => {
@@ -20,7 +21,7 @@ export function NoteDetail({ noteId, cards, s }: { noteId: string; cards: Card[]
         return (
           <div key={c.id} className="nd-card">
             <span className={`badge is-type t-${c.type}`}>{TYPE_LABEL[c.type]}</span>
-            <CardStats card={c} s={s} />
+            <CardStats card={c} s={s} mem={s.scheduler === 'fsrs' ? replayMemory(validWeights(s.fsrsWeights), ls, c, s.dayStartHour) : null} />
             <span className="muted small">复习 {ls.length} 次{ls.length ? ` · 忘了 ${fails} 次` : ''}</span>
             {/* 最近 20 次评分，从旧到新 */}
             <span className="nd-dots" title="最近的评分，从旧到新">

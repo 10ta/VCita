@@ -15,6 +15,7 @@ import { StatsPage } from './features/stats/StatsPage';
 import { SettingsPage } from './features/settings/SettingsPage';
 import { Onboarding } from './features/Onboarding';
 import { Help } from './features/Help';
+import { FrProvider } from './features/FrText';
 
 const NAV = [
   { key: 'review', label: '复习' },
@@ -101,6 +102,7 @@ export function App() {
         ))}
       </nav>
       <ErrorBoundary area="自动同步"><AutoSync /></ErrorBoundary>
+      <FrProvider>
       <main>
         <ErrorBoundary key={route} area="页面">
           {route === 'settings' ? <SettingsPage /> : !deckId ? <NoDeck />
@@ -110,6 +112,7 @@ export function App() {
             : <StatsPage deckId={deckId} />}
         </ErrorBoundary>
       </main>
+      </FrProvider>
       {help && <Help onClose={() => setHelp(false)} />}
       <Toaster />
     </div>

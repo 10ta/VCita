@@ -6,6 +6,7 @@ import { computeStats, type Retention } from '../../srs/stats';
 import { buildQueue } from '../../srs/queue';
 import { addDaysToDay, studyDay } from '../../lib/time';
 import { useNow } from '../../ui/hooks';
+import { TYPE_LABEL } from '../CardFace';
 
 const pct = (r: Retention) => (r.rate === null ? '—' : `${Math.round(r.rate * 1000) / 10}%`);
 const tone = (r: Retention) => (r.rate === null ? '' : r.rate >= 0.85 && r.rate <= 0.9 ? 'ok' : r.rate > 0.95 || r.rate < 0.8 ? 'warn' : '');
@@ -16,7 +17,7 @@ export function StatsPage({ deckId }: { deckId: string }) {
   const notes = useNotes();
   const [now] = useNow(60_000);
   const todayLogs = useTodayLogs(s?.dayStartHour, now);
-  const from = s ? addDaysToDay(studyDay(now, s.dayStartHour), -13) : null;
+  const from = s ? addDaysToDay(studyDay(now, s.dayStartHour), -29) : null;
   const logs = useLiveQuery(async () => (from ? db.logs.where('day').aboveOrEqual(from).toArray() : []), [from]);
   const st = useMemo(() => (s && cards && notes && logs ? computeStats({ cards, notes, logs, now, dayStartHour: s.dayStartHour, deckId }) : null), [s, cards, notes, logs, now, deckId]);
   const q = useMemo(() => (s && cards && todayLogs ? buildQueue({ cards, todayLogs, deckId, now, settings: s }) : null), [s, cards, todayLogs, deckId, now]);
@@ -35,6 +36,32 @@ export function StatsPage({ deckId }: { deckId: string }) {
           {st.suggestion === 'more' && <b className="green"> 保持率高于 95%：可以多加新卡。</b>}
           {st.suggestion === 'less' && <b className="red"> 保持率低于 80%：减少新卡，先处理顽固卡。</b>}
         </p>
+      </section>
+      <section>
+        <h2>按卡型 <small className="muted">过去 30 天</small></h2>
+        <table className="stat-table">
+          <thead><tr><th>卡型</th><th>保持率</th><th>复习卡次数</th><th>用时中位数</th><th>慢的 10%</th></tr></thead>
+          <tbody>
+            {st.byType.map((t) => (
+              <tr key={t.type}>
+                <td><span className={`badge is-type t-${t.type}`}>{TYPE_LABEL[t.type]}</span></td>
+                <td className={tone(t.ret)}>{pct(t.ret)}</td>
+                <td>{t.ret.total}</td>
+                <td>{t.medianSec === null ? '—' : `${t.medianSec.toFixed(1)} 秒`}</td>
+                <td>{t.p90Sec === null ? '—' : `≥ ${t.p90Sec.toFixed(0)} 秒`}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+        <p className="hint">保持率只算复习状态的卡；用时不算超过 3 分钟的（多半是走开了）。哪一类明显偏低，就先改那一类：认读低 → 补例句、词源；产出低 → 换更简单的题面说法；用时长 → 卡片太难或信息太多。</p>
+        {st.byTheme.length > 0 && (
+          <>
+            <h3 className="set-sub">按主题（复习 ≥ 15 次）</h3>
+            <div className="kpis">
+              {st.byTheme.map((t) => <div key={t.theme} className={`kpi ${tone(t.ret)}`}><b>{pct(t.ret)}</b><span>{t.theme}（{t.ret.pass}/{t.ret.total}）</span></div>)}
+            </div>
+          </>
+        )}
       </section>
       <section>
         <h2>今日</h2>

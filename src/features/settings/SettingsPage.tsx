@@ -1,5 +1,7 @@
-import { useEffect, useRef, useState, type ReactNode } from 'react';
-import { useCards, useDecks, useNotes, useSettings } from '../../db/hooks';
+import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import { useAllLogs, useCards, useDecks, useMemories, useNotes, useSettings } from '../../db/hooks';
+import { FSRS6_DEFAULT, validWeights } from '../../srs/fsrs';
+import { simulate, stepCounts } from '../../srs/simulate';
 import { clearAllLocalData, spreadBacklog, updateSettings } from '../../db/actions';
 import { exportBundle, importBundle } from '../../io/bundle';
 import { downloadJson, readJsonFile } from '../../io/download';
@@ -202,10 +204,18 @@ const LAPSES: Num[] = [
 const ALL_NUMS = [...DAILY, ...INTERVALS, ...LAPSES];
 const parseSteps = (s: string) => s.split(/[\s,，]+/).filter(Boolean).map(Number).filter((n) => n > 0);
 
-type Form = Settings & { learning: string; relearn: string };
-const toForm = (s: Settings): Form => ({ ...s, learning: s.learningSteps.join(' '), relearn: s.relearnSteps.join(' ') });
+type Form = Settings & { learning: string; relearn: string; retentionPct: string; weights: string };
+const toForm = (s: Settings): Form => ({
+  ...s, learning: s.learningSteps.join(' '), relearn: s.relearnSteps.join(' '),
+  retentionPct: String(Math.round(s.desiredRetention * 100)), weights: s.fsrsWeights?.join(', ') ?? '',
+});
+/** 粘贴的 FSRS 参数：空 = 默认；逗号 / 空格分隔的 21 个数（Anki 里复制出来的格式也行） */
+const parseWeights = (x: string): number[] | null => {
+  const ns = x.split(/[\s,，]+/).filter(Boolean).map(Number);
+  return ns.length ? ns : null;
+};
 function toPatch(f: Form): Partial<Settings> {
-  const patch: Partial<Settings> = { fuzz: f.fuzz, newReviewOrder: f.newReviewOrder, reviewSort: f.reviewSort, newSort: f.newSort, focusTags: f.focusTags, newSplit: f.newSplit, freshShare: Number(f.freshShare), freshDays: Number(f.freshDays), learningSteps: parseSteps(f.learning), relearnSteps: parseSteps(f.relearn) };
+  const patch: Partial<Settings> = { scheduler: f.scheduler, desiredRetention: Number(f.retentionPct) / 100, fsrsWeights: parseWeights(f.weights), fuzz: f.fuzz, newReviewOrder: f.newReviewOrder, reviewSort: f.reviewSort, newSort: f.newSort, focusTags: f.focusTags, newSplit: f.newSplit, freshShare: Number(f.freshShare), freshDays: Number(f.freshDays), learningSteps: parseSteps(f.learning), relearnSteps: parseSteps(f.relearn) };
   for (const [k] of ALL_NUMS) patch[k] = Number(f[k]);
   return patch;
 }
@@ -236,19 +246,21 @@ function SrsForm({ s }: { s: Settings }) {
       <h2>复习</h2>
       <h3 className="set-sub">每日安排</h3>
       {DAILY.map(num)}
+      <Forecast s={s} f={f} />
       <SetRow label="新卡出现时机" hint="穿插：复习积压时新卡也照常出现">
         <select value={f.newReviewOrder} onChange={(e) => setF({ ...f, newReviewOrder: e.target.value as Settings['newReviewOrder'] })}>
           <option value="mix">穿插在复习中</option>
           <option value="after">复习完再出</option>
         </select>
       </SetRow>
-      <SetRow label="新卡顺序" hint="核心 = 要用出来的词（有产出卡）">
+      <SetRow label="新卡顺序" hint="核心 = 要用出来的词（有产出卡）。常用度按 Lexique 词频（法语电影字幕 + 书籍，每百万词出现次数）；短语看其中最不常用的词。挖矿卡那一份额度不受影响，照样越新越先出">
         <select value={f.newSort} onChange={(e) => setF({ ...f, newSort: e.target.value as Settings['newSort'] })}>
-          <option value="layer">重点主题 → 核心 → 中频 → 添加时间</option>
+          <option value="layer">重点主题 → 核心 → 中频，同层常用词先出</option>
+          <option value="freq">重点主题 → 常用词先出（不分层）</option>
           <option value="created">按添加时间</option>
         </select>
       </SetRow>
-      {f.newSort === 'layer' && (
+      {f.newSort !== 'created' && (
         <SetRow stack label="重点主题" hint="这些主题的新卡最先出，例如考试写作里容易卡住的主题。不选 = 不区分主题">
           <div className="chips">
             {THEMES.map((t) => {
@@ -274,11 +286,33 @@ function SrsForm({ s }: { s: Settings }) {
         </select>
       </SetRow>
 
+      <h3 className="set-sub">调度算法</h3>
+      <SetRow label="算法" hint="FSRS：按「到期时还记得的概率」排期，参数可以用自己的复习记录优化（Anki 23.10 起的默认算法）。SM-2：旧算法，间隔 = 上次间隔 × 倍率">
+        <select value={f.scheduler} onChange={(e) => setF({ ...f, scheduler: e.target.value as Settings['scheduler'] })}>
+          <option value="fsrs">FSRS-6（推荐）</option>
+          <option value="sm2">SM-2</option>
+        </select>
+      </SetRow>
+      {f.scheduler === 'fsrs' && (
+        <>
+          <SetRow label="目标保持率" hint="到期时还记得的概率。90% 是常用的平衡点；调高复习量增长很快（95% 约是 90% 的两倍），调低忘得多">
+            <span className="num-unit">
+              <input type="number" min={70} max={99} aria-label="目标保持率" value={f.retentionPct} onChange={(e) => setF({ ...f, retentionPct: e.target.value })} /><em>%</em>
+            </span>
+          </SetRow>
+          <SetRow stack label="FSRS 参数" hint="21 个数，逗号分隔；留空 = 默认参数。用自己的复习记录优化出来的参数预测更准（把导出的备份交给 Claude 优化，或者从 Anki 复制）。改了参数立刻对所有卡生效，不用迁移">
+            <textarea className="weights" rows={3} aria-label="FSRS 参数" placeholder={FSRS6_DEFAULT.join(', ')} value={f.weights} onChange={(e) => setF({ ...f, weights: e.target.value })} />
+            {f.weights.trim() && validWeights(parseWeights(f.weights)) === FSRS6_DEFAULT && <span className="red small">需要 21 个数</span>}
+          </SetRow>
+          <p className="hint">学习步骤、重学步骤、每日上限照常生效；毕业间隔、倍率、逾期加成这些 SM-2 参数在 FSRS 下不用（逾期由记忆模型自己算进去）。记忆状态每次从复习记录重放，切换算法不改任何已有数据。</p>
+        </>
+      )}
+
       <h3 className="set-sub">学习与间隔</h3>
       <SetRow label="学习步骤" hint="分钟，空格分隔；默认 10 1440（10 分钟、1 天）">
         <input className="steps" aria-label="学习步骤" value={f.learning} onChange={(e) => setF({ ...f, learning: e.target.value })} />
       </SetRow>
-      {INTERVALS.map(num)}
+      {f.scheduler === 'sm2' && INTERVALS.map(num)}
       <SetRow label="间隔随机扰动 ±5%" hint="避免同一天加的卡永远挤在同一天到期">
         <Switch label="间隔随机扰动" checked={f.fuzz} onChange={(v) => setF({ ...f, fuzz: v })} />
       </SetRow>
@@ -287,7 +321,7 @@ function SrsForm({ s }: { s: Settings }) {
       <SetRow label="重学步骤" hint="分钟；默认 10">
         <input className="steps" aria-label="重学步骤" value={f.relearn} onChange={(e) => setF({ ...f, relearn: e.target.value })} />
       </SetRow>
-      {LAPSES.map(num)}
+      {LAPSES.filter(([k]) => f.scheduler === 'sm2' || k === 'leechThreshold').map(num)}
 
       <div className={`save-bar${dirty ? ' is-dirty' : ''}`}>
         <span className="muted small">{dirty ? '有未保存的修改' : '参数随同步应用到其他设备'}</span>
@@ -298,6 +332,56 @@ function SrsForm({ s }: { s: Settings }) {
 
       <Backlog s={s} />
     </section>
+  );
+}
+
+/** 负荷预测：按 FSRS 模拟未来 30 天，比较不同的每日新卡数 */
+function Forecast({ s, f }: { s: Settings; f: Form }) {
+  const cards = useCards();
+  const logs = useAllLogs();
+  const memories = useMemories(s.scheduler === 'fsrs' ? s : { ...s, scheduler: 'fsrs' });
+  const [open, setOpen] = useState(false);
+  const cur = Math.max(0, Math.floor(Number(f.newPerDay)) || 0);
+  const rows = useMemo(() => {
+    if (!open || !cards || !memories) return null;
+    const w = validWeights(parseWeights(f.weights));
+    const retention = Math.min(0.99, Math.max(0.7, Number(f.retentionPct) / 100 || 0.9));
+    const steps = stepCounts(parseSteps(f.learning));
+    const newAvailable = new Set(cards.filter((c) => c.state === 'new' && !c.suspended).map((c) => c.noteId)).size;
+    const today = studyDay(Date.now(), s.dayStartHour);
+    const options = [...new Set([0, 10, 20, 30, 50, cur])].sort((a, b) => a - b);
+    return {
+      newAvailable,
+      list: options.map((n) => ({ n, ...simulate({ cards, memories, weights: w, retention, ...steps, maxInterval: s.maxInterval, today, dayStartHour: s.dayStartHour, days: 30, newPerDay: n, newAvailable }) })),
+    };
+  }, [open, cards, memories, f.weights, f.retentionPct, f.learning, cur, s.maxInterval, s.dayStartHour]);
+  // 每张卡的用时：最近的作答用时中位数（超过 3 分钟的不算）
+  const sec = useMemo(() => {
+    const xs = (logs ?? []).map((l) => l.elapsedMs ?? 0).filter((x) => x > 0 && x < 180_000).sort((a, b) => a - b);
+    return xs.length ? xs[Math.floor(xs.length / 2)] / 1000 : 10;
+  }, [logs]);
+  return (
+    <SetRow stack label="负荷预测" hint={`按 FSRS 模拟未来 30 天每天要复习多少次（含学习步骤和重学），用时按你的作答中位数 ${sec.toFixed(1)} 秒 / 次估算。只用来比较量级`}>
+      {!open ? <button type="button" className="pill" onClick={() => setOpen(true)}>计算</button> : !rows ? <span className="muted small">计算中…</span> : (
+        <div className="forecast-box">
+          <table className="stat-table">
+            <thead><tr><th>每天新卡</th><th>平均每天复习</th><th>最多的一天</th><th>每天约用时</th><th>新卡学完</th></tr></thead>
+            <tbody>
+              {rows.list.map((r) => (
+                <tr key={r.n} className={r.n === cur ? 'is-cur' : ''}>
+                  <td>{r.n}{r.n === cur ? '（当前）' : ''}</td>
+                  <td>{r.avg}</td>
+                  <td>{r.peak}</td>
+                  <td>{Math.round((r.avg * sec) / 60)} 分钟</td>
+                  <td>{r.n ? `约 ${Math.ceil(rows.newAvailable / r.n)} 天` : '—'}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+          <span className="muted small">待学新卡 {rows.newAvailable} 条笔记。改了目标保持率、参数、学习步骤，表会跟着变（保存前就能比较）</span>
+        </div>
+      )}
+    </SetRow>
   );
 }
 
@@ -383,6 +467,9 @@ function UiSection({ s }: { s: Settings }) {
       <h3 className="set-sub">卡片与添加</h3>
       <SetRow label="挖空卡横线处显示首字母和字母数" hint={'例如 s _ _ _ _ _ _ _。横线处的中文提示在编辑笔记的"挖空提示"里填，没填时正面显示中文意思'}>
         <Switch label="挖空首字母" checked={s.clozeLetters} onChange={(v) => void updateSettings({ clozeLetters: v })} />
+      </SetRow>
+      <SetRow label="名词按阴阳性着色" hint="卡面上的名词加下划线：阳性蓝、阴性红。关掉后鼠标悬停（手机上点一下）照样能看到性别、另一个性的形式和词尾规则">
+        <Switch label="名词按阴阳性着色" checked={s.genderColors} onChange={(v) => void updateSettings({ genderColors: v })} />
       </SetRow>
       <SetRow label={'添加页默认展开"更多字段"'} hint="例句、词族线索、出处、补充。关闭后需要时点“更多字段”展开">
         <Switch label="默认展开更多字段" checked={s.addShowMore} onChange={(v) => void updateSettings({ addShowMore: v })} />

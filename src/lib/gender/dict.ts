@@ -1,0 +1,129 @@
+// 法语词典（Lexique 3.83 + Lefff 3.4，见 scripts/build-fr-dict.mjs）：词频、词性、名词 / 形容词的阴阳性。
+// 文件约 2.6 MB（压缩后约 0.5 MB），第一次用到时才下载，带哈希的文件名，浏览器长期缓存。
+import { useEffect, useState } from 'react';
+import dictUrl from './fr-dict.txt?url';
+import { FALLBACK_STATS, RULE_STATS } from './stats.gen';
+import { HOMOGRAPHS, SPECIAL, matchRule, norm, type GenderRule } from './rules';
+
+export type Pos = 'N' | 'A' | 'V' | 'O';
+/** m / f；b = 阴阳同形（le / la ministre）；h = 同形异义（le / la tour）；? = 词典里没有性别 */
+export type DictGender = 'm' | 'f' | 'b' | 'h' | '?' | '';
+export interface Entry { form: string; pos: Pos; g: DictGender; n: 's' | 'p' | ''; lemma: string; freq: number }
+export interface FrDict { get(word: string): Entry | undefined; formsOf(lemma: string): Entry[] }
+
+export function parseDict(text: string): FrDict {
+  const map = new Map<string, Entry>();
+  const byLemma = new Map<string, Entry[]>();
+  for (const line of text.split('\n')) {
+    if (!line || line.startsWith('#')) continue;
+    const [form, pos, g, n, lemma, freq] = line.split('\t');
+    const e: Entry = { form, pos: pos as Pos, g: g as DictGender, n: n as Entry['n'], lemma: lemma || form, freq: Number(freq) || 0 };
+    map.set(form, e);
+    if (e.pos === 'N' || e.pos === 'A') (byLemma.get(e.lemma) ?? byLemma.set(e.lemma, []).get(e.lemma)!).push(e);
+  }
+  return { get: (w) => map.get(norm(w)), formsOf: (l) => byLemma.get(norm(l)) ?? [] };
+}
+
+let loading: Promise<FrDict> | null = null;
+let loaded: FrDict | null = null;
+export function loadDict(): Promise<FrDict> {
+  loading ??= fetch(dictUrl).then((r) => {
+    if (!r.ok) throw new Error(`词典下载失败：${r.status}`);
+    return r.text();
+  }).then((t) => (loaded = parseDict(t))).catch((e) => { loading = null; throw e; });
+  return loading;
+}
+/** 词典（加载完之前是 null）；enabled = false 时不下载 */
+export function useFrDict(enabled = true): FrDict | null {
+  const [d, setD] = useState<FrDict | null>(loaded);
+  useEffect(() => {
+    if (!enabled || d) return;
+    let alive = true;
+    loadDict().then((x) => alive && setD(x)).catch((e) => console.warn(e));
+    return () => { alive = false; };
+  }, [enabled, d]);
+  return d;
+}
+
+// ---------------- 词频 ----------------
+
+// 词条里不算"词"的部分：qqch / qqn、括号里的语法说明、+ 号
+const NOT_WORDS = /\([^)]*\)|\bqq(?:ch|n)\b|\bqn\b|\bqc\b|\+|…|\.\.\./gi;
+const FUNC = new Set('le la les l un une des de du d à au aux en et ou se s ne pas y que qu qui ce sa son ses leur leurs mon ma mes ton ta tes nous vous il elle on je j me m te t lui pour par sur dans avec sans être avoir faire'.split(' '));
+
+/** 一个词条的词频（每百万词）：短语取最不常见的那个实词——短语的常用度取决于它最生僻的部分。查不到返回 null */
+export function lemmaFreq(dict: FrDict, lemma: string): number | null {
+  const words = norm(lemma).replace(NOT_WORDS, ' ').split(/[^\p{L}'-]+/u).flatMap((w) => w.split(/'/)).filter((w) => w.length > 1);
+  const content = words.filter((w) => !FUNC.has(w));
+  const pool = content.length ? content : words;
+  let min: number | null = null;
+  for (const w of pool) {
+    const e = dict.get(w);
+    if (!e) continue;
+    // 变形的词（écopé）查到的是原形的词频
+    const f = e.freq;
+    min = min === null ? f : Math.min(min, f);
+  }
+  return min;
+}
+
+// ---------------- 阴阳性 ----------------
+
+const MASC_DET = new Set(['le', 'un', 'du', 'au', 'ce', 'cet', 'mon', 'ton', 'son', 'quel', 'aucun', 'nul', 'tout', 'certain']);
+const FEM_DET = new Set(['la', 'une', 'cette', 'ma', 'ta', 'sa', 'quelle', 'aucune', 'nulle', 'toute', 'certaine']);
+/** 前一个词是限定词时，它说明了这个名词在这里的性 */
+export const genderFromDet = (prev: string | null | undefined): 'm' | 'f' | null => {
+  const p = prev ? norm(prev) : '';
+  return MASC_DET.has(p) ? 'm' : FEM_DET.has(p) ? 'f' : null;
+};
+
+export interface RuleView extends GenderRule { pct: number; n: number; exceptions: string[]; /** 这个词是不是这条规则的例外 */ isException: boolean }
+export interface GenderInfo {
+  word: string;
+  pos: 'N' | 'A';
+  /** 这个词的性；b = 阴阳同形；h = 同形异义；? = 不知道 */
+  gender: DictGender;
+  /** 从前面的冠词看出来的性（同形词、阴阳同形词有用） */
+  ctxGender: 'm' | 'f' | null;
+  number: 's' | 'p' | '';
+  lemma: string;
+  /** 另一个性的形式：acteur ↔ actrice、beau ↔ belle */
+  other: string[];
+  /** 名词按词尾的规则（有另一个性形式的指人名词不给，它的性跟着所指的人） */
+  rule: RuleView | null;
+  /** 没有匹配的词尾规则时的大致倾向 */
+  fallback: { endsWithE: boolean; femPct: number } | null;
+  homograph: { m: string; f: string } | null;
+  special: string | null;
+}
+
+export function genderInfo(dict: FrDict, word: string, prev?: string | null): GenderInfo | null {
+  const e = dict.get(word);
+  if (!e || (e.pos !== 'N' && e.pos !== 'A')) return null;
+  const lemma = e.lemma;
+  const want = e.g === 'm' ? 'f' : e.g === 'f' ? 'm' : null;
+  const other = want
+    ? [...new Set(dict.formsOf(lemma).filter((x) => x.pos === e.pos && x.g === want && (x.n === e.n || !x.n || !e.n)).map((x) => x.form))]
+    : [];
+  // 原形是阳性形式，查阴性词的"另一个性"时原形本身也算（actrice → acteur）
+  if (want === 'm' && lemma !== e.form && !other.includes(lemma) && dict.get(lemma)?.pos === e.pos) other.unshift(lemma);
+  const homo = HOMOGRAPHS.find((h) => h.word === norm(e.form) || h.word === norm(lemma)) ?? null;
+  let rule: RuleView | null = null;
+  let fallback: GenderInfo['fallback'] = null;
+  if (e.pos === 'N' && !other.length && (e.g === 'm' || e.g === 'f' || e.g === '?')) {
+    // 词尾规则按单数原形看（chevaux → cheval）
+    const base = e.n === 'p' ? lemma : e.form;
+    const r = matchRule(base);
+    if (r) {
+      const st = RULE_STATS[r.suffix] ?? { n: 0, pct: 0, exceptions: [] };
+      rule = { ...r, ...st, isException: (e.g === 'm' || e.g === 'f') && e.g !== r.gender };
+    } else {
+      const endsWithE = norm(base).endsWith('e');
+      fallback = { endsWithE, femPct: endsWithE ? FALLBACK_STATS.e.fem : FALLBACK_STATS.other.fem };
+    }
+  }
+  return {
+    word, pos: e.pos, gender: e.g, ctxGender: e.pos === 'N' ? genderFromDet(prev) : null, number: e.n, lemma, other,
+    rule, fallback, homograph: homo ? { m: homo.m, f: homo.f } : null, special: SPECIAL[norm(e.form)] ?? SPECIAL[norm(lemma)] ?? null,
+  };
+}

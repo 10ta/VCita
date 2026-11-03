@@ -4,6 +4,8 @@ import type { ReactNode } from 'react';
 import type { Card, Note, Settings } from '../schema';
 import { dayStartMs, daysBetween, fmtDays, fromIso, studyDay } from '../lib/time';
 import { speak } from '../lib/speech';
+import { currentR, validWeights, type Memory } from '../srs/fsrs';
+import { Fr } from './FrText';
 import { blankIsFunctionWords, clozeTargets, hasCloze, hasInlineHint, hintLeaks } from '../schema/validate';
 
 /** "survoler la Sibérie" → "s _ _ _ _ _ _ _   l _" ：每个词的首字母 + 其余字母数，标点和省音号原样 */
@@ -34,6 +36,17 @@ export function renderSentence(s: string, mode: 'bold' | 'blank' = 'bold', blank
     else out.push(el);
   }
   return out;
+}
+/** 一个词的首字母提示：teinte → t…，l'arbre → l'a…；省音的小词（d'、qu'）和纯标点原样 */
+const initialOf = (w: string) => {
+  if (/^\p{L}+['’]$/u.test(w) || !/\p{L}/u.test(w)) return w;
+  const m = /^((?:\p{L}{1,2}['’])?)([^\p{L}]*)(\p{L})[\p{L}'’-]*(.*)$/u.exec(w);
+  return m ? `${m[1]}${m[2]}${m[3]}…${m[4]}` : w;
+};
+/** 产出卡的首字母提示：答案句里高亮外的部分题面上本来就有，照常显示；只有要产出的部分给首字母。
+ *  "L'enfance {{teinte}} toute notre vie." → "L'enfance t… toute notre vie." */
+export function productionHint(answerFr: string): string {
+  return answerFr.replace(/\{\{(.*?)\}\}/g, (_, x: string) => x.split('::')[0].split(/(\s+)/).map((w) => (/^\s+$/.test(w) ? w : initialOf(w))).join(''));
 }
 export const plainSentence = (s: string) => s.replace(/\{\{(.*?)\}\}/g, (_, x: string) => x.split('::')[0]);
 
@@ -79,7 +92,7 @@ export function quizSplit(note: Note, s: Settings, quizType: number, labels: [st
   return { question: f[q], answers: f.filter((_, i) => i !== q) };
 }
 
-export const TYPE_LABEL: Record<Card['type'], string> = { recognition: '认读', production: '产出', cloze: '挖空' };
+export const TYPE_LABEL: Record<Card['type'], string> = { recognition: '认读', production: '产出', cloze: '挖空', contrast: '辨析' };
 
 export interface CardView {
   question: Face;
@@ -89,11 +102,49 @@ export interface CardView {
   cues: 'all' | 'extra';
   /** 听力认读：题面不显示文字 */
   listen?: boolean;
+  /** 产出卡这次用的法语答案（带 {{…}}），对照自己写的用 */
+  answerFr?: string;
+  /** 辨析卡的选项（易混组里几个词的词条，顺序每次复习换一次） */
+  choices?: string[];
+}
+
+/** 辨析卡：这条笔记的例句挖掉考查部分，下面列出易混组里的几个词，选哪一个；背面是答案句 + 每个词的意思和区别 */
+function contrastView(note: Note, group: Note[], s: Settings, labels: [string, string, string], variant: number): CardView {
+  const sent = pickSentence(note, 'recognition', variant);
+  const members = [note, ...group.filter((g) => g.id !== note.id)];
+  // 选项顺序每次复习换一次，免得记住位置
+  const seed = [...`${note.id}:${variant}`].reduce((h, ch) => (h * 31 + ch.charCodeAt(0)) >>> 0, 7);
+  const options = members.map((m, i) => ({ m, k: (seed * (i + 3) * 2654435761) >>> 0 })).sort((a, b) => a.k - b.k).map((x) => x.m);
+  return {
+    question: {
+      text: renderSentence(sent, 'blank'),
+      speakText: '', lang: s.sourceLang, label: '辨析',
+    },
+    hint: null, cues: 'extra', choices: options.map((m) => m.lemma),
+    answers: [
+      { text: renderSentence(sent), speakText: plainSentence(sent), lang: s.sourceLang, label: labels[0] },
+      {
+        text: (
+          <span className="contrast-table">
+            {members.map((m) => (
+              <span key={m.id} className={`cmp${m.id === note.id ? ' is-answer' : ''}`}>
+                <b>{m.id === note.id ? '✓ ' : ''}{m.lemma}</b>
+                <span>{m.meaningZh}</span>
+                {m.contrastNote && <span className="muted">{m.contrastNote}</span>}
+              </span>
+            ))}
+          </span>
+        ),
+        speakText: '', lang: s.targetLang1, label: '辨析',
+      },
+    ],
+  };
 }
 
 /** 三种卡的正反面。旋转和题面切换只作用于认读卡 */
 /** variant：第几个版本，复习时传卡片的复习次数，每次复习轮换一个句子 / 场景 */
-export function cardView(type: Card['type'], note: Note, s: Settings, quizType: number, labels: [string, string, string], variant = 0, listen = false): CardView {
+export function cardView(type: Card['type'], note: Note, s: Settings, quizType: number, labels: [string, string, string], variant = 0, listen = false, group: Note[] = []): CardView {
+  if (type === 'contrast') return contrastView(note, group, s, labels, variant);
   // 听力认读：正面只有声音，翻面显示句子和两个翻译
   if (listen && type === 'recognition' && note.sentence) {
     const f = faces(note, s, labels, variant);
@@ -108,14 +159,15 @@ export function cardView(type: Card['type'], note: Note, s: Settings, quizType: 
     if (it.promptFr) {
       return {
         question: { text: renderSentence(it.promptFr), speakText: plainSentence(it.promptFr), lang: s.sourceLang, label: '法语题面' },
-        hint: it.hint, cues: 'extra',
+        // 有法语题面时提示由答案句自动生成（笔记里手写的整句首字母提示会把题面上已有的词也遮住）
+        hint: hasCloze(a) ? productionHint(a) : it.hint, cues: 'extra', answerFr: a,
         answers: it.intentZh.trim() ? [answer, { text: plainSentence(it.intentZh), speakText: plainSentence(it.intentZh), lang: s.targetLang1, label: labels[1] }] : [answer],
       };
     }
     const q = it.intentZh;
     return {
       question: { text: hasCloze(q) ? renderSentence(q) : q, speakText: plainSentence(q), lang: s.targetLang1, label: '中文意图' },
-      hint: it.hint, cues: 'extra',
+      hint: it.hint, cues: 'extra', answerFr: a,
       answers: [answer],
     };
   }
@@ -154,18 +206,18 @@ export function SpeakBtn({ text, lang, size = 14 }: { text: string; lang: string
 export function Cues({ note, only }: { note: Note; only?: 'extra' }) {
   const line1 = only ? '' : [note.cueFamily, note.source].filter(Boolean).join(' · ');
   return (
-    <>
+    <Fr>
       {!only && note.etymology && <div className="cue etym" title="词源">⌁ {note.etymology}</div>}
       {line1 && <div className="cue">{line1}</div>}
       {note.extra && <div className="cue">{note.extra}</div>}
-    </>
+    </Fr>
   );
 }
 
 const STATE_LABEL: Record<Card['state'], string> = { new: '新卡', learning: '学习中', relearning: '重学', review: '' };
 
 /** 调度状态的小标签：到期、间隔、倍率、遗忘次数 */
-export function CardStats({ card, s, center }: { card: Card; s: Settings; center?: boolean }) {
+export function CardStats({ card, s, center, mem }: { card: Card; s: Settings; center?: boolean; mem?: Memory | null }) {
   const chips: Array<[string, string, string?]> = [];
   if (card.state !== 'review') chips.push([STATE_LABEL[card.state], 'is-blue']);
   else {
@@ -175,7 +227,14 @@ export function CardStats({ card, s, center }: { card: Card; s: Settings; center
     chips.push([d < 0 ? `逾期${-d}天` : d === 0 ? '今天到期' : `${d}天后`, d <= 0 ? 'is-accent' : '', `下次复习 ${new Date(dayStartMs(dueDay, 0)).toLocaleDateString()}`]);
     chips.push([`间隔 ${fmtDays(card.interval)}`, '', '上次复习到下次复习之间隔多久']);
   }
-  chips.push([`倍率 ×${card.ease.toFixed(2)}`, card.ease < 2 ? 'is-warn' : '', '答"良好"时：新间隔 = 当前间隔 × 倍率。越低说明越难记']);
+  if (s.scheduler === 'fsrs') {
+    if (mem) {
+      const w = validWeights(s.fsrsWeights);
+      const r = currentR(w, mem, studyDay(Date.now(), s.dayStartHour));
+      chips.push([`记住 ${Math.round(r * 100)}%`, r < s.desiredRetention - 0.1 ? 'is-warn' : '', `FSRS 估计现在还记得的概率；稳定性 ${fmtDays(Math.max(1, Math.round(mem.s)))}（过这么久记住的概率降到 90%）`]);
+      chips.push([`难度 ${mem.d.toFixed(1)}`, mem.d >= 7 ? 'is-warn' : '', 'FSRS 难度 1–10：经常答忘了、困难会升高，越高间隔涨得越慢']);
+    }
+  } else chips.push([`倍率 ×${card.ease.toFixed(2)}`, card.ease < 2 ? 'is-warn' : '', '答"良好"时：新间隔 = 当前间隔 × 倍率。越低说明越难记']);
   if (card.lapses > 0) chips.push([`遗忘${card.lapses}次`, 'is-red', '复习时点"忘了"的次数']);
   if (card.isLeech) chips.push(['待改造', 'is-red', `遗忘达到 ${s.leechThreshold} 次：补句子、加线索后解除暂停`]);
   if (card.suspended) chips.push(['已暂停', 'is-warn']);

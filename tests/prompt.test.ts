@@ -28,7 +28,7 @@ describe('产出卡：法语题面', () => {
     expect(html(v.answers[0].text)).toContain('<b class="cloze">au motif que</b>');
     expect(v.answers[0].speakText).toBe('On m’a refusé l’entrée au motif que mon trépied gênait.');
     expect(v.answers[1].text).toBe('以……为理由');
-    expect(v.hint).toBe('a… m… q…');
+    expect(v.hint).toBe('On m’a refusé l’entrée a… m… q… mon trépied gênait.');
   });
   it('没有法语题面：正面退回中文意图，中文里也可以高亮', () => {
     const v = cardView('production', note({ intentZh: '要{{考虑}}居民的意见', answerFr: 'tenir compte de' }), S, 0, L);
@@ -109,5 +109,16 @@ describe('挖空提示不能只是语法标签', () => {
     expect(promptErrors("J'ai {{reçu une sanction financière}} pour stationnement.", null, "J'ai {{écopé d'une amende}} pour stationnement.", 'amende')).toEqual([]);
     // 答案高亮里有这个词、题面别处又出现同一个词，不算
     expect(promptErrors('il faut {{affronter}} ce que les gens font', null, 'il faut {{faire face à}} ce que les gens font', 'faire face à')).toEqual([]);
+  });
+});
+
+import { productionHint } from '../src/features/CardFace';
+describe('产出卡首字母提示', () => {
+  it('高亮外照常显示，只遮要产出的部分', () => {
+    expect(productionHint("L'enfance {{teinte}} toute notre vie.")).toBe("L'enfance t… toute notre vie.");
+    expect(productionHint("J'ai {{écopé d'une amende}} pour stationnement.")).toBe("J'ai é… d'u… a… pour stationnement.");
+    expect(productionHint("refusé {{au motif qu'}}il manquait")).toBe("refusé a… m… qu'il manquait");
+    expect(productionHint("{{avoir}} ces idées {{en tête}}.")).toBe("a… ces idées e… t….");
+    expect(productionHint("c'est {{peut-être}} vrai")).toBe("c'est p… vrai");
   });
 });

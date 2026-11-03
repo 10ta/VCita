@@ -3,6 +3,9 @@ import { db } from './db';
 import { getSettings, ONBOARDED_KEY } from './actions';
 import { studyDay } from '../lib/time';
 import { liveStore, useLiveStore } from './live';
+import { useMemo } from 'react';
+import { memoryMap, validWeights, type Memory } from '../srs/fsrs';
+import type { Settings } from '../schema';
 
 // 整表查询由所有页面共用（见 live.ts）：作答后卡片表只读一次，切换页面不用重新读
 const settingsStore = liveStore(getSettings);
@@ -13,6 +16,19 @@ export const useSettings = () => useLiveStore(settingsStore);
 export const useDecks = () => useLiveStore(decksStore);
 export const useNotes = () => useLiveStore(notesStore);
 export const useCards = () => useLiveStore(cardsStore);
+const logsStore = liveStore(async () => (await db.logs.toArray()).filter((l) => !l.deleted));
+/** 全部日志（不含墓碑） */
+export const useAllLogs = () => useLiveStore(logsStore);
+/** FSRS 记忆状态（每张卡从日志重放）；用 SM-2 时返回空表 */
+export function useMemories(s: Settings | undefined): Map<string, Memory> | undefined {
+  const cards = useCards();
+  const logs = useAllLogs();
+  const fsrs = s?.scheduler === 'fsrs';
+  return useMemo(() => {
+    if (!s || !cards || !logs) return undefined;
+    return fsrs ? memoryMap(validWeights(s.fsrsWeights), cards, logs, s.dayStartHour) : new Map();
+  }, [fsrs, s?.fsrsWeights, s?.dayStartHour, cards, logs]); // eslint-disable-line react-hooks/exhaustive-deps
+}
 /** 当前学习日的日志（含墓碑，由调用方过滤） */
 export const useTodayLogs = (dayStartHour: number | undefined, now: number) => {
   const day = dayStartHour === undefined ? null : studyDay(now, dayStartHour);

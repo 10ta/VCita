@@ -192,5 +192,5 @@ const EMPTY = { sentence: '', promptFr: '', intentZh: '', hint: '', clozeHint: '
 const BLANK_NOTE: Note = {
   id: 'draft', deckId: '', createdAt: '2026-01-01T00:00:00.000Z', lemma: '', sentence: '', meaningZh: '', meaningEn: '',
   cueFamily: null, promptFr: null, intentZh: null, hint: null, clozeHint: null, clozeSentence: null, etymology: null, answerFr: null, extra: null, source: null, origin: null, altSentences: [], altIntents: [], layer: 'mid', cardTypes: ['recognition'],
-  tags: [], usedCount: 0, usedAt: [], rot: 0, legacy: null, updatedAt: '2026-01-01T00:00:00.000Z', deleted: false,
+  tags: [], usedCount: 0, usedAt: [], rot: 0, contrastGroup: null, contrastNote: null, legacy: null, updatedAt: '2026-01-01T00:00:00.000Z', deleted: false,
 };

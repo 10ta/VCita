@@ -16,7 +16,8 @@ const base = {
 
 export const THEMES = ['TRAVAIL', 'SOCIÉTÉ', 'TECHNOLOGIE', 'ENVIRONNEMENT', 'MÉDIAS', 'ÉDUCATION', 'SANTÉ', 'GÉNÉRAL'] as const;
 export const ThemeV2 = z.enum(THEMES);
-export const CARD_TYPES = ['recognition', 'production', 'cloze'] as const;
+/** contrast = 辨析卡：易混组里的几个词放在一起，看句子选哪一个（由易混组自动生成，不在编辑器里勾选） */
+export const CARD_TYPES = ['recognition', 'production', 'cloze', 'contrast'] as const;
 export const CARD_STATES = ['new', 'learning', 'review', 'relearning'] as const;
 
 export const DeckV2 = z.looseObject({
@@ -64,6 +65,10 @@ export const NoteV2 = z.looseObject({
   usedAt: z.array(IsoTime).default([]),
   /** 卡片旋转：题面在 法语 / 翻译1 / 翻译2 之间轮换 */
   rot: z.number().int().min(0).max(2).default(0),
+  /** 易混组：同一个组号的笔记互相辨析（teinter / colorer），每条笔记生成一张辨析卡 */
+  contrastGroup: z.string().nullable().default(null),
+  /** 辨析说明：这个词和组里其他词的区别（辨析卡背面显示），如"抽象地给…染上色彩（经历、情绪）" */
+  contrastNote: z.string().nullable().default(null),
   /** 迁移时原样保存的旧卡对象 */
   legacy: z.unknown().nullable().default(null),
 });
@@ -136,8 +141,8 @@ export const SettingsV2 = z.looseObject({
   newReviewOrder: z.enum(['mix', 'after']).default('mix'),
   /** 复习卡顺序：overdue = 相对逾期（逾期天数 ÷ 间隔）最大的先出；due = 按到期时间 */
   reviewSort: z.enum(['overdue', 'due']).default('overdue'),
-  /** 新卡顺序：layer = 重点主题 → 核心 → 中频 → 添加时间；created = 只按添加时间 */
-  newSort: z.enum(['layer', 'created']).default('layer'),
+  /** 新卡顺序：layer = 重点主题 → 核心 → 中频，同一层里常用词先出；freq = 重点主题 → 常用词先出（不分层）；created = 只按添加时间 */
+  newSort: z.enum(['layer', 'freq', 'created']).default('layer'),
   /** 新卡额度怎么拆：source = 按来源（挖矿卡 / 词表卡）；recent = 按添加时间（最近 N 天 / 更早）；off = 不拆 */
   newSplit: z.enum(['source', 'recent', 'off']).default('source'),
   /** 每日新卡上限里留给"新鲜"那一份（挖矿卡 / 最近添加）的百分比；一份用不完的额度让给另一份 */
@@ -152,6 +157,14 @@ export const SettingsV2 = z.looseObject({
   addShowMore: z.boolean().default(true),
   /** 挖空卡横线处显示首字母和字母数：s _ _ _ _ _ _ _ */
   clozeLetters: z.boolean().default(false),
+  /** 调度算法：fsrs = FSRS-6（按目标保持率排期，参数可以用自己的复习记录优化）；sm2 = 旧的 SM-2 */
+  scheduler: z.enum(['fsrs', 'sm2']).default('fsrs'),
+  /** FSRS 的目标保持率：到期时记住的概率。越高复习越多 */
+  desiredRetention: z.number().min(0.7).max(0.99).default(0.9),
+  /** FSRS-6 的 21 个参数；null = 默认参数 */
+  fsrsWeights: z.array(z.number()).length(21).nullable().default(null),
+  /** 卡面上的名词按阴阳性加下划线颜色（阳性蓝、阴性红），悬停看规则 */
+  genderColors: z.boolean().default(true),
 });
 
 const file = <K extends string, S extends z.ZodRawShape>(kind: K, shape: S) =>
