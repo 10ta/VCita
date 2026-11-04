@@ -12,6 +12,7 @@ import { toast } from '../../ui/toast';
 import { THEMES, noteOrigin } from '../../schema';
 import type { Settings } from '../../schema';
 import { DeckSection } from './DeckSection';
+import { genderDisplayOf, type GenderDisplay } from '../FrText';
 import { Modal } from '../../ui/Modal';
 
 /** 设置页的分类，顺序即页面顺序：常用的在上面 */
@@ -468,8 +469,13 @@ function UiSection({ s }: { s: Settings }) {
       <SetRow label="挖空卡横线处显示首字母和字母数" hint={'例如 s _ _ _ _ _ _ _。横线处的中文提示在编辑笔记的"挖空提示"里填，没填时正面显示中文意思'}>
         <Switch label="挖空首字母" checked={s.clozeLetters} onChange={(v) => void updateSettings({ clozeLetters: v })} />
       </SetRow>
-      <SetRow label="名词按阴阳性着色" hint="卡面上的名词加下划线：阳性蓝、阴性红。关掉后鼠标悬停（手机上点一下）照样能看到性别、另一个性的形式和词尾规则">
-        <Switch label="名词按阴阳性着色" checked={s.genderColors} onChange={(v) => void updateSettings({ genderColors: v })} />
+      <SetRow label="阴阳性下划线" hint="名词下划线：阳性蓝、阴性红。只标考查部分：注意力留在要学的词上，句子其余部分干净；悬停：鼠标移到名词上才出现；关闭：不画线。哪种都能悬停（手机上点一下）看性别、另一个性的形式和词尾规则">
+        <select aria-label="阴阳性下划线" value={genderDisplayOf(s)} onChange={(e) => void updateSettings({ genderDisplay: e.target.value as GenderDisplay })}>
+          <option value="focus">只标考查部分（推荐）</option>
+          <option value="always">所有名词</option>
+          <option value="hover">悬停时显示</option>
+          <option value="off">关闭（悬停仍显示说明）</option>
+        </select>
       </SetRow>
       <SetRow label={'添加页默认展开"更多字段"'} hint="例句、词族线索、出处、补充。关闭后需要时点“更多字段”展开">
         <Switch label="默认展开更多字段" checked={s.addShowMore} onChange={(v) => void updateSettings({ addShowMore: v })} />

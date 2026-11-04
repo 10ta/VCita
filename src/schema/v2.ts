@@ -163,8 +163,11 @@ export const SettingsV2 = z.looseObject({
   desiredRetention: z.number().min(0.7).max(0.99).default(0.9),
   /** FSRS-6 的 21 个参数；null = 默认参数 */
   fsrsWeights: z.array(z.number()).length(21).nullable().default(null),
-  /** 卡面上的名词按阴阳性加下划线颜色（阳性蓝、阴性红），悬停看规则 */
-  genderColors: z.boolean().default(true),
+  /** 旧开关（被 genderDisplay 取代）：false 时 genderDisplay 默认为 off */
+  genderColors: z.boolean().optional(),
+  /** 名词阴阳性下划线（阳性蓝、阴性红）：focus = 只标考查部分里的名词；always = 所有名词；hover = 鼠标移上去才显示；off = 不显示。
+   *  四种都能悬停（手机上点一下）看性别和规则。没设过时按旧开关推断 */
+  genderDisplay: z.enum(['focus', 'always', 'hover', 'off']).optional(),
 });
 
 const file = <K extends string, S extends z.ZodRawShape>(kind: K, shape: S) =>

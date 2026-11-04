@@ -3,15 +3,24 @@
 import { Children, cloneElement, createContext, isValidElement, useContext, useEffect, useMemo, useRef, useState, type ReactElement, type ReactNode } from 'react';
 import { genderInfo, lemmaFreq, useFrDict, type FrDict, type GenderInfo } from '../lib/gender/dict';
 import { useNotes, useSettings } from '../db/hooks';
+import type { Settings } from '../schema';
 
-interface Ctx { dict: FrDict | null; colors: boolean }
-const FrCtx = createContext<Ctx>({ dict: null, colors: false });
+interface Ctx { dict: FrDict | null }
+const FrCtx = createContext<Ctx>({ dict: null });
+
+export type GenderDisplay = NonNullable<Settings['genderDisplay']>;
+/** 没设过时：旧开关关掉过 → off，否则默认只标考查部分（focus） */
+export const genderDisplayOf = (s: Pick<Settings, 'genderDisplay' | 'genderColors'> | undefined): GenderDisplay =>
+  s?.genderDisplay ?? (s?.genderColors === false ? 'off' : 'focus');
 
 export function FrProvider({ children }: { children: ReactNode }) {
   const s = useSettings();
   const dict = useFrDict(true);
+  const mode = genderDisplayOf(s);
+  // 显示方式只靠 CSS 切换（<html data-gender>），换设置不用重新切词
+  useEffect(() => { document.documentElement.dataset.gender = mode; }, [mode]);
   return (
-    <FrCtx.Provider value={{ dict, colors: s?.genderColors ?? true }}>
+    <FrCtx.Provider value={{ dict }}>
       {children}
       {dict && <GenderPopover dict={dict} />}
     </FrCtx.Provider>
@@ -29,11 +38,12 @@ const WORD = /(\p{L}+(?:-\p{L}+)*)/u;
 const URL_RE = /https?:\/\/\S+/;
 const URL_SPLIT = /(https?:\/\/\S+)/;
 
-/** 把 children 里的法语文字切成词，名词 / 形容词包一层可悬停的 span */
+/** 把 children 里的法语文字切成词，名词 / 形容词包一层可悬停的 span。
+ *  考查部分（{{…}} 渲染成的 .cloze）里的词多一个 fw-t，"只标考查部分"模式只给它们画线 */
 export function Fr({ children }: { children: ReactNode }) {
-  const { dict, colors } = useContext(FrCtx);
+  const { dict } = useContext(FrCtx);
   if (!dict) return <>{children}</>;
-  const st = { prev: null as string | null, key: 0 };
+  const st = { prev: null as string | null, key: 0, target: false };
   const walk = (node: ReactNode): ReactNode => {
     if (typeof node === 'string') {
       // 网址原样保留
@@ -49,7 +59,7 @@ export function Fr({ children }: { children: ReactNode }) {
         // 单个字母（j'、m'、字母 e）不算
         const e = part.length > 1 ? dict.get(part) : undefined;
         if (!e || (e.pos !== 'N' && e.pos !== 'A')) return part;
-        const cls = colors && e.pos === 'N' && (e.g === 'm' || e.g === 'f') ? ` g-${e.g}` : '';
+        const cls = (e.pos === 'N' && (e.g === 'm' || e.g === 'f') ? ` g-${e.g}` : '') + (st.target ? ' fw-t' : '');
         return <span key={`fw${st.key++}`} className={`fw${cls}`} data-fw={part} data-prev={prev ?? ''}>{part}</span>;
       });
     }
@@ -57,7 +67,11 @@ export function Fr({ children }: { children: ReactNode }) {
     if (isValidElement(node)) {
       const el = node as ReactElement<{ children?: ReactNode; className?: string }>;
       if (el.props.children === undefined || el.props.className?.includes('blank')) return el;
-      return cloneElement(el, undefined, walk(el.props.children));
+      const outer = st.target;
+      if (el.props.className?.split(/\s+/).includes('cloze')) st.target = true;
+      const kids = walk(el.props.children);
+      st.target = outer;
+      return cloneElement(el, undefined, kids);
     }
     return node;
   };
@@ -65,7 +79,8 @@ export function Fr({ children }: { children: ReactNode }) {
 }
 
 const GENDER_ZH = { m: '阳性', f: '阴性' } as const;
-const article = (w: string, g: 'm' | 'f') => `${g === 'm' ? 'un' : 'une'} ${w}`;
+/** 不定冠词 + 词：复数用 des（看不出性，性在后面的标签里） */
+const article = (w: string, g: 'm' | 'f', plural = false) => `${plural ? 'des' : g === 'm' ? 'un' : 'une'} ${w}`;
 
 function GenderBody({ info }: { info: GenderInfo }) {
   const g = info.ctxGender ?? (info.gender === 'm' || info.gender === 'f' ? info.gender : null);
@@ -81,7 +96,7 @@ function GenderBody({ info }: { info: GenderInfo }) {
   return (
     <>
       <div className="gp-head">
-        <b>{g ? article(info.word, g) : info.word}</b>{' '}
+        <b>{g ? article(info.word, g, info.number === 'p') : info.word}</b>{' '}
         {g ? <span className={`gp-g g-${g}`}>{GENDER_ZH[g]}{num && ` · ${num}`}</span>
           : info.gender === 'b' ? <span className="gp-g">阴阳同形</span>
           : info.gender === 'h' ? <span className="gp-g">两个性，意思不同</span>

@@ -58,3 +58,12 @@ describe('词频', () => {
     expect(lemmaFreq(dict, 'zzzqqq')).toBeNull();
   });
 });
+
+import { genderDisplayOf } from '../src/features/FrText';
+describe('阴阳性下划线设置', () => {
+  it('默认只标考查部分；旧开关关掉过的默认关闭；设过就用设的', () => {
+    expect(genderDisplayOf({})).toBe('focus');
+    expect(genderDisplayOf({ genderColors: false })).toBe('off');
+    expect(genderDisplayOf({ genderColors: false, genderDisplay: 'hover' })).toBe('hover');
+  });
+});

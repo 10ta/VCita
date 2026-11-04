@@ -278,9 +278,18 @@ code { font-family: var(--mono); background: var(--surface2); padding: 0 4px; bo
 /* ---- 阴阳性：名词下划线颜色 + 悬停迷你条 ---- */
 :root { --g-m: #6ea8ff; --g-f: #ff6fae; }
 .fw { cursor: help; }
-.fw.g-m, .fw.g-f { text-decoration: underline; text-decoration-thickness: 2px; text-underline-offset: .2em; text-decoration-skip-ink: none; }
-.fw.g-m { text-decoration-color: color-mix(in srgb, var(--g-m) 70%, transparent); }
-.fw.g-f { text-decoration-color: color-mix(in srgb, var(--g-f) 70%, transparent); }
+/* 显示方式由 <html data-gender> 决定（设置 → 阴阳性下划线）：
+   focus 只标考查部分（.cloze 里的词）；always 所有名词，线更细更淡，不抢句子；hover 鼠标移上去才出现；off 不画线 */
+.fw.g-m { --g: var(--g-m); } .fw.g-f { --g: var(--g-f); }
+[data-gender='focus'] .fw-t.g-m, [data-gender='focus'] .fw-t.g-f,
+[data-gender='hover'] .fw.g-m:hover, [data-gender='hover'] .fw.g-f:hover {
+  text-decoration: underline; text-decoration-thickness: 2px; text-underline-offset: .2em; text-decoration-skip-ink: none;
+  text-decoration-color: color-mix(in srgb, var(--g) 80%, transparent);
+}
+[data-gender='always'] .fw.g-m, [data-gender='always'] .fw.g-f {
+  text-decoration: underline; text-decoration-thickness: 1.5px; text-underline-offset: .22em; text-decoration-skip-ink: none;
+  text-decoration-color: color-mix(in srgb, var(--g) 45%, transparent);
+}
 .fw:hover { background: var(--surface2); border-radius: 3px; }
 b.g-m, .gp-g.g-m { color: var(--g-m); } b.g-f, .gp-g.g-f { color: var(--g-f); }
 .gender-pop { position: fixed; z-index: 50; width: 320px; max-width: calc(100vw - 16px); padding: 10px 12px; border-radius: 10px; border: 1px solid var(--border);
