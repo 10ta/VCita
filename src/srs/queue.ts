@@ -11,6 +11,8 @@
 //     额度拆分（newSplit）：每日新卡上限的 freshShare% 留给"新鲜"的卡，越新越先出；其余额度按上面的顺序消化积压。
 //       source = 挖矿卡算新鲜（从自己输入里摘的，语境越新越好记）；recent = 最近 freshDays 天添加的算新鲜；off = 不拆。
 //       一份用不完的额度让给另一份；出卡顺序：新鲜份额 → 其余份额 → 互相让出的部分
+//     句框（语块库）：每日新卡上限里留 frameNewPerDay 张给句框笔记的卡（默认 3），没用完的让给单词；
+//       套用卡要等同一条句框的句框卡进入复习（学会了句框）才出
 //  4. 同一条笔记的卡当天只出一张（今天已答过这条笔记的其他卡，推到明天）；同一个易混组的辨析卡当天也只出一张
 //  5. 都没有时，20 分钟内到期的学习卡提前出（Anki 的 learn ahead）；只提前本学习日内到期的，
 //     跨过换日时间的不提前（凌晨 3:42 不能把"1 天"步骤、4:00 才到期的卡拿出来，它属于明天）；刚答完的那张不提前，
@@ -26,9 +28,9 @@ export interface QueueInput {
   todayLogs: ReviewLog[];
   deckId: string;
   now: number;
-  settings: Pick<Settings, 'newPerDay' | 'reviewsPerDay' | 'dayStartHour'> & Partial<Pick<Settings, 'newReviewOrder' | 'reviewSort' | 'newSort' | 'focusTags' | 'newSplit' | 'freshShare' | 'freshDays'>>;
+  settings: Pick<Settings, 'newPerDay' | 'reviewsPerDay' | 'dayStartHour'> & Partial<Pick<Settings, 'newReviewOrder' | 'reviewSort' | 'newSort' | 'focusTags' | 'newSplit' | 'freshShare' | 'freshDays' | 'frameNewPerDay'>>;
   /** 新卡排序要用笔记的层级和主题；不传时只按添加时间 */
-  notes?: ReadonlyMap<string, Pick<Note, 'layer' | 'tags'> & Partial<Pick<Note, 'origin' | 'source' | 'contrastGroup'>>>;
+  notes?: ReadonlyMap<string, Pick<Note, 'layer' | 'tags'> & Partial<Pick<Note, 'origin' | 'source' | 'contrastGroup' | 'frame'>>>;
   /** 笔记的词频（每百万词，见 lib/gender/dict.ts 的 lemmaFreq）；查不到的排在同一层的最后。不传时按添加时间 */
   freq?: ReadonlyMap<string, number | null>;
   /** 本轮跳过的卡 */
@@ -96,10 +98,36 @@ function onePerNote(cards: Card[]): Card[] {
   return cards.filter((c) => (seen.has(c.noteId) ? false : (seen.add(c.noteId), true)));
 }
 
-/** 今天还要出的新卡（已排好序） */
+/** 今天还要出的新卡（已排好序）：句框先分走自己的份额，其余按单词的规则出 */
 function pickNew(q: QueueInput, pool: Card[], today: string, newSeen: Set<string>): Card[] {
+  const byId = new Map(q.cards.map((c) => [c.id, c]));
+  // 套用卡：同一条笔记的句框卡还没进入复习时不出
+  const frameState = new Map<string, Card['state']>();
+  for (const c of q.cards) if (c.type === 'frame' && !c.deleted) frameState.set(c.noteId, c.state);
+  const due = pool.filter((c) => c.state === 'new' && studyDay(fromIso(c.createdAt), q.settings.dayStartHour) <= today
+    && (c.type !== 'apply' || frameState.get(c.noteId) === 'review'));
+  const notes = q.notes;
+  const isFrame = (c: Card) => !!notes?.get(c.noteId)?.frame;
+  const frameCands = notes ? due.filter(isFrame) : [];
+  const wordCands = notes ? due.filter((c) => !isFrame(c)) : due;
+
+  let seenFrames = 0;
+  for (const id of newSeen) { const c = byId.get(id); if (c && isFrame(c)) seenFrames++; }
   const newLimit = Math.max(0, q.settings.newPerDay - newSeen.size);
-  const candidates = pool.filter((c) => c.state === 'new' && studyDay(fromIso(c.createdAt), q.settings.dayStartHour) <= today);
+  const frameQuota = Math.min(q.settings.frameNewPerDay ?? 3, q.settings.newPerDay);
+  const frames = onePerNote(frameCands.sort(byCreated)).slice(0, Math.max(0, Math.min(frameQuota - seenFrames, newLimit)));
+  // 单词：上限扣掉句框今天用掉的和要出的；句框没用完的份额自然留给单词
+  const wordSeen = new Set([...newSeen].filter((id) => { const c = byId.get(id); return !c || !isFrame(c); }));
+  const words = pickWords(q, wordCands, today, wordSeen, q.settings.newPerDay - seenFrames - frames.length);
+  // 句框均匀穿插在单词新卡中间
+  const out = [...words];
+  frames.forEach((f, i) => out.splice(Math.round(((i + 1) * words.length) / (frames.length + 1)) + i, 0, f));
+  return out;
+}
+
+/** 单词新卡：按 newSort 排序，按 newSplit 拆额度（见文件开头） */
+function pickWords(q: QueueInput, candidates: Card[], today: string, newSeen: Set<string>, newPerDay: number): Card[] {
+  const newLimit = Math.max(0, newPerDay - newSeen.size);
   const sort = newCardSort(q);
   const isFresh = freshTest(q, today);
   if (!isFresh) return onePerNote(candidates.sort(sort)).slice(0, newLimit);
@@ -107,8 +135,8 @@ function pickNew(q: QueueInput, pool: Card[], today: string, newSeen: Set<string
   const byId = new Map(q.cards.map((c) => [c.id, c]));
   let seenFresh = 0;
   for (const id of newSeen) { const c = byId.get(id); if (c && isFresh(c)) seenFresh++; }
-  const freshQuota = Math.round((q.settings.newPerDay * (q.settings.freshShare ?? 60)) / 100);
-  const otherQuota = q.settings.newPerDay - freshQuota;
+  const freshQuota = Math.round((newPerDay * (q.settings.freshShare ?? 60)) / 100);
+  const otherQuota = newPerDay - freshQuota;
   const fresh = onePerNote(candidates.filter(isFresh).sort(newestFirst));
   const other = onePerNote(candidates.filter((c) => !isFresh(c)).sort(sort));
   const f = Math.min(fresh.length, Math.max(0, freshQuota - seenFresh), newLimit);

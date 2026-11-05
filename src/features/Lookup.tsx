@@ -192,13 +192,18 @@ function LookupBody({ sel, dict }: { sel: Sel; dict: FrDict | null }) {
     <>
       <div className="lk-head">
         <b className="lk-word">{mode === 'sentence' ? '句子' : bare}</b>
-        {lemma && lemma !== bare.toLowerCase() && <span className="muted small">原形 {lemma}</span>}
+        {mode !== 'sentence' && (() => {
+          // 词条标题（原形）以 Wiktionnaire 实际查到的为准，没查到时用本地词典的原形
+          const base = found?.dict?.title ?? lemma;
+          return base && base.toLowerCase() !== bare.toLowerCase() ? <span className="muted small">原形 <b>{base}</b></span> : null;
+        })()}
         <span className="grow" />
         <button type="button" className="icon" title="朗读" onClick={() => void speak(sel.text, s.sourceLang)}>🔊</button>
       </div>
       {!found ? <p className="muted small pulse">查询中…</p> : (
         <div className="lk-body">
           {found.textZh && <p className="lk-zh">{found.textZh}</p>}
+          {found.dict?.formNote && <p className="muted small lk-form">{bare}：{found.dict.formNote}</p>}
           {entries.map((e, ei) => (
             <div key={ei} className="lk-entry">
               <div className="lk-pos">{e.pos}{e.gender && <span className={`lk-g g-${e.gender === 'féminin' ? 'f' : e.gender === 'masculin' ? 'm' : 'b'}`}> · {e.gender}</span>}</div>

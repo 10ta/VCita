@@ -54,10 +54,16 @@ export function labelOnlyHint(hint: string | null | undefined): boolean {
 }
 const inlineHints = (s: string) => [...s.matchAll(/\{\{[^}]*?::([^}]+?)\}\}/g)].map((m) => m[1]);
 
-type Fields = Pick<Note, 'lemma' | 'sentence' | 'cardTypes' | 'intentZh' | 'answerFr'> & Partial<Pick<Note, 'clozeSentence' | 'clozeHint' | 'promptFr' | 'altSentences'>>;
+type Fields = Pick<Note, 'lemma' | 'sentence' | 'cardTypes' | 'intentZh' | 'answerFr'> & Partial<Pick<Note, 'clozeSentence' | 'clozeHint' | 'promptFr' | 'altSentences' | 'frame'>>;
 
 export function noteErrors(n: Fields): string[] {
   const errs: string[] = [];
+  // 句框：例句是填好的整句（不用 {{…}}），只要求有句框
+  if (n.frame) {
+    if (!n.cardTypes.length) errs.push('至少选一种卡');
+    if (!n.lemma.trim()) errs.push('句框不能为空');
+    return errs;
+  }
   const cloze = hasCloze(n.sentence);
   if (!n.cardTypes.length) errs.push('至少选一种卡');
   if (n.sentence.trim() && !cloze) errs.push('例句里要用 {{…}} 标出考查的部分');

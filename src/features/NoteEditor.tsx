@@ -6,7 +6,8 @@ import { bumpUsed, deleteNotes, leaveContrast, updateNote } from '../db/actions'
 import { useDecks, useNotes, useSettings } from '../db/hooks';
 import { langLabel } from '../ui/langs';
 import { noonIso } from '../lib/time';
-import { CardPreviews, CARD_TYPES, ClozeMarker } from './NoteParts';
+import { CardPreviews, CARD_TYPES, ClozeMarker, FRAME_TYPES } from './NoteParts';
+import { LENSES } from '../lib/frames';
 import { toast } from '../ui/toast';
 
 export function ThemePicker({ value, onChange }: { value: Theme[]; onChange: (v: Theme[]) => void }) {
@@ -36,7 +37,6 @@ export function OriginPicker({ value, onChange }: { value: NoteOrigin; onChange:
   );
 }
 
-const TYPES = CARD_TYPES;
 
 /** 备用产出题的一行：有法语题面时 "法语题面 | 法语答案 | 提示 | 中文"；旧题 "中文意图 | 法语答案 | 提示" */
 export function altIntentLine(x: Note['altIntents'][number]): string {
@@ -60,7 +60,10 @@ export function NoteEditor({ note, onClose }: { note: Note; onClose: () => void 
     alts: (note.altSentences ?? []).join('\n'),
     altIntents: (note.altIntents ?? []).map(altIntentLine).join('\n'),
     contrastNote: note.contrastNote ?? '',
+    fTask: note.frame?.task ?? '', fSlot: note.frame?.slot ?? '', fLens: note.frame?.lens ?? '', fRegister: note.frame?.register ?? '',
   });
+  const isFrame = !!note.frame;
+  const TYPES = isFrame ? FRAME_TYPES : CARD_TYPES;
   const allNotes = useNotes();
   const groupMates = note.contrastGroup ? (allNotes ?? []).filter((n) => n.contrastGroup === note.contrastGroup && n.id !== note.id) : [];
   const [confirmDel, setConfirmDel] = useState(false);
@@ -68,7 +71,7 @@ export function NoteEditor({ note, onClose }: { note: Note; onClose: () => void 
   const altSentences = f.alts.split('\n').map((x) => x.trim()).filter(Boolean);
   const altIntents = f.altIntents.split('\n').map((x) => x.trim()).filter(Boolean).map(parseAltIntent);
   const errors = [
-    ...noteErrors({ ...f, altSentences }),
+    ...noteErrors({ ...f, altSentences, frame: isFrame ? { task: f.fTask, slot: null, lens: null, register: null } : null }),
     ...(altSentences.some((x) => !hasCloze(x)) ? ['备用例句每句都要用 {{…}} 标出考查部分'] : []),
     ...(f.cardTypes.includes('production') ? altIntents.flatMap((x, i) => promptErrors(x.promptFr, x.intentZh, x.answerFr, f.lemma).map((e) => `备用产出题第 ${i + 1} 行：${e}`)) : []),
   ];
@@ -82,6 +85,7 @@ export function NoteEditor({ note, onClose }: { note: Note; onClose: () => void 
       // 辨析卡跟着易混组走，不在这里勾选：保留
       layer: f.layer, cardTypes: [...TYPES.map(([t]) => t).filter((t) => f.cardTypes.includes(t)), ...(note.contrastGroup ? ['contrast' as const] : [])],
       contrastNote: nul(f.contrastNote),
+      ...(isFrame ? { frame: { ...note.frame, task: f.fTask.trim() || 'T3', slot: nul(f.fSlot), lens: nul(f.fLens), register: nul(f.fRegister) } } : {}),
       tags: f.tags, deckId: f.deckId, altSentences, altIntents,
       // 没标过、也没改的保持"按出处推断"
       origin: note.origin == null && f.origin === noteOrigin(note) ? null : f.origin,
@@ -128,6 +132,27 @@ export function NoteEditor({ note, onClose }: { note: Note; onClose: () => void 
           </div>
         </div>
       </div>
+      {isFrame && (
+        <>
+          {text('lemma', '句框（⬚ = 要填的位置）', "例如：Interdire ⬚ ne ferait que déplacer le problème.")}
+          {text('meaningZh', '功能（正面，写论证功能，不写中文句子）', '例如：反事实：禁止只会把问题挪到别处')}
+          {text('sentence', '例句（填好的整句）', "例如：Interdire les téléphones au collège ne ferait que déplacer le problème.")}
+          {text('extra', '语法锁 / 补充', '例如：条件式 ferait；ne faire que + 不定式')}
+          <div className="row">
+            <label className="field"><span className="field-label">任务</span><input value={f.fTask} placeholder="T3 / T1 / T2 / 口语" onChange={(e) => set('fTask', e.target.value)} /></label>
+            <label className="field"><span className="field-label">槽位</span><input value={f.fSlot} placeholder="⑤ / T1-04" onChange={(e) => set('fSlot', e.target.value)} /></label>
+            <label className="field"><span className="field-label">透镜</span>
+              <select value={f.fLens} onChange={(e) => set('fLens', e.target.value)}>
+                <option value="">（无）</option>
+                {Object.entries(LENSES).map(([k, v]) => <option key={k} value={k}>{k} {v}</option>)}
+              </select>
+            </label>
+            <label className="field"><span className="field-label">语域</span><input value={f.fRegister} placeholder="保 / 高 / 口语" onChange={(e) => set('fRegister', e.target.value)} /></label>
+          </div>
+          {text('source', '出处', '例如：LENTILLES · ① 反事实')}
+        </>
+      )}
+      {!isFrame && <>
       {text('sentence', '例句', '用 {{…}} 标出要考的部分，例如：les enfants ont perdu leurs {{repères}}')}
       {f.sentence.trim() && <><ClozeMarker value={f.sentence} onChange={(v) => set('sentence', v)} /><p className="muted small" style={{ marginTop: -6, marginBottom: 10 }}>点词标记 / 取消考查部分（认读卡加粗、挖空卡挖掉）</p></>}
       {text('lemma', `单词（${labels[0]}）`, '旧卡的正面；有例句时可留空')}
@@ -137,6 +162,7 @@ export function NoteEditor({ note, onClose }: { note: Note; onClose: () => void 
       {text('source', '出处', '例如：InnerFrench · 第 12 集')}
       {text('extra', '补充', '例如：≠ se tenir à 扶住')}
       {text('etymology', '词源（可选，认读 / 挖空卡背面显示）', '例如：tentacule 触手 + -aire → 像触手一样四处伸展的')}
+      </>}
       {f.cardTypes.includes('cloze') && <>
         {text('clozeSentence', '挖空例句（可选，和上面的例句不同更好记）', '同样用 {{…}} 标出挖掉的部分；不填就用上面的例句')}
         {f.clozeSentence.trim() && <ClozeMarker value={f.clozeSentence} onChange={(v) => set('clozeSentence', v)} />}

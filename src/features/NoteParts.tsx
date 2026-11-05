@@ -7,6 +7,11 @@ export const CARD_TYPES: Array<[Card['type'], string, string]> = [
   ['production', '产出', '看法语题面里高亮的简单说法，换成目标表达'],
   ['cloze', '挖空', '句子里挖掉考查部分，填出来'],
 ];
+/** 句框笔记的卡型 */
+export const FRAME_TYPES: Array<[Card['type'], string, string]> = [
+  ['frame', '句框', '看功能，写出句框'],
+  ['apply', '套用', '功能 + 一个随机主题，用句框写一整句，自评'],
+];
 
 interface Tok { t: string; word: boolean; on: boolean }
 const SEP = /(\s+|[.,;:!?…«»"“”()–—]+|(?<=['’]))/;
@@ -60,7 +65,7 @@ export function ClozeMarker({ value, onChange }: { value: string; onChange: (v: 
 
 /** 选中卡型的正反面预览 */
 export function CardPreviews({ draft, s, labels }: { draft: Note; s: Settings; labels: [string, string, string] }) {
-  const types = CARD_TYPES.filter(([t]) => draft.cardTypes.includes(t));
+  const types = [...CARD_TYPES, ...FRAME_TYPES].filter(([t]) => draft.cardTypes.includes(t));
   if (!types.length) return null;
   return (
     <div className="previews">

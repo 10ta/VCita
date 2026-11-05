@@ -30,20 +30,64 @@ export function bumpIso(prev: string | undefined, now = Date.now()): string {
 
 const ymd = (d: Date) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
 
+// ---------- 时区 ----------
+// 学习日按设置里的时区算（null = 跟随设备）。设置读出来时（getSettings）调用 setTimeZone，
+// 之后所有按"哪一天"计算的地方（学习日、换日时刻、日历日）都用这个时区。存储的 ISO 时间不受影响。
+let zone: string | null = null;
+const fmtCache = new Map<string, Intl.DateTimeFormat>();
+/** 设置时区；无效的时区名按跟随设备处理 */
+export function setTimeZone(tz: string | null | undefined) {
+  if (!tz) { zone = null; return; }
+  try { new Intl.DateTimeFormat('en-US', { timeZone: tz }); zone = tz; } catch { zone = null; }
+}
+export const currentTimeZone = () => zone;
+/** 设备的时区名 */
+export const deviceTimeZone = () => Intl.DateTimeFormat().resolvedOptions().timeZone;
+function partsIn(ms: number, tz: string): { y: number; m: number; d: number; h: number; mi: number; s: number } {
+  let f = fmtCache.get(tz);
+  if (!f) {
+    f = new Intl.DateTimeFormat('en-US', { timeZone: tz, hourCycle: 'h23', year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit' });
+    fmtCache.set(tz, f);
+  }
+  const p: Record<string, number> = {};
+  for (const x of f.formatToParts(new Date(ms))) if (x.type !== 'literal') p[x.type] = Number(x.value);
+  return { y: p.year, m: p.month, d: p.day, h: p.hour, mi: p.minute, s: p.second };
+}
+/** 毫秒 → 该时区的日期 "YYYY-MM-DD" */
+const ymdAt = (ms: number) => {
+  if (!zone) return ymd(new Date(ms));
+  const p = partsIn(ms, zone);
+  return `${p.y}-${pad(p.m)}-${pad(p.d)}`;
+};
+/** 该时区的墙上时间 → 毫秒（夏令时跳过的时刻取之后的那个） */
+function wallToMs(y: number, m: number, d: number, h: number): number {
+  if (!zone) return new Date(y, m - 1, d, h).getTime();
+  const want = Date.UTC(y, m - 1, d, h);
+  let t = want;
+  for (let i = 0; i < 3; i++) {
+    const p = partsIn(t, zone);
+    const got = Date.UTC(p.y, p.m - 1, p.d, p.h, p.mi, p.s);
+    if (got === want) break;
+    t += want - got;
+  }
+  return t;
+}
+
 /** 毫秒 → 学习日 "YYYY-MM-DD" */
 export function studyDay(ms: number, dayStartHour: number): string {
-  return ymd(new Date(ms - dayStartHour * 3_600_000));
+  return ymdAt(ms - dayStartHour * 3_600_000);
 }
 
 /** 学习日的开始时刻（当天 dayStartHour 点） */
 export function dayStartMs(day: string, dayStartHour: number): number {
   const [y, m, d] = day.split('-').map(Number);
-  return new Date(y, m - 1, d, dayStartHour).getTime();
+  return wallToMs(y, m, d, dayStartHour);
 }
 
 export function addDaysToDay(day: string, n: number): string {
   const [y, m, d] = day.split('-').map(Number);
-  return ymd(new Date(y, m - 1, d + n));
+  const t = new Date(Date.UTC(y, m - 1, d + n));
+  return `${t.getUTCFullYear()}-${pad(t.getUTCMonth() + 1)}-${pad(t.getUTCDate())}`;
 }
 
 export function daysBetween(a: string, b: string): number {
@@ -53,7 +97,7 @@ export function daysBetween(a: string, b: string): number {
 }
 
 /** 本地日历日（不考虑切换时间）："2026-10-02" */
-export const calendarDay = (ms: number) => ymd(new Date(ms));
+export const calendarDay = (ms: number) => ymdAt(ms);
 
 /** "2026-10-02" → 当天中午的 ISO（用于只有日期的旧数据） */
 export const noonIso = (day: string) => {

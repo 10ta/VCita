@@ -266,8 +266,8 @@ export function ReviewPage({ deckId }: { deckId: string }) {
               ? <div className="cue">提示：{card.type === 'production' ? <Fr>{split.hint}</Fr> : split.hint}</div>
               : <button type="button" className="pill hint-btn" onClick={() => setShowHint(true)} title="首字母提示 (H)">提示 <kbd>H</kbd></button>)}
             <CardStats card={card} s={s} center mem={mem} />
-            {card.type === 'production' && !revealed && (
-              <input className="type-in" value={typed} placeholder="先写出法语（可选），回车显示答案" onChange={(e) => setTyped(e.target.value)}
+            {(card.type === 'production' || card.type === 'frame') && !revealed && (
+              <input className="type-in" value={typed} placeholder={card.type === 'frame' ? '先写出句框（可选，要填的位置写 ⬚ 或随便填），回车显示答案' : '先写出法语（可选），回车显示答案'} onChange={(e) => setTyped(e.target.value)}
                 onKeyDown={(e) => { if (e.key === 'Enter' && !e.nativeEvent.isComposing) { e.preventDefault(); setRevealed(true); (e.target as HTMLInputElement).blur(); } }} />
             )}
             {!revealed ? (
@@ -275,7 +275,7 @@ export function ReviewPage({ deckId }: { deckId: string }) {
             ) : (
               <>
                 <div className="answer">
-                  {card.type === 'production' && typed.trim() && split.answerFr && <TypedDiff typed={typed} answerFr={split.answerFr} />}
+                  {(card.type === 'production' || card.type === 'frame') && typed.trim() && split.answerFr && <TypedDiff typed={typed} answerFr={split.answerFr} />}
                   {split.answers.map((a, i) => (
                     <div key={i} className={i === 0 ? 'a1' : 'a2'}>
                       <span>{a.text ? (a.lang === s.sourceLang ? <Fr>{a.text}</Fr> : a.text) : <i className="muted">（{a.label}为空）</i>}</span>
@@ -283,7 +283,7 @@ export function ReviewPage({ deckId }: { deckId: string }) {
                     </div>
                   ))}
                   <Cues note={note} only={split.cues === 'extra' ? 'extra' : undefined} />
-                  {card.type === 'production' && (
+                  {(card.type === 'production' || card.type === 'frame' || card.type === 'apply') && (
                     <button type="button" className="pill" title="这个表达在写作或口语里用上了一次" onClick={() => void bumpUsed(note.id).then(() => toast(`已记录，累计用上 ${note.usedCount + 1} 次`))}>
                       用上了 +1（{note.usedCount}）
                     </button>
@@ -293,6 +293,8 @@ export function ReviewPage({ deckId }: { deckId: string }) {
                   <p className="muted small grade-guide">
                     {split.listen ? '2–3 秒内没听懂 → 困难；听不出来 → 忘了'
                       : card.type === 'contrast' ? '选对、说得出为什么 → 良好；选对但靠猜 → 困难；选错 → 忘了'
+                      : card.type === 'frame' ? '句框想得出、只有小词或配合错 → 困难；想不起句框 → 忘了'
+                      : card.type === 'apply' ? '句框用对、语法锁都满足 → 良好；句框对但语法锁有错 → 困难；写不出来 → 忘了'
                       : '表达想出来了、只是形式错 → 困难；表达想不出来 → 忘了'}
                   </p>
                 )}

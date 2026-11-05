@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { useCards, useDecks, useOnboarded, useSettings, useTodayLogs } from './db/hooks';
+import { useCards, useDecks, useNotes, useOnboarded, useSettings, useTodayLogs } from './db/hooks';
 import { ensureDeck } from './db/actions';
 import { useSyncConfig } from './sync/engine';
 import { buildQueue } from './srs/queue';
@@ -12,6 +12,7 @@ import { ReviewPage } from './features/review/ReviewPage';
 import { LibraryPage } from './features/library/LibraryPage';
 import { AddPage } from './features/add/AddPage';
 import { ReadPage } from './features/read/ReadPage';
+import { FramesPage } from './features/frames/FramesPage';
 import { StatsPage } from './features/stats/StatsPage';
 import { SettingsPage } from './features/settings/SettingsPage';
 import { Onboarding } from './features/Onboarding';
@@ -22,6 +23,7 @@ const NAV = [
   { key: 'review', label: '复习' },
   { key: 'library', label: '词库' },
   { key: 'read', label: '阅读' },
+  { key: 'frames', label: '语块' },
   { key: 'add', label: '添加' },
   { key: 'stats', label: '统计' },
   { key: 'settings', label: '设置' },
@@ -54,6 +56,9 @@ export function App() {
   const prefs = usePrefs();
   const s = useSettings();
   const cards = useCards();
+  const notes = useNotes();
+  // 计数也要知道哪些是句框（句框有自己的新卡份额）
+  const noteMap = useMemo(() => (notes ? new Map(notes.map((n) => [n.id, n])) : undefined), [notes]);
   const [now] = useNow(60_000);
   const logs = useTodayLogs(s?.dayStartHour, now);
   const [help, setHelp] = useState(false);
@@ -61,8 +66,8 @@ export function App() {
   const deckId = decks?.find((d) => d.id === prefs.deckId)?.id ?? decks?.[0]?.id ?? null;
 
   const counts = useMemo(
-    () => (s && cards && logs && deckId ? buildQueue({ cards, todayLogs: logs, deckId, now: Date.now(), settings: s }).counts : null),
-    [s, cards, logs, deckId, now],
+    () => (s && cards && logs && deckId ? buildQueue({ cards, todayLogs: logs, deckId, now: Date.now(), settings: s, notes: noteMap }).counts : null),
+    [s, cards, logs, deckId, now, noteMap],
   );
 
   useEffect(() => {
@@ -112,6 +117,7 @@ export function App() {
             : route === 'library' ? <LibraryPage deckId={deckId} />
             : route === 'add' ? <AddPage deckId={deckId} />
             : route === 'read' ? <ReadPage />
+            : route === 'frames' ? <FramesPage deckId={deckId} />
             : <StatsPage deckId={deckId} />}
         </ErrorBoundary>
       </main>

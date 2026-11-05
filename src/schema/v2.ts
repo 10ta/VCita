@@ -17,7 +17,8 @@ const base = {
 export const THEMES = ['TRAVAIL', 'SOCIÉTÉ', 'TECHNOLOGIE', 'ENVIRONNEMENT', 'MÉDIAS', 'ÉDUCATION', 'SANTÉ', 'GÉNÉRAL'] as const;
 export const ThemeV2 = z.enum(THEMES);
 /** contrast = 辨析卡：易混组里的几个词放在一起，看句子选哪一个（由易混组自动生成，不在编辑器里勾选） */
-export const CARD_TYPES = ['recognition', 'production', 'cloze', 'contrast'] as const;
+/** frame = 句框卡：正面是功能（"反事实：禁令只会转移问题"），写出句框；apply = 套用卡：功能 + 一个随机主题，用句框写一整句，自评 */
+export const CARD_TYPES = ['recognition', 'production', 'cloze', 'contrast', 'frame', 'apply'] as const;
 export const CARD_STATES = ['new', 'learning', 'review', 'relearning'] as const;
 
 export const DeckV2 = z.looseObject({
@@ -71,6 +72,17 @@ export const NoteV2 = z.looseObject({
   contrastNote: z.string().nullable().default(null),
   /** 迁移时原样保存的旧卡对象 */
   legacy: z.unknown().nullable().default(null),
+  /** 写作句框（语块库）：有它的笔记是句框，lemma = 句框（⬚ 是要填的位置），meaningZh = 功能，sentence = 填好的例句，extra = 语法锁 */
+  frame: z.looseObject({
+    /** T1 / T2 / T3 / 口语 */
+    task: z.string(),
+    /** 槽位：T3 的 ①–⑨，T1-04 这类小节号 */
+    slot: z.string().nullable().default(null),
+    /** 论证透镜 ①–⑧ */
+    lens: z.string().nullable().default(null),
+    /** 保 / 高 / 口语 */
+    register: z.string().nullable().default(null),
+  }).nullable().default(null),
 });
 
 export const CardV2 = z.looseObject({
@@ -136,6 +148,8 @@ export const SettingsV2 = z.looseObject({
   /** 0 = 不自动暂停 */
   leechThreshold: z.number().int().min(0).default(8),
   dayStartHour: z.number().int().min(0).max(23).default(4),
+  /** 学习日按哪个时区切换（IANA 名，如 Asia/Shanghai）；null = 跟随设备 */
+  timeZone: z.string().nullable().default(null),
   fuzz: z.boolean().default(true),
   /** 新卡出现时机：mix = 均匀穿插在复习中；after = 复习完才出新卡 */
   newReviewOrder: z.enum(['mix', 'after']).default('mix'),
@@ -170,6 +184,8 @@ export const SettingsV2 = z.looseObject({
   genderDisplay: z.enum(['focus', 'always', 'hover', 'off']).optional(),
   /** 阅读页：词频最高的前 N 个原形算「认识」（不标色、算进覆盖率）。0 = 只按自己的卡和手动标记 */
   knownTop: z.number().int().min(0).default(2000),
+  /** 每日新卡里留给句框（语块库）的张数；没用完的让给单词 */
+  frameNewPerDay: z.number().int().min(0).default(3),
 });
 
 /** 摘句篮里的一条：划词时摘下的词 / 表达 / 整句，晚上统一做卡。做成卡后记下笔记 id */

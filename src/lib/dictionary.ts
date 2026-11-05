@@ -18,6 +18,10 @@ export interface DictResult {
   title: string;
   entries: DictEntry[];
   etymology: string | null;
+  /** 这一页只是变形（Forme de verbe / de nom / d'adjectif）时，它指向的原形 */
+  formOf?: string | null;
+  /** 从变形跳到原形时，变形那一页的说明（Troisième personne du singulier de l'imparfait de sentir.） */
+  formNote?: string | null;
 }
 
 /** 不是词性的三级标题：这些标题下面的列表不当释义 */
@@ -97,7 +101,15 @@ export function parseWiktionnaire(html: string, title: string): DictResult | nul
       underPos = false; // 同一个词性只取第一个释义列表
     }
   }
-  return entries.length || etymology ? { title, entries, etymology } : null;
+  // 只有"Forme de …"词条：找出它指向的原形（释义里最后一个词条链接，或文字里 "de XXX." 的 XXX）
+  let formOf: string | null = null;
+  if (entries.length && entries.every((e) => FORM_OF.test(e.pos))) {
+    const ol = kids.slice(start + 1).find((el) => el.tagName === 'OL');
+    const links = [...(ol?.querySelectorAll('li a[href*="/wiki/"]') ?? [])].map((a) => (a.getAttribute('title') ?? '').trim()).filter((t) => t && !/:/.test(t));
+    formOf = links.at(-1) ?? /\bd[e'’]\s*([\p{L}'’-]+)\.?\s*$/u.exec(entries[0].senses[0]?.def ?? '')?.[1] ?? null;
+    if (formOf && formOf.toLowerCase() === title.toLowerCase()) formOf = null;
+  }
+  return entries.length || etymology ? { title, entries, etymology, formOf } : null;
 }
 
 // ---------------- 缓存 ----------------
@@ -141,7 +153,18 @@ export async function lookupWiktionnaire(candidates: string[]): Promise<DictResu
       const page = await fetchPage(w);
       return page ? parseWiktionnaire(page.html, page.title) : null;
     });
-    if (r?.entries.length) return r;
+    if (!r?.entries.length) continue;
+    // 查到的只是变形（sentait → Forme de verbe）：顺着链接查原形，原形的释义才有用
+    if (r.formOf && !tried.has(r.formOf)) {
+      tried.add(r.formOf);
+      const target = r.formOf;
+      const base = await cached(`wk:${target}`, 4 * WEEK, async () => {
+        const page = await fetchPage(target);
+        return page ? parseWiktionnaire(page.html, page.title) : null;
+      });
+      if (base?.entries.length) return { ...base, formNote: r.entries[0].senses[0]?.def ?? null };
+    }
+    return r;
   }
   return null;
 }

@@ -4,6 +4,7 @@ import type { ReactNode } from 'react';
 import type { Card, Note, Settings } from '../schema';
 import { dayStartMs, daysBetween, fmtDays, fromIso, studyDay } from '../lib/time';
 import { speak } from '../lib/speech';
+import { frameMeta, pickTopic } from '../lib/frames';
 import { currentR, validWeights, type Memory } from '../srs/fsrs';
 import { Fr } from './FrText';
 import { blankIsFunctionWords, clozeTargets, hasCloze, hasInlineHint, hintLeaks } from '../schema/validate';
@@ -92,7 +93,7 @@ export function quizSplit(note: Note, s: Settings, quizType: number, labels: [st
   return { question: f[q], answers: f.filter((_, i) => i !== q) };
 }
 
-export const TYPE_LABEL: Record<Card['type'], string> = { recognition: '认读', production: '产出', cloze: '挖空', contrast: '辨析' };
+export const TYPE_LABEL: Record<Card['type'], string> = { recognition: '认读', production: '产出', cloze: '挖空', contrast: '辨析', frame: '句框', apply: '套用' };
 
 export interface CardView {
   question: Face;
@@ -141,10 +142,45 @@ function contrastView(note: Note, group: Note[], s: Settings, labels: [string, s
   };
 }
 
+/** 句框里的 ⬚ 加个样式 */
+export function renderFrame(frame: string): ReactNode[] {
+  return frame.split(/(⬚)/).map((x, i) => (x === '⬚' ? <span key={i} className="slot">⬚</span> : x));
+}
+
+/**
+ * 句框卡：正面只写功能（手册：「正面写功能，不写中文句子」），写出句框；背面句框、填好的例句、语法锁（补充）。
+ * 套用卡：功能 + 一个主题（每次复习换一个），用句框写一整句，自己对照评分。
+ */
+function frameView(type: 'frame' | 'apply', note: Note, s: Settings, labels: [string, string, string], variant: number): CardView {
+  const meta = frameMeta(note);
+  const topic = type === 'apply' ? pickTopic(note, variant) : null;
+  const ex = plainSentence(note.sentence);
+  return {
+    question: {
+      text: (
+        <span className="frame-q">
+          <span>{note.meaningZh || '（功能为空）'}</span>
+          {meta && <span className="frame-meta">{meta}</span>}
+          {topic && <span className="frame-topic">主题：<b>{topic.fr}</b>（{topic.zh}）</span>}
+        </span>
+      ),
+      speakText: '', lang: s.targetLang1, label: type === 'frame' ? '功能' : '套用',
+    },
+    hint: topic ? '用这个句框写一整句（脑中或纸上），翻面对照' : null,
+    cues: 'extra',
+    answerFr: type === 'frame' ? note.lemma : undefined,
+    answers: [
+      { text: <span className="frame-a">{renderFrame(note.lemma)}</span>, speakText: note.lemma.replace(/⬚/g, ''), lang: s.sourceLang, label: '句框' },
+      ...(ex ? [{ text: ex, speakText: ex, lang: s.sourceLang, label: labels[0] }] : []),
+    ],
+  };
+}
+
 /** 三种卡的正反面。旋转和题面切换只作用于认读卡 */
 /** variant：第几个版本，复习时传卡片的复习次数，每次复习轮换一个句子 / 场景 */
 export function cardView(type: Card['type'], note: Note, s: Settings, quizType: number, labels: [string, string, string], variant = 0, listen = false, group: Note[] = []): CardView {
   if (type === 'contrast') return contrastView(note, group, s, labels, variant);
+  if (type === 'frame' || type === 'apply') return frameView(type, note, s, labels, variant);
   // 听力认读：正面只有声音，翻面显示句子和两个翻译
   if (listen && type === 'recognition' && note.sentence) {
     const f = faces(note, s, labels, variant);

@@ -47,7 +47,19 @@ const OLD = `<div class="mw-parser-output">
 <ol><li>Couvert de pavés.</li></ol>
 </div>`;
 
+// 变形词条：只有 "Forme de verbe"，链接指向原形
+const FORM = `<div class="mw-parser-output"><div class="mw-heading mw-heading2"><h2 id="Français">Français</h2></div>
+<div class="mw-heading mw-heading3"><h3 id="Forme_de_verbe">Forme de verbe</h3></div>
+<p><b>dérogeait</b> <i>intransitif</i></p>
+<ol><li><i>Troisième personne du singulier de l’imparfait de</i> <a href="/wiki/d%C3%A9roger" title="déroger">déroger</a>.</li></ol></div>`;
+
 describe('Wiktionnaire 解析', () => {
+  it('变形词条：记下它指向的原形', () => {
+    const r = parseWiktionnaire(FORM, 'dérogeait')!;
+    expect(r.entries[0].pos).toBe('Forme de verbe');
+    expect(r.formOf).toBe('déroger');
+    expect(parseWiktionnaire(NEW, 'déroger')!.formOf).toBeNull();
+  });
   it('新版标题：只取法语节，词性、释义、例句、子义项、词源', () => {
     const r = parseWiktionnaire(NEW, 'déroger')!;
     expect(r.title).toBe('déroger');
@@ -92,6 +104,7 @@ describe('查词与机翻', () => {
       fetched.push(page);
       expect(new URL(url).searchParams.get('origin')).toBe('*');
       if (page === 'déroger') return new Response(JSON.stringify({ parse: { title: 'déroger', text: NEW } }));
+      if (page === 'dérogea') return new Response(JSON.stringify({ parse: { title: 'dérogea', text: FORM } }));
       return new Response(JSON.stringify({ error: { code: 'missingtitle' } }));
     }));
     const r = await lookupWiktionnaire(['Dérogeait', 'déroger']);
@@ -100,6 +113,12 @@ describe('查词与机翻', () => {
     fetched.length = 0;
     await lookupWiktionnaire(['Dérogeait', 'déroger']);
     expect(fetched).toEqual([]); // 全部走缓存
+    // 查到的只是变形：顺着链接查原形，带上变形的说明
+    fetched.length = 0;
+    const f = await lookupWiktionnaire(['dérogea']);
+    expect(fetched).toEqual(['dérogea']); // 原形 déroger 前面查过，走缓存
+    expect(f?.title).toBe('déroger');
+    expect(f?.formNote).toBe('Troisième personne du singulier de l’imparfait de déroger.');
     vi.stubGlobal('fetch', vi.fn(async () => { throw new TypeError('network'); }));
     await expect(lookupWiktionnaire(['autre'])).rejects.toThrow();
     vi.unstubAllGlobals();

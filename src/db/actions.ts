@@ -1,7 +1,7 @@
 // 所有写操作。每次修改都更新 updatedAt（严格递增），删除一律打墓碑。
 import { db } from './db';
 import { SettingsSchema, type Card, type Clip, type Deck, type Encounter, type Text, type Note, type ReviewLog, type Settings } from '../schema';
-import { addDaysToDay, bumpIso, dayStartMs, fromIso, studyDay, toIso } from '../lib/time';
+import { addDaysToDay, bumpIso, dayStartMs, fromIso, setTimeZone, studyDay, toIso } from '../lib/time';
 import { relativeOverdue } from '../srs/queue';
 import { newId } from '../lib/id';
 import { schedule, type Rating } from '../srs/scheduler';
@@ -16,7 +16,10 @@ export const defaultSettings = (): Settings => SettingsSchema.parse({ updatedAt:
 
 export async function getSettings(): Promise<Settings> {
   const v = (await db.meta.get(SETTINGS_KEY))?.value;
-  return v ? SettingsSchema.parse(v) : defaultSettings();
+  const s = v ? SettingsSchema.parse(v) : defaultSettings();
+  // 学习日的时区：读设置时生效，之后所有按天的计算都用它
+  setTimeZone(s.timeZone);
+  return s;
 }
 export const putSettingsRaw = (s: Settings) => db.meta.put({ key: SETTINGS_KEY, value: s });
 export async function updateSettings(patch: Partial<Omit<Settings, 'updatedAt'>>) {
@@ -74,7 +77,7 @@ export async function ensureDeck(): Promise<string> {
 
 // ---------- 笔记与卡片 ----------
 
-type NoteContent = Pick<Note, 'lemma' | 'sentence' | 'meaningZh' | 'meaningEn' | 'cueFamily' | 'promptFr' | 'intentZh' | 'hint' | 'clozeHint' | 'clozeSentence' | 'etymology' | 'answerFr' | 'extra' | 'source' | 'origin' | 'layer' | 'cardTypes' | 'tags' | 'altSentences' | 'altIntents' | 'contrastGroup' | 'contrastNote'>;
+type NoteContent = Pick<Note, 'lemma' | 'sentence' | 'meaningZh' | 'meaningEn' | 'cueFamily' | 'promptFr' | 'intentZh' | 'hint' | 'clozeHint' | 'clozeSentence' | 'etymology' | 'answerFr' | 'extra' | 'source' | 'origin' | 'layer' | 'cardTypes' | 'tags' | 'altSentences' | 'altIntents' | 'contrastGroup' | 'contrastNote' | 'frame'>;
 export type NewNoteInput = { deckId: string; createdAtMs?: number } & Partial<NoteContent>;
 
 export function blankCard(note: Pick<Note, 'id' | 'deckId' | 'createdAt'>, type: Card['type'], s: Settings, stamp: string): Card {
@@ -106,7 +109,7 @@ export async function addNotes(inputs: NewNoteInput[]): Promise<Array<{ noteId: 
       extra: input.extra ?? null, source: input.source ?? null, origin: input.origin ?? null,
       altSentences: input.altSentences ?? [], altIntents: input.altIntents ?? [],
       layer: input.layer ?? 'mid', cardTypes: input.cardTypes ?? ['recognition'], tags: input.tags ?? [],
-      usedCount: 0, usedAt: [], rot: 0, contrastGroup: input.contrastGroup ?? null, contrastNote: input.contrastNote ?? null, legacy: null, updatedAt: stamp, deleted: false,
+      usedCount: 0, usedAt: [], rot: 0, contrastGroup: input.contrastGroup ?? null, contrastNote: input.contrastNote ?? null, frame: input.frame ?? null, legacy: null, updatedAt: stamp, deleted: false,
     };
     notes.push(note);
     for (const t of note.cardTypes) cards.push(blankCard(note, t, s, stamp));

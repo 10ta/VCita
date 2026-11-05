@@ -5,7 +5,7 @@ import { simulate, stepCounts } from '../../srs/simulate';
 import { clearAllLocalData, spreadBacklog, updateSettings } from '../../db/actions';
 import { exportBundle, importBundle } from '../../io/bundle';
 import { downloadJson, readJsonFile } from '../../io/download';
-import { dayStartMs, fileStamp, fromIso, studyDay } from '../../lib/time';
+import { dayStartMs, deviceTimeZone, fileStamp, fromIso, studyDay } from '../../lib/time';
 import { SyncSection } from '../../sync/SyncSection';
 import { LANGS } from '../../ui/langs';
 import { toast } from '../../ui/toast';
@@ -183,12 +183,12 @@ function DataSection() {
 
 /* ---------------- 复习 ---------------- */
 
-type NumKey = 'newPerDay' | 'reviewsPerDay' | 'graduatingInterval' | 'easyInterval' | 'startingEase' | 'hardFactor' | 'easyBonus' | 'lapseFactor' | 'overdueBonusMaxDays' | 'leechThreshold' | 'dayStartHour';
+type NumKey = 'newPerDay' | 'frameNewPerDay' | 'reviewsPerDay' | 'graduatingInterval' | 'easyInterval' | 'startingEase' | 'hardFactor' | 'easyBonus' | 'lapseFactor' | 'overdueBonusMaxDays' | 'leechThreshold';
 type Num = [NumKey, string, string, string?];
 const DAILY: Num[] = [
   ['newPerDay', '每日新卡上限', '', '张'],
+  ['frameNewPerDay', '其中句框卡最多', '语块库的新句框卡每天最多出几张，占用上面的新卡名额，没用完的给单词', '张'],
   ['reviewsPerDay', '每日复习上限', '0 = 不限（推荐）。到期的复习拖到明天会更难记、越积越多；量大时减少每日新卡', '张'],
-  ['dayStartHour', '每日切换时间', '在这之前学习仍算前一天', '点'],
 ];
 const INTERVALS: Num[] = [
   ['graduatingInterval', '毕业间隔', '学习步骤走完后的第一个间隔', '天'],
@@ -205,6 +205,14 @@ const LAPSES: Num[] = [
 const ALL_NUMS = [...DAILY, ...INTERVALS, ...LAPSES];
 const parseSteps = (s: string) => s.split(/[\s,，]+/).filter(Boolean).map(Number).filter((n) => n > 0);
 
+/** 时区列表：常用的放前面，其余按字母 */
+const COMMON_ZONES = ['Asia/Shanghai', 'Europe/Paris', 'America/Toronto', 'America/Montreal', 'America/New_York', 'America/Vancouver', 'UTC'];
+function zoneOptions(): string[] {
+  let all: string[] = [];
+  try { all = (Intl as unknown as { supportedValuesOf?: (k: string) => string[] }).supportedValuesOf?.('timeZone') ?? []; } catch { /* 旧浏览器 */ }
+  return [...COMMON_ZONES, ...all.filter((z) => !COMMON_ZONES.includes(z))];
+}
+
 type Form = Settings & { learning: string; relearn: string; retentionPct: string; weights: string };
 const toForm = (s: Settings): Form => ({
   ...s, learning: s.learningSteps.join(' '), relearn: s.relearnSteps.join(' '),
@@ -216,7 +224,7 @@ const parseWeights = (x: string): number[] | null => {
   return ns.length ? ns : null;
 };
 function toPatch(f: Form): Partial<Settings> {
-  const patch: Partial<Settings> = { scheduler: f.scheduler, desiredRetention: Number(f.retentionPct) / 100, fsrsWeights: parseWeights(f.weights), fuzz: f.fuzz, newReviewOrder: f.newReviewOrder, reviewSort: f.reviewSort, newSort: f.newSort, focusTags: f.focusTags, newSplit: f.newSplit, freshShare: Number(f.freshShare), freshDays: Number(f.freshDays), learningSteps: parseSteps(f.learning), relearnSteps: parseSteps(f.relearn) };
+  const patch: Partial<Settings> = { scheduler: f.scheduler, desiredRetention: Number(f.retentionPct) / 100, fsrsWeights: parseWeights(f.weights), fuzz: f.fuzz, dayStartHour: Number(f.dayStartHour), timeZone: f.timeZone || null, newReviewOrder: f.newReviewOrder, reviewSort: f.reviewSort, newSort: f.newSort, focusTags: f.focusTags, newSplit: f.newSplit, freshShare: Number(f.freshShare), freshDays: Number(f.freshDays), learningSteps: parseSteps(f.learning), relearnSteps: parseSteps(f.relearn) };
   for (const [k] of ALL_NUMS) patch[k] = Number(f[k]);
   return patch;
 }
@@ -247,6 +255,17 @@ function SrsForm({ s }: { s: Settings }) {
       <h2>复习</h2>
       <h3 className="set-sub">每日安排</h3>
       {DAILY.map(num)}
+      <SetRow label="每日切换时间" hint={`在这之前学习仍算前一天。时区：${f.timeZone ? f.timeZone : `跟随设备（${deviceTimeZone()}）`}`}>
+        <span className="row">
+          <select aria-label="每日切换时间" value={f.dayStartHour} onChange={(e) => setF({ ...f, dayStartHour: Number(e.target.value) })}>
+            {Array.from({ length: 24 }, (_, h) => <option key={h} value={h}>{String(h).padStart(2, '0')}:00</option>)}
+          </select>
+          <select aria-label="时区" value={f.timeZone ?? ''} onChange={(e) => setF({ ...f, timeZone: e.target.value || null })} style={{ maxWidth: 230 }}>
+            <option value="">跟随设备（{deviceTimeZone()}）</option>
+            {zoneOptions().map((z) => <option key={z} value={z}>{z}</option>)}
+          </select>
+        </span>
+      </SetRow>
       <Forecast s={s} f={f} />
       <SetRow label="新卡出现时机" hint="穿插：复习积压时新卡也照常出现">
         <select value={f.newReviewOrder} onChange={(e) => setF({ ...f, newReviewOrder: e.target.value as Settings['newReviewOrder'] })}>
