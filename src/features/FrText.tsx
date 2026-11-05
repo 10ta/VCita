@@ -132,56 +132,64 @@ function GenderBody({ info }: { info: GenderInfo }) {
   );
 }
 
-/** 全页只有一个迷你条：在 [data-fw] 上悬停时显示（手机上点一下） */
+/** 全页只有一个迷你条：在 [data-fw] 上悬停时显示（手机上点一下）。
+ *  迷你条不接收鼠标（pointer-events: none），点在它上面等于点在下面的按钮上；
+ *  鼠标离开词、按任意键、点任何地方、滚动、或者词被换掉（翻面、评分换卡）时自动消失 */
 function GenderPopover({ dict }: { dict: FrDict }) {
   const [state, setState] = useState<{ info: GenderInfo; x: number; y: number; below: boolean } | null>(null);
   const hide = useRef<number | undefined>(undefined);
+  const anchor = useRef<HTMLElement | null>(null);
   useEffect(() => {
+    const close = () => { window.clearTimeout(hide.current); anchor.current = null; setState(null); };
     const show = (el: HTMLElement) => {
       const info = genderInfo(dict, el.dataset.fw!, el.dataset.prev || null);
       if (!info) return;
       window.clearTimeout(hide.current);
+      anchor.current = el;
       const r = el.getBoundingClientRect();
       const below = r.bottom + 180 < window.innerHeight;
       setState({ info, x: Math.min(Math.max(8, r.left + r.width / 2 - 160), window.innerWidth - 328), y: below ? r.bottom + 6 : r.top - 6, below });
     };
-    const over = (e: Event) => {
-      const el = (e.target as HTMLElement | null)?.closest?.('[data-fw]') as HTMLElement | null;
-      if (el) show(el);
-      else if ((e.target as HTMLElement | null)?.closest?.('.gender-pop')) window.clearTimeout(hide.current);
-    };
+    const fwOf = (e: Event) => (e.target as HTMLElement | null)?.closest?.('[data-fw]') as HTMLElement | null;
     // 触屏点一下之后浏览器会补发 mouseover / mouseout，别让它把刚打开的迷你条关掉
     let touchedAt = 0;
+    const over = (e: Event) => { const el = fwOf(e); if (el) show(el); };
     const out = (e: Event) => {
-      if (Date.now() - touchedAt < 1000) return;
-      if (!(e.target as HTMLElement | null)?.closest?.('[data-fw], .gender-pop')) return;
+      if (Date.now() - touchedAt < 1000 || !fwOf(e)) return;
       window.clearTimeout(hide.current);
-      hide.current = window.setTimeout(() => setState(null), 200);
+      hide.current = window.setTimeout(close, 120);
     };
-    // 触屏：点词显示，点别处关掉
-    const tap = (e: Event) => {
-      touchedAt = Date.now();
-      const el = (e.target as HTMLElement | null)?.closest?.('[data-fw]') as HTMLElement | null;
-      if (el) show(el);
-      else if (!(e.target as HTMLElement | null)?.closest?.('.gender-pop')) setState(null);
+    // 点任何地方都先关掉（点到的按钮照常生效）；点的是词就换成这个词（触屏靠这个打开）
+    const down = (e: PointerEvent) => {
+      if (e.pointerType === 'touch') touchedAt = Date.now();
+      const el = fwOf(e);
+      if (el && e.pointerType === 'touch') show(el);
+      else if (!el) close();
     };
-    const close = () => setState(null);
+    // 词被换掉（评分换卡、翻面重渲染）时 mouseout 不会触发，定时检查锚点还在不在
+    const watch = window.setInterval(() => { if (anchor.current && !anchor.current.isConnected) close(); }, 250);
     document.addEventListener('mouseover', over);
     document.addEventListener('mouseout', out);
-    document.addEventListener('touchstart', tap, { passive: true });
+    document.addEventListener('pointerdown', down, true);
+    window.addEventListener('keydown', close, true);
     window.addEventListener('scroll', close, true);
+    window.addEventListener('resize', close);
     window.addEventListener('hashchange', close);
     return () => {
+      window.clearInterval(watch);
+      window.clearTimeout(hide.current);
       document.removeEventListener('mouseover', over);
       document.removeEventListener('mouseout', out);
-      document.removeEventListener('touchstart', tap);
+      document.removeEventListener('pointerdown', down, true);
+      window.removeEventListener('keydown', close, true);
       window.removeEventListener('scroll', close, true);
+      window.removeEventListener('resize', close);
       window.removeEventListener('hashchange', close);
     };
   }, [dict]);
   if (!state) return null;
   return (
-    <div className={`gender-pop${state.below ? '' : ' is-above'}`} role="tooltip" style={{ left: state.x, top: state.y }}>
+    <div className={`gender-pop${state.below ? '' : ' is-above'}`} role="tooltip" aria-hidden="true" style={{ left: state.x, top: state.y }}>
       <GenderBody info={state.info} />
     </div>
   );

@@ -292,7 +292,7 @@ code { font-family: var(--mono); background: var(--surface2); padding: 0 4px; bo
 }
 .fw:hover { background: var(--surface2); border-radius: 3px; }
 b.g-m, .gp-g.g-m { color: var(--g-m); } b.g-f, .gp-g.g-f { color: var(--g-f); }
-.gender-pop { position: fixed; z-index: 50; width: 320px; max-width: calc(100vw - 16px); padding: 10px 12px; border-radius: 10px; border: 1px solid var(--border);
+.gender-pop { position: fixed; z-index: 50; pointer-events: none; user-select: none; width: 320px; max-width: calc(100vw - 16px); padding: 10px 12px; border-radius: 10px; border: 1px solid var(--border);
   background: var(--surface2); box-shadow: 0 8px 30px #000a; font-size: 13px; line-height: 1.55; display: grid; gap: 4px; text-align: left; font-family: var(--sans); font-weight: 400; }
 .gender-pop.is-above { transform: translateY(-100%); }
 .gp-head { font-size: 15px; } .gp-head b { font-family: var(--serif); font-size: 17px; }
