@@ -1,10 +1,17 @@
 // 本地数据库（IndexedDB）。它是唯一的数据源；GitHub 数据仓库是它的同步副本。
 import Dexie, { type EntityTable, type Table } from 'dexie';
-import type { Card, Deck, Note, ReviewLog } from '../schema';
+import type { Card, Clip, Deck, Note, ReviewLog } from '../schema';
 
 export interface MetaRow {
   key: string;
   value: unknown;
+}
+
+export interface CacheRow {
+  key: string;
+  value: unknown;
+  /** 写入时间（毫秒） */
+  at: number;
 }
 
 class VocabDb extends Dexie {
@@ -13,6 +20,9 @@ class VocabDb extends Dexie {
   cards!: EntityTable<Card, 'id'>;
   logs!: EntityTable<ReviewLog, 'id'>;
   meta!: Table<MetaRow, string>;
+  clips!: EntityTable<Clip, 'id'>;
+  /** 查词 / 翻译结果的本机缓存（不同步） */
+  cache!: Table<CacheRow, string>;
 
   constructor() {
     super('vcita');
@@ -24,6 +34,8 @@ class VocabDb extends Dexie {
       logs: 'id, cardId, noteId, day',
       meta: 'key',
     });
+    // v2：摘句篮、查词缓存
+    this.version(2).stores({ clips: 'id, createdAt, status', cache: 'key' });
   }
 }
 

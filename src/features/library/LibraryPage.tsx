@@ -242,7 +242,7 @@ export function LibraryPage({ deckId }: { deckId: string }) {
           const isSel = sel.has(n.id);
           const due = card && !card.suspended && card.state !== 'new' && fromIso(card.due) <= Date.now();
           return (
-            <li key={n.id} className={`note${isSel ? ' is-sel' : ''}${due ? ' is-due' : ''}`}
+            <li key={n.id} className={`note${isSel ? ' is-sel' : ''}${due ? ' is-due' : ''}`} data-lookup-source={n.lemma || undefined}
               onClick={(e) => { if (!(e.target as HTMLElement).closest('button,input,select,a,label') && !window.getSelection()?.toString()) toggle(n.id); }}>
               <input type="checkbox" checked={isSel} onChange={() => toggle(n.id)} aria-label="选择" />
               <div className="note-main">

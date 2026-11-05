@@ -1,24 +1,41 @@
-// 翻译和发音都直连 Google（不需要服务器）。
+// 翻译和发音都直连 Google（不需要服务器），翻译失败时退到 MyMemory。
 // 发音：index.html 里设了 <meta name="referrer" content="no-referrer">，Google TTS 不会因来源页面拒绝请求；
 // 依次尝试：同源代理 ./api/tts（CF Pages / Vercel 部署时随站点一起发布）→ 直连 Google → 浏览器自带语音。
 const TIMEOUT = 8000;
 
+/** 机翻：Google（越长越准）→ 失败时 MyMemory（匿名每天 5,000 字符，单次 500 字节以内） */
 export async function translate(text: string, sl: string, tl: string): Promise<string | null> {
+  return (await translateGoogle(text, sl, tl)) ?? (await translateMyMemory(text, sl, tl));
+}
+
+async function getJson<T>(url: string): Promise<T | null> {
   const ctrl = new AbortController();
   const timer = setTimeout(() => ctrl.abort(), TIMEOUT);
   try {
-    const r = await fetch(
-      `https://translate.googleapis.com/translate_a/single?client=dict-chrome-ex&sl=${sl}&tl=${tl}&dt=t&dj=1&q=${encodeURIComponent(text)}`,
-      { signal: ctrl.signal },
-    );
-    if (!r.ok) return null;
-    const d = (await r.json()) as { sentences?: Array<{ trans?: string }> };
-    return d.sentences?.map((s) => s.trans).filter(Boolean).join('') || null;
+    const r = await fetch(url, { signal: ctrl.signal });
+    return r.ok ? ((await r.json()) as T) : null;
   } catch {
     return null;
   } finally {
     clearTimeout(timer);
   }
+}
+
+async function translateGoogle(text: string, sl: string, tl: string): Promise<string | null> {
+  const d = await getJson<{ sentences?: Array<{ trans?: string }> }>(
+    `https://translate.googleapis.com/translate_a/single?client=dict-chrome-ex&sl=${sl}&tl=${tl}&dt=t&dj=1&q=${encodeURIComponent(text)}`,
+  );
+  return d?.sentences?.map((s) => s.trans).filter(Boolean).join('') || null;
+}
+
+async function translateMyMemory(text: string, sl: string, tl: string): Promise<string | null> {
+  if (new TextEncoder().encode(text).length > 500) return null;
+  const d = await getJson<{ responseStatus?: number | string; responseData?: { translatedText?: string } }>(
+    `https://api.mymemory.translated.net/get?langpair=${encodeURIComponent(`${sl}|${tl}`)}&q=${encodeURIComponent(text)}`,
+  );
+  const t = d?.responseData?.translatedText;
+  // 额度用完时它返回 200 + 一段英文警告当译文
+  return Number(d?.responseStatus) === 200 && t && !/MYMEMORY WARNING|QUERY LENGTH LIMIT/i.test(t) ? t : null;
 }
 
 const sources = [

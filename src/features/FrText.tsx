@@ -4,6 +4,7 @@ import { Children, cloneElement, createContext, isValidElement, useContext, useE
 import { genderInfo, lemmaFreq, useFrDict, type FrDict, type GenderInfo } from '../lib/gender/dict';
 import { useNotes, useSettings } from '../db/hooks';
 import type { Settings } from '../schema';
+import { LookupBubble } from './Lookup';
 
 interface Ctx { dict: FrDict | null }
 const FrCtx = createContext<Ctx>({ dict: null });
@@ -23,6 +24,7 @@ export function FrProvider({ children }: { children: ReactNode }) {
     <FrCtx.Provider value={{ dict }}>
       {children}
       {dict && <GenderPopover dict={dict} />}
+      <LookupBubble dict={dict} />
     </FrCtx.Provider>
   );
 }
@@ -153,7 +155,9 @@ function GenderPopover({ dict }: { dict: FrDict }) {
     const fwOf = (e: Event) => (e.target as HTMLElement | null)?.closest?.('[data-fw]') as HTMLElement | null;
     // 触屏点一下之后浏览器会补发 mouseover / mouseout，别让它把刚打开的迷你条关掉
     let touchedAt = 0;
-    const over = (e: Event) => { const el = fwOf(e); if (el) show(el); };
+    // 正在选文字（拖选中）或划词气泡开着时不弹，免得两个弹层叠在一起
+    const busy = () => !!document.querySelector('.lookup-pop') || !(window.getSelection()?.isCollapsed ?? true);
+    const over = (e: Event) => { const el = fwOf(e); if (el && !busy()) show(el); };
     const out = (e: Event) => {
       if (Date.now() - touchedAt < 1000 || !fwOf(e)) return;
       window.clearTimeout(hide.current);
@@ -167,6 +171,7 @@ function GenderPopover({ dict }: { dict: FrDict }) {
       else if (!el) close();
     };
     // 词被换掉（评分换卡、翻面重渲染）时 mouseout 不会触发，定时检查锚点还在不在
+    window.addEventListener('vcita:lookup-open', close);
     const watch = window.setInterval(() => { if (anchor.current && !anchor.current.isConnected) close(); }, 250);
     document.addEventListener('mouseover', over);
     document.addEventListener('mouseout', out);
@@ -177,6 +182,7 @@ function GenderPopover({ dict }: { dict: FrDict }) {
     window.addEventListener('hashchange', close);
     return () => {
       window.clearInterval(watch);
+      window.removeEventListener('vcita:lookup-open', close);
       window.clearTimeout(hide.current);
       document.removeEventListener('mouseover', over);
       document.removeEventListener('mouseout', out);

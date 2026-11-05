@@ -1,0 +1,215 @@
+// 划词查词：在页面里选中法语（词、表达或句子）弹出气泡。
+// 单词 / 短表达：Wiktionnaire 法法释义 + 机翻（几条释义拼成一段翻，越长越准）+ 所在句子的机翻；
+// 长句：只给机翻。气泡里可以朗读、放进摘句篮、跳到外部词典。
+// 不弹的地方：输入框、复习卡正面（data-no-lookup，免得提前看到答案）、主内容区以外。
+// 点气泡以外的地方、按任意键、滚动、换页时自动关掉。
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { useNotes, useSettings } from '../db/hooks';
+import { addClip } from '../db/actions';
+import type { FrDict } from '../lib/gender/dict';
+import { externalLinks, lookupWiktionnaire, sentenceAround, translateCached, translateSenses, type DictResult } from '../lib/dictionary';
+import { speak } from '../lib/speech';
+import { toast } from '../ui/toast';
+
+interface Sel { text: string; context: string; x: number; y: number; below: boolean; source: string | null }
+type Mode = 'word' | 'phrase' | 'sentence';
+
+const WORD_RE = /^[\p{L}'’-]+$/u;
+const ELISION = /^(?:[ldjmnstc]|qu|jusqu|lorsqu|puisqu)['’]/i;
+const hasLetter = (s: string) => /\p{L}/u.test(s);
+export const modeOf = (t: string): Mode => {
+  const words = t.trim().split(/\s+/).length;
+  if (words === 1 && WORD_RE.test(t.trim())) return 'word';
+  return words <= 6 && !/[.!?;:]\s*$/.test(t.trim()) ? 'phrase' : 'sentence';
+};
+
+/** 一个选区所在的文本块（最近的块级祖先）和选区在块里的位置 */
+function contextOf(range: Range): { block: string; start: number; end: number } {
+  let el: Element | null = range.commonAncestorContainer instanceof Element ? range.commonAncestorContainer : range.commonAncestorContainer.parentElement;
+  while (el && el.parentElement && getComputedStyle(el).display.startsWith('inline')) el = el.parentElement;
+  if (!el) return { block: range.toString(), start: 0, end: range.toString().length };
+  const pre = document.createRange();
+  pre.setStart(el, 0);
+  pre.setEnd(range.startContainer, range.startOffset);
+  const start = pre.toString().length;
+  return { block: el.textContent ?? '', start, end: start + range.toString().length };
+}
+
+/** 选区是否在允许查词的地方 */
+function allowed(node: Node | null): boolean {
+  const el = node instanceof Element ? node : node?.parentElement;
+  if (!el || !el.closest('main')) return false;
+  return !el.closest('[data-no-lookup], input, textarea, select, [contenteditable="true"], .lookup-pop');
+}
+
+export function LookupBubble({ dict }: { dict: FrDict | null }) {
+  const [sel, setSel] = useState<Sel | null>(null);
+  const box = useRef<HTMLDivElement>(null);
+  const last = useRef('');
+  useEffect(() => {
+    const close = () => { last.current = ''; setSel(null); };
+    const read = () => {
+      const s = window.getSelection();
+      if (!s || s.isCollapsed || !s.rangeCount) return;
+      const text = s.toString().replace(/\s+/g, ' ').trim();
+      if (!text || text.length > 400 || !hasLetter(text) || !allowed(s.anchorNode) || !allowed(s.focusNode)) return;
+      const range = s.getRangeAt(0);
+      const r = range.getBoundingClientRect();
+      const key = `${text}@${Math.round(r.left)},${Math.round(r.top)}`;
+      if (key === last.current) return;
+      last.current = key;
+      const { block, start, end } = contextOf(range);
+      const context = modeOf(text) === 'sentence' ? text : sentenceAround(block, start, end) || text;
+      const below = r.bottom + 300 < window.innerHeight || r.top < 300;
+      const host = (range.startContainer instanceof Element ? range.startContainer : range.startContainer.parentElement)?.closest('[data-lookup-source]');
+      setSel({
+        text, context, below, source: host?.getAttribute('data-lookup-source') || null,
+        x: Math.min(Math.max(8, r.left + r.width / 2 - 180), window.innerWidth - 368),
+        y: below ? r.bottom + 8 : r.top - 8,
+      });
+      window.dispatchEvent(new Event('vcita:lookup-open'));
+    };
+    let pointerDown = false;
+    let timer: number | undefined;
+    const down = (e: PointerEvent) => {
+      pointerDown = true;
+      if (!box.current?.contains(e.target as Node)) close();
+    };
+    const up = (e: PointerEvent) => {
+      pointerDown = false;
+      if (box.current?.contains(e.target as Node)) return;
+      window.setTimeout(read, 0);
+    };
+    // 手机上长按选词、拖动选区手柄不一定有 pointerup：选区停下来半秒后再读
+    const change = () => {
+      window.clearTimeout(timer);
+      timer = window.setTimeout(() => { if (!pointerDown) read(); }, 500);
+    };
+    const key = (e: KeyboardEvent) => { if (!box.current?.contains(e.target as Node)) close(); };
+    const scroll = (e: Event) => { if (!box.current?.contains(e.target as Node)) close(); };
+    document.addEventListener('pointerdown', down, true);
+    document.addEventListener('pointerup', up, true);
+    document.addEventListener('selectionchange', change);
+    window.addEventListener('keydown', key, true);
+    window.addEventListener('scroll', scroll, true);
+    window.addEventListener('resize', close);
+    window.addEventListener('hashchange', close);
+    return () => {
+      window.clearTimeout(timer);
+      document.removeEventListener('pointerdown', down, true);
+      document.removeEventListener('pointerup', up, true);
+      document.removeEventListener('selectionchange', change);
+      window.removeEventListener('keydown', key, true);
+      window.removeEventListener('scroll', scroll, true);
+      window.removeEventListener('resize', close);
+      window.removeEventListener('hashchange', close);
+    };
+  }, []);
+  if (!sel) return null;
+  return (
+    <div ref={box} className={`lookup-pop${sel.below ? '' : ' is-above'}`} style={{ left: sel.x, top: sel.y }} role="dialog" aria-label={`查词：${sel.text}`}>
+      <LookupBody key={`${sel.text}|${sel.context}`} sel={sel} dict={dict} />
+    </div>
+  );
+}
+
+interface Found { dict: DictResult | null; zh: string[] | null; zhWhole: string | null; sentenceZh: string | null; textZh: string | null; error: boolean }
+
+function LookupBody({ sel, dict }: { sel: Sel; dict: FrDict | null }) {
+  const s = useSettings();
+  const notes = useNotes();
+  const mode = modeOf(sel.text);
+  const bare = mode === 'word' ? sel.text.replace(ELISION, '') : sel.text;
+  const lemma = mode === 'word' ? dict?.get(bare)?.lemma ?? null : null;
+  const [found, setFound] = useState<Found | null>(null);
+  const [clipped, setClipped] = useState(false);
+
+  useEffect(() => {
+    if (!s) return;
+    let alive = true;
+    const sl = s.sourceLang, tl = s.targetLang1;
+    void (async () => {
+      let error = false;
+      const wk = mode === 'sentence' ? Promise.resolve(null) : lookupWiktionnaire(lemma && lemma !== bare ? [lemma, bare] : [bare]).catch(() => { error = true; return null; });
+      const sentenceZh = mode !== 'sentence' && sel.context && sel.context !== sel.text ? translateCached(sel.context, sl, tl) : Promise.resolve(null);
+      const textZh = mode === 'word' ? Promise.resolve(null) : translateCached(sel.text, sl, tl);
+      const d = await wk;
+      const defs = (d?.entries ?? []).slice(0, 2).flatMap((e) => e.senses.slice(0, 4).map((x) => x.def));
+      const [zh, sz, tz] = await Promise.all([translateSenses(defs, sl, tl), sentenceZh, textZh]);
+      if (alive) setFound({ dict: d, zh: zh.lines, zhWhole: zh.lines ? null : zh.whole, sentenceZh: sz, textZh: tz, error });
+    })();
+    return () => { alive = false; };
+  }, [s, mode, bare, lemma, sel.context, sel.text]);
+
+  // 已有的笔记：词条里出现这个原形（或选中的表达）
+  const existing = useMemo(() => {
+    const key = (lemma ?? bare).toLowerCase();
+    if (!notes || key.length < 2) return [];
+    const re = new RegExp(`(^|[^\\p{L}])${key.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}($|[^\\p{L}])`, 'iu');
+    return notes.filter((n) => re.test(n.lemma)).slice(0, 3);
+  }, [notes, lemma, bare]);
+
+  if (!s) return null;
+  const clip = async () => {
+    const isSentence = mode === 'sentence';
+    const i = sel.context.toLowerCase().indexOf(sel.text.toLowerCase());
+    const context = isSentence || i < 0 ? sel.context : `${sel.context.slice(0, i)}{{${sel.context.slice(i, i + sel.text.length)}}}${sel.context.slice(i + sel.text.length)}`;
+    const first = found?.dict?.entries[0]?.senses[0];
+    const gloss = first ? [first.def, found?.zh?.[0]].filter(Boolean).join(' · ') : (found?.textZh ?? '');
+    const r = await addClip({
+      kind: isSentence ? 'sentence' : 'expr', text: isSentence ? sel.text : (lemma && mode === 'word' ? lemma : sel.text),
+      context, translation: (isSentence ? found?.textZh : found?.sentenceZh) ?? '', gloss, source: sel.source,
+    });
+    setClipped(true);
+    toast(r.existed ? '摘句篮里已经有这一条了' : '已放进摘句篮（添加 → 摘句篮）');
+  };
+
+  const entries = found?.dict?.entries.slice(0, 2) ?? [];
+  let line = 0;
+  return (
+    <>
+      <div className="lk-head">
+        <b className="lk-word">{mode === 'sentence' ? '句子' : bare}</b>
+        {lemma && lemma !== bare.toLowerCase() && <span className="muted small">原形 {lemma}</span>}
+        <span className="grow" />
+        <button type="button" className="icon" title="朗读" onClick={() => void speak(sel.text, s.sourceLang)}>🔊</button>
+      </div>
+      {!found ? <p className="muted small pulse">查询中…</p> : (
+        <div className="lk-body">
+          {found.textZh && <p className="lk-zh">{found.textZh}</p>}
+          {entries.map((e, ei) => (
+            <div key={ei} className="lk-entry">
+              <div className="lk-pos">{e.pos}{e.gender && <span className={`lk-g g-${e.gender === 'féminin' ? 'f' : e.gender === 'masculin' ? 'm' : 'b'}`}> · {e.gender}</span>}</div>
+              <ol>
+                {e.senses.slice(0, 4).map((x, i) => {
+                  const zh = found.zh?.[line++];
+                  return (
+                    <li key={i}>
+                      <span className="lk-def">{x.def}</span>
+                      {zh && <span className="lk-def-zh">{zh}</span>}
+                      {i === 0 && ei === 0 && x.example && <span className="lk-ex">{x.example}</span>}
+                    </li>
+                  );
+                })}
+              </ol>
+            </div>
+          ))}
+          {found.zhWhole && <p className="lk-zh small">{found.zhWhole}</p>}
+          {mode !== 'sentence' && !entries.length && (
+            <p className="muted small">{found.error ? '连不上 Wiktionnaire（网络问题），可以用下面的外部词典' : 'Wiktionnaire 里没有这个词条'}</p>
+          )}
+          {found.dict?.etymology && <p className="lk-etym small"><span className="muted">词源 </span>{found.dict.etymology}</p>}
+          {found.sentenceZh && <p className="lk-sent small"><span className="muted">整句 </span>{found.sentenceZh}</p>}
+          {existing.length > 0 && <p className="small"><span className="muted">已有卡 </span>{existing.map((n) => n.lemma).join('；')}</p>}
+        </div>
+      )}
+      <div className="lk-actions">
+        <button type="button" className={`pill${clipped ? ' is-on' : ''}`} disabled={clipped} onClick={() => void clip()}>{clipped ? '已摘 ✓' : '摘句'}</button>
+        <span className="grow" />
+        {externalLinks(mode === 'word' ? (lemma ?? bare) : sel.text).map((l) => (
+          <a key={l.label} className="small" href={l.url} target="_blank" rel="noreferrer">{l.label}</a>
+        ))}
+      </div>
+    </>
+  );
+}

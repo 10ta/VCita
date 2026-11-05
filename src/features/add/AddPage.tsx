@@ -1,6 +1,6 @@
 import { useMemo, useRef, useState } from 'react';
-import { useNotes, useSettings } from '../../db/hooks';
-import { addNote, updateNote } from '../../db/actions';
+import { useClips, useNotes, useSettings } from '../../db/hooks';
+import { addNote, updateClip, updateNote } from '../../db/actions';
 import { db } from '../../db/db';
 import type { Card, Note, Theme } from '../../schema';
 import { clozeTarget, hasCloze, noteErrors } from '../../schema/validate';
@@ -11,35 +11,44 @@ import { usePrefs, setPrefs } from '../../ui/prefs';
 import { toast } from '../../ui/toast';
 import { OriginPicker, ThemePicker } from '../NoteEditor';
 import { BulkImport } from './BulkImport';
+import { ClipBasket, type ClipPrefill } from './ClipBasket';
 
 const todayInput = () => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`; };
 
 export function AddPage({ deckId }: { deckId: string }) {
-  const [tab, setTab] = useState<'one' | 'bulk'>('one');
+  const [tab, setTab] = useState<'one' | 'bulk' | 'basket'>(() => (location.hash.includes('basket') ? 'basket' : 'one'));
+  const [prefill, setPrefill] = useState<ClipPrefill | null>(null);
+  const clips = useClips();
+  const todo = clips?.filter((c) => c.status === 'todo').length ?? 0;
   return (
     <div className="page add">
       <div className="toolbar">
         <button type="button" className={`pill${tab === 'one' ? ' is-on' : ''}`} onClick={() => setTab('one')}>单个添加</button>
         <button type="button" className={`pill${tab === 'bulk' ? ' is-on' : ''}`} onClick={() => setTab('bulk')}>批量导入</button>
+        <button type="button" className={`pill${tab === 'basket' ? ' is-on' : ''}`} onClick={() => setTab('basket')}>摘句篮{todo ? ` ${todo}` : ''}</button>
       </div>
-      {tab === 'one' ? <AddOne deckId={deckId} /> : <BulkImport deckId={deckId} />}
+      {tab === 'one' ? <AddOne key={prefill?.clipId ?? 'blank'} deckId={deckId} prefill={prefill} />
+        : tab === 'bulk' ? <BulkImport deckId={deckId} />
+        : <ClipBasket onMake={(p) => { setPrefill(p); setPrefs({ addOrigin: 'mined' }); setTab('one'); }} />}
     </div>
   );
 }
 
 // 单个添加：默认只填一个框、回车生成认读卡；打开"产出""挖空"时就地展开需要的字段
-function AddOne({ deckId }: { deckId: string }) {
+function AddOne({ deckId, prefill }: { deckId: string; prefill?: ClipPrefill | null }) {
+  // 从摘句篮来的那一条：第一次添加后标为已做卡
+  const clipRef = useRef(prefill?.clipId ?? null);
   const s = useSettings();
   const notes = useNotes();
   const prefs = usePrefs();
-  const [text, setText] = useState('');
+  const [text, setText] = useState(prefill?.text ?? '');
   const [day, setDay] = useState(todayInput);
   const [tags, setTags] = useState<Theme[]>([]);
   const [types, setTypes] = useState<Card['type'][]>(['recognition']);
   // 默认展开与否看设置；本页内手动点过"收起 / 更多字段"后以手动为准
   const [moreOverride, setMore] = useState<boolean | null>(null);
   const more = moreOverride ?? s?.addShowMore ?? true;
-  const [f, setF] = useState(EMPTY);
+  const [f, setF] = useState(() => (prefill ? { ...EMPTY, source: prefill.source ?? '', extra: prefill.extra } : EMPTY));
   const [pending, setPending] = useState<Set<string>>(new Set());
   const [dupWarned, setDupWarned] = useState<string | null>(null);
   const [tried, setTried] = useState(false);
@@ -93,6 +102,8 @@ function AddOne({ deckId }: { deckId: string }) {
       deckId, createdAtMs: created, lemma, sentence, tags, origin: prefs.addOrigin, cardTypes: types, layer: has('production') ? 'core' : 'mid',
       promptFr: nul(f.promptFr), intentZh: nul(f.intentZh), hint: nul(f.hint), clozeHint: nul(f.clozeHint), clozeSentence: nul(f.clozeSentence), etymology: nul(f.etymology), answerFr: nul(f.answerFr), cueFamily: nul(f.cueFamily), source: nul(f.source), extra: nul(f.extra),
     });
+    // 从摘句篮来的：标为已做卡
+    if (clipRef.current) { void updateClip(clipRef.current, { status: 'done', noteId }); clipRef.current = null; }
     const toTranslate = target || plain;
     setText(''); setF(EMPTY); setTypes(['recognition']); setTried(false);
     input.current?.focus();

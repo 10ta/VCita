@@ -249,7 +249,7 @@ export function ReviewPage({ deckId }: { deckId: string }) {
             <button type="button" className="pill" onClick={() => void suspend()} title="暂停 (P)">暂停</button>
             <button type="button" className="pill" onClick={() => setEditing(true)} title="编辑 (E)">编辑</button>
           </div>
-          <div className="review-card" key={card.id}>
+          <div className="review-card" key={card.id} data-lookup-source={note.lemma || undefined} data-no-lookup={revealed ? undefined : ''}>
             <div className="badges">
               <span className={`badge is-type t-${card.type}`}>{TYPE_LABEL[card.type]}</span>
               {card.type === 'recognition' && !note.sentence && <span className="badge">待补句子</span>}

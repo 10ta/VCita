@@ -16,6 +16,9 @@ export const useSettings = () => useLiveStore(settingsStore);
 export const useDecks = () => useLiveStore(decksStore);
 export const useNotes = () => useLiveStore(notesStore);
 export const useCards = () => useLiveStore(cardsStore);
+const clipsStore = liveStore(async () => (await db.clips.toArray()).filter((c) => !c.deleted).sort((a, b) => (a.createdAt < b.createdAt ? 1 : -1)));
+/** 摘句篮（不含墓碑），新的在前 */
+export const useClips = () => useLiveStore(clipsStore);
 const logsStore = liveStore(async () => (await db.logs.toArray()).filter((l) => !l.deleted));
 /** 全部日志（不含墓碑） */
 export const useAllLogs = () => useLiveStore(logsStore);

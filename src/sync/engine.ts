@@ -164,7 +164,7 @@ async function attempt(gh: GitHub, cfg: SyncConfig): Promise<SyncResult | 'retry
   const texts = await mapPool(toPull, PULL_CONCURRENCY, ([, sha]) => gh.getBlobText(sha));
   // 全部放在一个事务里合并：界面只刷新一次，而不是每个文件刷新一次
   if (toPull.length)
-    await db.transaction('rw', [db.decks, db.notes, db.cards, db.logs, db.meta], async () => {
+    await db.transaction('rw', [db.decks, db.notes, db.cards, db.logs, db.clips, db.meta], async () => {
       for (let i = 0; i < toPull.length; i++) await applyRemoteFile(toPull[i][0], texts[i]);
     });
   const pulled = toPull.length;
@@ -256,7 +256,7 @@ Dexie.on('storagemutated', (parts) => {
   const keys = Object.keys(parts).filter((k) => k.startsWith(`idb://${db.name}/`));
   if (!keys.length) return;
   schedulePending(); // 同步状态、设置（meta 表）变了也要重算
-  if (keys.some((k) => /\/(decks|notes|cards|logs)\//.test(k))) {
+  if (keys.some((k) => /\/(decks|notes|cards|logs|clips)\//.test(k))) {
     dataVersion++;
     versionListeners.forEach((l) => l());
   }

@@ -170,6 +170,26 @@ export const SettingsV2 = z.looseObject({
   genderDisplay: z.enum(['focus', 'always', 'hover', 'off']).optional(),
 });
 
+/** 摘句篮里的一条：划词时摘下的词 / 表达 / 整句，晚上统一做卡。做成卡后记下笔记 id */
+export const ClipV2 = z.looseObject({
+  ...base,
+  createdAt: IsoTime,
+  /** expr = 词或表达（在 context 里用 {{…}} 标出）；sentence = 整句 */
+  kind: z.enum(['expr', 'sentence']).default('expr'),
+  /** 摘下的词、表达或整句，原样 */
+  text: z.string(),
+  /** 所在的句子；kind = expr 时 text 在其中用 {{…}} 标出 */
+  context: z.string().default(''),
+  /** 句子的机翻 */
+  translation: z.string().default(''),
+  /** 词典释义的一行摘要（法法释义 + 机翻） */
+  gloss: z.string().default(''),
+  /** 在哪里摘的：笔记的词条、页面名 */
+  source: z.string().nullable().default(null),
+  status: z.enum(['todo', 'done', 'dropped']).default('todo'),
+  noteId: z.string().nullable().default(null),
+});
+
 const file = <K extends string, S extends z.ZodRawShape>(kind: K, shape: S) =>
   z.looseObject({ schemaVersion: z.literal(2), kind: z.literal(kind), ...shape });
 
@@ -177,6 +197,7 @@ export const ProfileFileV2 = file('profile', { decks: z.array(DeckV2), settings:
 export const NotesFileV2 = file('notes', { month: z.string(), notes: z.array(NoteV2) });
 export const CardsFileV2 = file('cards', { month: z.string(), cards: z.array(CardV2) });
 export const LogsFileV2 = file('logs', { day: Day, logs: z.array(ReviewLogV2) });
+export const ClipsFileV2 = file('clips', { month: z.string(), clips: z.array(ClipV2) });
 export const BundleFileV2 = file('bundle', {
   app: z.enum(['VCita', 'VocabForge']),
   exportedAt: IsoTime,
@@ -185,4 +206,6 @@ export const BundleFileV2 = file('bundle', {
   notes: z.array(NoteV2),
   cards: z.array(CardV2),
   logs: z.array(ReviewLogV2),
+  /** 摘句篮（旧版本导出没有） */
+  clips: z.array(ClipV2).default([]),
 });

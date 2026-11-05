@@ -7,9 +7,10 @@
 //   notes/2026-09.json        笔记，按创建月份
 //   cards/2026-09.json        卡片调度状态，按所属笔记的创建月份
 //   logs/2026-10/02.json      复习日志，按学习日。每次同步只会改当天这一个日志文件
+//   clips/2026-11.json        摘句篮，按摘下的月份
 import { db } from '../db/db';
 import { getSettings, putSettingsRaw } from '../db/actions';
-import { CURRENT_SCHEMA_VERSION, parseCardsFile, parseLogsFile, parseNotesFile, parseProfileFile, type Card, type Deck, type Note, type ReviewLog, type Settings } from '../schema';
+import { CURRENT_SCHEMA_VERSION, parseCardsFile, parseClipsFile, parseLogsFile, parseNotesFile, parseProfileFile, type Card, type Clip, type Deck, type Note, type ReviewLog, type Settings } from '../schema';
 import { mergeLww } from '../io/merge';
 import { fromIso, monthOf } from '../lib/time';
 import { sha1Hex } from '../lib/sha1';
@@ -20,8 +21,9 @@ const KEY_ORDER = [
   'lemma', 'sentence', 'clozeSentence', 'meaningZh', 'meaningEn', 'etymology', 'cueFamily', 'promptFr', 'intentZh', 'hint', 'clozeHint', 'answerFr', 'extra', 'source', 'origin', 'altSentences', 'altIntents',
   'layer', 'cardTypes', 'tags', 'usedCount', 'rot',
   'state', 'due', 'interval', 'ease', 'reps', 'lapses', 'step', 'lastReviewedAt', 'isLeech', 'suspended',
+  'kind', 'text', 'context', 'translation', 'gloss', 'status',
   'ts', 'rating', 'prevState', 'newState', 'prevInterval', 'newInterval', 'prevEase', 'newEase', 'prevDue', 'newDue', 'elapsedMs',
-  'updatedAt', 'deleted', 'legacy', 'decks', 'settings', 'notes', 'cards', 'logs',
+  'updatedAt', 'deleted', 'legacy', 'decks', 'settings', 'notes', 'cards', 'logs', 'clips',
 ];
 const rank = (k: string) => {
   const i = KEY_ORDER.indexOf(k);
@@ -58,7 +60,8 @@ export const PROFILE_PATH = 'profile.json';
 const NOTES_RE = /^notes\/(\d{4}-\d{2})\.json$/;
 const CARDS_RE = /^cards\/(\d{4}-\d{2})\.json$/;
 const LOGS_RE = /^logs\/(\d{4}-\d{2})\/(\d{2})\.json$/;
-export const isOurFile = (rel: string) => rel === PROFILE_PATH || NOTES_RE.test(rel) || CARDS_RE.test(rel) || LOGS_RE.test(rel);
+const CLIPS_RE = /^clips\/(\d{4}-\d{2})\.json$/;
+export const isOurFile = (rel: string) => rel === PROFILE_PATH || NOTES_RE.test(rel) || CARDS_RE.test(rel) || LOGS_RE.test(rel) || CLIPS_RE.test(rel);
 
 const byId = <T extends { id: string }>(a: T, b: T) => (a.id < b.id ? -1 : a.id > b.id ? 1 : 0);
 const sorted = <T extends { createdAt?: string; ts?: string; id: string }>(list: T[], key: 'createdAt' | 'ts') =>
@@ -78,6 +81,8 @@ function group<T>(list: T[], keyOf: (x: T) => string): Map<string, T[]> {
 export interface LocalFile { text: string; sha: string }
 export interface LocalData {
   decks: Deck[]; notes: Note[]; cards: Card[]; logs: ReviewLog[]; settings: Settings;
+  /** 旧测试里构造的 LocalData 没有它 */
+  clips?: Clip[];
 }
 
 /**
@@ -95,15 +100,15 @@ const sigOf = (list: Array<{ id: string; updatedAt: string }>) => {
 };
 
 export const readLocalData = async (): Promise<LocalData> => {
-  const [decks, notes, cards, logs, settings] = await Promise.all([
-    db.decks.toArray(), db.notes.toArray(), db.cards.toArray(), db.logs.toArray(), getSettings(),
+  const [decks, notes, cards, logs, settings, clips] = await Promise.all([
+    db.decks.toArray(), db.notes.toArray(), db.cards.toArray(), db.logs.toArray(), getSettings(), db.clips.toArray(),
   ]);
-  return { decks, notes, cards, logs, settings };
+  return { decks, notes, cards, logs, settings, clips };
 };
 
 /** 把本地数据序列化成仓库文件（路径相对于数据目录），带 blob SHA */
 export async function localFiles(data?: LocalData): Promise<Map<string, LocalFile>> {
-  const { decks, notes, cards, logs, settings } = data ?? (await readLocalData());
+  const { decks, notes, cards, logs, settings, clips = [] } = data ?? (await readLocalData());
   const v = CURRENT_SCHEMA_VERSION;
   const out = new Map<string, LocalFile>();
   const put = async (rel: string, sig: string, make: () => unknown) => {
@@ -124,6 +129,8 @@ export async function localFiles(data?: LocalData): Promise<Map<string, LocalFil
     await put(`cards/${month}.json`, sigOf(list), () => ({ schemaVersion: v, kind: 'cards', month, cards: sorted(list, 'createdAt') }));
   for (const [day, list] of [...group(logs, (l) => l.day)].sort())
     await put(`logs/${day.slice(0, 7)}/${day.slice(8)}.json`, sigOf(list), () => ({ schemaVersion: v, kind: 'logs', day, logs: sorted(list, 'ts') }));
+  for (const [month, list] of [...group(clips, (c) => monthOf(c.createdAt))].sort())
+    await put(`clips/${month}.json`, sigOf(list), () => ({ schemaVersion: v, kind: 'clips', month, clips: sorted(list, 'createdAt') }));
   for (const rel of fileCache.keys()) if (!out.has(rel)) fileCache.delete(rel);
   return out;
 }
@@ -157,5 +164,8 @@ export async function applyRemoteFile(rel: string, text: string): Promise<void> 
   } else if (LOGS_RE.test(rel)) {
     const f = parseLogsFile(raw);
     await db.transaction('rw', db.logs, () => mergeLww(db.logs, f.logs));
+  } else if (CLIPS_RE.test(rel)) {
+    const f = parseClipsFile(raw);
+    await db.transaction('rw', db.clips, () => mergeLww(db.clips, f.clips));
   }
 }

@@ -6,21 +6,22 @@ import { fromIso, toIso } from '../lib/time';
 import { mergeLww, type MergeCount } from './merge';
 
 export async function exportBundle(): Promise<BundleFile> {
-  const [decks, notes, cards, logs, settings] = await Promise.all([
-    db.decks.toArray(), db.notes.toArray(), db.cards.toArray(), db.logs.toArray(), getSettings(),
+  const [decks, notes, cards, logs, settings, clips] = await Promise.all([
+    db.decks.toArray(), db.notes.toArray(), db.cards.toArray(), db.logs.toArray(), getSettings(), db.clips.toArray(),
   ]);
   // 墓碑也导出，合并时才能正确传播删除
-  return { schemaVersion: CURRENT_SCHEMA_VERSION as 2, kind: 'bundle', app: 'VCita', exportedAt: toIso(Date.now()), decks, settings, notes, cards, logs };
+  return { schemaVersion: CURRENT_SCHEMA_VERSION as 2, kind: 'bundle', app: 'VCita', exportedAt: toIso(Date.now()), decks, settings, notes, cards, logs, clips };
 }
 
-export async function importBundle(raw: unknown): Promise<Record<'decks' | 'notes' | 'cards' | 'logs', MergeCount>> {
+export async function importBundle(raw: unknown): Promise<Record<'decks' | 'notes' | 'cards' | 'logs' | 'clips', MergeCount>> {
   const b = parseBundle(raw);
-  return db.transaction('rw', [db.decks, db.notes, db.cards, db.logs, db.meta], async () => {
+  return db.transaction('rw', [db.decks, db.notes, db.cards, db.logs, db.clips, db.meta], async () => {
     const r = {
       decks: await mergeLww(db.decks, b.decks),
       notes: await mergeLww(db.notes, b.notes),
       cards: await mergeLww(db.cards, b.cards),
       logs: await mergeLww(db.logs, b.logs),
+      clips: await mergeLww(db.clips, b.clips),
     };
     const cur = await getSettings();
     if (fromIso(b.settings.updatedAt) > fromIso(cur.updatedAt)) await putSettingsRaw(b.settings);
