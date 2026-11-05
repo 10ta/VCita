@@ -453,6 +453,17 @@ function Backlog({ s }: { s: Settings }) {
 
 /* ---------------- 界面 ---------------- */
 
+function KnownTopInput({ value }: { value: number }) {
+  const [v, setV] = useState(String(value));
+  const commit = () => {
+    const n = Math.max(0, Math.round(Number(v)));
+    if (Number.isFinite(n) && n !== value) void updateSettings({ knownTop: n });
+    else setV(String(value));
+  };
+  return <input type="number" min={0} step={500} aria-label="常用词前 N 个" value={v} onChange={(e) => setV(e.target.value)} onBlur={commit}
+    onKeyDown={(e) => { if (e.key === 'Enter') (e.target as HTMLInputElement).blur(); }} style={{ width: 110 }} />;
+}
+
 function UiSection({ s }: { s: Settings }) {
   return (
     <section id="ui">
@@ -476,6 +487,10 @@ function UiSection({ s }: { s: Settings }) {
           <option value="hover">悬停时显示</option>
           <option value="off">关闭（悬停仍显示说明）</option>
         </select>
+      </SetRow>
+      <h3 className="set-sub">阅读</h3>
+      <SetRow label="常用词前 N 个算认识" hint="阅读页里，词频（Lexique）最高的前 N 个原形不标色、算进已知覆盖率。默认 2000；填 0 只按自己的卡和手动标的「认识」">
+        <KnownTopInput value={s.knownTop} />
       </SetRow>
       <SetRow label={'添加页默认展开"更多字段"'} hint="例句、词族线索、出处、补充。关闭后需要时点“更多字段”展开">
         <Switch label="默认展开更多字段" checked={s.addShowMore} onChange={(v) => void updateSettings({ addShowMore: v })} />

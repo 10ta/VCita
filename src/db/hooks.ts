@@ -19,6 +19,14 @@ export const useCards = () => useLiveStore(cardsStore);
 const clipsStore = liveStore(async () => (await db.clips.toArray()).filter((c) => !c.deleted).sort((a, b) => (a.createdAt < b.createdAt ? 1 : -1)));
 /** 摘句篮（不含墓碑），新的在前 */
 export const useClips = () => useLiveStore(clipsStore);
+const textsStore = liveStore(async () => (await db.texts.toArray()).filter((t) => !t.deleted).sort((a, b) => (a.createdAt < b.createdAt ? 1 : -1)));
+/** 阅读页的文章，新的在前 */
+export const useTexts = () => useLiveStore(textsStore);
+const encountersStore = liveStore(async () => (await db.encounters.toArray()).filter((e) => !e.deleted));
+export const useEncounters = () => useLiveStore(encountersStore);
+const knownStore = liveStore(async () => new Set((await db.known.toArray()).filter((k) => !k.deleted).map((k) => k.id)));
+/** 手动标为认识的原形 */
+export const useKnown = () => useLiveStore(knownStore);
 const logsStore = liveStore(async () => (await db.logs.toArray()).filter((l) => !l.deleted));
 /** 全部日志（不含墓碑） */
 export const useAllLogs = () => useLiveStore(logsStore);

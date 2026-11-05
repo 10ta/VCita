@@ -1,6 +1,6 @@
 // 所有写操作。每次修改都更新 updatedAt（严格递增），删除一律打墓碑。
 import { db } from './db';
-import { SettingsSchema, type Card, type Clip, type Deck, type Note, type ReviewLog, type Settings } from '../schema';
+import { SettingsSchema, type Card, type Clip, type Deck, type Encounter, type Text, type Note, type ReviewLog, type Settings } from '../schema';
 import { addDaysToDay, bumpIso, dayStartMs, fromIso, studyDay, toIso } from '../lib/time';
 import { relativeOverdue } from '../srs/queue';
 import { newId } from '../lib/id';
@@ -305,15 +305,15 @@ export const markOnboarded = () => db.meta.put({ key: ONBOARDED_KEY, value: true
 
 /** 清空本地数据；保留同步设置（令牌） */
 export async function clearAllLocalData() {
-  await db.transaction('rw', [db.decks, db.notes, db.cards, db.logs, db.clips, db.meta], async () => {
-    await Promise.all([db.decks.clear(), db.notes.clear(), db.cards.clear(), db.logs.clear(), db.clips.clear()]);
+  await db.transaction('rw', [db.decks, db.notes, db.cards, db.logs, db.clips, db.texts, db.encounters, db.known, db.meta], async () => {
+    await Promise.all([db.decks.clear(), db.notes.clear(), db.cards.clear(), db.logs.clear(), db.clips.clear(), db.texts.clear(), db.encounters.clear(), db.known.clear()]);
     await db.meta.bulkDelete([SETTINGS_KEY, 'syncState', ONBOARDED_KEY]);
   });
 }
 
 // ---------- 摘句篮 ----------
 
-export interface NewClip { kind: Clip['kind']; text: string; context?: string; translation?: string; gloss?: string; source?: string | null }
+export interface NewClip { kind: Clip['kind']; text: string; context?: string; translation?: string; gloss?: string; source?: string | null; textId?: string | null }
 /** 放进摘句篮。同一个词（或整句）在同一句里已经在篮子里待做时不重复放，返回已有那条 */
 export async function addClip(input: NewClip): Promise<{ id: string; existed: boolean }> {
   const text = input.text.trim();
@@ -324,7 +324,7 @@ export async function addClip(input: NewClip): Promise<{ id: string; existed: bo
   const stamp = toIso(Date.now());
   const clip: Clip = {
     id: newId(), createdAt: stamp, updatedAt: stamp, deleted: false, kind: input.kind, text, context,
-    translation: input.translation ?? '', gloss: input.gloss ?? '', source: input.source ?? null, status: 'todo', noteId: null,
+    translation: input.translation ?? '', gloss: input.gloss ?? '', source: input.source ?? null, status: 'todo', noteId: null, textId: input.textId ?? null,
   };
   await db.clips.put(clip);
   return { id: clip.id, existed: false };
@@ -340,6 +340,50 @@ export async function updateClip(id: string, patch: Partial<Pick<Clip, 'status' 
 export async function deleteClip(id: string) {
   const cur = await db.clips.get(id);
   if (cur) await db.clips.put({ ...cur, deleted: true, updatedAt: bumpIso(cur.updatedAt) });
+}
+
+// ---------- 阅读 ----------
+
+export async function addText(input: { title: string; source?: string | null; body: string; cues?: Text['cues'] }): Promise<string> {
+  const stamp = toIso(Date.now());
+  const t: Text = {
+    id: newId(), createdAt: stamp, updatedAt: stamp, deleted: false, title: input.title.trim() || '未命名',
+    source: input.source?.trim() || null, body: input.body, cues: input.cues ?? [], summary: '',
+  };
+  await db.texts.put(t);
+  return t.id;
+}
+export async function updateText(id: string, patch: Partial<Pick<Text, 'title' | 'source' | 'summary' | 'body' | 'cues'>>) {
+  const cur = await db.texts.get(id);
+  if (cur) await db.texts.put({ ...cur, ...patch, updatedAt: bumpIso(cur.updatedAt) });
+}
+export async function deleteText(id: string) {
+  const cur = await db.texts.get(id);
+  if (cur) await db.texts.put({ ...cur, deleted: true, updatedAt: bumpIso(cur.updatedAt) });
+}
+
+/** 记一次遇见；同一个词在同一句里只记一次。返回这个词一共遇见过几次（不同的句子） */
+export async function recordEncounter(input: { key: string; form: string; sentence: string; textId?: string | null; source?: string | null }): Promise<Encounter[]> {
+  const key = input.key.toLowerCase().trim();
+  // 读和写放在一个事务里：同时打开两次（开发模式下 effect 会跑两遍）也只记一条
+  return db.transaction('rw', db.encounters, async () => {
+    const all = (await db.encounters.where('key').equals(key).toArray()).filter((e) => !e.deleted);
+    if (!key || all.some((e) => e.sentence === input.sentence)) return all;
+    const stamp = toIso(Date.now());
+    const e: Encounter = { id: newId(), createdAt: stamp, updatedAt: stamp, deleted: false, key, form: input.form, sentence: input.sentence, textId: input.textId ?? null, source: input.source ?? null };
+    await db.encounters.put(e);
+    return [...all, e];
+  });
+}
+
+/** 手动标为认识 / 取消（取消是墓碑，同步到其他设备） */
+export async function setKnown(key: string, known: boolean) {
+  const id = key.toLowerCase().trim();
+  if (!id) return;
+  const cur = await db.known.get(id);
+  if (known && cur && !cur.deleted) return;
+  if (!known && (!cur || cur.deleted)) return;
+  await db.known.put({ id, deleted: !known, updatedAt: cur ? bumpIso(cur.updatedAt) : toIso(Date.now()) });
 }
 
 export type { Deck };

@@ -168,6 +168,8 @@ export const SettingsV2 = z.looseObject({
   /** 名词阴阳性下划线（阳性蓝、阴性红）：focus = 只标考查部分里的名词；always = 所有名词；hover = 鼠标移上去才显示；off = 不显示。
    *  四种都能悬停（手机上点一下）看性别和规则。没设过时按旧开关推断 */
   genderDisplay: z.enum(['focus', 'always', 'hover', 'off']).optional(),
+  /** 阅读页：词频最高的前 N 个原形算「认识」（不标色、算进覆盖率）。0 = 只按自己的卡和手动标记 */
+  knownTop: z.number().int().min(0).default(2000),
 });
 
 /** 摘句篮里的一条：划词时摘下的词 / 表达 / 整句，晚上统一做卡。做成卡后记下笔记 id */
@@ -188,7 +190,39 @@ export const ClipV2 = z.looseObject({
   source: z.string().nullable().default(null),
   status: z.enum(['todo', 'done', 'dropped']).default('todo'),
   noteId: z.string().nullable().default(null),
+  /** 在阅读页哪篇文章里摘的 */
+  textId: z.string().nullable().default(null),
 });
+
+/** 阅读页的一篇文章（正文同步）。字幕导入时保留每句的时间 */
+export const TextV2 = z.looseObject({
+  ...base,
+  createdAt: IsoTime,
+  title: z.string(),
+  /** 出处：链接、集数 */
+  source: z.string().nullable().default(null),
+  body: z.string(),
+  /** 字幕：每条字幕的开始时间（00:01:23）和文字；不是字幕时为空，正文按段落显示 */
+  cues: z.array(z.looseObject({ t: z.string(), text: z.string() })).default([]),
+  /** 读完后的复述 */
+  summary: z.string().default(''),
+});
+
+/** 遇见记录：划词查过一次就记一条（同一个词在同一句里只记一次）。手册：第一次遇见先不做卡，第二次再做 */
+export const EncounterV2 = z.looseObject({
+  ...base,
+  createdAt: IsoTime,
+  /** 原形（单词）或小写的表达 */
+  key: z.string(),
+  /** 遇见时的样子 */
+  form: z.string(),
+  sentence: z.string().default(''),
+  textId: z.string().nullable().default(null),
+  source: z.string().nullable().default(null),
+});
+
+/** 手动标为「认识」的词（id = 原形）。常用词前 N 个不存，按设置里的数字现算 */
+export const KnownV2 = z.looseObject({ ...base });
 
 const file = <K extends string, S extends z.ZodRawShape>(kind: K, shape: S) =>
   z.looseObject({ schemaVersion: z.literal(2), kind: z.literal(kind), ...shape });
@@ -198,6 +232,9 @@ export const NotesFileV2 = file('notes', { month: z.string(), notes: z.array(Not
 export const CardsFileV2 = file('cards', { month: z.string(), cards: z.array(CardV2) });
 export const LogsFileV2 = file('logs', { day: Day, logs: z.array(ReviewLogV2) });
 export const ClipsFileV2 = file('clips', { month: z.string(), clips: z.array(ClipV2) });
+export const TextsFileV2 = file('texts', { month: z.string(), texts: z.array(TextV2) });
+export const EncountersFileV2 = file('encounters', { month: z.string(), encounters: z.array(EncounterV2) });
+export const KnownFileV2 = file('known', { known: z.array(KnownV2) });
 export const BundleFileV2 = file('bundle', {
   app: z.enum(['VCita', 'VocabForge']),
   exportedAt: IsoTime,
@@ -208,4 +245,7 @@ export const BundleFileV2 = file('bundle', {
   logs: z.array(ReviewLogV2),
   /** 摘句篮（旧版本导出没有） */
   clips: z.array(ClipV2).default([]),
+  texts: z.array(TextV2).default([]),
+  encounters: z.array(EncounterV2).default([]),
+  known: z.array(KnownV2).default([]),
 });

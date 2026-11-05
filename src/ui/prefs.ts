@@ -19,9 +19,11 @@ export interface Prefs {
   pageSize: number;
   /** 添加页：新笔记的来源类型（挖矿 / 词表），记住上次的选择 */
   addOrigin: 'mined' | 'list';
+  /** 阅读页：按认识 / 学习中 / 生词给词标色 */
+  readColors: boolean;
 }
 const KEY = 'vf_prefs';
-const DEFAULTS: Prefs = { deckId: null, quizType: 0, autoPlay: false, audio: 'core', showT1: true, showT2: false, pageSize: 30, addOrigin: 'mined' };
+const DEFAULTS: Prefs = { deckId: null, quizType: 0, autoPlay: false, audio: 'core', showT1: true, showT2: false, pageSize: 30, addOrigin: 'mined', readColors: true };
 
 let cache: Prefs = (() => {
   try {

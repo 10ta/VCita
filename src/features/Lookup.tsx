@@ -4,14 +4,16 @@
 // 不弹的地方：输入框、复习卡正面（data-no-lookup，免得提前看到答案）、主内容区以外。
 // 点气泡以外的地方、按任意键、滚动、换页时自动关掉。
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { useNotes, useSettings } from '../db/hooks';
-import { addClip } from '../db/actions';
-import type { FrDict } from '../lib/gender/dict';
+import { useKnown, useNotes, useSettings } from '../db/hooks';
+import { addClip, recordEncounter, setKnown } from '../db/actions';
+import { canonicalLemma, lemmaCandidates, lemmaOf, useFrVerbs, type FrDict } from '../lib/gender/dict';
+import { useReadingIndex } from '../lib/reading';
+import type { Encounter } from '../schema';
 import { externalLinks, lookupWiktionnaire, sentenceAround, translateCached, translateSenses, type DictResult } from '../lib/dictionary';
 import { speak } from '../lib/speech';
 import { toast } from '../ui/toast';
 
-interface Sel { text: string; context: string; x: number; y: number; below: boolean; source: string | null }
+interface Sel { text: string; context: string; x: number; y: number; below: boolean; source: string | null; textId: string | null }
 type Mode = 'word' | 'phrase' | 'sentence';
 
 const WORD_RE = /^[\p{L}'’-]+$/u;
@@ -61,9 +63,11 @@ export function LookupBubble({ dict }: { dict: FrDict | null }) {
       const { block, start, end } = contextOf(range);
       const context = modeOf(text) === 'sentence' ? text : sentenceAround(block, start, end) || text;
       const below = r.bottom + 300 < window.innerHeight || r.top < 300;
-      const host = (range.startContainer instanceof Element ? range.startContainer : range.startContainer.parentElement)?.closest('[data-lookup-source]');
+      const startEl = range.startContainer instanceof Element ? range.startContainer : range.startContainer.parentElement;
+      const host = startEl?.closest('[data-lookup-source]');
       setSel({
         text, context, below, source: host?.getAttribute('data-lookup-source') || null,
+        textId: startEl?.closest('[data-text-id]')?.getAttribute('data-text-id') || null,
         x: Math.min(Math.max(8, r.left + r.width / 2 - 180), window.innerWidth - 368),
         y: below ? r.bottom + 8 : r.top - 8,
       });
@@ -118,14 +122,30 @@ interface Found { dict: DictResult | null; zh: string[] | null; zhWhole: string 
 function LookupBody({ sel, dict }: { sel: Sel; dict: FrDict | null }) {
   const s = useSettings();
   const notes = useNotes();
+  const known = useKnown();
+  const verbs = useFrVerbs(true);
+  const index = useReadingIndex(true);
   const mode = modeOf(sel.text);
   const bare = mode === 'word' ? sel.text.replace(ELISION, '') : sel.text;
-  const lemma = mode === 'word' ? dict?.get(bare)?.lemma ?? null : null;
+  // 变位动词（mangeait → manger）要等变位表加载完才知道原形
+  const lemma = mode === 'word' && dict ? lemmaOf(dict, verbs, bare)?.lemma ?? null : null;
+  const ready = mode !== 'word' || (!!dict && !!verbs);
+  // 记遇见、标认识的键：和阅读页标色用同一个（候选原形里最常用的）
+  const key = (mode === 'word' ? (dict && lemma ? canonicalLemma(dict, verbs, bare) : bare) : sel.text).toLowerCase();
   const [found, setFound] = useState<Found | null>(null);
   const [clipped, setClipped] = useState(false);
+  const [seen, setSeen] = useState<Encounter[] | null>(null);
+
+  // 记一次遇见（单词按原形，表达按小写原样；长句不记）
+  useEffect(() => {
+    if (mode === 'sentence' || !ready) return;
+    let alive = true;
+    void recordEncounter({ key, form: bare, sentence: sel.context, textId: sel.textId, source: sel.source }).then((list) => alive && setSeen(list));
+    return () => { alive = false; };
+  }, [mode, ready, key, bare, sel.context, sel.textId, sel.source]);
 
   useEffect(() => {
-    if (!s) return;
+    if (!s || !ready) return;
     let alive = true;
     const sl = s.sourceLang, tl = s.targetLang1;
     void (async () => {
@@ -139,7 +159,7 @@ function LookupBody({ sel, dict }: { sel: Sel; dict: FrDict | null }) {
       if (alive) setFound({ dict: d, zh: zh.lines, zhWhole: zh.lines ? null : zh.whole, sentenceZh: sz, textZh: tz, error });
     })();
     return () => { alive = false; };
-  }, [s, mode, bare, lemma, sel.context, sel.text]);
+  }, [s, ready, mode, bare, lemma, sel.context, sel.text]);
 
   // 已有的笔记：词条里出现这个原形（或选中的表达）
   const existing = useMemo(() => {
@@ -148,6 +168,8 @@ function LookupBody({ sel, dict }: { sel: Sel; dict: FrDict | null }) {
     const re = new RegExp(`(^|[^\\p{L}])${key.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}($|[^\\p{L}])`, 'iu');
     return notes.filter((n) => re.test(n.lemma)).slice(0, 3);
   }, [notes, lemma, bare]);
+  // 有没有卡：和阅读页标色用同一套（一个词形可能属于几个原形，任何一个有卡就算）
+  const hasCard = existing.length > 0 || (mode === 'word' && !!dict && !!index && [key, ...lemmaCandidates(dict, verbs, bare)].some((k) => index.notes.has(k)));
 
   if (!s) return null;
   const clip = async () => {
@@ -158,7 +180,7 @@ function LookupBody({ sel, dict }: { sel: Sel; dict: FrDict | null }) {
     const gloss = first ? [first.def, found?.zh?.[0]].filter(Boolean).join(' · ') : (found?.textZh ?? '');
     const r = await addClip({
       kind: isSentence ? 'sentence' : 'expr', text: isSentence ? sel.text : (lemma && mode === 'word' ? lemma : sel.text),
-      context, translation: (isSentence ? found?.textZh : found?.sentenceZh) ?? '', gloss, source: sel.source,
+      context, translation: (isSentence ? found?.textZh : found?.sentenceZh) ?? '', gloss, source: sel.source, textId: sel.textId,
     });
     setClipped(true);
     toast(r.existed ? '摘句篮里已经有这一条了' : '已放进摘句篮（添加 → 摘句篮）');
@@ -200,11 +222,21 @@ function LookupBody({ sel, dict }: { sel: Sel; dict: FrDict | null }) {
           )}
           {found.dict?.etymology && <p className="lk-etym small"><span className="muted">词源 </span>{found.dict.etymology}</p>}
           {found.sentenceZh && <p className="lk-sent small"><span className="muted">整句 </span>{found.sentenceZh}</p>}
-          {existing.length > 0 && <p className="small"><span className="muted">已有卡 </span>{existing.map((n) => n.lemma).join('；')}</p>}
+          {existing.length > 0 ? <p className="small"><span className="muted">已有卡 </span>{existing.map((n) => n.lemma).join('；')}</p>
+            : hasCard && <p className="small muted">已有包含这个词的卡</p>}
+        </div>
+      )}
+      {seen && seen.length > 1 && (
+        <div className={`lk-seen small${!hasCard ? ' is-hint' : ''}`}>
+          <b>第 {seen.length} 次遇见</b>{!hasCard && '，还没有卡：建议摘句'}
+          {seen.filter((e) => e.sentence !== sel.context).slice(-2).map((e) => <div key={e.id} className="muted">· {e.sentence}{e.source ? `（${e.source}）` : ''}</div>)}
         </div>
       )}
       <div className="lk-actions">
-        <button type="button" className={`pill${clipped ? ' is-on' : ''}`} disabled={clipped} onClick={() => void clip()}>{clipped ? '已摘 ✓' : '摘句'}</button>
+        <button type="button" className={`pill${clipped ? ' is-on' : seen && seen.length > 1 && !hasCard ? ' is-suggest' : ''}`} disabled={clipped} onClick={() => void clip()}>{clipped ? '已摘 ✓' : '摘句'}</button>
+        {mode === 'word' && known && (
+          <button type="button" className={`pill${known.has(key) ? ' is-on' : ''}`} title="阅读页里不再标成生词" onClick={() => void setKnown(key, !known.has(key))}>{known.has(key) ? '已认识 ✓' : '认识'}</button>
+        )}
         <span className="grow" />
         {externalLinks(mode === 'word' ? (lemma ?? bare) : sel.text).map((l) => (
           <a key={l.label} className="small" href={l.url} target="_blank" rel="noreferrer">{l.label}</a>

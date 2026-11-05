@@ -8,9 +8,12 @@
 //   cards/2026-09.json        卡片调度状态，按所属笔记的创建月份
 //   logs/2026-10/02.json      复习日志，按学习日。每次同步只会改当天这一个日志文件
 //   clips/2026-11.json        摘句篮，按摘下的月份
+//   texts/2026-11.json        阅读页的文章，按添加的月份
+//   encounters/2026-11.json   遇见记录，按月份
+//   known.json                手动标为认识的词
 import { db } from '../db/db';
 import { getSettings, putSettingsRaw } from '../db/actions';
-import { CURRENT_SCHEMA_VERSION, parseCardsFile, parseClipsFile, parseLogsFile, parseNotesFile, parseProfileFile, type Card, type Clip, type Deck, type Note, type ReviewLog, type Settings } from '../schema';
+import { CURRENT_SCHEMA_VERSION, parseCardsFile, parseClipsFile, parseEncountersFile, parseKnownFile, parseLogsFile, parseTextsFile, parseNotesFile, parseProfileFile, type Card, type Clip, type Deck, type Encounter, type Known, type Text, type Note, type ReviewLog, type Settings } from '../schema';
 import { mergeLww } from '../io/merge';
 import { fromIso, monthOf } from '../lib/time';
 import { sha1Hex } from '../lib/sha1';
@@ -21,9 +24,9 @@ const KEY_ORDER = [
   'lemma', 'sentence', 'clozeSentence', 'meaningZh', 'meaningEn', 'etymology', 'cueFamily', 'promptFr', 'intentZh', 'hint', 'clozeHint', 'answerFr', 'extra', 'source', 'origin', 'altSentences', 'altIntents',
   'layer', 'cardTypes', 'tags', 'usedCount', 'rot',
   'state', 'due', 'interval', 'ease', 'reps', 'lapses', 'step', 'lastReviewedAt', 'isLeech', 'suspended',
-  'kind', 'text', 'context', 'translation', 'gloss', 'status',
+  'kind', 'title', 'key', 'form', 'text', 'context', 'translation', 'gloss', 'status', 'body', 'cues', 'summary', 'textId',
   'ts', 'rating', 'prevState', 'newState', 'prevInterval', 'newInterval', 'prevEase', 'newEase', 'prevDue', 'newDue', 'elapsedMs',
-  'updatedAt', 'deleted', 'legacy', 'decks', 'settings', 'notes', 'cards', 'logs', 'clips',
+  'updatedAt', 'deleted', 'legacy', 'decks', 'settings', 'notes', 'cards', 'logs', 'clips', 'texts', 'encounters', 'known',
 ];
 const rank = (k: string) => {
   const i = KEY_ORDER.indexOf(k);
@@ -61,7 +64,10 @@ const NOTES_RE = /^notes\/(\d{4}-\d{2})\.json$/;
 const CARDS_RE = /^cards\/(\d{4}-\d{2})\.json$/;
 const LOGS_RE = /^logs\/(\d{4}-\d{2})\/(\d{2})\.json$/;
 const CLIPS_RE = /^clips\/(\d{4}-\d{2})\.json$/;
-export const isOurFile = (rel: string) => rel === PROFILE_PATH || NOTES_RE.test(rel) || CARDS_RE.test(rel) || LOGS_RE.test(rel) || CLIPS_RE.test(rel);
+const TEXTS_RE = /^texts\/(\d{4}-\d{2})\.json$/;
+const ENC_RE = /^encounters\/(\d{4}-\d{2})\.json$/;
+const KNOWN_PATH = 'known.json';
+export const isOurFile = (rel: string) => rel === PROFILE_PATH || rel === KNOWN_PATH || NOTES_RE.test(rel) || CARDS_RE.test(rel) || LOGS_RE.test(rel) || CLIPS_RE.test(rel) || TEXTS_RE.test(rel) || ENC_RE.test(rel);
 
 const byId = <T extends { id: string }>(a: T, b: T) => (a.id < b.id ? -1 : a.id > b.id ? 1 : 0);
 const sorted = <T extends { createdAt?: string; ts?: string; id: string }>(list: T[], key: 'createdAt' | 'ts') =>
@@ -83,6 +89,9 @@ export interface LocalData {
   decks: Deck[]; notes: Note[]; cards: Card[]; logs: ReviewLog[]; settings: Settings;
   /** 旧测试里构造的 LocalData 没有它 */
   clips?: Clip[];
+  texts?: Text[];
+  encounters?: Encounter[];
+  known?: Known[];
 }
 
 /**
@@ -100,15 +109,16 @@ const sigOf = (list: Array<{ id: string; updatedAt: string }>) => {
 };
 
 export const readLocalData = async (): Promise<LocalData> => {
-  const [decks, notes, cards, logs, settings, clips] = await Promise.all([
+  const [decks, notes, cards, logs, settings, clips, texts, encounters, known] = await Promise.all([
     db.decks.toArray(), db.notes.toArray(), db.cards.toArray(), db.logs.toArray(), getSettings(), db.clips.toArray(),
+    db.texts.toArray(), db.encounters.toArray(), db.known.toArray(),
   ]);
-  return { decks, notes, cards, logs, settings, clips };
+  return { decks, notes, cards, logs, settings, clips, texts, encounters, known };
 };
 
 /** 把本地数据序列化成仓库文件（路径相对于数据目录），带 blob SHA */
 export async function localFiles(data?: LocalData): Promise<Map<string, LocalFile>> {
-  const { decks, notes, cards, logs, settings, clips = [] } = data ?? (await readLocalData());
+  const { decks, notes, cards, logs, settings, clips = [], texts = [], encounters = [], known = [] } = data ?? (await readLocalData());
   const v = CURRENT_SCHEMA_VERSION;
   const out = new Map<string, LocalFile>();
   const put = async (rel: string, sig: string, make: () => unknown) => {
@@ -131,6 +141,14 @@ export async function localFiles(data?: LocalData): Promise<Map<string, LocalFil
     await put(`logs/${day.slice(0, 7)}/${day.slice(8)}.json`, sigOf(list), () => ({ schemaVersion: v, kind: 'logs', day, logs: sorted(list, 'ts') }));
   for (const [month, list] of [...group(clips, (c) => monthOf(c.createdAt))].sort())
     await put(`clips/${month}.json`, sigOf(list), () => ({ schemaVersion: v, kind: 'clips', month, clips: sorted(list, 'createdAt') }));
+  for (const [month, list] of [...group(texts, (t) => monthOf(t.createdAt))].sort())
+    await put(`texts/${month}.json`, sigOf(list), () => ({ schemaVersion: v, kind: 'texts', month, texts: sorted(list, 'createdAt') }));
+  for (const [month, list] of [...group(encounters, (e) => monthOf(e.createdAt))].sort())
+    await put(`encounters/${month}.json`, sigOf(list), () => ({ schemaVersion: v, kind: 'encounters', month, encounters: sorted(list, 'createdAt') }));
+  if (known.length) {
+    const list = [...known].sort(byId);
+    await put(KNOWN_PATH, sigOf(list), () => ({ schemaVersion: v, kind: 'known', known: list }));
+  }
   for (const rel of fileCache.keys()) if (!out.has(rel)) fileCache.delete(rel);
   return out;
 }
@@ -167,5 +185,14 @@ export async function applyRemoteFile(rel: string, text: string): Promise<void> 
   } else if (CLIPS_RE.test(rel)) {
     const f = parseClipsFile(raw);
     await db.transaction('rw', db.clips, () => mergeLww(db.clips, f.clips));
+  } else if (TEXTS_RE.test(rel)) {
+    const f = parseTextsFile(raw);
+    await db.transaction('rw', db.texts, () => mergeLww(db.texts, f.texts));
+  } else if (ENC_RE.test(rel)) {
+    const f = parseEncountersFile(raw);
+    await db.transaction('rw', db.encounters, () => mergeLww(db.encounters, f.encounters));
+  } else if (rel === KNOWN_PATH) {
+    const f = parseKnownFile(raw);
+    await db.transaction('rw', db.known, () => mergeLww(db.known, f.known));
   }
 }

@@ -4,7 +4,7 @@
 // 注：v1 是旧服务器版 VCita 的数据，已不再支持导入。
 import { z } from 'zod';
 import {
-  BundleFileV2, CardV2, ClipV2, ClipsFileV2, CardsFileV2, DeckV2, LogsFileV2, NoteV2, NotesFileV2, ProfileFileV2, ReviewLogV2, SettingsV2,
+  BundleFileV2, CardV2, ClipV2, ClipsFileV2, EncounterV2, EncountersFileV2, KnownFileV2, KnownV2, TextV2, TextsFileV2, CardsFileV2, DeckV2, LogsFileV2, NoteV2, NotesFileV2, ProfileFileV2, ReviewLogV2, SettingsV2,
 } from './v2';
 
 export { THEMES, CARD_STATES, CARD_TYPES } from './v2';
@@ -23,6 +23,9 @@ export type NoteOrigin = NonNullable<Note['origin']>;
 export const noteOrigin = (n: Partial<Pick<Note, 'origin' | 'source'>>): NoteOrigin => n.origin ?? (n.source?.trim() ? 'mined' : 'list');
 export type BundleFile = z.infer<typeof BundleFileV2>;
 export type Clip = z.infer<typeof ClipV2>;
+export type Text = z.infer<typeof TextV2>;
+export type Encounter = z.infer<typeof EncounterV2>;
+export type Known = z.infer<typeof KnownV2>;
 
 type AnyFile = { schemaVersion: number; kind: string; [k: string]: unknown };
 interface Migration { from: number; to: number; up: (file: AnyFile) => AnyFile }
@@ -54,6 +57,9 @@ export const parseNotesFile = (raw: unknown) => NotesFileV2.parse(migrateFile(ra
 export const parseCardsFile = (raw: unknown) => CardsFileV2.parse(migrateFile(raw));
 export const parseLogsFile = (raw: unknown) => LogsFileV2.parse(migrateFile(raw));
 export const parseClipsFile = (raw: unknown) => ClipsFileV2.parse(migrateFile(raw));
+export const parseTextsFile = (raw: unknown) => TextsFileV2.parse(migrateFile(raw));
+export const parseEncountersFile = (raw: unknown) => EncountersFileV2.parse(migrateFile(raw));
+export const parseKnownFile = (raw: unknown) => KnownFileV2.parse(migrateFile(raw));
 export const parseBundle = (raw: unknown) => BundleFileV2.parse(migrateFile(raw));
 export const parseNote = (raw: unknown) => NoteV2.parse(raw);
 export const parseCard = (raw: unknown) => CardV2.parse(raw);

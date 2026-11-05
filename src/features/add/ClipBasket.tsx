@@ -2,8 +2,9 @@
 // 两条出口：直接在这里建卡（预填句子、出处），或者复制成 `词(原句` 的格式交给 Claude 批量做卡。
 // 做成的卡导入后，篮子里对应的条目自动标为已做卡。
 import { useEffect, useMemo, useState } from 'react';
-import { useClips, useNotes, useSettings } from '../../db/hooks';
-import { deleteClip, updateClip } from '../../db/actions';
+import { useClips, useEncounters, useKnown, useNotes, useSettings } from '../../db/hooks';
+import { addClip, deleteClip, setKnown, updateClip } from '../../db/actions';
+import { useReadingIndex } from '../../lib/reading';
 import type { Clip, Note } from '../../schema';
 import { clozeTarget } from '../../schema/validate';
 import { renderSentence } from '../CardFace';
@@ -91,6 +92,7 @@ export function ClipBasket({ onMake }: { onMake: (p: ClipPrefill) => void }) {
         <button type="button" className="btn" disabled={!todo.length && !chosen.length} onClick={() => void copy()}
           title="复制成「词(原句」的格式，一行一条">{chosen.length ? `复制选中的 ${chosen.length} 条给 Claude` : '复制全部待做给 Claude'}</button>
       </div>
+      {view === 'todo' && <SeenTwice clips={clips} />}
       {!shown.length && <p className="empty muted">{view === 'todo' ? '篮子是空的。在复习卡背面、词库里选中法语，点「摘句」。' : '没有记录'}</p>}
       <ul className="clips">
         {shown.map((c) => (
@@ -120,6 +122,51 @@ export function ClipBasket({ onMake }: { onMake: (p: ClipPrefill) => void }) {
           </li>
         ))}
       </ul>
+    </div>
+  );
+}
+
+/** 遇见两次以上（不同的句子）、还没有卡、没标认识、也不在篮子里的词。手册：第一次遇见先不做卡，第二次再做 */
+export function SeenTwice({ clips }: { clips: Clip[] }) {
+  const encounters = useEncounters();
+  const known = useKnown();
+  const index = useReadingIndex(true);
+  const [open, setOpen] = useState(true);
+  const list = useMemo(() => {
+    if (!encounters || !known || !index) return [];
+    const inBasket = new Set(clips.filter((c) => c.status === 'todo').map((c) => c.text.toLowerCase()));
+    const by = new Map<string, typeof encounters>();
+    for (const e of encounters) (by.get(e.key) ?? by.set(e.key, []).get(e.key)!).push(e);
+    return [...by].filter(([k, es]) => es.length >= 2 && !index.notes.has(k) && !known.has(k) && !inBasket.has(k))
+      .map(([k, es]) => ({ key: k, list: es.sort((a, b) => (a.createdAt < b.createdAt ? 1 : -1)) }))
+      .sort((a, b) => b.list.length - a.list.length || (a.list[0].createdAt < b.list[0].createdAt ? 1 : -1));
+  }, [encounters, known, index, clips]);
+  if (!list.length) return null;
+  const pick = async (key: string, e: (typeof list)[number]['list'][number]) => {
+    const i = e.sentence.toLowerCase().indexOf(e.form.toLowerCase());
+    const context = i < 0 ? e.sentence : `${e.sentence.slice(0, i)}{{${e.sentence.slice(i, i + e.form.length)}}}${e.sentence.slice(i + e.form.length)}`;
+    await addClip({ kind: 'expr', text: key, context, source: e.source, textId: e.textId });
+    toast(`「${key}」放进摘句篮了`);
+  };
+  return (
+    <div className="seen-twice">
+      <button type="button" className="pill" onClick={() => setOpen(!open)}>{open ? '▾' : '▸'} 遇见两次以上、还没有卡（{list.length}）</button>
+      {open && (
+        <ul className="clips">
+          {list.slice(0, 30).map(({ key, list: es }) => (
+            <li key={key} className="clip">
+              <div className="clip-main">
+                <div className="clip-text"><b>{key}</b><span className="badge">遇见 {es.length} 次</span></div>
+                {es.slice(0, 2).map((e) => <div key={e.id} className="muted small">· {e.sentence}{e.source ? `（${e.source}）` : ''}</div>)}
+              </div>
+              <div className="clip-actions">
+                <button type="button" className="pill" onClick={() => void pick(key, es[0])}>摘句</button>
+                <button type="button" className="pill" onClick={() => void setKnown(key, true)} title="以后不再列出，阅读页里也不标成生词">认识</button>
+              </div>
+            </li>
+          ))}
+        </ul>
+      )}
     </div>
   );
 }

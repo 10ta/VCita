@@ -6,22 +6,26 @@ import { fromIso, toIso } from '../lib/time';
 import { mergeLww, type MergeCount } from './merge';
 
 export async function exportBundle(): Promise<BundleFile> {
-  const [decks, notes, cards, logs, settings, clips] = await Promise.all([
+  const [decks, notes, cards, logs, settings, clips, texts, encounters, known] = await Promise.all([
     db.decks.toArray(), db.notes.toArray(), db.cards.toArray(), db.logs.toArray(), getSettings(), db.clips.toArray(),
+    db.texts.toArray(), db.encounters.toArray(), db.known.toArray(),
   ]);
   // 墓碑也导出，合并时才能正确传播删除
-  return { schemaVersion: CURRENT_SCHEMA_VERSION as 2, kind: 'bundle', app: 'VCita', exportedAt: toIso(Date.now()), decks, settings, notes, cards, logs, clips };
+  return { schemaVersion: CURRENT_SCHEMA_VERSION as 2, kind: 'bundle', app: 'VCita', exportedAt: toIso(Date.now()), decks, settings, notes, cards, logs, clips, texts, encounters, known };
 }
 
-export async function importBundle(raw: unknown): Promise<Record<'decks' | 'notes' | 'cards' | 'logs' | 'clips', MergeCount>> {
+export async function importBundle(raw: unknown): Promise<Record<'decks' | 'notes' | 'cards' | 'logs' | 'clips' | 'texts' | 'encounters' | 'known', MergeCount>> {
   const b = parseBundle(raw);
-  return db.transaction('rw', [db.decks, db.notes, db.cards, db.logs, db.clips, db.meta], async () => {
+  return db.transaction('rw', [db.decks, db.notes, db.cards, db.logs, db.clips, db.texts, db.encounters, db.known, db.meta], async () => {
     const r = {
       decks: await mergeLww(db.decks, b.decks),
       notes: await mergeLww(db.notes, b.notes),
       cards: await mergeLww(db.cards, b.cards),
       logs: await mergeLww(db.logs, b.logs),
       clips: await mergeLww(db.clips, b.clips),
+      texts: await mergeLww(db.texts, b.texts),
+      encounters: await mergeLww(db.encounters, b.encounters),
+      known: await mergeLww(db.known, b.known),
     };
     const cur = await getSettings();
     if (fromIso(b.settings.updatedAt) > fromIso(cur.updatedAt)) await putSettingsRaw(b.settings);

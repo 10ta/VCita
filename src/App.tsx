@@ -11,6 +11,7 @@ import { AutoSync, SyncBadge } from './sync/SyncBadge';
 import { ReviewPage } from './features/review/ReviewPage';
 import { LibraryPage } from './features/library/LibraryPage';
 import { AddPage } from './features/add/AddPage';
+import { ReadPage } from './features/read/ReadPage';
 import { StatsPage } from './features/stats/StatsPage';
 import { SettingsPage } from './features/settings/SettingsPage';
 import { Onboarding } from './features/Onboarding';
@@ -20,6 +21,7 @@ import { FrProvider } from './features/FrText';
 const NAV = [
   { key: 'review', label: '复习' },
   { key: 'library', label: '词库' },
+  { key: 'read', label: '阅读' },
   { key: 'add', label: '添加' },
   { key: 'stats', label: '统计' },
   { key: 'settings', label: '设置' },
@@ -109,6 +111,7 @@ export function App() {
             : route === 'review' ? <ReviewPage deckId={deckId} />
             : route === 'library' ? <LibraryPage deckId={deckId} />
             : route === 'add' ? <AddPage deckId={deckId} />
+            : route === 'read' ? <ReadPage />
             : <StatsPage deckId={deckId} />}
         </ErrorBoundary>
       </main>
