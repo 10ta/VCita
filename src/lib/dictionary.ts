@@ -201,8 +201,8 @@ export function sentenceAround(block: string, start: number, end: number): strin
 
 /** 外部词典（手册里用的查词工具） */
 export const externalLinks = (q: string) => [
-  { label: 'Wiktionnaire', url: `https://fr.wiktionary.org/wiki/${encodeURIComponent(q.replace(/ /g, '_'))}` },
-  { label: 'Le Robert', url: `https://dictionnaire.lerobert.com/definition/${encodeURIComponent(q.toLowerCase().replace(/ /g, '-'))}` },
-  { label: 'WordReference', url: `https://www.wordreference.com/fren/${encodeURIComponent(q)}` },
-  { label: 'Reverso', url: `https://context.reverso.net/traduction/francais-chinois/${encodeURIComponent(q.replace(/ /g, '+'))}` },
+  { label: 'Wiktionnaire', short: 'Wikt', url: `https://fr.wiktionary.org/wiki/${encodeURIComponent(q.replace(/ /g, '_'))}` },
+  { label: 'Le Robert', short: 'Robert', url: `https://dictionnaire.lerobert.com/definition/${encodeURIComponent(q.toLowerCase().replace(/ /g, '-'))}` },
+  { label: 'WordReference', short: 'WR', url: `https://www.wordreference.com/fren/${encodeURIComponent(q)}` },
+  { label: 'Reverso', short: 'Reverso', url: `https://context.reverso.net/traduction/francais-chinois/${encodeURIComponent(q.replace(/ /g, '+'))}` },
 ];

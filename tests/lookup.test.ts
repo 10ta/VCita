@@ -12,7 +12,7 @@ vi.mock('../src/lib/speech', () => ({
 import { db } from '../src/db/db';
 import { addClip, addNotes, clearAllLocalData, deleteClip, updateClip } from '../src/db/actions';
 import { lookupWiktionnaire, parseWiktionnaire, sentenceAround, translateSenses } from '../src/lib/dictionary';
-import { modeOf } from '../src/features/Lookup';
+import { modeOf, placeBubble } from '../src/features/Lookup';
 import { clipLine, matchNote } from '../src/features/add/ClipBasket';
 import { applyRemoteFile, buildLocalFiles, clearFileCache } from '../src/sync/files';
 import { exportBundle, importBundle } from '../src/io/bundle';
@@ -180,5 +180,36 @@ describe('摘句篮', () => {
     await new Promise((r) => setTimeout(r, 5));
     await updateClip(id, { status: 'todo', noteId: null });
     expect(matchNote((await db.clips.get(id))!, notes)).toBeUndefined();
+  });
+});
+
+describe('气泡位置', () => {
+  const a = (top: number, bottom = top + 24, left = 500, width = 80) => ({ top, bottom, left, width });
+  it('下方够就放下方，高度不超出屏幕', () => {
+    const p = placeBubble(a(100), 1280, 900);
+    expect(p.top).toBe(132);
+    expect(p.bottom).toBeUndefined();
+    expect(p.maxHeight).toBeLessThanOrEqual(900 - 132 - 8);
+  });
+  it('选区靠近底部：放上方，用 bottom 定位，最高不超过上方空间', () => {
+    const p = placeBubble(a(700), 1280, 900);
+    expect(p.top).toBeUndefined();
+    expect(p.bottom).toBe(900 - 700 + 8);
+    expect(p.maxHeight).toBeLessThanOrEqual(700 - 16);
+  });
+  it('截图里的情况（选区在屏幕中间偏下）：气泡整个落在屏幕里', () => {
+    const p = placeBubble(a(480, 510), 1280, 936);
+    expect(p.top! + p.maxHeight).toBeLessThanOrEqual(936 - 8);
+  });
+  it('多行长句上下都没空间：贴底部', () => {
+    const p = placeBubble(a(150, 780), 1280, 900);
+    expect(p.bottom).toBe(8);
+  });
+  it('水平方向不出屏：手机宽度占满减两边留白', () => {
+    const p = placeBubble(a(100, 124, 360, 20), 390, 844);
+    expect(p.width).toBe(374);
+    expect(p.left).toBe(8);
+    const q = placeBubble(a(100, 124, 1260, 20), 1280, 900);
+    expect(q.left + q.width).toBeLessThanOrEqual(1272);
   });
 });

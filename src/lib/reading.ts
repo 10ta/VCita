@@ -13,6 +13,8 @@ export interface Tok { text: string; key?: string; status?: WordStatus }
 export const STABLE_DAYS = 21;
 // 词频前 N 设成 0 时，这些虚词仍算认识
 const FUNC = new Set('le la les l un une des de du d à au aux en et ou se s ne pas y que qu qui ce cet cette ces sa son ses leur leurs mon ma mes ton ta tes nous vous il ils elle elles on je j me m te t lui eux pour par sur dans avec sans être avoir faire mais donc car si'.split(' '));
+/** 虚词（冠词、介词、代词、连词等） */
+export const isFunctionWord = (w: string) => FUNC.has(w.toLowerCase());
 const NOT_WORDS = /\([^)]*\)|\bqq(?:ch|n)\b|\+|…/gi;
 const WORD = /(\p{L}+(?:['’-]\p{L}+)*)/u;
 const ELISION = /^((?:[ldjmnstc]|qu|jusqu|lorsqu|puisqu|quoiqu)['’])(\p{L}.*)$/iu;
