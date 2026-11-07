@@ -7,6 +7,7 @@ import { deleteNotes, groupContrast, resetNotes, setSuspended, updateNote, updat
 import { THEMES, noteOrigin, type Card, type Note, type NoteOrigin, type Theme } from '../../schema';
 import { productionErrors } from '../../schema/validate';
 import { addDaysToDay, fromIso, noonIso, studyDay } from '../../lib/time';
+import { isDue } from '../../srs/scheduler';
 import { findDuplicates } from '../../srs/dups';
 import { startCustom } from '../../srs/custom';
 import { NoteDetail } from './NoteDetail';
@@ -129,7 +130,7 @@ export function LibraryPage({ deckId }: { deckId: string }) {
           case 'all': return true;
           case 'new': return cs.some((c) => c.state === 'new');
           case 'learning': return cs.some((c) => c.state === 'learning' || c.state === 'relearning');
-          case 'due': return cs.some((c) => !c.suspended && c.state !== 'new' && fromIso(c.due) <= now);
+          case 'due': return cs.some((c) => !c.suspended && c.state !== 'new' && isDue(c, now, s?.dayStartHour ?? 4));
           case 'leech': return cs.some((c) => c.isLeech);
           case 'suspended': return cs.some((c) => c.suspended);
           case 'nosentence': return !n.sentence;
@@ -240,7 +241,7 @@ export function LibraryPage({ deckId }: { deckId: string }) {
           const cs = cardsByNote.get(n.id) ?? [];
           const card = cs.find((c) => c.type === 'recognition') ?? cs[0];
           const isSel = sel.has(n.id);
-          const due = card && !card.suspended && card.state !== 'new' && fromIso(card.due) <= Date.now();
+          const due = card && !card.suspended && card.state !== 'new' && isDue(card, Date.now(), s?.dayStartHour ?? 4);
           return (
             <li key={n.id} className={`note${isSel ? ' is-sel' : ''}${due ? ' is-due' : ''}`} data-lookup-source={n.lemma || undefined}
               onClick={(e) => { if (!(e.target as HTMLElement).closest('button,input,select,a,label') && !window.getSelection()?.toString()) toggle(n.id); }}>

@@ -177,5 +177,12 @@ export function schedule<C extends Sched>(card: C, rating: Rating, now: number, 
 export const fmtNextIn = (n: NextIn, fmtM: (m: number) => string, fmtD: (d: number) => string) =>
   'minutes' in n ? fmtM(n.minutes) : fmtD(n.days);
 
-/** 卡片当前是否已到期（学习卡按分钟，复习卡按学习日） */
-export const isDue = (card: Pick<Card, 'due'>, now: number) => fromIso(card.due) <= now;
+/**
+ * 卡片当前是否已到期：学习 / 重学卡按到期时刻（分钟级），复习卡按学习日。
+ * 复习卡的 due 是排期那一刻按当时的切换时间算的时间点；改过切换时间或时区（或在时区不同的设备上复习过）后，
+ * 老卡的时间点和新的切换时间对不上，按时刻判断会在一天中途陆续冒出来。按学习日判断，新的一天开始时就全部到期。
+ */
+export function isDue(card: Pick<Card, 'due' | 'state'>, now: number, dayStartHour: number): boolean {
+  if (card.state === 'review') return studyDay(fromIso(card.due), dayStartHour) <= studyDay(now, dayStartHour);
+  return fromIso(card.due) <= now;
+}

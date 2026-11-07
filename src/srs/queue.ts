@@ -17,6 +17,7 @@
 //  5. 都没有时，20 分钟内到期的学习卡提前出（Anki 的 learn ahead）；只提前本学习日内到期的，
 //     跨过换日时间的不提前（凌晨 3:42 不能把"1 天"步骤、4:00 才到期的卡拿出来，它属于明天）；刚答完的那张不提前，
 //     否则只剩它时会立刻重复出现（例如重学卡点"困难"= 10 分钟后，却马上又出来）
+import { isDue } from './scheduler';
 import { noteOrigin, type Card, type Note, type ReviewLog, type Settings } from '../schema';
 import { addDaysToDay, dayStartMs, fromIso, studyDay } from '../lib/time';
 
@@ -179,7 +180,7 @@ export function buildQueue(q: QueueInput): QueueState {
   const reviewLimit = q.settings.reviewsPerDay > 0 ? Math.max(0, q.settings.reviewsPerDay - revSeen.size) : Infinity;
   const sortOverdue = (q.settings.reviewSort ?? 'overdue') === 'overdue';
   const dueReviews = pool
-    .filter((c) => c.state === 'review' && fromIso(c.due) <= q.now)
+    .filter((c) => c.state === 'review' && isDue(c, q.now, q.settings.dayStartHour))
     .sort(sortOverdue ? (a, b) => relativeOverdue(b, q.now) - relativeOverdue(a, q.now) || byDue(a, b) : byDue);
   const reviews = dueReviews.slice(0, reviewLimit);
 

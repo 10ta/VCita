@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, it } from 'vitest';
-import { addDaysToDay, calendarDay, dayStartMs, setTimeZone, studyDay } from '../src/lib/time';
+import { addDaysToDay, calendarDay, dayStartMs, setTimeZone, studyDay, toIso } from '../src/lib/time';
+import { isDue } from '../src/srs/scheduler';
 
 describe('学习日的时区', () => {
   afterEach(() => setTimeZone(null));
@@ -24,5 +25,24 @@ describe('学习日的时区', () => {
     expect(studyDay(t, 0)).toBe(calendarDay(t));
     expect(addDaysToDay('2026-03-08', 1)).toBe('2026-03-09');
     expect(addDaysToDay('2026-12-31', 1)).toBe('2027-01-01');
+  });
+});
+
+describe('改了切换时间以后，复习卡按学习日到期', () => {
+  it('旧设置（纽约 04:00）排的卡，改成 UTC 00:00 后新的一天一开始就到期，不会中途冒出来', () => {
+    // 旧设置下排到 11 月 7 日：到期时刻 = 纽约 04:00 = UTC 09:00
+    setTimeZone('America/New_York');
+    const due = toIso(dayStartMs('2026-11-07', 4));
+    expect(due).toBe(toIso(Date.UTC(2026, 10, 7, 9)));
+    // 改成 UTC 00:00；现在是 UTC 06:00（纽约凌晨 1 点），已经是 11 月 7 日这个学习日
+    setTimeZone('UTC');
+    const now = Date.UTC(2026, 10, 7, 6);
+    const card = { state: 'review' as const, due };
+    expect(isDue(card, now, 0)).toBe(true);
+    // 前一个学习日还没到
+    expect(isDue(card, Date.UTC(2026, 10, 6, 23), 0)).toBe(false);
+    // 学习中的卡仍按分钟
+    expect(isDue({ state: 'learning' as const, due }, now, 0)).toBe(false);
+    setTimeZone(null);
   });
 });

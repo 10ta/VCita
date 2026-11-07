@@ -1,10 +1,10 @@
 // 设置 → 牌组：牌组增删改频率很低，从独立页面并到设置里
 import { useState } from 'react';
-import { useCards, useDecks, useNotes } from '../../db/hooks';
+import { useCards, useDecks, useNotes, useSettings } from '../../db/hooks';
+import { isDue } from '../../srs/scheduler';
 import { createDeck, deleteDeck, mergeDeck, renameDeck } from '../../db/actions';
 import { setPrefs, usePrefs } from '../../ui/prefs';
 import { Modal } from '../../ui/Modal';
-import { fromIso } from '../../lib/time';
 import { toast } from '../../ui/toast';
 
 export function DeckSection() {
@@ -12,6 +12,7 @@ export function DeckSection() {
   const notes = useNotes();
   const cards = useCards();
   const prefs = usePrefs();
+  const s = useSettings();
   const [name, setName] = useState('');
   const [renaming, setRenaming] = useState<{ id: string; name: string } | null>(null);
   const [deleting, setDeleting] = useState<string | null>(null);
@@ -23,7 +24,7 @@ export function DeckSection() {
     const cs = cards.filter((c) => c.deckId === id);
     return {
       notes: notes.filter((n) => n.deckId === id).length,
-      due: cs.filter((c) => !c.suspended && c.state !== 'new' && fromIso(c.due) <= now).length,
+      due: cs.filter((c) => !c.suspended && c.state !== 'new' && isDue(c, now, s?.dayStartHour ?? 4)).length,
       fresh: cs.filter((c) => !c.suspended && c.state === 'new').length,
       leech: cs.filter((c) => c.isLeech).length,
     };

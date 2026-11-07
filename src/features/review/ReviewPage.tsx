@@ -2,8 +2,8 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { useCards, useMemories, useNotes, useSettings, useTodayLogs } from '../../db/hooks';
 import { answerCard, bumpUsed, setSuspended, undoAnswer, type AnswerResult } from '../../db/actions';
 import { buildQueue } from '../../srs/queue';
-import { fmtNextIn, preview, type Rating } from '../../srs/scheduler';
-import { fmtDays, fmtMinutes, fromIso } from '../../lib/time';
+import { fmtNextIn, isDue, preview, type Rating } from '../../srs/scheduler';
+import { fmtDays, fmtMinutes } from '../../lib/time';
 import { answerCustom, endCustom, nextQueue, pickCustom, restoreCustom, useCustom, type CustomSession } from '../../srs/custom';
 import { speak } from '../../lib/speech';
 import { usePrefs, setPrefs } from '../../ui/prefs';
@@ -142,7 +142,7 @@ export function ReviewPage({ deckId }: { deckId: string }) {
   if (!s || !q) return null;
 
   // 自定义学习里，没到期的卡只练习不调度
-  const scheduled = !custom || (!!card && card.state !== 'new' && fromIso(card.due) <= Date.now());
+  const scheduled = !custom || (!!card && card.state !== 'new' && isDue(card, Date.now(), s.dayStartHour));
   const answer = async (r: Rating) => {
     if (!card || !revealed) return;
     setLearnAheadAll(false);
