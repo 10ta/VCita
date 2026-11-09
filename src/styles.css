@@ -434,14 +434,24 @@ textarea.weights { width: 100%; font-family: var(--mono); font-size: 12px; }
   .page { animation: none; }
 }
 
-/* 听力卡正面：文字先模糊；悬停看上下文（要听的部分仍遮住），点一下 / H 全部显示 */
-.listen-text { margin-top: 10px; font-size: 18px; line-height: 1.7; cursor: pointer; user-select: none; -webkit-user-select: none; }
-.listen-text .lt-ctx, .listen-text .lt-target { filter: blur(7px); transition: filter .15s; }
-.listen-text .lt-target { color: var(--accent); }
-.listen-text.is-ctx .lt-ctx { filter: none; }
-.listen-text.is-full .lt-ctx, .listen-text.is-full .lt-target { filter: none; }
-.listen-peek { font-size: 12px; color: var(--dim); margin-top: 4px; }
+/* 听力卡正面：遮住的就是背面那行答案（.answer .a1，样式不变）；悬停露出上下文（要听的部分 .cloze 仍遮住），点一下全部露出 */
+.listen-mask .a1 { cursor: pointer; user-select: none; -webkit-user-select: none; }
+.listen-mask .a1 > span, .listen-mask .a1 .cloze { transition: filter .15s; }
+.listen-mask.peek-0 .a1 > span { filter: blur(7px); }
+.listen-mask.peek-1 .a1 .cloze { filter: blur(7px); }
+.listen-peek { font-size: 12px; color: var(--dim); }
 .audio-ctl { display: inline-flex; border: 1px solid #333; border-radius: 20px; overflow: hidden; }
 .audio-ctl button { border: 0; border-radius: 0; background: transparent; padding: 4px 11px; font-family: var(--mono); font-size: 12px; color: var(--dim); cursor: pointer; }
 .audio-ctl button + button { border-left: 1px solid #333; }
 .audio-ctl button.is-on { color: var(--accent); background: var(--accent-dim); }
+
+/* 添加 → 短文挖词 */
+.mine { display: grid; gap: 10px; }
+.mine-head { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.mine-head .sub { margin: 0; }
+.mine-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; }
+.mine-list li { display: grid; grid-template-columns: minmax(140px, max-content) 1fr auto; gap: 4px 12px; align-items: baseline; padding: 6px 10px; border-radius: 8px; background: var(--surface); }
+.mine-list li.is-off { opacity: .45; }
+.mine-pick { display: flex; gap: 6px; align-items: baseline; cursor: pointer; font-family: var(--serif); font-size: 17px; }
+.mine-sent { line-height: 1.5; }
+@media (max-width: 560px) { .mine-list li { grid-template-columns: 1fr auto; } .mine-sent { grid-column: 1 / -1; grid-row: 2; } }

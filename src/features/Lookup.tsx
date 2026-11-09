@@ -268,7 +268,7 @@ function LookupBody({ sel, dict, onClose }: { sel: Sel; dict: FrDict | null; onC
       <div className="lk-actions">
         <button type="button" className={`pill${clipped ? ' is-on' : seen && seen.length > 1 && !hasCard ? ' is-suggest' : ''}`} disabled={clipped} onClick={() => void clip()}>{clipped ? '已摘 ✓' : '摘句'}</button>
         {mode === 'word' && known && (
-          <button type="button" className={`pill${known.has(key) ? ' is-on' : ''}`} title="阅读页里不再标成生词" onClick={() => void setKnown(key, !known.has(key))}>{known.has(key) ? '已认识 ✓' : '认识'}</button>
+          <button type="button" className={`pill${known.has(key) ? ' is-on' : ''}`} title="短文挖词里不再算生词" onClick={() => void setKnown(key, !known.has(key))}>{known.has(key) ? '已认识 ✓' : '认识'}</button>
         )}
         <span className="grow" />
         <nav className="lk-dicts" aria-label="外部词典">

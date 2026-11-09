@@ -11,7 +11,6 @@ import { AutoSync, SyncBadge } from './sync/SyncBadge';
 import { ReviewPage } from './features/review/ReviewPage';
 import { LibraryPage } from './features/library/LibraryPage';
 import { AddPage } from './features/add/AddPage';
-import { ReadPage } from './features/read/ReadPage';
 import { FramesPage } from './features/frames/FramesPage';
 import { StatsPage } from './features/stats/StatsPage';
 import { SettingsPage } from './features/settings/SettingsPage';
@@ -22,7 +21,6 @@ import { FrProvider } from './features/FrText';
 const NAV = [
   { key: 'review', label: '复习' },
   { key: 'library', label: '词库' },
-  { key: 'read', label: '阅读' },
   { key: 'frames', label: '语块' },
   { key: 'add', label: '添加' },
   { key: 'stats', label: '统计' },
@@ -33,6 +31,11 @@ type RouteKey = (typeof NAV)[number]['key'];
 function readRoute(): RouteKey {
   const key = location.hash.replace(/^#\/?/, '').split(/[/?]/)[0];
   // 牌组管理并进了设置：旧链接跳到设置里的牌组分类
+  // 阅读页并进了 添加 → 短文挖词
+  if (key === 'read') {
+    history.replaceState(null, '', '#/add?tab=text');
+    return 'add';
+  }
   if (key === 'decks') {
     history.replaceState(null, '', '#/settings?s=decks');
     return 'settings';
@@ -116,7 +119,6 @@ export function App() {
             : route === 'review' ? <ReviewPage deckId={deckId} />
             : route === 'library' ? <LibraryPage deckId={deckId} />
             : route === 'add' ? <AddPage deckId={deckId} />
-            : route === 'read' ? <ReadPage />
             : route === 'frames' ? <FramesPage deckId={deckId} />
             : <StatsPage deckId={deckId} />}
         </ErrorBoundary>

@@ -161,7 +161,7 @@ export function SeenTwice({ clips }: { clips: Clip[] }) {
               </div>
               <div className="clip-actions">
                 <button type="button" className="pill" onClick={() => void pick(key, es[0])}>摘句</button>
-                <button type="button" className="pill" onClick={() => void setKnown(key, true)} title="以后不再列出，阅读页里也不标成生词">认识</button>
+                <button type="button" className="pill" onClick={() => void setKnown(key, true)} title="以后不再列出，短文挖词里也不算生词">认识</button>
               </div>
             </li>
           ))}

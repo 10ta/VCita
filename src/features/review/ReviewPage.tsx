@@ -26,11 +26,7 @@ const openInLibrary = (noteId: string) => { location.hash = `#/library?note=${en
 /** 复习页发音开关：点一下换一档，从轻到重 */
 const LISTEN_LABEL = { off: '关', core: '核心词', all: '全部' } as const;
 const LISTEN_NEXT = { off: 'core', core: 'all', all: 'off' } as const;
-/** {{…}} 标出的句子 → 上下文 / 要听的部分 */
-const listenParts = (s: string) => s.split(/(\{\{[^}]*\}\})/).filter(Boolean).map((x) => {
-  const m = /^\{\{([^}:]*)(?:::[^}]*)?\}\}$/.exec(x);
-  return m ? { text: m[1], target: true } : { text: x, target: false };
-});
+
 
 export function ReviewPage({ deckId }: { deckId: string }) {
   const s = useSettings();
@@ -280,18 +276,6 @@ export function ReviewPage({ deckId }: { deckId: string }) {
                 : <span>{!split.question.text ? <i className="muted">（{split.question.label}为空）</i> : split.question.lang === s.sourceLang ? <Fr>{split.question.text}</Fr> : split.question.text}</span>}
               <SpeakBtn text={split.question.speakText} lang={split.question.lang} size={20} />
             </div>
-            {split.listen && !revealed && split.listenSentence && (
-              <>
-                <div className={`listen-text${peek === 1 ? ' is-ctx' : peek === 2 ? ' is-full' : ''}`} role="button" tabIndex={0}
-                  title="悬停：看上下文（要听的部分仍遮住）；点一下或按 H：全部显示"
-                  onMouseEnter={() => { window.clearTimeout(peekTimer.current); peekTimer.current = window.setTimeout(() => setPeek((p) => (p === 0 ? 1 : p)), 250); }}
-                  onMouseLeave={() => window.clearTimeout(peekTimer.current)}
-                  onClick={() => setPeek((p) => (p === 2 ? 2 : ((p + 1) as 1 | 2)))}>
-                  {listenParts(split.listenSentence).map((x, i) => <span key={i} className={x.target ? 'lt-target' : 'lt-ctx'}>{x.text}</span>)}
-                </div>
-                <div className="listen-peek">{peek === 0 ? '听不出来时：悬停看上下文，点一下（H）看全部' : peek === 1 ? '看了上下文 · 要听的部分还遮着' : '已看全部文字'}</div>
-              </>
-            )}
             {split.choices && <div className="cx-choices">{split.choices.map((c) => <span key={c} className="cx-choice">{c}</span>)}</div>}
             {split.hint && (card.type !== 'production' || showHint || revealed
               ? <div className="cue">提示：{card.type === 'production' ? <Fr>{split.hint}</Fr> : split.hint}</div>
@@ -300,6 +284,18 @@ export function ReviewPage({ deckId }: { deckId: string }) {
             {(card.type === 'production' || card.type === 'frame') && !revealed && (
               <input className="type-in" value={typed} placeholder={card.type === 'frame' ? '先写出句框（可选，要填的位置写 ⬚ 或随便填），回车显示答案' : '先写出法语（可选），回车显示答案'} onChange={(e) => setTyped(e.target.value)}
                 onKeyDown={(e) => { if (e.key === 'Enter' && !e.nativeEvent.isComposing) { e.preventDefault(); setRevealed(true); (e.target as HTMLInputElement).blur(); } }} />
+            )}
+            {!revealed && split.listen && split.answers[0]?.text && (
+              // 听力卡：遮住的就是翻面后那行答案本身（同样的字号和样式），悬停露出上下文、点一下全部露出；翻面后原地揭开
+              <div className={`answer listen-mask peek-${peek}`}>
+                <div className="a1" role="button" tabIndex={0} title="悬停：看上下文（要听的部分仍遮住）；点一下或按 H：全部显示"
+                  onMouseEnter={() => { window.clearTimeout(peekTimer.current); peekTimer.current = window.setTimeout(() => setPeek((p) => (p === 0 ? 1 : p)), 250); }}
+                  onMouseLeave={() => window.clearTimeout(peekTimer.current)}
+                  onClick={() => setPeek((p) => (p === 2 ? 2 : ((p + 1) as 1 | 2)))}>
+                  <span><Fr>{split.answers[0].text}</Fr></span>
+                </div>
+                <div className="listen-peek">{peek === 0 ? '听不出来时：悬停看上下文，点一下（H）看全部' : peek === 1 ? '看了上下文 · 要听的部分还遮着' : '已看全部文字'}</div>
+              </div>
             )}
             {!revealed ? (
               <button type="button" className="show-btn" onClick={() => setRevealed(true)}>显示答案 <kbd>空格</kbd></button>

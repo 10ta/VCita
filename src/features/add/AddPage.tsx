@@ -11,12 +11,13 @@ import { usePrefs, setPrefs } from '../../ui/prefs';
 import { toast } from '../../ui/toast';
 import { OriginPicker, ThemePicker } from '../NoteEditor';
 import { BulkImport } from './BulkImport';
+import { MineText } from './MineText';
 import { ClipBasket, type ClipPrefill } from './ClipBasket';
 
 const todayInput = () => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`; };
 
 export function AddPage({ deckId }: { deckId: string }) {
-  const [tab, setTab] = useState<'one' | 'bulk' | 'basket'>(() => (location.hash.includes('basket') ? 'basket' : 'one'));
+  const [tab, setTab] = useState<'one' | 'text' | 'bulk' | 'basket'>(() => (location.hash.includes('basket') ? 'basket' : location.hash.includes('text') || location.hash.startsWith('#/read') ? 'text' : 'one'));
   const [prefill, setPrefill] = useState<ClipPrefill | null>(null);
   const clips = useClips();
   const todo = clips?.filter((c) => c.status === 'todo').length ?? 0;
@@ -24,10 +25,12 @@ export function AddPage({ deckId }: { deckId: string }) {
     <div className="page add">
       <div className="toolbar">
         <button type="button" className={`pill${tab === 'one' ? ' is-on' : ''}`} onClick={() => setTab('one')}>单个添加</button>
+        <button type="button" className={`pill${tab === 'text' ? ' is-on' : ''}`} onClick={() => setTab('text')} title="粘贴短文，标出生词，一键复制给 Claude 做卡">短文挖词</button>
         <button type="button" className={`pill${tab === 'bulk' ? ' is-on' : ''}`} onClick={() => setTab('bulk')}>批量导入</button>
         <button type="button" className={`pill${tab === 'basket' ? ' is-on' : ''}`} onClick={() => setTab('basket')}>摘句篮{todo ? ` ${todo}` : ''}</button>
       </div>
       {tab === 'one' ? <AddOne key={prefill?.clipId ?? 'blank'} deckId={deckId} prefill={prefill} />
+        : tab === 'text' ? <MineText />
         : tab === 'bulk' ? <BulkImport deckId={deckId} />
         : <ClipBasket onMake={(p) => { setPrefill(p); setPrefs({ addOrigin: 'mined' }); setTab('one'); }} />}
     </div>

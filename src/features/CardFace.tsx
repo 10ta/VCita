@@ -103,8 +103,6 @@ export interface CardView {
   cues: 'all' | 'extra';
   /** 听力认读：题面不显示文字 */
   listen?: boolean;
-  /** 听力认读这次读的句子（带 {{…}}）：正面模糊显示，听不出来时偷看 */
-  listenSentence?: string;
   /** 产出卡这次用的法语答案（带 {{…}}），对照自己写的用 */
   answerFr?: string;
   /** 辨析卡的选项（易混组里几个词的词条，顺序每次复习换一次） */
@@ -186,7 +184,7 @@ export function cardView(type: Card['type'], note: Note, s: Settings, quizType: 
   // 听力认读：正面只有声音，翻面显示句子和两个翻译
   if (listen && type === 'recognition' && note.sentence) {
     const f = faces(note, s, labels, variant);
-    return { question: { ...f[0], text: '', label: '听' }, hint: null, cues: 'all', answers: f, listen: true, listenSentence: pickSentence(note, 'recognition', variant) };
+    return { question: { ...f[0], text: '', label: '听' }, hint: null, cues: 'all', answers: f, listen: true };
   }
   if (type === 'production') {
     // 正面：法语题面（高亮的是要换掉的简单说法）；没有法语题面的旧题退回中文意图（也可以 {{…}} 高亮考点）
@@ -245,7 +243,7 @@ export function Cues({ note, only }: { note: Note; only?: 'extra' }) {
   const line1 = only ? '' : [note.cueFamily, note.source].filter(Boolean).join(' · ');
   return (
     <Fr>
-      {!only && note.etymology && <div className="cue etym" title="词源">⌁ {note.etymology}</div>}
+      {note.etymology && <div className="cue etym" title="词源">⌁ {note.etymology}</div>}
       {line1 && <div className="cue">{line1}</div>}
       {note.extra && <div className="cue">{note.extra}</div>}
     </Fr>

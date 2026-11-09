@@ -525,8 +525,8 @@ function UiSection({ s }: { s: Settings }) {
           <option value="off">关闭（悬停仍显示说明）</option>
         </select>
       </SetRow>
-      <h3 className="set-sub">阅读</h3>
-      <SetRow label="常用词前 N 个算认识" hint="阅读页里，词频（Lexique）最高的前 N 个原形不标色、算进已知覆盖率。默认 2000；填 0 只按自己的卡和手动标的「认识」">
+      <h3 className="set-sub">短文挖词</h3>
+      <SetRow label="常用词前 N 个算认识" hint="短文挖词里，词频（Lexique）最高的前 N 个原形不算生词、算进已知覆盖率。默认 2000；填 0 只按自己的卡和手动标的「认识」">
         <KnownTopInput value={s.knownTop} />
       </SetRow>
       <SetRow label={'添加页默认展开"更多字段"'} hint="例句、词族线索、出处、补充。关闭后需要时点“更多字段”展开">
