@@ -24,9 +24,13 @@ const RATINGS: Array<{ r: Rating; label: string; cls: string }> = [
 const openInLibrary = (noteId: string) => { location.hash = `#/library?note=${encodeURIComponent(noteId)}&edit=1`; };
 
 /** 复习页发音开关：点一下换一档，从轻到重 */
-const AUDIO_LABEL = { off: '关', read: '自动读', core: '听·核心词', all: '听·全部' } as const;
-const AUDIO_NEXT = { off: 'read', read: 'core', core: 'all', all: 'off' } as const;
-const AUDIO_TITLE = '关 → 自动读（只读法语：法语题面出题时读，中文题面 / 挖空翻面后读答案）→ 听·核心词 / 听·全部（再加上认读卡正面只放声音，闭眼听懂再翻面）';
+const LISTEN_LABEL = { off: '关', core: '核心词', all: '全部' } as const;
+const LISTEN_NEXT = { off: 'core', core: 'all', all: 'off' } as const;
+/** {{…}} 标出的句子 → 上下文 / 要听的部分 */
+const listenParts = (s: string) => s.split(/(\{\{[^}]*\}\})/).filter(Boolean).map((x) => {
+  const m = /^\{\{([^}:]*)(?:::[^}]*)?\}\}$/.exec(x);
+  return m ? { text: m[1], target: true } : { text: x, target: false };
+});
 
 export function ReviewPage({ deckId }: { deckId: string }) {
   const s = useSettings();
@@ -95,22 +99,28 @@ export function ReviewPage({ deckId }: { deckId: string }) {
   }, [q, currentId]);
 
   const labels: [string, string, string] = s ? [langLabel(s.sourceLang), langLabel(s.targetLang1), langLabel(s.targetLang2)] : ['', '', ''];
-  const audio = prefs.audio ?? 'core';
-  const listen = !!note && (audio === 'all' || (audio === 'core' && note.layer === 'core'));
+  const autoRead = prefs.autoRead ?? true;
+  const listenCards = prefs.listenCards ?? 'core';
+  const listen = !!note && (listenCards === 'all' || (listenCards === 'core' && note.layer === 'core'));
   const group = useMemo(() => (note?.contrastGroup ? (notes ?? []).filter((n) => n.contrastGroup === note.contrastGroup && n.id !== note.id) : []), [note, notes]);
   const split = note && s && card ? cardView(card.type, note, s, prefs.quizType, labels, card.reps, listen, group) : null;
   // 产出卡可以先写出答案，揭示后和标准答案并排对照（不自动判对错）
   const [typed, setTyped] = useState('');
   // 产出卡的首字母提示默认收起，想不出来时再点开（H），否则一眼看到就失去了回忆的意义
   const [showHint, setShowHint] = useState(false);
-  useEffect(() => { setTyped(''); setShowHint(false); }, [currentId]);
+  // 听力卡偷看文字：0 没看；1 看了上下文（悬停）；2 连要听的部分也看了（点一下 / H）
+  const [peek, setPeek] = useState<0 | 1 | 2>(0);
+  const peekTimer = useRef<number | undefined>(undefined);
+  useEffect(() => { setTyped(''); setShowHint(false); setPeek(0); }, [currentId]);
 
   // 自动发音只读学习语言（法语）：题面是法语就出题时读；题面是中文 / 英文 / 挖空，就翻面后读法语答案
   const frontIsSource = !!split && !!s && split.question.lang === s.sourceLang && !!split.question.speakText;
   const sourceAnswer = split && s ? split.answers.find((a) => a.lang === s.sourceLang && a.speakText) : undefined;
   const lastSpoken = useRef<string | null>(null);
   useEffect(() => {
-    if (!split || !card || audio === 'off') return;
+    if (!split || !card) return;
+    // 听力卡出题时总要读（不读就没法答）；其他情况看「自动读」
+    if (!autoRead && !(split.listen && !revealed)) return;
     const target = !revealed ? (frontIsSource ? split.question : null) : (frontIsSource ? null : sourceAnswer ?? null);
     if (!target) return;
     const key = `${card.id}:${prefs.quizType}:${split.listen ? 'l' : ''}:${revealed ? 'b' : 'f'}`;
@@ -130,6 +140,7 @@ export function ReviewPage({ deckId }: { deckId: string }) {
     if (k === 'p' || k === 'P') return void suspend();
     if (k === 'e' || k === 'E') return setEditing(true);
     if ((k === 'h' || k === 'H') && card.type === 'production' && !revealed) return setShowHint(true);
+    if ((k === 'h' || k === 'H') && split?.listen && !revealed) return setPeek(2);
     if (k === 'l' || k === 'L') return openInLibrary(card.noteId);
     // R：重听法语。题面不是法语时，翻面后读答案；没翻面就读题面（手动按的，读什么都行）
     if (k === 'r' || k === 'R') {
@@ -203,10 +214,16 @@ export function ReviewPage({ deckId }: { deckId: string }) {
           <button key={i} type="button" className={`pill${prefs.quizType === i ? ' is-on' : ''}`} onClick={() => setPrefs({ quizType: i as 0 | 1 | 2 })}>{l}</button>
         ))}
         <span className="grow" />
-        <button type="button" className={`pill${audio !== 'off' ? ' is-on' : ''}`} title={AUDIO_TITLE}
-          onClick={() => setPrefs({ audio: AUDIO_NEXT[audio] })}>
-          发音：{AUDIO_LABEL[audio]}
-        </button>
+        <span className="audio-ctl">
+          <button type="button" className={autoRead ? 'is-on' : ''} onClick={() => setPrefs({ autoRead: !autoRead })}
+            title="自动读法语：法语题面出题时读，中文题面 / 挖空翻面后读答案。中文、英文不自动读">
+            自动读：{autoRead ? '开' : '关'}
+          </button>
+          <button type="button" className={listenCards !== 'off' ? 'is-on' : ''} onClick={() => setPrefs({ listenCards: LISTEN_NEXT[listenCards] })}
+            title="听力卡：认读卡正面只放声音，闭眼听懂再翻面。核心词 → 全部 → 关。听力卡出题时总会读，和自动读无关">
+            听力卡：{LISTEN_LABEL[listenCards]}
+          </button>
+        </span>
       </div>
       {custom ? (
         <div className="custom-bar">
@@ -253,7 +270,7 @@ export function ReviewPage({ deckId }: { deckId: string }) {
           </div>
           <div className="review-card" key={card.id} data-lookup-source={note.lemma || undefined} data-no-lookup={revealed ? undefined : ''}>
             <div className="badges">
-              <span className={`badge is-type t-${card.type}`}>{TYPE_LABEL[card.type]}</span>
+              <span className={`badge is-type t-${split.listen ? 'listen' : card.type}`}>{split.listen ? '听认' : TYPE_LABEL[card.type]}</span>
               {card.type === 'recognition' && !note.sentence && <span className="badge">待补句子</span>}
               {note.tags.map((t) => <span key={t} className="badge is-theme">{t}</span>)}
             </div>
@@ -263,6 +280,18 @@ export function ReviewPage({ deckId }: { deckId: string }) {
                 : <span>{!split.question.text ? <i className="muted">（{split.question.label}为空）</i> : split.question.lang === s.sourceLang ? <Fr>{split.question.text}</Fr> : split.question.text}</span>}
               <SpeakBtn text={split.question.speakText} lang={split.question.lang} size={20} />
             </div>
+            {split.listen && !revealed && split.listenSentence && (
+              <>
+                <div className={`listen-text${peek === 1 ? ' is-ctx' : peek === 2 ? ' is-full' : ''}`} role="button" tabIndex={0}
+                  title="悬停：看上下文（要听的部分仍遮住）；点一下或按 H：全部显示"
+                  onMouseEnter={() => { window.clearTimeout(peekTimer.current); peekTimer.current = window.setTimeout(() => setPeek((p) => (p === 0 ? 1 : p)), 250); }}
+                  onMouseLeave={() => window.clearTimeout(peekTimer.current)}
+                  onClick={() => setPeek((p) => (p === 2 ? 2 : ((p + 1) as 1 | 2)))}>
+                  {listenParts(split.listenSentence).map((x, i) => <span key={i} className={x.target ? 'lt-target' : 'lt-ctx'}>{x.text}</span>)}
+                </div>
+                <div className="listen-peek">{peek === 0 ? '听不出来时：悬停看上下文，点一下（H）看全部' : peek === 1 ? '看了上下文 · 要听的部分还遮着' : '已看全部文字'}</div>
+              </>
+            )}
             {split.choices && <div className="cx-choices">{split.choices.map((c) => <span key={c} className="cx-choice">{c}</span>)}</div>}
             {split.hint && (card.type !== 'production' || showHint || revealed
               ? <div className="cue">提示：{card.type === 'production' ? <Fr>{split.hint}</Fr> : split.hint}</div>
@@ -293,7 +322,8 @@ export function ReviewPage({ deckId }: { deckId: string }) {
                 </div>
                 {(card.type !== 'recognition' || split.listen) && (
                   <p className="muted small grade-guide">
-                    {split.listen ? '2–3 秒内没听懂 → 困难；听不出来 → 忘了'
+                    {split.listen
+                      ? peek === 2 ? '看了要听的部分才懂 → 忘了' : peek === 1 ? '看了上下文才听懂 → 最多困难' : '2–3 秒内没听懂 → 困难；听不出来 → 忘了'
                       : card.type === 'contrast' ? '选对、说得出为什么 → 良好；选对但靠猜 → 困难；选错 → 忘了'
                       : card.type === 'frame' ? '句框想得出、只有小词或配合错 → 困难；想不起句框 → 忘了'
                       : card.type === 'apply' ? '句框用对、语法锁都满足 → 良好；句框对但语法锁有错 → 困难；写不出来 → 忘了'
