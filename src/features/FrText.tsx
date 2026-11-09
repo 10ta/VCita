@@ -141,6 +141,11 @@ function GenderBody({ info }: { info: GenderInfo }) {
   );
 }
 
+/** 还遮着的文字（听力卡没揭开的部分）：悬停不弹迷你条，否则词和词性直接露出来。
+ *  遮罩随 peek 变化：peek-0 整行遮住，peek-1 只遮要听的那段（.cloze）；别处要遮的文字加 data-masked */
+export const MASKED_SELECTOR = '[data-masked], .listen-mask.peek-0 .a1, .listen-mask.peek-1 .cloze';
+export const isMasked = (el: Element) => !!el.closest(MASKED_SELECTOR);
+
 /** 全页只有一个迷你条：在 [data-fw] 上悬停时显示（手机上点一下）。
  *  迷你条不接收鼠标（pointer-events: none），点在它上面等于点在下面的按钮上；
  *  鼠标离开词、按任意键、点任何地方、滚动、或者词被换掉（翻面、评分换卡）时自动消失 */
@@ -164,7 +169,7 @@ function GenderPopover({ dict }: { dict: FrDict }) {
     let touchedAt = 0;
     // 正在选文字（拖选中）或划词气泡开着时不弹，免得两个弹层叠在一起
     const busy = () => !!document.querySelector('.lookup-pop') || !(window.getSelection()?.isCollapsed ?? true);
-    const over = (e: Event) => { const el = fwOf(e); if (el && !busy()) show(el); };
+    const over = (e: Event) => { const el = fwOf(e); if (el && !busy() && !isMasked(el)) show(el); };
     const out = (e: Event) => {
       if (Date.now() - touchedAt < 1000 || !fwOf(e)) return;
       window.clearTimeout(hide.current);
@@ -174,7 +179,7 @@ function GenderPopover({ dict }: { dict: FrDict }) {
     const down = (e: PointerEvent) => {
       if (e.pointerType === 'touch') touchedAt = Date.now();
       const el = fwOf(e);
-      if (el && e.pointerType === 'touch') show(el);
+      if (el && e.pointerType === 'touch' && !isMasked(el)) show(el);
       else if (!el) close();
     };
     // 词被换掉（评分换卡、翻面重渲染）时 mouseout 不会触发，定时检查锚点还在不在

@@ -296,7 +296,7 @@ export function ReviewPage({ deckId }: { deckId: string }) {
             {!revealed && split.listen && split.answers[0]?.text && (
               // 听力卡：遮住的就是翻面后那行答案本身（同样的字号和样式），悬停露出上下文、点一下全部露出；翻面后原地揭开
               <div className={`answer listen-mask peek-${peek}`}>
-                <div className="a1" role="button" tabIndex={0} title="悬停：看上下文（要听的部分仍遮住）；点一下或按 H：全部显示"
+                <div className="a1" role="button" tabIndex={0} aria-label="遮住的答案：悬停看上下文，点一下或按 H 全部显示"
                   onMouseEnter={() => { window.clearTimeout(peekTimer.current); peekTimer.current = window.setTimeout(() => setPeek((p) => (p === 0 ? 1 : p)), 250); }}
                   onMouseLeave={() => window.clearTimeout(peekTimer.current)}
                   onClick={() => setPeek((p) => (p === 2 ? 2 : ((p + 1) as 1 | 2)))}>
