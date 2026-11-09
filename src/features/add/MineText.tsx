@@ -1,7 +1,8 @@
 // 短文挖词：粘贴一段法语，按自己的词汇标色（阅读页那套逻辑），列出生词和它所在的句子，
 // 一键复制成「词(原句」的格式交给 Claude 做卡，或放进摘句篮。点词 / 选中照常弹查词气泡。
 import { useMemo, useRef, useState } from 'react';
-import { useTexts } from '../../db/hooks';
+import { useDeckSettings, useTexts } from '../../db/hooks';
+import { isFrench, langLabel } from '../../ui/langs';
 import { addClip, setKnown } from '../../db/actions';
 import { useFrDict } from '../../lib/gender/dict';
 import { annotate, coverage, coverageAdvice, importFile, useReadingIndex, wordCount, type Tok } from '../../lib/reading';
@@ -29,7 +30,15 @@ export function unknownWords(sentences: Array<{ text: string; toks: Tok[] }>): U
 }
 export const mineLine = (u: Pick<Unknown, 'form' | 'sentence'>) => `${u.form}(${u.sentence}`;
 
-export function MineText() {
+export function MineText({ deckId }: { deckId: string }) {
+  const ds = useDeckSettings(deckId);
+  if (ds && !isFrench(ds.sourceLang)) {
+    return <p className="muted">短文挖词靠法语词典（词频、原形）判断生词，当前牌组的学习语言是{langLabel(ds.sourceLang)}，暂时不支持。</p>;
+  }
+  return <MineFr />;
+}
+
+function MineFr() {
   const prefs = usePrefs();
   const dict = useFrDict(true);
   const index = useReadingIndex(true);

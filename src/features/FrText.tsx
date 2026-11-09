@@ -2,7 +2,9 @@
 // 这个词的性、另一个性的形式、按词尾的记忆规则（含可靠度和最常见的例外），同形异义词给两个意思。
 import { Children, cloneElement, createContext, isValidElement, useContext, useEffect, useMemo, useRef, useState, type ReactElement, type ReactNode } from 'react';
 import { genderInfo, lemmaFreq, useFrDict, type FrDict, type GenderInfo } from '../lib/gender/dict';
-import { useNotes, useSettings } from '../db/hooks';
+import { useDeckSettings, useNotes, useSettings } from '../db/hooks';
+import { usePrefs } from '../ui/prefs';
+import { isFrench } from '../ui/langs';
 import type { Settings } from '../schema';
 import { LookupBubble } from './Lookup';
 
@@ -16,7 +18,12 @@ export const genderDisplayOf = (s: Pick<Settings, 'genderDisplay' | 'genderColor
 
 export function FrProvider({ children }: { children: ReactNode }) {
   const s = useSettings();
-  const dict = useFrDict(true);
+  const prefs = usePrefs();
+  const ds = useDeckSettings(prefs.deckId);
+  // 法语词典（阴阳性、词频、原形）只给学习语言是法语的牌组用；别的语言不切词、不标色
+  const fr = isFrench(ds?.sourceLang);
+  const loaded = useFrDict(fr);
+  const dict = fr ? loaded : null;
   const mode = genderDisplayOf(s);
   // 显示方式只靠 CSS 切换（<html data-gender>），换设置不用重新切词
   useEffect(() => { document.documentElement.dataset.gender = mode; }, [mode]);

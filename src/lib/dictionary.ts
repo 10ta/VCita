@@ -199,10 +199,19 @@ export function sentenceAround(block: string, start: number, end: number): strin
   return block.slice(a, b).replace(/\s+/g, ' ').trim();
 }
 
-/** 外部词典（手册里用的查词工具） */
-export const externalLinks = (q: string) => [
-  { label: 'Wiktionnaire', short: 'Wikt', url: `https://fr.wiktionary.org/wiki/${encodeURIComponent(q.replace(/ /g, '_'))}` },
-  { label: 'Le Robert', short: 'Robert', url: `https://dictionnaire.lerobert.com/definition/${encodeURIComponent(q.toLowerCase().replace(/ /g, '-'))}` },
-  { label: 'WordReference', short: 'WR', url: `https://www.wordreference.com/fren/${encodeURIComponent(q)}` },
-  { label: 'Reverso', short: 'Reverso', url: `https://context.reverso.net/traduction/francais-chinois/${encodeURIComponent(q.replace(/ /g, '+'))}` },
-];
+/** 外部词典：法语用手册里的查词工具；其他学习语言先给通用的（维基词典 + 机翻），以后按语言补 */
+export function externalLinks(q: string, sl = 'fr', tl = 'zh-CN'): Array<{ label: string; short: string; url: string }> {
+  if (!sl.toLowerCase().startsWith('fr')) {
+    const wk = sl.split('-')[0];
+    return [
+      { label: 'Wiktionary', short: 'Wikt', url: `https://${wk}.wiktionary.org/wiki/${encodeURIComponent(q.replace(/ /g, '_'))}` },
+      { label: 'Google 翻译', short: 'Google', url: `https://translate.google.com/?sl=${encodeURIComponent(sl)}&tl=${encodeURIComponent(tl)}&text=${encodeURIComponent(q)}` },
+    ];
+  }
+  return [
+    { label: 'Wiktionnaire', short: 'Wikt', url: `https://fr.wiktionary.org/wiki/${encodeURIComponent(q.replace(/ /g, '_'))}` },
+    { label: 'Le Robert', short: 'Robert', url: `https://dictionnaire.lerobert.com/definition/${encodeURIComponent(q.toLowerCase().replace(/ /g, '-'))}` },
+    { label: 'WordReference', short: 'WR', url: `https://www.wordreference.com/fren/${encodeURIComponent(q)}` },
+    { label: 'Reverso', short: 'Reverso', url: `https://context.reverso.net/traduction/francais-chinois/${encodeURIComponent(q.replace(/ /g, '+'))}` },
+  ];
+}

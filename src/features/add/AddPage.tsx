@@ -1,5 +1,5 @@
 import { useMemo, useRef, useState } from 'react';
-import { useClips, useNotes, useSettings } from '../../db/hooks';
+import { useClips, useDeckSettings, useNotes } from '../../db/hooks';
 import { addNote, updateClip, updateNote } from '../../db/actions';
 import { db } from '../../db/db';
 import type { Card, Note, Theme } from '../../schema';
@@ -30,7 +30,7 @@ export function AddPage({ deckId }: { deckId: string }) {
         <button type="button" className={`pill${tab === 'basket' ? ' is-on' : ''}`} onClick={() => setTab('basket')}>摘句篮{todo ? ` ${todo}` : ''}</button>
       </div>
       {tab === 'one' ? <AddOne key={prefill?.clipId ?? 'blank'} deckId={deckId} prefill={prefill} />
-        : tab === 'text' ? <MineText />
+        : tab === 'text' ? <MineText deckId={deckId} />
         : tab === 'bulk' ? <BulkImport deckId={deckId} />
         : <ClipBasket onMake={(p) => { setPrefill(p); setPrefs({ addOrigin: 'mined' }); setTab('one'); }} />}
     </div>
@@ -41,7 +41,7 @@ export function AddPage({ deckId }: { deckId: string }) {
 function AddOne({ deckId, prefill }: { deckId: string; prefill?: ClipPrefill | null }) {
   // 从摘句篮来的那一条：第一次添加后标为已做卡
   const clipRef = useRef(prefill?.clipId ?? null);
-  const s = useSettings();
+  const s = useDeckSettings(deckId);
   const notes = useNotes();
   const prefs = usePrefs();
   const [text, setText] = useState(prefill?.text ?? '');

@@ -3,7 +3,7 @@ import { Modal } from '../ui/Modal';
 import { THEMES, noteOrigin, type Note, type NoteOrigin, type Theme } from '../schema';
 import { defaultCardTypes, hasCloze, noteErrors, promptErrors } from '../schema/validate';
 import { bumpUsed, deleteNotes, leaveContrast, updateNote } from '../db/actions';
-import { useDecks, useNotes, useSettings } from '../db/hooks';
+import { useDeckSettings, useDecks, useNotes } from '../db/hooks';
 import { langLabel } from '../ui/langs';
 import { noonIso } from '../lib/time';
 import { CardPreviews, CARD_TYPES, ClozeMarker, FRAME_TYPES } from './NoteParts';
@@ -50,7 +50,7 @@ export function parseAltIntent(line: string): Note['altIntents'][number] {
 }
 
 export function NoteEditor({ note, onClose }: { note: Note; onClose: () => void }) {
-  const s = useSettings();
+  const s = useDeckSettings(note.deckId);
   const decks = useDecks();
   const [f, setF] = useState({
     lemma: note.lemma, sentence: note.sentence, meaningZh: note.meaningZh, meaningEn: note.meaningEn,

@@ -5,7 +5,9 @@
 // 点气泡以外的地方、按任意键、滚动、换页时自动关掉。
 // 布局：标题和底部按钮固定，只有中间的释义滚动；气泡按选区上下哪边空间大摆放，高度不超出屏幕。
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { useKnown, useNotes, useSettings } from '../db/hooks';
+import { useDeckSettings, useKnown, useNotes } from '../db/hooks';
+import { usePrefs } from '../ui/prefs';
+import { isFrench } from '../ui/langs';
 import { addClip, recordEncounter, setKnown } from '../db/actions';
 import { canonicalLemma, lemmaCandidates, lemmaOf, useFrVerbs, type FrDict } from '../lib/gender/dict';
 import { isFunctionWord, useReadingIndex } from '../lib/reading';
@@ -139,7 +141,10 @@ export function LookupBubble({ dict }: { dict: FrDict | null }) {
 interface Found { dict: DictResult | null; zh: string[] | null; zhWhole: string | null; sentenceZh: string | null; textZh: string | null; error: boolean }
 
 function LookupBody({ sel, dict, onClose }: { sel: Sel; dict: FrDict | null; onClose: () => void }) {
-  const s = useSettings();
+  const prefs = usePrefs();
+  const s = useDeckSettings(prefs.deckId);
+  // 学习语言不是法语：不查 Wiktionnaire、不还原原形，只机翻 + 外部词典
+  const fr = isFrench(s?.sourceLang);
   const notes = useNotes();
   const known = useKnown();
   const verbs = useFrVerbs(true);
@@ -148,7 +153,7 @@ function LookupBody({ sel, dict, onClose }: { sel: Sel; dict: FrDict | null; onC
   const bare = mode === 'word' ? sel.text.replace(ELISION, '') : sel.text;
   // 变位动词（mangeait → manger）要等变位表加载完才知道原形
   const lemma = mode === 'word' && dict ? lemmaOf(dict, verbs, bare)?.lemma ?? null : null;
-  const ready = mode !== 'word' || (!!dict && !!verbs);
+  const ready = mode !== 'word' || !fr || (!!dict && !!verbs);
   // 记遇见、标认识的键：和阅读页标色用同一个（候选原形里最常用的）
   const key = (mode === 'word' ? (dict && lemma ? canonicalLemma(dict, verbs, bare) : bare) : sel.text).toLowerCase();
   const [found, setFound] = useState<Found | null>(null);
@@ -170,16 +175,16 @@ function LookupBody({ sel, dict, onClose }: { sel: Sel; dict: FrDict | null; onC
     const sl = s.sourceLang, tl = s.targetLang1;
     void (async () => {
       let error = false;
-      const wk = mode === 'sentence' ? Promise.resolve(null) : lookupWiktionnaire(lemma && lemma !== bare ? [lemma, bare] : [bare]).catch(() => { error = true; return null; });
+      const wk = mode === 'sentence' || !fr ? Promise.resolve(null) : lookupWiktionnaire(lemma && lemma !== bare ? [lemma, bare] : [bare]).catch(() => { error = true; return null; });
       const sentenceZh = mode !== 'sentence' && sel.context && sel.context !== sel.text ? translateCached(sel.context, sl, tl) : Promise.resolve(null);
-      const textZh = mode === 'word' ? Promise.resolve(null) : translateCached(sel.text, sl, tl);
+      const textZh = mode === 'word' && fr ? Promise.resolve(null) : translateCached(sel.text, sl, tl);
       const d = await wk;
       const defs = (d?.entries ?? []).slice(0, 2).flatMap((e) => e.senses.slice(0, 4).map((x) => x.def));
       const [zh, sz, tz] = await Promise.all([translateSenses(defs, sl, tl), sentenceZh, textZh]);
       if (alive) setFound({ dict: d, zh: zh.lines, zhWhole: zh.lines ? null : zh.whole, sentenceZh: sz, textZh: tz, error });
     })();
     return () => { alive = false; };
-  }, [s, ready, mode, bare, lemma, sel.context, sel.text]);
+  }, [s, ready, mode, bare, lemma, sel.context, sel.text, fr]);
 
   // 已有的笔记：词条里出现这个原形（或选中的表达）
   const existing = useMemo(() => {
@@ -245,7 +250,7 @@ function LookupBody({ sel, dict, onClose }: { sel: Sel; dict: FrDict | null; onC
             </div>
           ))}
           {found.zhWhole && <p className="lk-zh small">{found.zhWhole}</p>}
-          {mode !== 'sentence' && !entries.length && (
+          {mode !== 'sentence' && fr && !entries.length && (
             <p className="muted small">{found.error ? '连不上 Wiktionnaire（网络问题），可以用下面的外部词典' : 'Wiktionnaire 里没有这个词条'}</p>
           )}
           {found.dict?.etymology && (
@@ -272,7 +277,7 @@ function LookupBody({ sel, dict, onClose }: { sel: Sel; dict: FrDict | null; onC
         )}
         <span className="grow" />
         <nav className="lk-dicts" aria-label="外部词典">
-          {externalLinks(mode === 'word' ? (lemma ?? bare) : sel.text).map((l) => (
+          {externalLinks(mode === 'word' ? (lemma ?? bare) : sel.text, s.sourceLang, s.targetLang1).map((l) => (
             <a key={l.label} href={l.url} target="_blank" rel="noreferrer" title={`在 ${l.label} 查`}>{l.short}</a>
           ))}
         </nav>

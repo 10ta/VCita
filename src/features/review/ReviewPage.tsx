@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { useCards, useMemories, useNotes, useSettings, useTodayLogs } from '../../db/hooks';
+import { useCards, useDeckSettings, useMemories, useNotes, useTodayLogs } from '../../db/hooks';
 import { answerCard, bumpUsed, setSuspended, undoAnswer, type AnswerResult } from '../../db/actions';
 import { buildQueue } from '../../srs/queue';
 import { fmtNextIn, isDue, paramsFor, preview, type Rating } from '../../srs/scheduler';
@@ -29,7 +29,7 @@ const LISTEN_NEXT = { off: 'core', core: 'all', all: 'off' } as const;
 
 
 export function ReviewPage({ deckId }: { deckId: string }) {
-  const s = useSettings();
+  const s = useDeckSettings(deckId);
   const cards = useCards();
   const notes = useNotes();
   const prefs = usePrefs();

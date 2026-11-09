@@ -505,9 +505,9 @@ function UiSection({ s }: { s: Settings }) {
   return (
     <section id="ui">
       <h2>界面</h2>
-      <h3 className="set-sub">语言</h3>
+      <h3 className="set-sub">默认语言</h3>
       {(['sourceLang', 'targetLang1', 'targetLang2'] as const).map((k, i) => (
-        <SetRow key={k} label={['学习语言', '翻译 1', '翻译 2'][i]} hint={i === 0 ? '新词按这里的设置自动翻译；复习时的题面在复习页顶部切换' : undefined}>
+        <SetRow key={k} label={['学习语言', '翻译 1', '翻译 2'][i]} hint={i === 0 ? '没单独设语言的牌组用这里的；每个牌组可以在 设置 → 牌组 里单独设（比如以后加一个英语牌组）' : undefined}>
           <select aria-label={['学习语言', '翻译 1', '翻译 2'][i]} value={s[k]} onChange={(e) => void updateSettings({ [k]: e.target.value })}>
             {LANGS.map((l) => <option key={l.code} value={l.code}>{l.label}</option>)}
           </select>

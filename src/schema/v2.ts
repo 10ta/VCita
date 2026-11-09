@@ -25,6 +25,11 @@ export const DeckV2 = z.looseObject({
   ...base,
   name: z.string(),
   order: z.number(),
+  /** 这个牌组的学习语言、翻译 1、翻译 2；没有（或 null）= 跟设置里的默认语言。
+   *  不给默认值：没设过语言的牌组序列化出来和以前一字不差，同步时不会多出提交 */
+  sourceLang: z.string().nullable().optional(),
+  targetLang1: z.string().nullable().optional(),
+  targetLang2: z.string().nullable().optional(),
 });
 
 export const NoteV2 = z.looseObject({

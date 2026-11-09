@@ -2,7 +2,8 @@
 import { useState } from 'react';
 import { useCards, useDecks, useNotes, useSettings } from '../../db/hooks';
 import { isDue } from '../../srs/scheduler';
-import { createDeck, deleteDeck, mergeDeck, renameDeck } from '../../db/actions';
+import { createDeck, deleteDeck, mergeDeck, renameDeck, setDeckLangs } from '../../db/actions';
+import { LANGS, langLabel } from '../../ui/langs';
 import { setPrefs, usePrefs } from '../../ui/prefs';
 import { Modal } from '../../ui/Modal';
 import { toast } from '../../ui/toast';
@@ -45,6 +46,19 @@ export function DeckSection() {
               <div className="deck-info">
                 <div><b>{d.name}</b>{on && <span className="badge is-current">当前</span>}</div>
                 <small className="muted">{st.notes} 条 · <span className="accent">{st.due} 到期</span> · <span className="blue">{st.fresh} 新</span>{st.leech ? <> · <span className="red">{st.leech} 待改造</span></> : null}</small>
+                {s && (
+                  <div className="deck-langs" title="这个牌组学什么语言、背面显示哪两种翻译；选「默认」跟 设置 → 界面 里的默认语言">
+                    {(['sourceLang', 'targetLang1', 'targetLang2'] as const).map((k, i) => (
+                      <label key={k} className="small">
+                        <span className="muted">{['学习', '翻译 1', '翻译 2'][i]}</span>
+                        <select aria-label={`${d.name} ${['学习语言', '翻译 1', '翻译 2'][i]}`} value={d[k] ?? ''} onChange={(e) => void setDeckLangs(d.id, { [k]: e.target.value || null })}>
+                          <option value="">默认（{langLabel(s[k])}）</option>
+                          {LANGS.map((l) => <option key={l.code} value={l.code}>{l.label}</option>)}
+                        </select>
+                      </label>
+                    ))}
+                  </div>
+                )}
               </div>
               <div className="deck-ops">
                 {!on && <button type="button" className="btn" onClick={() => setPrefs({ deckId: d.id })}>设为当前</button>}

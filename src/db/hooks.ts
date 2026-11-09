@@ -1,3 +1,4 @@
+import { withDeckLangs } from '../ui/langs';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from './db';
 import { getSettings, ONBOARDED_KEY } from './actions';
@@ -55,3 +56,11 @@ export const useLogsSince = (fromDay: string | null) =>
 /** 一条笔记的全部日志，新的在前 */
 export const useNoteLogs = (noteId: string) =>
   useLiveQuery(async () => (await db.logs.where('noteId').equals(noteId).toArray()).filter((l) => !l.deleted).sort((a, b) => (a.ts < b.ts ? 1 : -1)), [noteId]);
+
+/** 当前牌组的设置：语言换成牌组自己的（牌组没设就跟默认）。设置或牌组还没加载完时是 undefined */
+export function useDeckSettings(deckId: string | null | undefined) {
+  const s = useSettings();
+  const decks = useDecks();
+  // 找不到（还没选过牌组）时和顶部的牌组下拉一样，用第一个牌组
+  return useMemo(() => (s && decks ? withDeckLangs(s, decks.find((d) => d.id === deckId) ?? decks[0]) : undefined), [s, decks, deckId]);
+}

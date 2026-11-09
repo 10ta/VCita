@@ -36,6 +36,11 @@ export async function createDeck(name: string): Promise<string> {
   return id;
 }
 
+export async function setDeckLangs(id: string, patch: Partial<Pick<Deck, 'sourceLang' | 'targetLang1' | 'targetLang2'>>) {
+  const d = await db.decks.get(id);
+  if (d) await db.decks.put({ ...d, ...patch, updatedAt: bumpIso(d.updatedAt) });
+}
+
 export async function renameDeck(id: string, name: string) {
   const d = await db.decks.get(id);
   if (d) await db.decks.put({ ...d, name: name.trim() || d.name, updatedAt: bumpIso(d.updatedAt) });

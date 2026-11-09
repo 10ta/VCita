@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { useCards, useDecks, useLogsSince, useMemories, useNotes, useSettings } from '../../db/hooks';
+import { useCards, useDeckSettings, useDecks, useLogsSince, useMemories, useNotes } from '../../db/hooks';
 import type { Memory } from '../../srs/fsrs';
 import { findConfusables } from '../../srs/confusable';
 import { Fr, useNoteFreqs } from '../FrText';
@@ -54,7 +54,7 @@ const readFocus = () => {
 };
 
 export function LibraryPage({ deckId }: { deckId: string }) {
-  const s = useSettings();
+  const s = useDeckSettings(deckId);
   const notes = useNotes();
   const cards = useCards();
   const decks = useDecks();
