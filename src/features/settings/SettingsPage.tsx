@@ -4,7 +4,8 @@ import { FSRS6_DEFAULT, validWeights } from '../../srs/fsrs';
 import { simulate, stepCounts } from '../../srs/simulate';
 import { clearAllLocalData, spreadBacklog, updateSettings } from '../../db/actions';
 import { exportBundle, importBundle } from '../../io/bundle';
-import { downloadJson, readJsonFile } from '../../io/download';
+import { downloadBlob, readJsonFile } from '../../io/download';
+import { bundleText, canGzip, gzip } from '../../io/pack';
 import { dayStartMs, deviceTimeZone, fileStamp, fromIso, localClockOf, studyDay } from '../../lib/time';
 import { SyncSection } from '../../sync/SyncSection';
 import { LANGS } from '../../ui/langs';
@@ -139,6 +140,16 @@ function PasteBox({ onClose }: { onClose: () => void }) {
   );
 }
 
+const fmtSize = (n: number) => (n >= 1e6 ? `${(n / 1e6).toFixed(1)} MB` : `${Math.max(1, Math.round(n / 1e3))} KB`);
+/** 导出备份：精简字段（默认值不写）、不缩进；gz = true 时再 gzip 压缩 */
+async function exportBackup(gz: boolean) {
+  const text = bundleText(await exportBundle());
+  const name = `vcita-${fileStamp(Date.now())}.json`;
+  const blob = gz ? await gzip(text) : new Blob([text], { type: 'application/json' });
+  downloadBlob(blob, gz ? `${name}.gz` : name);
+  toast(`已导出 ${fmtSize(blob.size)}`);
+}
+
 async function importFile(file: File) {
   try {
     toast(importedMsg(await importBundle(await readJsonFile(file))));
@@ -167,12 +178,13 @@ function DataSection() {
           <button type="button" className="btn is-primary" onClick={() => bundleRef.current?.click()}>导入备份</button>
           <button type="button" className="btn is-primary" title="复制了备份 JSON 后点这里直接导入" onClick={() => void importFromClipboard().then((box) => box && setPasting(true))}>从剪贴板导入</button>
         </div>
-        <small>也可以把备份 JSON 文件拖到这里。导入按"较新者胜出"逐条合并，可以重复导入。</small>
+        <small>也可以把备份文件（.json 或 .json.gz）拖到这里。导入按"较新者胜出"逐条合并，可以重复导入。</small>
       </div>
       <SetRow label="导出备份" hint={decks && notes && cards ? `本机：${decks.length} 个牌组 · ${notes.length} 条笔记 · ${cards.length} 张卡` : '数据保存在这台设备的浏览器里'}>
-        <button type="button" className="btn" onClick={() => void exportBundle().then((b) => downloadJson(b, `vcita-${fileStamp(Date.now())}.json`))}>导出 JSON</button>
+        {canGzip() && <button type="button" className="btn" title="压缩包，体积约为 JSON 的八分之一；导入时直接选这个文件" onClick={() => void exportBackup(true)}>导出备份（.json.gz）</button>}
+        <button type="button" className="btn" title="不压缩，可以用文本编辑器打开" onClick={() => void exportBackup(false)}>导出 JSON</button>
       </SetRow>
-      <input ref={bundleRef} type="file" accept=".json,application/json" hidden onChange={(e) => {
+      <input ref={bundleRef} type="file" accept=".json,.gz,application/json,application/gzip" hidden onChange={(e) => {
         const file = e.target.files?.[0]; e.target.value = '';
         if (file) void importFile(file);
       }} />

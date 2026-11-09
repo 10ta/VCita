@@ -1,5 +1,6 @@
-export function downloadJson(data: unknown, filename: string) {
-  const blob = new Blob([JSON.stringify(data, null, 2) + '\n'], { type: 'application/json' });
+import { readBackupText } from './pack';
+
+export function downloadBlob(blob: Blob, filename: string) {
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
@@ -8,8 +9,9 @@ export function downloadJson(data: unknown, filename: string) {
   setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
 
+/** 读备份文件，.json 和 .json.gz 都行 */
 export async function readJsonFile(file: File): Promise<unknown> {
-  const text = await file.text();
+  const text = await readBackupText(file);
   try {
     return JSON.parse(text);
   } catch {
