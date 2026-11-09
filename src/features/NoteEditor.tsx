@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Modal } from '../ui/Modal';
 import { THEMES, noteOrigin, type Note, type NoteOrigin, type Theme } from '../schema';
-import { defaultCardTypes, hasCloze, noteErrors, promptErrors } from '../schema/validate';
+import { contrastLeaks, defaultCardTypes, hasCloze, noteErrors, promptErrors } from '../schema/validate';
 import { bumpUsed, deleteNotes, leaveContrast, updateNote } from '../db/actions';
 import { useDeckSettings, useDecks, useNotes } from '../db/hooks';
 import { langLabel } from '../ui/langs';
@@ -177,6 +177,7 @@ export function NoteEditor({ note, onClose }: { note: Note; onClose: () => void 
       {note.contrastGroup && (
         <div className="contrast-edit">
           <span className="field-label">易混组：和 {groupMates.map((n) => n.lemma).join(' / ') || '（其他笔记已删除）'} 辨析，每条笔记一张辨析卡</span>
+          {contrastLeaks({ lemma: f.lemma, sentence: f.sentence, altSentences }, groupMates).map((w) => <p key={w} className="warn small">⚠ 辨析卡{w}</p>)}
           <label className="field">
             <span className="field-label">辨析说明（这个词和组里其他词的区别，辨析卡背面显示）</span>
             <input value={f.contrastNote} placeholder="例如：抽象地给…染上色彩（经历、情绪）；colorer 多指字面上色" onChange={(e) => set('contrastNote', e.target.value)} />

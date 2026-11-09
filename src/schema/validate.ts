@@ -118,3 +118,56 @@ export function productionErrors(n: Pick<Note, 'lemma' | 'cardTypes' | 'intentZh
     ...(n.altIntents ?? []).flatMap((x, i) => promptErrors(x.promptFr ?? null, x.intentZh ?? null, x.answerFr, n.lemma).map((e) => `备用产出题第 ${i + 1} 行：${e}`)),
   ];
 }
+
+// ---- 辨析卡：空外面不能露出能排除其他组员的线索 ----
+// 辨析卡正面挖掉考查部分、列出组里几个词让人选。组员有的是代动词（s'attacher à）有的不是（tenir à）时，
+// 空前面的 me suis / se 直接告诉你答案是代动词；组员阴阳性不同（la journée / le jour）时，空前面的 la / une / cette 直接给出答案；
+// 组员带的介词不同（servir à / se servir de）时，空后面紧跟的 à / de 也是线索。这些词要挖进空里，或者换个句子
+type ContrastNote = Pick<Note, 'lemma' | 'sentence'> & Partial<Pick<Note, 'altSentences'>>;
+const lemmaCore = (lemma: string) => lemma.replace(/\(.*?\)|（.*?）/g, ' ').split(/[;,/｜|]/)[0].replace(/\b(qqch|qqn|qch|inf)\b\.?/gi, ' ').replace(/\s+/g, ' ').trim();
+const isPronominal = (lemma: string) => /^(se\s|s['’])/i.test(lemmaCore(lemma));
+const hasEn = (lemma: string) => /^(s['’]en|en)\s/i.test(lemmaCore(lemma));
+function lemmaGender(lemma: string): 'm' | 'f' | null {
+  const l = lemma.trim().toLowerCase();
+  if (/^(le|un)\s/.test(l)) return 'm';
+  if (/^(la|une)\s/.test(l)) return 'f';
+  if (/^l['’]/.test(l)) return /\(m\.?\)/.test(l) ? 'm' : /\(f\.?\)/.test(l) ? 'f' : null;
+  return null;
+}
+const PREPS = ['à', 'de', 'sur', 'pour', 'avec', 'contre', 'dans', 'par', 'en', 'vers', 'envers'];
+function lemmaPrep(lemma: string): string {
+  const last = lemmaCore(lemma).split(' ').pop()?.toLowerCase() ?? '';
+  return PREPS.includes(last) ? last : '';
+}
+const ETRE = 'suis|es|est|sommes|êtes|sont|étais|était|étions|étiez|étaient|serai|seras|sera|serons|serez|seront|serais|serait|serions|seriez|seraient|sois|soit|soyons|soyez|soient|être|étant';
+const REFL_BEFORE = new RegExp(`(?:^|[\\s«"(])(?:me|te|se|m['’]|t['’]|s['’]|nous nous|vous vous)\\s*(?:(?:en|y)\\s+)?(?:(?:ne|n['’])\\s*)?(?:(?:${ETRE})\\s*)?(?:(?:pas|plus|jamais)\\s*)?$`, 'i');
+const EN_BEFORE = /(?:^|[\s'’])en\s*(?:(?:suis|es|est|sommes|êtes|sont|ai|as|a|avons|avez|ont)\s*)?$/i;
+const FEM_DET = /(?:^|\s)(?:la|une|cette|ma|ta|sa|quelle|toute|aucune)\s+(?:\S+\s+)?$/i;
+const MASC_DET = /(?:^|\s)(?:le|un|ce|cet|du|au|quel|tout|aucun)\s+(?:\S+\s+)?$/i;
+/** 辨析卡例句的空外面有没有露出能排除其他组员的线索；返回问题描述（空数组 = 没问题） */
+export function contrastLeaks(note: ContrastNote, mates: Array<Pick<Note, 'lemma'>>): string[] {
+  if (!mates.length) return [];
+  const all = [note, ...mates];
+  const mixedRefl = new Set(all.map((n) => isPronominal(n.lemma))).size > 1;
+  const mixedEn = new Set(all.map((n) => hasEn(n.lemma))).size > 1;
+  const genders = all.map((n) => lemmaGender(n.lemma));
+  const mixedGender = genders.every(Boolean) && new Set(genders).size > 1;
+  const preps = new Set(all.map((n) => lemmaPrep(n.lemma)));
+  const out: string[] = [];
+  const sentences = [note.sentence, ...(note.altSentences ?? [])].filter((s) => s && hasCloze(s));
+  sentences.forEach((s, i) => {
+    const where = i === 0 ? '例句' : `备用例句 ${i}`;
+    const at = s.indexOf('{{');
+    const before = s.slice(0, at).replace(/\s+$/, ' ');
+    const after = s.slice(s.indexOf('}}', at) + 2).trimStart().toLowerCase();
+    if (mixedRefl && REFL_BEFORE.test(before)) out.push(`${where}：空前面的代词（me / se / me suis…）露出了答案是代动词，把它挖进空里或换个句子`);
+    else if (mixedEn && EN_BEFORE.test(before)) out.push(`${where}：空前面的 en 露出了答案，把它挖进空里或换个句子`);
+    if (mixedGender && (FEM_DET.test(before) || MASC_DET.test(before))) out.push(`${where}：空前面的冠词 / 限定词露出了阴阳性，组里的词阴阳性不同，把它挖进空里或换个句子`);
+    if (preps.size > 1) {
+      const first = after.split(/[\s'’]/)[0];
+      const p = first === 'au' || first === 'aux' ? 'à' : first === 'du' || first === 'des' || first === 'd' ? 'de' : first;
+      if (preps.has(p)) out.push(`${where}：空后面紧跟的 ${first} 露出了答案带哪个介词，把介词挖进空里`);
+    }
+  });
+  return out;
+}

@@ -64,15 +64,23 @@ export function pickSentence(note: Note, kind: 'recognition' | 'cloze', variant 
 const isMainCloze = (note: Note, variant: number) => variant % variantCount(note).sentences === 0;
 export interface Intent { promptFr: string | null; intentZh: string; answerFr: string; hint: string | null }
 const usable = (x: { promptFr?: string | null; intentZh?: string | null; answerFr?: string | null }) => !!(x.answerFr?.trim() && (x.promptFr?.trim() || x.intentZh?.trim()));
-export function pickIntent(note: Note, variant = 0): Intent {
+/** 主题 + 备用题；和主题（或前面的备用题）一模一样的备用题只算一次，免得同一道题轮到两次 */
+function intentPool(note: Note): Intent[] {
   const main: Intent = { promptFr: note.promptFr?.trim() || null, intentZh: note.intentZh ?? '', answerFr: note.answerFr ?? '', hint: note.hint };
-  const pool = [main, ...(note.altIntents ?? []).filter(usable).map((x) => ({ promptFr: x.promptFr?.trim() || null, intentZh: x.intentZh ?? '', answerFr: x.answerFr, hint: x.hint ?? null }))];
+  const key = (x: Intent) => `${x.promptFr ?? ''}|${x.promptFr ? '' : x.intentZh.trim()}|${x.answerFr.trim()}`;
+  const seen = new Set([key(main)]);
+  const alts = (note.altIntents ?? []).filter(usable).map((x) => ({ promptFr: x.promptFr?.trim() || null, intentZh: x.intentZh ?? '', answerFr: x.answerFr, hint: x.hint ?? null }))
+    .filter((x) => { const k = key(x); if (seen.has(k)) return false; seen.add(k); return true; });
+  return [main, ...alts];
+}
+export function pickIntent(note: Note, variant = 0): Intent {
+  const pool = intentPool(note);
   return pool[variant % pool.length];
 }
 /** 这条笔记有几个轮换版本（认读 / 挖空 / 产出） */
 export const variantCount = (note: Note) => ({
   sentences: 1 + (note.altSentences ?? []).filter((x) => hasCloze(x)).length,
-  intents: 1 + (note.altIntents ?? []).filter(usable).length,
+  intents: intentPool(note).length,
 });
 
 export function faces(note: Note, s: Settings, labels: [string, string, string], variant = 0): Face[] {
