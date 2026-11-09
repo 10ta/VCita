@@ -1,5 +1,5 @@
 // 时间工具。存储一律用带时区偏移的 ISO 8601（毫秒精度），计算一律转毫秒时间戳。
-// "学习日"在每天 dayStartHour 点切换（默认凌晨 4 点），熬夜复习仍算前一天。
+// "学习日"在每天 dayStartHour 点切换（设置里改，默认 04:00，按设置的时区算），熬夜复习仍算前一天。
 
 const pad = (n: number, len = 2) => String(n).padStart(len, '0');
 
@@ -60,12 +60,12 @@ const ymdAt = (ms: number) => {
   return `${p.y}-${pad(p.m)}-${pad(p.d)}`;
 };
 /** 该时区的墙上时间 → 毫秒（夏令时跳过的时刻取之后的那个） */
-function wallToMs(y: number, m: number, d: number, h: number): number {
-  if (!zone) return new Date(y, m - 1, d, h).getTime();
+function wallToMs(y: number, m: number, d: number, h: number, tz: string | null = zone): number {
+  if (!tz) return new Date(y, m - 1, d, h).getTime();
   const want = Date.UTC(y, m - 1, d, h);
   let t = want;
   for (let i = 0; i < 3; i++) {
-    const p = partsIn(t, zone);
+    const p = partsIn(t, tz);
     const got = Date.UTC(p.y, p.m - 1, p.d, p.h, p.mi, p.s);
     if (got === want) break;
     t += want - got;
@@ -94,6 +94,31 @@ export function daysBetween(a: string, b: string): number {
   const [y1, m1, d1] = a.split('-').map(Number);
   const [y2, m2, d2] = b.split('-').map(Number);
   return Math.round((Date.UTC(y2, m2 - 1, d2) - Date.UTC(y1, m1 - 1, d1)) / 86_400_000);
+}
+
+/** 下一次换天（本学习日结束）的时刻 */
+export const nextDayStartMs = (now: number, dayStartHour: number) => dayStartMs(addDaysToDay(studyDay(now, dayStartHour), 1), dayStartHour);
+
+/** 用设备本地时间说一个时刻：今天 19:00 / 明天 04:00 / 11月10日 04:00 */
+export function fmtLocalMoment(ms: number, now = Date.now()): string {
+  const d = new Date(ms);
+  const n = new Date(now);
+  const hm = `${pad(d.getHours())}:${pad(d.getMinutes())}`;
+  const diff = Math.round((new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime() - new Date(n.getFullYear(), n.getMonth(), n.getDate()).getTime()) / 86_400_000);
+  return diff === 0 ? `今天 ${hm}` : diff === 1 ? `明天 ${hm}` : `${d.getMonth() + 1}月${d.getDate()}日 ${hm}`;
+}
+
+/**
+ * 某时区的 hour 点，现在相当于设备本地的几点（"19:00"）；时区就是设备时区（或无效）时返回 null。
+ * 夏令时会让对应关系变，所以是"现在"的换算。
+ */
+export function localClockOf(hour: number, tz: string | null, now = Date.now()): string | null {
+  if (!tz || tz === deviceTimeZone()) return null;
+  try {
+    const p = partsIn(now, tz);
+    const d = new Date(wallToMs(p.y, p.m, p.d, hour, tz));
+    return `${pad(d.getHours())}:${pad(d.getMinutes())}`;
+  } catch { return null; }
 }
 
 /** 本地日历日（不考虑切换时间）："2026-10-02" */

@@ -3,7 +3,7 @@ import { useCards, useMemories, useNotes, useSettings, useTodayLogs } from '../.
 import { answerCard, bumpUsed, setSuspended, undoAnswer, type AnswerResult } from '../../db/actions';
 import { buildQueue } from '../../srs/queue';
 import { fmtNextIn, isDue, preview, type Rating } from '../../srs/scheduler';
-import { fmtDays, fmtMinutes } from '../../lib/time';
+import { fmtDays, fmtLocalMoment, fmtMinutes, nextDayStartMs } from '../../lib/time';
 import { answerCustom, endCustom, nextQueue, pickCustom, restoreCustom, useCustom, type CustomSession } from '../../srs/custom';
 import { speak } from '../../lib/speech';
 import { usePrefs, setPrefs } from '../../ui/prefs';
@@ -190,8 +190,10 @@ export function ReviewPage({ deckId }: { deckId: string }) {
   const pv = card ? preview(card, s, now, mem) : null;
   const PRACTICE: Record<Rating, string> = { 1: '稍后再练', 2: '本轮最后', 3: '本轮完成', 4: '本轮完成' };
   const btnNote = (r: Rating) => (!scheduled ? PRACTICE[r] : pv ? `${fmtNextIn(pv[r], fmtMinutes, fmtDays)}后` : '');
+  // 下一次换天，用本地时间说（设置里的切换时间 + 时区换算过来）
+  const rollover = fmtLocalMoment(nextDayStartMs(now, s.dayStartHour), now);
   const limitLine = `今日已学：新卡 ${q.done.newDone}/${s.newPerDay} · 复习 ${q.done.reviewDone}${s.reviewsPerDay ? `/${s.reviewsPerDay}` : ''}`
-    + (q.reviewBacklog > 0 ? ` · 超出上限 ${q.reviewBacklog}` : '');
+    + (q.reviewBacklog > 0 ? ` · 超出上限 ${q.reviewBacklog}` : '') + ` · ${rollover} 换天`;
 
   return (
     <div className="page review">
@@ -216,8 +218,8 @@ export function ReviewPage({ deckId }: { deckId: string }) {
         </div>
       ) : (
         <div className="counts">
-          <span className="c-learn" title="学习中 / 重学（本学习日内到期，默认到凌晨 4 点）">{q.counts.learning}</span>
-          <span className="c-review" title="到期复习">{q.counts.review}</span>
+          <span className="c-learn" title={`学习中 / 重学：${rollover} 换天之前到期的（之后到期的算下一个学习日）`}>{q.counts.learning}</span>
+          <span className="c-review" title={`今天到期的复习（${rollover} 换天）`}>{q.counts.review}</span>
           <span className="c-new" title="今天还能学的新卡">{q.counts.new}</span>
         </div>
       )}

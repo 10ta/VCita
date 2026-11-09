@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it } from 'vitest';
-import { addDaysToDay, calendarDay, dayStartMs, setTimeZone, studyDay, toIso } from '../src/lib/time';
+import { addDaysToDay, calendarDay, dayStartMs, fmtLocalMoment, localClockOf, nextDayStartMs, setTimeZone, studyDay, toIso } from '../src/lib/time';
 import { isDue } from '../src/srs/scheduler';
 
 describe('学习日的时区', () => {
@@ -44,5 +44,26 @@ describe('改了切换时间以后，复习卡按学习日到期', () => {
     // 学习中的卡仍按分钟
     expect(isDue({ state: 'learning' as const, due }, now, 0)).toBe(false);
     setTimeZone(null);
+  });
+});
+
+describe('换天时刻的显示', () => {
+  it('下一次换天：UTC 00:00 设置下，纽约晚上 9 点看，是明天 UTC 零点', () => {
+    setTimeZone('UTC');
+    const now = Date.UTC(2026, 10, 9, 2, 45); // 纽约 11-08 21:45
+    expect(nextDayStartMs(now, 0)).toBe(Date.UTC(2026, 10, 10, 0));
+    setTimeZone(null);
+  });
+  it('本地时间说法：今天 / 明天 / 日期', () => {
+    const base = new Date(2026, 10, 8, 21, 45).getTime();
+    expect(fmtLocalMoment(new Date(2026, 10, 9, 4, 0).getTime(), base)).toBe('明天 04:00');
+    expect(fmtLocalMoment(new Date(2026, 10, 8, 23, 0).getTime(), base)).toBe('今天 23:00');
+    expect(fmtLocalMoment(new Date(2026, 10, 11, 4, 0).getTime(), base)).toBe('11月11日 04:00');
+  });
+  it('换算成本地时间：设备时区相同时不换算', () => {
+    expect(localClockOf(4, null)).toBeNull();
+    expect(localClockOf(4, Intl.DateTimeFormat().resolvedOptions().timeZone)).toBeNull();
+    // 容器是 UTC 时，上海 08:00 = 本地 00:00
+    if (Intl.DateTimeFormat().resolvedOptions().timeZone === 'UTC') expect(localClockOf(8, 'Asia/Shanghai', Date.UTC(2026, 10, 8, 12))).toBe('00:00');
   });
 });

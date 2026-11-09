@@ -5,7 +5,7 @@
 //  - 新卡：按学习步骤（默认 10 分钟、1 天）走完后毕业，毕业间隔 3 天；"容易"直接毕业 4 天
 //  - 复习卡：困难 ×1.2 / 良好 ×ease / 容易 ×ease×1.3；忘了 → 重学步骤，结束后间隔 ×0.5
 //  - 逾期答对（困难/良好/容易）按逾期天数加成，但额外天数不超过 overdueBonusMaxDays
-//  - 1 天以上的步骤和所有复习间隔都对齐到学习日开始（默认凌晨 4 点）
+//  - 1 天以上的步骤和所有复习间隔都对齐到学习日开始（设置的切换时间）
 import type { Card, CardState, Settings } from '../schema';
 import { addDaysToDay, dayStartMs, daysBetween, fromIso, studyDay, toIso } from '../lib/time';
 import { intervalFor, nextMemory, validWeights, type Grade, type Memory } from './fsrs';
@@ -48,7 +48,7 @@ function dueAfterDays(now: number, days: number, p: SrsParams): string {
   return toIso(dayStartMs(addDaysToDay(studyDay(now, p.dayStartHour), days), p.dayStartHour));
 }
 function dueAfterMinutes(now: number, minutes: number, p: SrsParams): string {
-  // 1 天以上的步骤按学习日对齐，否则凌晨学的卡会在第二天凌晨同一时刻才到期
+  // 1 天以上的步骤按学习日对齐，否则换天前学的卡会在第二天同一时刻才到期
   if (minutes >= 1440) return dueAfterDays(now, Math.round(minutes / 1440), p);
   return toIso(now + minutes * MIN);
 }

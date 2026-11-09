@@ -15,7 +15,7 @@
 //       套用卡要等同一条句框的句框卡进入复习（学会了句框）才出
 //  4. 同一条笔记的卡当天只出一张（今天已答过这条笔记的其他卡，推到明天）；同一个易混组的辨析卡当天也只出一张
 //  5. 都没有时，20 分钟内到期的学习卡提前出（Anki 的 learn ahead）；只提前本学习日内到期的，
-//     跨过换日时间的不提前（凌晨 3:42 不能把"1 天"步骤、4:00 才到期的卡拿出来，它属于明天）；刚答完的那张不提前，
+//     跨过换日时间的不提前（换天前 18 分钟不能把"1 天"步骤、换天后才到期的卡拿出来，它属于明天）；刚答完的那张不提前，
 //     否则只剩它时会立刻重复出现（例如重学卡点"困难"= 10 分钟后，却马上又出来）
 import { isDue } from './scheduler';
 import { noteOrigin, type Card, type Note, type ReviewLog, type Settings } from '../schema';
@@ -170,7 +170,7 @@ export function buildQueue(q: QueueInput): QueueState {
   const skipped = q.skipped ?? new Set<string>();
   const pool = q.cards.filter((c) => c.deckId === q.deckId && !c.deleted && !c.suspended && !skipped.has(c.id) && !sibling(c));
 
-  // 本学习日结束（下一个切换时间，默认凌晨 4 点）：明天才到期的学习卡不算进"今天还要学"
+  // 本学习日结束（下一个切换时间，按设置的时区）：明天才到期的学习卡不算进"今天还要学"
   const endOfToday = dayStartMs(addDaysToDay(today, 1), q.settings.dayStartHour);
   const learningAll = pool.filter((c) => c.state === 'learning' || c.state === 'relearning').sort(byDue);
   const learningDue = learningAll.filter((c) => fromIso(c.due) <= q.now);

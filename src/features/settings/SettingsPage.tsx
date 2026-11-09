@@ -5,7 +5,7 @@ import { simulate, stepCounts } from '../../srs/simulate';
 import { clearAllLocalData, spreadBacklog, updateSettings } from '../../db/actions';
 import { exportBundle, importBundle } from '../../io/bundle';
 import { downloadJson, readJsonFile } from '../../io/download';
-import { dayStartMs, deviceTimeZone, fileStamp, fromIso, studyDay } from '../../lib/time';
+import { dayStartMs, deviceTimeZone, fileStamp, fromIso, localClockOf, studyDay } from '../../lib/time';
 import { SyncSection } from '../../sync/SyncSection';
 import { LANGS } from '../../ui/langs';
 import { toast } from '../../ui/toast';
@@ -207,6 +207,13 @@ const parseSteps = (s: string) => s.split(/[\s,，]+/).filter(Boolean).map(Numbe
 
 /** 时区列表：常用的放前面，其余按字母 */
 const COMMON_ZONES = ['Asia/Shanghai', 'Europe/Paris', 'America/Toronto', 'America/Montreal', 'America/New_York', 'America/Vancouver', 'UTC'];
+/** 「每日切换时间」的说明：时区不是设备时区时，换算成本地时间 */
+function switchHint(hour: number, tz: string | null): string {
+  const hh = `${String(hour).padStart(2, '0')}:00`;
+  const local = localClockOf(hour, tz);
+  return `到这个时间换成新的一天，在这之前学习仍算前一天。`
+    + (local ? `${tz} ${hh} 现在相当于本地 ${local}` : `按${tz ? ` ${tz}` : '设备'}时间 ${hh} 换天`);
+}
 function zoneOptions(): string[] {
   let all: string[] = [];
   try { all = (Intl as unknown as { supportedValuesOf?: (k: string) => string[] }).supportedValuesOf?.('timeZone') ?? []; } catch { /* 旧浏览器 */ }
@@ -255,7 +262,7 @@ function SrsForm({ s }: { s: Settings }) {
       <h2>复习</h2>
       <h3 className="set-sub">每日安排</h3>
       {DAILY.map(num)}
-      <SetRow label="每日切换时间" hint={`在这之前学习仍算前一天。时区：${f.timeZone ? f.timeZone : `跟随设备（${deviceTimeZone()}）`}`}>
+      <SetRow label="每日切换时间" hint={switchHint(Number(f.dayStartHour), f.timeZone || null)}>
         <span className="row">
           <select aria-label="每日切换时间" value={f.dayStartHour} onChange={(e) => setF({ ...f, dayStartHour: Number(e.target.value) })}>
             {Array.from({ length: 24 }, (_, h) => <option key={h} value={h}>{String(h).padStart(2, '0')}:00</option>)}
