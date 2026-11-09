@@ -3,8 +3,6 @@ import { useSyncExternalStore } from 'react';
 
 export interface Prefs {
   deckId: string | null;
-  /** 题面：0 法语 / 1 翻译1 / 2 翻译2（再叠加每张卡自己的旋转） */
-  quizType: 0 | 1 | 2;
   /** 添加页：添加后读一遍法语 */
   autoPlay: boolean;
   /** 复习页自动读法语：题面是法语就出题时读，题面是中文 / 挖空就翻面后读答案。中文、英文永远不自动读 */
@@ -20,7 +18,7 @@ export interface Prefs {
   readColors: boolean;
 }
 const KEY = 'vf_prefs';
-const DEFAULTS: Prefs = { deckId: null, quizType: 0, autoPlay: false, autoRead: true, listenCards: 'core', showT1: true, showT2: false, pageSize: 30, addOrigin: 'mined', readColors: true };
+const DEFAULTS: Prefs = { deckId: null, autoPlay: false, autoRead: true, listenCards: 'core', showT1: true, showT2: false, pageSize: 30, addOrigin: 'mined', readColors: true };
 
 let cache: Prefs = (() => {
   try {
@@ -34,6 +32,7 @@ let cache: Prefs = (() => {
       raw.listenCards = raw.audio === 'core' || raw.audio === 'all' ? raw.audio : 'off';
     }
     delete raw.audio;
+    delete raw.quizType; // 题面切换已去掉
     return { ...DEFAULTS, ...raw };
   } catch { return DEFAULTS; }
 })();

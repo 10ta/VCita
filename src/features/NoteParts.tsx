@@ -70,7 +70,7 @@ export function CardPreviews({ draft, s, labels }: { draft: Note; s: Settings; l
   return (
     <div className="previews">
       {types.map(([t, label]) => {
-        const v = cardView(t, draft, s, 0, labels);
+        const v = cardView(t, draft, s, labels);
         return (
           <div key={t} className="mini">
             <span className={`badge is-type t-${t}`}>{label}</span>

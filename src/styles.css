@@ -458,3 +458,6 @@ textarea.weights { width: 100%; font-family: var(--mono); font-size: 12px; }
 .deck-langs { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 6px; }
 .deck-langs label { display: inline-flex; gap: 4px; align-items: center; }
 .deck-langs select { padding: 2px 6px; font-size: 12px; }
+
+.prompt-phrase { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; justify-content: center; }
+.prompt-phrase b { font-family: var(--serif); font-weight: 500; font-size: 15px; }

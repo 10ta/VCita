@@ -3,7 +3,7 @@ import { useCards, useDeckSettings, useDecks, useLogsSince, useMemories, useNote
 import type { Memory } from '../../srs/fsrs';
 import { findConfusables } from '../../srs/confusable';
 import { Fr, useNoteFreqs } from '../FrText';
-import { deleteNotes, groupContrast, resetNotes, setSuspended, updateNote, updateNotes } from '../../db/actions';
+import { deleteNotes, groupContrast, resetNotes, setSuspended, updateNotes } from '../../db/actions';
 import { THEMES, noteOrigin, type Card, type Note, type NoteOrigin, type Theme } from '../../schema';
 import { productionErrors } from '../../schema/validate';
 import { addDaysToDay, fromIso, noonIso, studyDay } from '../../lib/time';
@@ -217,7 +217,6 @@ export function LibraryPage({ deckId }: { deckId: string }) {
       </div>
       {sel.size > 0 && (
         <div className="toolbar batch">
-          <button type="button" className="pill" onClick={() => void updateNotes(ids, (n) => ({ rot: (n.rot + 1) % 3 })).then(() => done(`已旋转 ${ids.length} 条`))}>旋转</button>
           <button type="button" className="pill" onClick={() => setBatch('theme')}>设主题</button>
           <button type="button" className="pill" onClick={() => setBatch('deck')}>移到牌组</button>
           <button type="button" className="pill" onClick={() => setBatch('date')}>改日期</button>
@@ -250,7 +249,6 @@ export function LibraryPage({ deckId }: { deckId: string }) {
                 <div className="note-front">
                   <span><Fr>{n.sentence ? renderSentence(n.sentence) : n.lemma}</Fr></span>
                   <SpeakBtn text={n.sentence ? n.sentence.replace(/\{\{|\}\}/g, '') : n.lemma} lang={s.sourceLang} />
-                  {n.rot !== 0 && <span className="badge" title="卡片旋转：复习时题面换成别的字段">旋转{n.rot}</span>}
                 </div>
                 {(prefs.showT1 || prefs.showT2) && (
                   <div className="note-mean">
@@ -278,7 +276,6 @@ export function LibraryPage({ deckId }: { deckId: string }) {
               <div className="note-actions">
                 <button type="button" className="icon" title={open.has(n.id) ? '收起' : '展开：每张卡的状态和复习历史'}
                   onClick={() => setOpen((x) => { const y = new Set(x); if (y.has(n.id)) y.delete(n.id); else y.add(n.id); return y; })}>{open.has(n.id) ? '▴' : '▾'}</button>
-                <button type="button" className="icon" title="旋转题面" onClick={() => void updateNote(n.id, { rot: (n.rot + 1) % 3 })}>⟳</button>
                 <button type="button" className="icon" title="编辑" onClick={() => setEditing(n)}>✎</button>
                 {card?.suspended
                   ? <button type="button" className="icon" title="恢复" onClick={() => void setSuspended([n.id], false)}>▶</button>

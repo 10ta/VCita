@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useCards, useDeckSettings, useMemories, useNotes, useTodayLogs } from '../../db/hooks';
-import { answerCard, bumpUsed, setSuspended, undoAnswer, type AnswerResult } from '../../db/actions';
+import { addClip, answerCard, bumpUsed, setSuspended, undoAnswer, type AnswerResult } from '../../db/actions';
 import { buildQueue } from '../../srs/queue';
 import { fmtNextIn, isDue, paramsFor, preview, type Rating } from '../../srs/scheduler';
 import { fmtDays, fmtLocalMoment, fmtMinutes, nextDayStartMs } from '../../lib/time';
@@ -99,15 +99,18 @@ export function ReviewPage({ deckId }: { deckId: string }) {
   const listenCards = prefs.listenCards ?? 'core';
   const listen = !!note && (listenCards === 'all' || (listenCards === 'core' && note.layer === 'core'));
   const group = useMemo(() => (note?.contrastGroup ? (notes ?? []).filter((n) => n.contrastGroup === note.contrastGroup && n.id !== note.id) : []), [note, notes]);
-  const split = note && s && card ? cardView(card.type, note, s, prefs.quizType, labels, card.reps, listen, group) : null;
+  const split = note && s && card ? cardView(card.type, note, s, labels, card.reps, listen, group) : null;
+  // 产出卡提示有几级：中文意思（有就算一级）+ 首字母
+  const hintSteps = (split?.meaningHint ? 1 : 0) + (split?.hint ? 1 : 0);
   // 产出卡可以先写出答案，揭示后和标准答案并排对照（不自动判对错）
   const [typed, setTyped] = useState('');
-  // 产出卡的首字母提示默认收起，想不出来时再点开（H），否则一眼看到就失去了回忆的意义
-  const [showHint, setShowHint] = useState(false);
+  // 产出卡的提示分两级，默认收起：第一下（H）中文意思——看不懂题面的换说法时用；第二下首字母
+  const [hintLevel, setHintLevel] = useState(0);
+  const [promptSaved, setPromptSaved] = useState(false);
   // 听力卡偷看文字：0 没看；1 看了上下文（悬停）；2 连要听的部分也看了（点一下 / H）
   const [peek, setPeek] = useState<0 | 1 | 2>(0);
   const peekTimer = useRef<number | undefined>(undefined);
-  useEffect(() => { setTyped(''); setShowHint(false); setPeek(0); }, [currentId]);
+  useEffect(() => { setTyped(''); setHintLevel(0); setPromptSaved(false); setPeek(0); }, [currentId]);
 
   // 自动发音只读学习语言（法语）：题面是法语就出题时读；题面是中文 / 英文 / 挖空，就翻面后读法语答案
   const frontIsSource = !!split && !!s && split.question.lang === s.sourceLang && !!split.question.speakText;
@@ -119,7 +122,7 @@ export function ReviewPage({ deckId }: { deckId: string }) {
     if (!autoRead && !(split.listen && !revealed)) return;
     const target = !revealed ? (frontIsSource ? split.question : null) : (frontIsSource ? null : sourceAnswer ?? null);
     if (!target) return;
-    const key = `${card.id}:${prefs.quizType}:${split.listen ? 'l' : ''}:${revealed ? 'b' : 'f'}`;
+    const key = `${card.id}:${split.listen ? 'l' : ''}:${revealed ? 'b' : 'f'}`;
     if (lastSpoken.current === key) return;
     lastSpoken.current = key;
     void speak(target.speakText, target.lang);
@@ -135,7 +138,7 @@ export function ReviewPage({ deckId }: { deckId: string }) {
     if (k === 's' || k === 'S') return skip();
     if (k === 'p' || k === 'P') return void suspend();
     if (k === 'e' || k === 'E') return setEditing(true);
-    if ((k === 'h' || k === 'H') && card.type === 'production' && !revealed) return setShowHint(true);
+    if ((k === 'h' || k === 'H') && card.type === 'production' && !revealed) return setHintLevel((l) => Math.min(l + 1, hintSteps));
     if ((k === 'h' || k === 'H') && split?.listen && !revealed) return setPeek(2);
     if (k === 'l' || k === 'L') return openInLibrary(card.noteId);
     // R：重听法语。题面不是法语时，翻面后读答案；没翻面就读题面（手动按的，读什么都行）
@@ -205,10 +208,6 @@ export function ReviewPage({ deckId }: { deckId: string }) {
   return (
     <div className="page review">
       <div className="toolbar">
-        <span className="muted">题面</span>
-        {labels.map((l, i) => (
-          <button key={i} type="button" className={`pill${prefs.quizType === i ? ' is-on' : ''}`} onClick={() => setPrefs({ quizType: i as 0 | 1 | 2 })}>{l}</button>
-        ))}
         <span className="grow" />
         <span className="audio-ctl">
           <button type="button" className={autoRead ? 'is-on' : ''} onClick={() => setPrefs({ autoRead: !autoRead })}
@@ -277,9 +276,18 @@ export function ReviewPage({ deckId }: { deckId: string }) {
               <SpeakBtn text={split.question.speakText} lang={split.question.lang} size={20} />
             </div>
             {split.choices && <div className="cx-choices">{split.choices.map((c) => <span key={c} className="cx-choice">{c}</span>)}</div>}
-            {split.hint && (card.type !== 'production' || showHint || revealed
-              ? <div className="cue">提示：{card.type === 'production' ? <Fr>{split.hint}</Fr> : split.hint}</div>
-              : <button type="button" className="pill hint-btn" onClick={() => setShowHint(true)} title="首字母提示 (H)">提示 <kbd>H</kbd></button>)}
+            {card.type === 'production' ? (
+              <>
+                {!revealed && hintLevel >= 1 && split.meaningHint && <div className="cue">意思：{split.meaningHint}</div>}
+                {split.hint && (revealed || hintLevel >= hintSteps) && <div className="cue">提示：<Fr>{split.hint}</Fr></div>}
+                {!revealed && hintLevel < hintSteps && (
+                  <button type="button" className="pill hint-btn" onClick={() => setHintLevel((l) => l + 1)}
+                    title={hintLevel === 0 && split.meaningHint ? '先看中文意思（看不懂题面的说法时用），再按一次给首字母 (H)' : '首字母提示 (H)'}>
+                    {hintLevel === 0 && split.meaningHint ? '提示' : '首字母'} <kbd>H</kbd>
+                  </button>
+                )}
+              </>
+            ) : split.hint && <div className="cue">提示：{split.hint}</div>}
             <CardStats card={card} s={s} center mem={mem} />
             {(card.type === 'production' || card.type === 'frame') && !revealed && (
               <input className="type-in" value={typed} placeholder={card.type === 'frame' ? '先写出句框（可选，要填的位置写 ⬚ 或随便填），回车显示答案' : '先写出法语（可选），回车显示答案'} onChange={(e) => setTyped(e.target.value)}
@@ -309,6 +317,17 @@ export function ReviewPage({ deckId }: { deckId: string }) {
                       <SpeakBtn text={a.speakText} lang={a.lang} />
                     </div>
                   ))}
+                  {split.promptPhrase && split.promptFr && (
+                    <div className="prompt-phrase small">
+                      <span className="muted">题面说法 </span><b>{split.promptPhrase}</b>
+                      <button type="button" className={`pill${promptSaved ? ' is-on' : ''}`} disabled={promptSaved}
+                        title="题面这个说法也值得学：连同题面句子放进摘句篮，之后做成它自己的卡"
+                        onClick={() => void addClip({ kind: 'expr', text: split.promptPhrase!, context: split.promptFr!, source: `产出卡题面（${note.lemma}）` })
+                          .then((r) => { setPromptSaved(true); toast(r.existed ? '摘句篮里已经有这一条了' : '已放进摘句篮（添加 → 摘句篮）'); })}>
+                        {promptSaved ? '已放进摘句篮 ✓' : '也学这个'}
+                      </button>
+                    </div>
+                  )}
                   <Cues note={note} only={split.cues === 'extra' ? 'extra' : undefined} />
                   {(card.type === 'production' || card.type === 'frame' || card.type === 'apply') && (
                     <button type="button" className="pill" title="这个表达在写作或口语里用上了一次" onClick={() => void bumpUsed(note.id).then(() => toast(`已记录，累计用上 ${note.usedCount + 1} 次`))}>

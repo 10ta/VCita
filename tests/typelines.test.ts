@@ -83,7 +83,7 @@ describe('产出答对顺带记认读', () => {
   it('困难 / 忘了不记；认读卡今天已复习过不记；开关关掉不记', async () => {
     const { rec, prod } = await setup();
     expect((await answerCard(prod.id, 2)).implicit).toBeNull();
-    await db.cards.put({ ...rec, lastReviewedAt: toIso(Date.now() - 60_000) });
+    await db.cards.put({ ...rec, lastReviewedAt: toIso(Date.now()) });
     expect((await answerCard(prod.id, 3)).implicit).toBeNull();
     await db.cards.put(rec);
     await updateSettings({ implicitRecognitionCredit: false });

@@ -21,8 +21,12 @@ describe('产出卡：法语题面', () => {
     intentZh: '以……为理由', hint: 'a… m… q…',
   });
   it('正面是法语题面，高亮要换掉的说法；背面高亮答案，中文作注释', () => {
-    const v = cardView('production', n, S, 0, L);
-    expect(v.question.label).toBe('法语题面');
+    const v = cardView('production', n, S, L);
+    expect(v.question.label).toBe(`${L[0]}题面`);
+    // 两级提示的第一级：中文意思；背面「也学这个」用的题面说法
+    expect(v.meaningHint).toBe('以……为理由');
+    expect(v.promptPhrase).toBe('en donnant comme raison que');
+    expect(v.promptFr).toBe(n.promptFr);
     expect(v.question.lang).toBe(S.sourceLang);
     expect(html(v.question.text)).toContain('<b class="cloze">en donnant comme raison que</b>');
     expect(html(v.answers[0].text)).toContain('<b class="cloze">au motif que</b>');
@@ -31,7 +35,7 @@ describe('产出卡：法语题面', () => {
     expect(v.hint).toBe('On m’a refusé l’entrée a… m… q… mon trépied gênait.');
   });
   it('没有法语题面：正面退回中文意图，中文里也可以高亮', () => {
-    const v = cardView('production', note({ intentZh: '要{{考虑}}居民的意见', answerFr: 'tenir compte de' }), S, 0, L);
+    const v = cardView('production', note({ intentZh: '要{{考虑}}居民的意见', answerFr: 'tenir compte de' }), S, L);
     expect(v.question.label).toBe('中文意图');
     expect(html(v.question.text)).toContain('<b class="cloze">考虑</b>');
     expect(v.question.speakText).toBe('要考虑居民的意见');
@@ -58,7 +62,7 @@ describe('产出卡：法语题面', () => {
 });
 
 describe('挖空：多处、提示不泄露答案', () => {
-  const view = (sentence: string, clozeHint: string | null = null) => html(cardView('cloze', note({ sentence, clozeHint, cardTypes: ['cloze'] }), S, 0, L).question.text);
+  const view = (sentence: string, clozeHint: string | null = null) => html(cardView('cloze', note({ sentence, clozeHint, cardTypes: ['cloze'] }), S, L).question.text);
   it('分开的表达挖两处，提示只在第一处', () => {
     const h = view("Essaie d'{{avoir}} ces trois idées {{en tête}}.", '记在脑子里');
     expect(h.match(/\[记在脑子里\]/g)).toHaveLength(1);

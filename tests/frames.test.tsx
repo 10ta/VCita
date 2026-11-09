@@ -68,7 +68,7 @@ describe('句框卡面', () => {
   const s = { targetLang1: 'zh', sourceLang: 'fr' } as never;
   const html = (x: unknown) => renderToStaticMarkup(<>{x as never}</>);
   it('句框卡：正面功能，背面句框（⬚ 标出）和例句', () => {
-    const v = cardView('frame', note, s, 0, ['法语', '中文', '英文']);
+    const v = cardView('frame', note, s, ['法语', '中文', '英文']);
     expect(html(v.question.text)).toContain('反事实');
     expect(html(v.question.text)).not.toContain('déplacer');
     expect(html(v.answers[0].text)).toContain('<span class="slot">⬚</span>');
@@ -76,7 +76,7 @@ describe('句框卡面', () => {
     expect(v.answerFr).toBe(note.lemma);
   });
   it('套用卡：多一个主题，按复习次数轮换，同一张卡顺序固定', () => {
-    const v = cardView('apply', note, s, 0, ['法语', '中文', '英文'], 1);
+    const v = cardView('apply', note, s, ['法语', '中文', '英文'], 1);
     expect(html(v.question.text)).toContain('主题');
     expect(v.hint).toContain('写一整句');
     expect(pickTopic(note, 1)).toEqual(pickTopic(note, 1));

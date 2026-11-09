@@ -87,10 +87,10 @@ export function faces(note: Note, s: Settings, labels: [string, string, string],
   ];
 }
 
-export function quizSplit(note: Note, s: Settings, quizType: number, labels: [string, string, string], variant = 0) {
+/** 认读卡：正面固定是学习语言的句子，背面是两个翻译（以前的「题面切换」和笔记旋转已去掉，中文正面的练法交给产出卡） */
+export function quizSplit(note: Note, s: Settings, labels: [string, string, string], variant = 0) {
   const f = faces(note, s, labels, variant);
-  const q = (note.rot + quizType) % 3;
-  return { question: f[q], answers: f.filter((_, i) => i !== q) };
+  return { question: f[0], answers: f.slice(1) };
 }
 
 export const TYPE_LABEL: Record<Card['type'], string> = { recognition: '认读', production: '产出', cloze: '挖空', contrast: '辨析', frame: '句框', apply: '套用' };
@@ -105,6 +105,11 @@ export interface CardView {
   listen?: boolean;
   /** 产出卡这次用的法语答案（带 {{…}}），对照自己写的用 */
   answerFr?: string;
+  /** 产出卡：第一级提示（中文意思），看不懂题面的换说法时用；第二级才是首字母 */
+  meaningHint?: string | null;
+  /** 产出卡：题面里被换掉的那个说法和题面整句（背面「也学这个」放进摘句篮用） */
+  promptPhrase?: string | null;
+  promptFr?: string | null;
   /** 辨析卡的选项（易混组里几个词的词条，顺序每次复习换一次） */
   choices?: string[];
 }
@@ -178,7 +183,7 @@ function frameView(type: 'frame' | 'apply', note: Note, s: Settings, labels: [st
 
 /** 三种卡的正反面。旋转和题面切换只作用于认读卡 */
 /** variant：第几个版本，复习时传卡片的复习次数，每次复习轮换一个句子 / 场景 */
-export function cardView(type: Card['type'], note: Note, s: Settings, quizType: number, labels: [string, string, string], variant = 0, listen = false, group: Note[] = []): CardView {
+export function cardView(type: Card['type'], note: Note, s: Settings, labels: [string, string, string], variant = 0, listen = false, group: Note[] = []): CardView {
   if (type === 'contrast') return contrastView(note, group, s, labels, variant);
   if (type === 'frame' || type === 'apply') return frameView(type, note, s, labels, variant);
   // 听力认读：正面只有声音，翻面显示句子和两个翻译
@@ -194,9 +199,11 @@ export function cardView(type: Card['type'], note: Note, s: Settings, quizType: 
     const answer: Face = { text: hasCloze(a) ? renderSentence(a) : a, speakText: plainSentence(a), lang: s.sourceLang, label: labels[0] };
     if (it.promptFr) {
       return {
-        question: { text: renderSentence(it.promptFr), speakText: plainSentence(it.promptFr), lang: s.sourceLang, label: '法语题面' },
+        question: { text: renderSentence(it.promptFr), speakText: plainSentence(it.promptFr), lang: s.sourceLang, label: `${labels[0]}题面` },
         // 有法语题面时提示由答案句自动生成（笔记里手写的整句首字母提示会把题面上已有的词也遮住）
         hint: hasCloze(a) ? productionHint(a) : it.hint, cues: 'extra', answerFr: a,
+        meaningHint: plainSentence(it.intentZh).trim() || null,
+        promptPhrase: clozeTargets(it.promptFr).join(' … ') || null, promptFr: it.promptFr,
         answers: it.intentZh.trim() ? [answer, { text: plainSentence(it.intentZh), speakText: plainSentence(it.intentZh), lang: s.targetLang1, label: labels[1] }] : [answer],
       };
     }
@@ -226,7 +233,7 @@ export function cardView(type: Card['type'], note: Note, s: Settings, quizType: 
       ],
     };
   }
-  return { ...quizSplit(note, s, quizType, labels, variant), hint: null, cues: 'all' };
+  return { ...quizSplit(note, s, labels, variant), hint: null, cues: 'all' };
 }
 
 export function SpeakBtn({ text, lang, size = 14 }: { text: string; lang: string; size?: number }) {
