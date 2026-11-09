@@ -19,6 +19,15 @@ export type SrsParams = Pick<
 
 const useFsrs = (p: SrsParams) => (p.scheduler ?? 'sm2') === 'fsrs';
 
+/** 认读类卡（认得就行）用较低的目标保持率，产出类（要写得出来）用较高的 */
+export const isRecognitionType = (type: Card['type']) => type === 'recognition' || type === 'contrast';
+export function retentionFor(type: Card['type'], s: Pick<Settings, 'desiredRetention'> & Partial<Pick<Settings, 'retentionRecognition'>>): number {
+  return isRecognitionType(type) ? s.retentionRecognition ?? s.desiredRetention : s.desiredRetention;
+}
+/** 这张卡用的调度参数：目标保持率按卡型换掉 */
+export const paramsFor = <P extends SrsParams & Partial<Pick<Settings, 'retentionRecognition'>>>(type: Card['type'], s: P): P =>
+  ({ ...s, desiredRetention: retentionFor(type, { desiredRetention: s.desiredRetention ?? 0.9, retentionRecognition: s.retentionRecognition }) });
+
 /** FSRS：四个评分各自的新记忆状态和天级间隔（复习卡的间隔保证 困难 ≤ 良好 < 容易） */
 export function fsrsOutcomes(card: Sched, p: SrsParams, now: number, mem: Memory | null): Record<Rating, { mem: Pick<Memory, 's' | 'd'>; days: number }> {
   const w = validWeights(p.fsrsWeights);

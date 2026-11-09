@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { useCards, useMemories, useNotes, useSettings, useTodayLogs } from '../../db/hooks';
 import { answerCard, bumpUsed, setSuspended, undoAnswer, type AnswerResult } from '../../db/actions';
 import { buildQueue } from '../../srs/queue';
-import { fmtNextIn, isDue, preview, type Rating } from '../../srs/scheduler';
+import { fmtNextIn, isDue, paramsFor, preview, type Rating } from '../../srs/scheduler';
 import { fmtDays, fmtLocalMoment, fmtMinutes, nextDayStartMs } from '../../lib/time';
 import { answerCustom, endCustom, nextQueue, pickCustom, restoreCustom, useCustom, type CustomSession } from '../../srs/custom';
 import { speak } from '../../lib/speech';
@@ -198,7 +198,7 @@ export function ReviewPage({ deckId }: { deckId: string }) {
   };
 
   const mem = card ? memories?.get(card.id) ?? null : null;
-  const pv = card ? preview(card, s, now, mem) : null;
+  const pv = card ? preview(card, paramsFor(card.type, s), now, mem) : null;
   const PRACTICE: Record<Rating, string> = { 1: '稍后再练', 2: '本轮最后', 3: '本轮完成', 4: '本轮完成' };
   const btnNote = (r: Rating) => (!scheduled ? PRACTICE[r] : pv ? `${fmtNextIn(pv[r], fmtMinutes, fmtDays)}后` : '');
   // 下一次换天，用本地时间说（设置里的切换时间 + 时区换算过来）

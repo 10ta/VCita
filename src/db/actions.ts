@@ -4,7 +4,7 @@ import { SettingsSchema, type Card, type Clip, type Deck, type Encounter, type T
 import { addDaysToDay, bumpIso, dayStartMs, fromIso, setTimeZone, studyDay, toIso } from '../lib/time';
 import { relativeOverdue } from '../srs/queue';
 import { newId } from '../lib/id';
-import { schedule, type Rating } from '../srs/scheduler';
+import { paramsFor, schedule, type Rating } from '../srs/scheduler';
 import { replayMemory, validWeights } from '../srs/fsrs';
 
 // ---------- 设置 ----------
@@ -264,6 +264,8 @@ export interface AnswerResult {
   after: Card;
   logId: string;
   leechNow: boolean;
+  /** 产出卡答对时顺带给认读卡记的隐性复习（撤销时一起恢复） */
+  implicit?: { before: Card; logId: string } | null;
 }
 
 export async function answerCard(cardId: string, rating: Rating, opts: { now?: number; elapsedMs?: number | null } = {}): Promise<AnswerResult> {
@@ -274,7 +276,7 @@ export async function answerCard(cardId: string, rating: Rating, opts: { now?: n
     if (!before) throw new Error('卡片不存在');
     // FSRS：这张卡的记忆状态从它的全部日志重放
     const mem = s.scheduler === 'fsrs' ? replayMemory(validWeights(s.fsrsWeights), await db.logs.where('cardId').equals(cardId).toArray(), before, s.dayStartHour) : null;
-    const r = schedule(before, rating, now, s, Math.random, mem);
+    const r = schedule(before, rating, now, paramsFor(before.type, s), Math.random, mem);
     const after: Card = { ...r.card, updatedAt: bumpIso(before.updatedAt, now) };
     const log: ReviewLog = {
       id: newId(), cardId, noteId: before.noteId, ts: toIso(now), day: studyDay(now, s.dayStartHour), rating,
@@ -282,22 +284,51 @@ export async function answerCard(cardId: string, rating: Rating, opts: { now?: n
       prevInterval: before.interval, newInterval: after.interval,
       prevEase: before.ease, newEase: after.ease,
       prevDue: before.due, newDue: after.due,
-      elapsedMs: opts.elapsedMs ?? null, source: 'app',
+      elapsedMs: opts.elapsedMs ?? null, source: 'app', implicit: false,
       updatedAt: toIso(now), deleted: false,
     };
     await db.cards.put(after);
     await db.logs.put(log);
-    return { before, after, logId: log.id, leechNow: r.leechNow };
+    const implicit = rating >= 3 && before.type === 'production' && s.implicitRecognitionCredit !== false
+      ? await creditRecognition(before.noteId, now, s) : null;
+    return { before, after, logId: log.id, leechNow: r.leechNow, implicit };
   });
 }
 
+/**
+ * 写得出来就一定认得：产出卡答对时，同一条笔记已在复习中的认读卡记一次隐性「良好」，下次复习往后推。
+ * 只往后推，不会提前；今天已经复习过这张认读卡就不记。在 answerCard 的事务里调用
+ */
+async function creditRecognition(noteId: string, now: number, s: Settings): Promise<{ before: Card; logId: string } | null> {
+  const today = studyDay(now, s.dayStartHour);
+  const rec = (await db.cards.where('noteId').equals(noteId).toArray())
+    .find((c) => c.type === 'recognition' && !c.deleted && !c.suspended && c.state === 'review');
+  if (!rec || (rec.lastReviewedAt && studyDay(fromIso(rec.lastReviewedAt), s.dayStartHour) === today)) return null;
+  const logs = await db.logs.where('cardId').equals(rec.id).toArray();
+  const mem = s.scheduler === 'fsrs' ? replayMemory(validWeights(s.fsrsWeights), logs, rec, s.dayStartHour) : null;
+  const r = schedule(rec, 3, now, paramsFor('recognition', s), Math.random, mem);
+  if (fromIso(r.card.due) <= fromIso(rec.due)) return null;
+  const after: Card = { ...r.card, updatedAt: bumpIso(rec.updatedAt, now) };
+  const log: ReviewLog = {
+    id: newId(), cardId: rec.id, noteId, ts: toIso(now), day: today, rating: 3,
+    prevState: rec.state, newState: after.state, prevInterval: rec.interval, newInterval: after.interval,
+    prevEase: rec.ease, newEase: after.ease, prevDue: rec.due, newDue: after.due,
+    elapsedMs: null, source: 'app', implicit: true, updatedAt: toIso(now), deleted: false,
+  };
+  await db.cards.put(after);
+  await db.logs.put(log);
+  return { before: rec, logId: log.id };
+}
+
 /** 撤销：卡片恢复到作答前（用更新的 updatedAt 才能在同步时胜出），日志打墓碑 */
-export async function undoAnswer(res: Pick<AnswerResult, 'before' | 'logId'>) {
+export async function undoAnswer(res: Pick<AnswerResult, 'before' | 'logId'> & Partial<Pick<AnswerResult, 'implicit'>>) {
   await db.transaction('rw', [db.cards, db.logs], async () => {
-    const cur = await db.cards.get(res.before.id);
-    await db.cards.put({ ...res.before, updatedAt: bumpIso(cur?.updatedAt ?? res.before.updatedAt) });
-    const log = await db.logs.get(res.logId);
-    if (log) await db.logs.put({ ...log, deleted: true, updatedAt: bumpIso(log.updatedAt) });
+    for (const x of [res, res.implicit].filter((y): y is { before: Card; logId: string } => !!y)) {
+      const cur = await db.cards.get(x.before.id);
+      await db.cards.put({ ...x.before, updatedAt: bumpIso(cur?.updatedAt ?? x.before.updatedAt) });
+      const log = await db.logs.get(x.logId);
+      if (log) await db.logs.put({ ...log, deleted: true, updatedAt: bumpIso(log.updatedAt) });
+    }
   });
 }
 

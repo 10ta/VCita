@@ -37,7 +37,7 @@ export function NoteDetail({ noteId, cards, s }: { noteId: string; cards: Card[]
             {logs.slice(0, 50).map((l) => (
               <tr key={l.id}>
                 <td>{new Date(fromIso(l.ts)).toLocaleString([], { year: '2-digit', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' })}</td>
-                <td>{TYPE_LABEL[typeOf.get(l.cardId) ?? 'recognition']}</td>
+                <td>{TYPE_LABEL[typeOf.get(l.cardId) ?? 'recognition']}{l.implicit && <span className="muted small" title="产出卡答对时顺带记的">（产出带过）</span>}</td>
                 <td><span className={`stat ${RCLS[l.rating]}`}>{RATING[l.rating]}</span></td>
                 <td>{fmtIvl(l.prevInterval)} → {fmtIvl(l.newInterval)}</td>
                 <td>{l.prevEase?.toFixed(2) ?? '—'}{l.newEase !== null && l.newEase !== l.prevEase ? ` → ${l.newEase.toFixed(2)}` : ''}</td>

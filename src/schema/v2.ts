@@ -124,6 +124,8 @@ export const ReviewLogV2 = z.looseObject({
   newDue: IsoTime.nullable(),
   elapsedMs: z.number().nullable().default(null),
   source: z.enum(['app', 'legacy']).default('app'),
+  /** 隐性复习：产出卡答对时顺带给同一条笔记的认读卡记的一次「良好」。参与记忆状态重放，不算进复习数、保持率 */
+  implicit: z.boolean().default(false),
 });
 
 export const SettingsV2 = z.looseObject({
@@ -186,6 +188,12 @@ export const SettingsV2 = z.looseObject({
   knownTop: z.number().int().min(0).default(2000),
   /** 每日新卡里留给句框（语块库）的张数；没用完的让给单词 */
   frameNewPerDay: z.number().int().min(0).default(3),
+  /** FSRS 目标保持率 · 认读类（认读、听力、辨析）；desiredRetention 管产出类（产出、挖空、句框、套用） */
+  retentionRecognition: z.number().min(0.7).max(0.99).default(0.85),
+  /** 新的产出卡等同一条笔记的认读卡进入复习后才出 */
+  productionAfterRecognition: z.boolean().default(true),
+  /** 产出卡答对（良好 / 容易）时，给同一条笔记已在复习中的认读卡记一次隐性「良好」 */
+  implicitRecognitionCredit: z.boolean().default(true),
 });
 
 /** 摘句篮里的一条：划词时摘下的词 / 表达 / 整句，晚上统一做卡。做成卡后记下笔记 id */

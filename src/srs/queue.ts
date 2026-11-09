@@ -29,7 +29,7 @@ export interface QueueInput {
   todayLogs: ReviewLog[];
   deckId: string;
   now: number;
-  settings: Pick<Settings, 'newPerDay' | 'reviewsPerDay' | 'dayStartHour'> & Partial<Pick<Settings, 'newReviewOrder' | 'reviewSort' | 'newSort' | 'focusTags' | 'newSplit' | 'freshShare' | 'freshDays' | 'frameNewPerDay'>>;
+  settings: Pick<Settings, 'newPerDay' | 'reviewsPerDay' | 'dayStartHour'> & Partial<Pick<Settings, 'newReviewOrder' | 'reviewSort' | 'newSort' | 'focusTags' | 'newSplit' | 'freshShare' | 'freshDays' | 'frameNewPerDay' | 'productionAfterRecognition'>>;
   /** 新卡排序要用笔记的层级和主题；不传时只按添加时间 */
   notes?: ReadonlyMap<string, Pick<Note, 'layer' | 'tags'> & Partial<Pick<Note, 'origin' | 'source' | 'contrastGroup' | 'frame'>>>;
   /** 笔记的词频（每百万词，见 lib/gender/dict.ts 的 lemmaFreq）；查不到的排在同一层的最后。不传时按添加时间 */
@@ -105,8 +105,13 @@ function pickNew(q: QueueInput, pool: Card[], today: string, newSeen: Set<string
   // 套用卡：同一条笔记的句框卡还没进入复习时不出
   const frameState = new Map<string, Card['state']>();
   for (const c of q.cards) if (c.type === 'frame' && !c.deleted) frameState.set(c.noteId, c.state);
+  // 产出卡：同一条笔记有认读卡、而认读卡还没进入复习时不出（先认得，再练写得出）
+  const recState = new Map<string, Card['state']>();
+  for (const c of q.cards) if (c.type === 'recognition' && !c.deleted && !c.suspended) recState.set(c.noteId, c.state);
+  const gateProd = q.settings.productionAfterRecognition !== false;
   const due = pool.filter((c) => c.state === 'new' && studyDay(fromIso(c.createdAt), q.settings.dayStartHour) <= today
-    && (c.type !== 'apply' || frameState.get(c.noteId) === 'review'));
+    && (c.type !== 'apply' || frameState.get(c.noteId) === 'review')
+    && (c.type !== 'production' || !gateProd || !recState.has(c.noteId) || recState.get(c.noteId) === 'review'));
   const notes = q.notes;
   const isFrame = (c: Card) => !!notes?.get(c.noteId)?.frame;
   const frameCands = notes ? due.filter(isFrame) : [];
@@ -151,7 +156,8 @@ function pickWords(q: QueueInput, candidates: Card[], today: string, newSeen: Se
 
 export function buildQueue(q: QueueInput): QueueState {
   const today = studyDay(q.now, q.settings.dayStartHour);
-  const logs = q.todayLogs.filter((l) => !l.deleted && l.day === today);
+  // 隐性复习（产出卡答对时顺带记的认读）不算今天复习过：不占复习额度，也不触发同笔记兄弟卡今天不出
+  const logs = q.todayLogs.filter((l) => !l.deleted && l.day === today && !l.implicit);
   const newSeen = new Set<string>();
   const revSeen = new Set<string>();
   const notesToday = new Set<string>();

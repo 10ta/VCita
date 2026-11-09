@@ -35,7 +35,8 @@ export function computeStats(input: { cards: Card[]; notes: Note[]; logs: Review
   const from7 = addDaysToDay(today, -6);
   const cards = input.cards.filter((c) => !c.deleted && (!input.deckId || c.deckId === input.deckId));
   const cardIds = new Set(cards.map((c) => c.id));
-  const logs30 = input.logs.filter((l) => !l.deleted && l.day >= addDaysToDay(today, -29) && l.day <= today && cardIds.has(l.cardId));
+  // 隐性复习不是真的作答：不算复习数、保持率
+  const logs30 = input.logs.filter((l) => !l.deleted && !l.implicit && l.day >= addDaysToDay(today, -29) && l.day <= today && cardIds.has(l.cardId));
   const logs = logs30.filter((l) => l.day >= from14);
 
   // 保持率：复习状态卡（不含新卡、学习步骤）的评分 ≥2 的比例；成熟 = 作答前间隔 ≥21 天

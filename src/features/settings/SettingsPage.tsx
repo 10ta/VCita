@@ -220,10 +220,10 @@ function zoneOptions(): string[] {
   return [...COMMON_ZONES, ...all.filter((z) => !COMMON_ZONES.includes(z))];
 }
 
-type Form = Settings & { learning: string; relearn: string; retentionPct: string; weights: string };
+type Form = Settings & { learning: string; relearn: string; retentionPct: string; retentionRecPct: string; weights: string };
 const toForm = (s: Settings): Form => ({
   ...s, learning: s.learningSteps.join(' '), relearn: s.relearnSteps.join(' '),
-  retentionPct: String(Math.round(s.desiredRetention * 100)), weights: s.fsrsWeights?.join(', ') ?? '',
+  retentionPct: String(Math.round(s.desiredRetention * 100)), retentionRecPct: String(Math.round((s.retentionRecognition ?? s.desiredRetention) * 100)), weights: s.fsrsWeights?.join(', ') ?? '',
 });
 /** 粘贴的 FSRS 参数：空 = 默认；逗号 / 空格分隔的 21 个数（Anki 里复制出来的格式也行） */
 const parseWeights = (x: string): number[] | null => {
@@ -231,7 +231,7 @@ const parseWeights = (x: string): number[] | null => {
   return ns.length ? ns : null;
 };
 function toPatch(f: Form): Partial<Settings> {
-  const patch: Partial<Settings> = { scheduler: f.scheduler, desiredRetention: Number(f.retentionPct) / 100, fsrsWeights: parseWeights(f.weights), fuzz: f.fuzz, dayStartHour: Number(f.dayStartHour), timeZone: f.timeZone || null, newReviewOrder: f.newReviewOrder, reviewSort: f.reviewSort, newSort: f.newSort, focusTags: f.focusTags, newSplit: f.newSplit, freshShare: Number(f.freshShare), freshDays: Number(f.freshDays), learningSteps: parseSteps(f.learning), relearnSteps: parseSteps(f.relearn) };
+  const patch: Partial<Settings> = { scheduler: f.scheduler, desiredRetention: Number(f.retentionPct) / 100, retentionRecognition: Number(f.retentionRecPct) / 100, productionAfterRecognition: f.productionAfterRecognition, implicitRecognitionCredit: f.implicitRecognitionCredit, fsrsWeights: parseWeights(f.weights), fuzz: f.fuzz, dayStartHour: Number(f.dayStartHour), timeZone: f.timeZone || null, newReviewOrder: f.newReviewOrder, reviewSort: f.reviewSort, newSort: f.newSort, focusTags: f.focusTags, newSplit: f.newSplit, freshShare: Number(f.freshShare), freshDays: Number(f.freshDays), learningSteps: parseSteps(f.learning), relearnSteps: parseSteps(f.relearn) };
   for (const [k] of ALL_NUMS) patch[k] = Number(f[k]);
   return patch;
 }
@@ -306,6 +306,12 @@ function SrsForm({ s }: { s: Settings }) {
         </select>
       </SetRow>
       {f.newSplit !== 'off' && <SplitRows f={f} setF={setF} />}
+      <SetRow label="产出卡等认读卡学会再出" hint="同一条笔记的认读卡进入复习（走完学习步骤）以后，才出它的产出卡：先认得，再练写得出，少出现连续忘的顽固卡">
+        <Switch label="产出卡等认读卡学会再出" checked={f.productionAfterRecognition} onChange={(v) => setF({ ...f, productionAfterRecognition: v })} />
+      </SetRow>
+      <SetRow label="产出答对顺带记认读" hint="写得出来就一定认得：产出卡答「良好 / 容易」时，同一条笔记已在复习中的认读卡记一次「良好」，下次复习往后推（只推后、不提前）。不算进复习数和保持率；撤销时一起撤回">
+        <Switch label="产出答对顺带记认读" checked={f.implicitRecognitionCredit} onChange={(v) => setF({ ...f, implicitRecognitionCredit: v })} />
+      </SetRow>
       <SetRow label="复习卡顺序" hint="相对逾期 = 逾期天数 ÷ 间隔">
         <select value={f.reviewSort} onChange={(e) => setF({ ...f, reviewSort: e.target.value as Settings['reviewSort'] })}>
           <option value="overdue">相对逾期（最可能忘的先出）</option>
@@ -322,9 +328,14 @@ function SrsForm({ s }: { s: Settings }) {
       </SetRow>
       {f.scheduler === 'fsrs' && (
         <>
-          <SetRow label="目标保持率" hint="到期时还记得的概率。90% 是常用的平衡点；调高复习量增长很快（95% 约是 90% 的两倍），调低忘得多">
+          <SetRow label="目标保持率 · 产出类" hint="产出、挖空、句框、套用：要写得出来的卡，到期时还记得的概率。90% 是常用的平衡点；调高复习量增长很快（95% 约是 90% 的两倍），调低忘得多">
             <span className="num-unit">
-              <input type="number" min={70} max={99} aria-label="目标保持率" value={f.retentionPct} onChange={(e) => setF({ ...f, retentionPct: e.target.value })} /><em>%</em>
+              <input type="number" min={70} max={99} aria-label="目标保持率 · 产出类" value={f.retentionPct} onChange={(e) => setF({ ...f, retentionPct: e.target.value })} /><em>%</em>
+            </span>
+          </SetRow>
+          <SetRow label="目标保持率 · 认读类" hint="认读（含听力卡）、辨析：认得就行，可以低一点，间隔更长、复习更少。默认 85%">
+            <span className="num-unit">
+              <input type="number" min={70} max={99} aria-label="目标保持率 · 认读类" value={f.retentionRecPct} onChange={(e) => setF({ ...f, retentionRecPct: e.target.value })} /><em>%</em>
             </span>
           </SetRow>
           <SetRow stack label="FSRS 参数" hint="21 个数，逗号分隔；留空 = 默认参数。用自己的复习记录优化出来的参数预测更准（把导出的备份交给 Claude 优化，或者从 Anki 复制）。改了参数立刻对所有卡生效，不用迁移">
