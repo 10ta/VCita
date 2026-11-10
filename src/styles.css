@@ -464,3 +464,54 @@ textarea.weights { width: 100%; font-family: var(--mono); font-size: 12px; }
 .prompt-phrase { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; justify-content: center; }
 .prompt-phrase b { font-family: var(--serif); font-weight: 500; font-size: 15px; }
 .contrast-edit .warn { color: var(--warn); margin: 2px 0; }
+
+/* 笔记表单（添加页、编辑弹窗）：表达 → 例句表 → 卡片 → 收起的补充 / 归类 */
+.noteform { display: flex; flex-direction: column; gap: 10px; }
+.nf-block { border: 1px solid var(--border); border-radius: 12px; padding: 10px 12px 4px; }
+.nf-head { display: flex; align-items: baseline; gap: 8px; margin-bottom: 6px; }
+.nf-head b { font-size: 14px; }
+.nf-lemma { font-family: var(--serif); font-size: 17px; }
+.nf-notice { display: flex; align-items: center; gap: 6px; color: var(--accent); margin: 0 0 6px; }
+.nf-rows { list-style: none; display: flex; flex-direction: column; gap: 6px; margin-bottom: 8px; }
+.nf-row { border: 1px solid var(--border); border-radius: 10px; padding: 6px 8px; background: var(--surface); }
+.nf-row.is-prod { border-color: #16a34a55; }
+.nf-row-head { display: flex; align-items: flex-start; gap: 6px; }
+.nf-no { flex: none; font-family: var(--mono); font-size: 11px; color: var(--dim); min-width: 22px; padding-top: 10px; }
+.nf-sent { flex: 1; min-width: 0; }
+.nf-sent .marker { margin: 0; border: none; padding: 2px 4px; background: transparent; font-size: 16px; line-height: 1.9; }
+.nf-input { width: 100%; font-family: var(--serif); font-size: 15px; }
+.nf-role { flex: none; font-family: var(--mono); font-size: 10.5px; color: var(--dim); padding: 2px 8px; margin-top: 8px; border-radius: 10px; border: 1px solid var(--border); white-space: nowrap; }
+.nf-role.is-prod { color: var(--green); border-color: #16a34a55; }
+.nf-ops { flex: none; display: flex; margin-top: 4px; }
+.nf-sub { display: flex; align-items: center; gap: 8px; margin: 4px 0 2px 28px; }
+.nf-sub > span { flex: none; font-family: var(--mono); font-size: 11px; color: var(--dim); min-width: 56px; }
+.nf-sub input { flex: 1; min-width: 0; font-size: 13px; padding: 5px 8px; }
+.nf-prompt { display: flex; align-items: baseline; gap: 6px; margin: 2px 0 2px 28px; }
+.nf-prompt .marker { margin: 0; border: none; padding: 0; background: transparent; font-size: 15px; line-height: 1.7; }
+.marker.is-readonly .tok.is-on { background: var(--accent-dim); color: var(--accent); font-weight: 700; border-radius: 4px; padding: 0 1px; }
+.nf-legacy { margin: 2px 0 2px 28px; }
+.nf-row .form-error { margin: 2px 0 2px 28px; }
+.nf-types { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 6px; margin-bottom: 6px; }
+.nf-type { display: flex; flex-direction: column; align-items: flex-start; gap: 2px; text-align: left; padding: 7px 10px; border-radius: 10px; border: 1px solid var(--border); background: transparent; color: var(--dim); cursor: pointer; font: inherit; }
+.nf-type b { font-size: 13px; color: var(--text); font-weight: 600; }
+.nf-type small { font-size: 11.5px; line-height: 1.4; }
+.nf-type.is-on { border-color: var(--accent); background: var(--accent-dim); }
+.nf-type.is-on b { color: var(--accent); }
+.nf-type.is-warn { border-color: var(--red); }
+.nf-type.is-warn small { color: var(--red); }
+.nf-type.is-fixed { cursor: default; }
+.nf-preview { margin: 8px 0 6px; display: flex; flex-direction: column; gap: 6px; }
+.nf-preview .mini { text-align: center; }
+.nf-more > summary { cursor: pointer; padding: 2px 0 8px; font-size: 14px; }
+.nf-more > summary .muted { margin-left: 6px; }
+.add-actions { align-items: flex-end; margin: 10px 0 4px; }
+.add-actions .field { flex: none; margin-bottom: 0; }
+@media (max-width: 560px) {
+  .nf-row-head { display: grid; grid-template-columns: auto 1fr auto; grid-template-areas: 'no role ops' 'sent sent sent'; align-items: center; row-gap: 0; }
+  .nf-no { grid-area: no; padding-top: 0; }
+  .nf-role { grid-area: role; justify-self: start; margin-top: 0; }
+  .nf-ops { grid-area: ops; margin-top: 0; }
+  .nf-sent { grid-area: sent; }
+  .nf-sub { margin-left: 0; flex-wrap: wrap; }
+  .nf-prompt, .nf-legacy, .nf-row .form-error { margin-left: 0; }
+}

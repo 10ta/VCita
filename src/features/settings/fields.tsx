@@ -76,7 +76,7 @@ export const META: Partial<Record<Key, Meta>> = {
     options: [['focus', '只标考查部分'], ['always', '所有名词'], ['hover', '悬停时显示'], ['off', '关闭（悬停仍显示说明）']],
   },
   knownTop: { kind: 'num', label: '常用词前 N 个算认识', hint: '短文挖词里，词频（Lexique）最高的前 N 个原形不算生词、算进已知覆盖率', unit: '个', min: 0, int: true, zero: '只按自己的卡和手动标的「认识」' },
-  addShowMore: { kind: 'sw', label: '添加页默认展开「更多字段」', hint: '例句、词族线索、出处、补充。关闭后需要时点「更多字段」展开' },
+  addShowMore: { kind: 'sw', label: '添加页默认展开「背面补充」', hint: '词源、词族线索、补充、出处。关闭后需要时点「背面补充」展开' },
 };
 
 const metaOf = (k: Key) => META[k] ?? ({ kind: 'other', label: String(k), fmt: String } as Meta);

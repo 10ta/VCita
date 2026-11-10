@@ -2,9 +2,11 @@ import { useMemo, useRef, useState } from 'react';
 import { useClips, useDeckSettings, useNotes } from '../../db/hooks';
 import { addNote, updateClip, updateNote } from '../../db/actions';
 import { db } from '../../db/db';
-import type { Card, Note, Theme } from '../../schema';
-import { clozeTarget, hasCloze, noteErrors } from '../../schema/validate';
-import { CARD_TYPES, CardPreviews, ClozeMarker } from '../NoteParts';
+import type { NoteOrigin, Theme } from '../../schema';
+import { clozeTarget, hasCloze } from '../../schema/validate';
+import { markedText } from '../../lib/markTarget';
+import { NoteForm, formErrors } from '../noteform/NoteForm';
+import { newRow, otherFields, rowFields, type Draft } from '../noteform/model';
 import { translate, speak } from '../../lib/speech';
 import { langLabel } from '../../ui/langs';
 import { usePrefs, setPrefs } from '../../ui/prefs';
@@ -37,152 +39,90 @@ export function AddPage({ deckId }: { deckId: string }) {
   );
 }
 
-// 单个添加：默认只填一个框、回车生成认读卡；打开"产出""挖空"时就地展开需要的字段
+// 单个添加：和编辑笔记同一套表单（noteform/NoteForm）。最快的用法：写表达、回车，生成认读卡，意思在后台翻译
+function blankDraft(deckId: string, origin: NoteOrigin, prefill?: ClipPrefill | null): Draft {
+  const d: Draft = {
+    lemma: '', meaningZh: '', meaningEn: '', cueFamily: '', source: prefill?.source ?? '', extra: prefill?.extra ?? '', etymology: '', contrastNote: '',
+    layer: 'mid', origin, cardTypes: ['recognition'], tags: [], deckId, day: todayInput(), rows: [],
+  };
+  const t = prefill?.text.trim() ?? '';
+  // 摘句篮来的：带 {{…}} 的整句 → 一句例句 + 标出的部分当表达；没标的整句 → 例句（点词标出）；否则就是表达
+  if (hasCloze(t)) { d.rows = [{ ...newRow('ex', t), manual: true }]; d.lemma = markedText(t); }
+  else if (t.split(/\s+/).length >= 5 || /[.!?…]$/.test(t)) d.rows = [newRow('ex', t)];
+  else d.lemma = t;
+  return d;
+}
+
 function AddOne({ deckId, prefill }: { deckId: string; prefill?: ClipPrefill | null }) {
   // 从摘句篮来的那一条：第一次添加后标为已做卡
   const clipRef = useRef(prefill?.clipId ?? null);
   const s = useDeckSettings(deckId);
   const notes = useNotes();
   const prefs = usePrefs();
-  const [text, setText] = useState(prefill?.text ?? '');
-  const [day, setDay] = useState(todayInput);
+  const [d, setDraft] = useState<Draft>(() => blankDraft(deckId, prefs.addOrigin, prefill));
+  const setD = (fn: (d: Draft) => Draft) => setDraft(fn);
   const [tags, setTags] = useState<Theme[]>([]);
-  const [types, setTypes] = useState<Card['type'][]>(['recognition']);
-  // 默认展开与否看设置；本页内手动点过"收起 / 更多字段"后以手动为准
-  const [moreOverride, setMore] = useState<boolean | null>(null);
-  const more = moreOverride ?? s?.addShowMore ?? true;
-  const [f, setF] = useState(() => (prefill ? { ...EMPTY, source: prefill.source ?? '', extra: prefill.extra } : EMPTY));
+  const [day, setDay] = useState(todayInput);
   const [pending, setPending] = useState<Set<string>>(new Set());
   const [dupWarned, setDupWarned] = useState<string | null>(null);
   const [tried, setTried] = useState(false);
-  const input = useRef<HTMLInputElement>(null);
-  const set = <K extends keyof typeof EMPTY>(k: K, v: string) => setF((x) => ({ ...x, [k]: v }));
+  const [formKey, setFormKey] = useState(0);
+  const lemmaInput = useRef<HTMLInputElement>(null);
 
   const recent = useMemo(() => (notes ?? []).filter((n) => n.deckId === deckId).sort((a, b) => (a.updatedAt < b.updatedAt ? 1 : -1)).slice(0, 8), [notes, deckId]);
-
-  // 输入的是整句（4 个词以上）：句子本身就是例句，点词标记考查部分；否则是单词 / 短语，例句另填
-  const plain = text.replace(/\{\{|\}\}/g, '').trim();
-  const isSentence = plain.split(/\s+/).filter(Boolean).length >= 4;
-  const sentence = isSentence ? (hasCloze(text) ? text.trim() : '') : f.sentence.trim();
-  const target = sentence ? clozeTarget(sentence) : '';
-  const lemma = isSentence ? (hasCloze(text) ? target : plain) : plain;
-  const draftFields = { lemma, sentence, cardTypes: types, promptFr: f.promptFr || null, intentZh: f.intentZh || null, answerFr: f.answerFr || null, clozeSentence: f.clozeSentence || null, clozeHint: f.clozeHint || null };
-  const errors = plain ? noteErrors(draftFields) : [];
-  const has = (t: Card['type']) => types.includes(t);
-
-  // 打开产出卡：答案默认填考查部分（或单词），中文意图自动翻译预填，可以改
-  const prefillProduction = async (answer: string) => {
-    if (!s || !answer) return;
-    setF((x) => ({ ...x, answerFr: x.answerFr || answer }));
-    const zh = await translate(answer, s.sourceLang, s.targetLang1);
-    if (zh) setF((x) => ({ ...x, intentZh: x.intentZh || zh }));
-  };
-  const toggle = (t: Card['type']) => {
-    const on = !has(t);
-    setTypes(on ? [...types, t] : types.filter((x) => x !== t));
-    if (on && t === 'production') void prefillProduction(target || plain);
-    if (on && t === 'cloze' && !isSentence) setMore(true);
-  };
-
   if (!s || !notes) return null;
   const labels: [string, string, string] = [langLabel(s.sourceLang), langLabel(s.targetLang1), langLabel(s.targetLang2)];
 
   const add = async () => {
     setTried(true);
-    if (!plain || errors.length) return;
-    const dup = notes.some((n) => n.deckId === deckId && ((lemma && n.lemma.toLowerCase() === lemma.toLowerCase()) || (sentence && n.sentence === sentence)));
-    const key = lemma || sentence;
+    const fields = rowFields(d);
+    // 表达空着时用第一句例句里标出的部分
+    const lemma = d.lemma.trim() || markedText(fields.sentence);
+    if (!lemma && !fields.sentence) return;
+    const errs = formErrors({ ...d, lemma }, null);
+    if (errs.count) return;
+    const dup = notes.some((n) => n.deckId === deckId && ((lemma && n.lemma.toLowerCase() === lemma.toLowerCase()) || (fields.sentence && n.sentence === fields.sentence)));
+    const key = lemma || fields.sentence;
     if (dup && dupWarned !== key) {
       setDupWarned(key);
-      toast(`"${key}" 已经在这个牌组里了，再按一次回车仍然添加`, true);
+      toast(`"${key}" 已经在这个牌组里了，再添加一次仍然添加`, true);
       return;
     }
     setDupWarned(null);
-    const [y, m, d] = day.split('-').map(Number);
-    const created = new Date(y, m - 1, d, new Date().getHours(), new Date().getMinutes()).getTime();
-    const nul = (x: string) => (x.trim() ? x.trim() : null);
+    const [y, m, dd] = day.split('-').map(Number);
+    const created = new Date(y, m - 1, dd, new Date().getHours(), new Date().getMinutes()).getTime();
     const { noteId } = await addNote({
-      deckId, createdAtMs: created, lemma, sentence, tags, origin: prefs.addOrigin, cardTypes: types, layer: has('production') ? 'core' : 'mid',
-      promptFr: nul(f.promptFr), intentZh: nul(f.intentZh), hint: nul(f.hint), clozeHint: nul(f.clozeHint), clozeSentence: nul(f.clozeSentence), etymology: nul(f.etymology), answerFr: nul(f.answerFr), cueFamily: nul(f.cueFamily), source: nul(f.source), extra: nul(f.extra),
+      deckId, createdAtMs: created, ...otherFields(d), lemma, ...fields, tags, origin: prefs.addOrigin,
+      cardTypes: d.cardTypes, layer: d.cardTypes.includes('production') ? 'core' : 'mid',
     });
     // 从摘句篮来的：标为已做卡
     if (clipRef.current) { void updateClip(clipRef.current, { status: 'done', noteId }); clipRef.current = null; }
-    const toTranslate = target || plain;
-    setText(''); setF(EMPTY); setTypes(['recognition']); setTried(false);
-    input.current?.focus();
-    if (prefs.autoPlay) void speak(plain, s.sourceLang);
-    // 意思在后台翻译（考查部分或单词），可以接着输入下一个
+    const typed = { zh: d.meaningZh.trim(), en: d.meaningEn.trim() };
+    setDraft(blankDraft(deckId, prefs.addOrigin)); setTried(false); setFormKey((k) => k + 1);
+    requestAnimationFrame(() => lemmaInput.current?.focus());
+    if (prefs.autoPlay) void speak(lemma, s.sourceLang);
+    if (typed.zh && typed.en) { toast(`✓ ${lemma}`); return; }
+    // 意思在后台翻译，可以接着输入下一个
     setPending((x) => new Set(x).add(noteId));
-    const [t1, t2] = await Promise.all([translate(toTranslate, s.sourceLang, s.targetLang1), translate(toTranslate, s.sourceLang, s.targetLang2)]);
+    const [t1, t2] = await Promise.all([typed.zh ? '' : translate(lemma, s.sourceLang, s.targetLang1), typed.en ? '' : translate(lemma, s.sourceLang, s.targetLang2)]);
     const cur = await db.notes.get(noteId);
     if (cur && (t1 || t2)) await updateNote(noteId, { meaningZh: cur.meaningZh || t1 || '', meaningEn: cur.meaningEn || t2 || '' });
     setPending((x) => { const n = new Set(x); n.delete(noteId); return n; });
-    toast(t1 && t2 ? `✓ ${toTranslate} → ${t1} / ${t2}` : `翻译失败：${toTranslate}，可在词库里手动编辑`, !(t1 && t2));
-  };
-  const onEnter = (e: React.KeyboardEvent) => { if (e.key === 'Enter' && !e.nativeEvent.isComposing) { e.preventDefault(); void add(); } };
-  const field = (k: keyof typeof EMPTY, label: string, ph = '') => (
-    <label className="field"><span className="field-label">{label}</span>
-      <input value={f[k]} placeholder={ph} onChange={(e) => set(k, e.target.value)} onKeyDown={onEnter} /></label>
-  );
-  const draft = {
-    ...BLANK_NOTE, lemma, sentence, cardTypes: types, origin: prefs.addOrigin, meaningZh: '', meaningEn: '',
-    promptFr: f.promptFr || null, intentZh: f.intentZh || null, hint: f.hint || null, clozeHint: f.clozeHint || null, clozeSentence: f.clozeSentence || null, etymology: f.etymology || null, answerFr: f.answerFr || null,
-    cueFamily: f.cueFamily || null, source: f.source || null, extra: f.extra || null,
+    const ok = (typed.zh || t1) && (typed.en || t2);
+    toast(ok ? `✓ ${lemma} → ${typed.zh || t1} / ${typed.en || t2}` : `翻译失败：${lemma}，可在词库里手动编辑`, !ok);
   };
 
   return (
     <div>
-      <p className="muted small">{labels[0]} → {labels[1]} + {labels[2]}。输入单词、短语或整句，回车添加；意思在后台翻译，可以连续输入。</p>
-      <div className="add-row">
-        <input ref={input} className="word-input" autoFocus placeholder={`${labels[0]}单词、短语或整句`} value={text}
-          onChange={(e) => setText(e.target.value)} onKeyDown={onEnter} />
-        <input type="date" value={day} onChange={(e) => e.target.value && setDay(e.target.value)} />
-        <button type="button" className="btn is-primary" disabled={!plain} onClick={() => void add()}>添加</button>
-      </div>
-      {isSentence && (
-        <>
-          <ClozeMarker value={text} onChange={setText} />
-          <p className="muted small">点句子里的词标记考查部分：认读卡加粗，挖空卡挖掉。不标记就整句作为正面。</p>
-        </>
-      )}
-      <div className="toolbar">
-        <span className="muted small">生成</span>
-        {CARD_TYPES.map(([t, label, tip]) => (
-          <button key={t} type="button" title={tip} className={`chip${has(t) ? ' is-on' : ''}`} aria-pressed={has(t)} onClick={() => toggle(t)}>{label}</button>
-        ))}
+      <p className="muted small">{labels[0]} → {labels[1]} + {labels[2]}。写表达、回车就生成认读卡，意思在后台翻译，可以连续输入。要例句、挖空、产出就在下面加；整句也可以直接写进例句，点词标出要学的部分。</p>
+      <NoteForm key={formKey} d={d} setD={setD} s={s} labels={labels} mode="add" onSubmit={() => void add()} lemmaRef={lemmaInput} showErrors={tried} />
+      <div className="row add-actions">
+        <label className="field"><span className="field-label">日期</span><input type="date" value={day} onChange={(e) => e.target.value && setDay(e.target.value)} /></label>
         <span className="grow" />
-        <button type="button" className={`pill${more ? ' is-on' : ''}`} onClick={() => setMore(!more)}>{more ? '收起' : '更多字段'}</button>
+        <button type="button" className="btn is-primary" onClick={() => void add()}>添加</button>
       </div>
-
-      {!isSentence && (more || has('cloze')) && (
-        <>
-          {field('sentence', has('cloze') ? '例句（挖空卡必填）' : '例句（可选）', '例如：les enfants ont perdu leurs repères')}
-          {f.sentence.trim() && <><ClozeMarker value={f.sentence} onChange={(v) => set('sentence', v)} /><p className="muted small">点词标记考查部分</p></>}
-        </>
-      )}
-      {has('cloze') && field('clozeSentence', '挖空例句（可选，和认读卡不同的句子）', '用 {{…}} 标出挖掉的部分；不填就用上面的例句')}
-      {has('cloze') && field('clozeHint', '挖空提示（可选，横线处显示，只用于挖空主句）', `写横线处的意思，例如：飞越（复合过去时）；不写答案的词或原形，不只写「介词」这类标签；只挖介词、冠词等小词时留空即可（上下文决定答案）。留空时正面显示${labels[1]}意思（只挖小词时不显示）`)}
-      {has('production') && (
-        <fieldset className="prod">
-          <legend>产出卡</legend>
-          {field('promptFr', `${labels[0]}题面（正面，用 {{…}} 高亮一个更简单的说法，不能用答案里的词）`, 'Le maire doit {{écouter ce que pensent}} les habitants.')}
-          {field('answerFr', `${labels[0]}答案（背面，可用 {{…}} 高亮目标表达）`, 'Le maire doit {{tenir compte de l’avis}} des habitants.')}
-          {field('intentZh', `${labels[1]}注释（背面，已自动翻译，可改；没有${labels[0]}题面时作为正面）`, '例如：考虑……的意见')}
-          {field('hint', '提示（可选）', '例如：首字母 t… c… d…')}
-        </fieldset>
-      )}
-      {more && (
-        <div className="grid2">
-          {field('cueFamily', '词族线索', '例如：repérer 找出、标出')}
-          {field('source', '出处', '例如：InnerFrench · 第 12 集')}
-          {field('extra', '补充', '例如：≠ se tenir à 扶住')}
-          {field('etymology', '词源（可选）', '例如：tentacule 触手 + -aire → 像触手一样伸展的')}
-        </div>
-      )}
       <div className="field"><span className="field-label">来源（记住上次的选择）</span><OriginPicker value={prefs.addOrigin} onChange={(v) => setPrefs({ addOrigin: v })} /></div>
       <div className="field"><span className="field-label">主题（对接下来添加的都生效）</span><ThemePicker value={tags} onChange={setTags} /></div>
-      {tried && errors.map((e) => <p key={e} className="form-error">{e}</p>)}
-      {plain && !errors.length && (has('production') || has('cloze') || sentence) && <CardPreviews draft={draft} s={s} labels={labels} />}
 
       <div className="toolbar">
         <button type="button" className={`pill${prefs.autoPlay ? ' is-on' : ''}`} onClick={() => setPrefs({ autoPlay: !prefs.autoPlay })}>自动发音</button>
@@ -194,17 +134,10 @@ function AddOne({ deckId, prefill }: { deckId: string; prefill?: ClipPrefill | n
           <li key={n.id}>
             <b>{n.lemma || clozeTarget(n.sentence)}</b><span className="arrow">→</span>
             <span>{n.meaningZh || (pending.has(n.id) ? '…' : '')}</span><span className="sep">/</span><span className="t2">{n.meaningEn || (pending.has(n.id) ? '…' : '')}</span>
-            {n.cardTypes.filter((t) => t !== 'recognition').map((t) => <span key={t} className={`badge is-type t-${t}`}>{t === 'production' ? '产出' : '挖空'}</span>)}
+            {n.cardTypes.filter((t) => t !== 'recognition').map((t) => <span key={t} className={`badge is-type t-${t}`}>{t === 'production' ? '产出' : t === 'cloze' ? '挖空' : t === 'contrast' ? '辨析' : t}</span>)}
           </li>
         ))}
       </ul>
     </div>
   );
 }
-
-const EMPTY = { sentence: '', promptFr: '', intentZh: '', hint: '', clozeHint: '', clozeSentence: '', etymology: '', answerFr: '', cueFamily: '', source: '', extra: '' };
-const BLANK_NOTE: Note = {
-  id: 'draft', deckId: '', createdAt: '2026-01-01T00:00:00.000Z', lemma: '', sentence: '', meaningZh: '', meaningEn: '',
-  cueFamily: null, promptFr: null, intentZh: null, hint: null, clozeHint: null, clozeSentence: null, etymology: null, answerFr: null, extra: null, source: null, origin: null, altSentences: [], altIntents: [], layer: 'mid', cardTypes: ['recognition'],
-  tags: [], usedCount: 0, usedAt: [], rot: 0, contrastGroup: null, contrastNote: null, frame: null, legacy: null, updatedAt: '2026-01-01T00:00:00.000Z', deleted: false,
-};

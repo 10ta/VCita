@@ -1,6 +1,7 @@
 // 添加页和编辑弹窗共用：卡型列表、点词标记考查部分、三种卡的预览
 import type { Card, Note, Settings } from '../schema';
 import { cardView, Cues } from './CardFace';
+import { fromTokens, toTokens } from '../lib/markTarget';
 
 export const CARD_TYPES: Array<[Card['type'], string, string]> = [
   ['recognition', '认读', '看句子（或单词）想意思'],
@@ -13,46 +14,14 @@ export const FRAME_TYPES: Array<[Card['type'], string, string]> = [
   ['apply', '套用', '功能 + 一个随机主题，用句框写一整句，自评'],
 ];
 
-interface Tok { t: string; word: boolean; on: boolean }
-const SEP = /(\s+|[.,;:!?…«»"“”()–—]+|(?<=['’]))/;
-const isSep = (t: string) => /^(\s+|[.,;:!?…«»"“”()–—]+)$/.test(t);
-
-/** "a {{b c}} d" → 词元列表，记录每个词是否在 {{…}} 里 */
-export function toTokens(v: string): Tok[] {
-  const out: Tok[] = [];
-  let on = false;
-  for (const part of v.split(/(\{\{|\}\})/)) {
-    if (part === '{{') { on = true; continue; }
-    if (part === '}}') { on = false; continue; }
-    for (const t of part.split(SEP).filter(Boolean)) out.push({ t, word: !isSep(t), on: on && !isSep(t) });
-  }
-  return out;
-}
-
-/** 词元 → 文本：相邻（中间只隔空格或省音号）的标记词合并成一个 {{…}} */
-export function fromTokens(toks: Tok[]): string {
-  let s = '';
-  let i = 0;
-  while (i < toks.length) {
-    if (toks[i].word && toks[i].on) {
-      let j = i, end = i;
-      while (j + 1 < toks.length) {
-        const n = toks[j + 1];
-        if (n.word && n.on) { j++; end = j; }
-        else if (/^\s+$/.test(n.t) && toks[j + 2]?.word && toks[j + 2]?.on) j++;
-        else break;
-      }
-      s += `{{${toks.slice(i, end + 1).map((x) => x.t).join('')}}}`;
-      i = end + 1;
-    } else { s += toks[i].t; i++; }
-  }
-  return s;
-}
+export { toTokens, fromTokens } from '../lib/markTarget';
 
 /** 把句子显示成可点的词：点一下标记 / 取消考查部分 */
-export function ClozeMarker({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+/** readOnly：只显示高亮，不能点（产出题正面的预览） */
+export function ClozeMarker({ value, onChange, readOnly }: { value: string; onChange: (v: string) => void; readOnly?: boolean }) {
   const toks = toTokens(value);
   if (!toks.some((t) => t.word)) return null;
+  if (readOnly) return <div className="marker is-readonly">{toks.map((k, i) => <span key={i} className={k.on ? 'tok is-on' : undefined}>{k.t}</span>)}</div>;
   return (
     <div className="marker" aria-label="点词标记考查部分">
       {toks.map((k, i) => k.word

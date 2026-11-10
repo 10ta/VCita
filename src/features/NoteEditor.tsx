@@ -1,12 +1,14 @@
 import { useState } from 'react';
 import { Modal } from '../ui/Modal';
 import { THEMES, noteOrigin, type Note, type NoteOrigin, type Theme } from '../schema';
-import { contrastLeaks, defaultCardTypes, hasCloze, noteErrors, promptErrors } from '../schema/validate';
+import { defaultCardTypes, hasCloze, noteErrors, promptErrors } from '../schema/validate';
 import { bumpUsed, deleteNotes, leaveContrast, updateNote } from '../db/actions';
 import { useDeckSettings, useDecks, useNotes } from '../db/hooks';
 import { langLabel } from '../ui/langs';
 import { noonIso } from '../lib/time';
-import { CardPreviews, CARD_TYPES, ClozeMarker, FRAME_TYPES } from './NoteParts';
+import { CardPreviews, CARD_TYPES, FRAME_TYPES } from './NoteParts';
+import { NoteForm, formErrors } from './noteform/NoteForm';
+import { fromNote, otherFields, rowFields, type Draft } from './noteform/model';
 import { LENSES } from '../lib/frames';
 import { toast } from '../ui/toast';
 
@@ -50,6 +52,89 @@ export function parseAltIntent(line: string): Note['altIntents'][number] {
 }
 
 export function NoteEditor({ note, onClose }: { note: Note; onClose: () => void }) {
+  return note.frame ? <FrameEditor note={note} onClose={onClose} /> : <WordEditor note={note} onClose={onClose} />;
+}
+
+/** 单词 / 表达笔记的编辑：一个表达、一张例句表（见 noteform/NoteForm） */
+function WordEditor({ note, onClose }: { note: Note; onClose: () => void }) {
+  const s = useDeckSettings(note.deckId);
+  const decks = useDecks();
+  const allNotes = useNotes();
+  const [d, setDraft] = useState<Draft>(() => fromNote(note, noteOrigin(note)));
+  const setD = (fn: (d: Draft) => Draft) => setDraft(fn);
+  const [confirmDel, setConfirmDel] = useState(false);
+  const [tried, setTried] = useState(false);
+  const groupMates = note.contrastGroup ? (allNotes ?? []).filter((n) => n.contrastGroup === note.contrastGroup && n.id !== note.id) : [];
+  if (!s) return null;
+  const labels: [string, string, string] = [langLabel(s.sourceLang), langLabel(s.targetLang1), langLabel(s.targetLang2)];
+  const errs = formErrors(d, note.contrastGroup);
+  const save = async () => {
+    setTried(true);
+    if (errs.count) return;
+    await updateNote(note.id, {
+      ...otherFields(d), ...rowFields(d),
+      // 辨析卡跟着易混组走，不在这里勾选：保留
+      cardTypes: [...CARD_TYPES.map(([t]) => t).filter((t) => d.cardTypes.includes(t)), ...(note.contrastGroup ? ['contrast' as const] : [])],
+      deckId: d.deckId,
+      // 没标过、也没改的保持"按出处推断"
+      origin: note.origin == null && d.origin === noteOrigin(note) ? null : d.origin,
+      ...(d.day !== note.createdAt.slice(0, 10) ? { createdAt: noonIso(d.day) } : {}),
+    });
+    toast('已保存');
+    onClose();
+  };
+  const remove = async () => {
+    if (!confirmDel) return setConfirmDel(true);
+    await deleteNotes([note.id]);
+    toast('已删除这条笔记');
+    onClose();
+  };
+  const meta = (
+    <>
+      <div className="row">
+        <label className="field"><span className="field-label">层级</span>
+          <select value={d.layer} onChange={(e) => { const layer = e.target.value as Note['layer']; setD((x) => ({ ...x, layer })); }}>
+            <option value="mid">中频（认得就行）</option>
+            <option value="core">核心（要用出来）</option>
+          </select>
+        </label>
+        <div className="field"><span className="field-label">来源</span><OriginPicker value={d.origin} onChange={(v) => setD((x) => ({ ...x, origin: v }))} /></div>
+      </div>
+      <div className="field"><span className="field-label">主题</span><ThemePicker value={d.tags} onChange={(v) => setD((x) => ({ ...x, tags: v }))} /></div>
+      <div className="row">
+        <label className="field"><span className="field-label">牌组</span>
+          <select value={d.deckId} onChange={(e) => setD((x) => ({ ...x, deckId: e.target.value }))}>{decks?.map((x) => <option key={x.id} value={x.id}>{x.name}</option>)}</select>
+        </label>
+        <label className="field"><span className="field-label">创建日期</span>
+          <input type="date" value={d.day} onChange={(e) => e.target.value && setD((x) => ({ ...x, day: e.target.value }))} />
+        </label>
+      </div>
+      {d.cardTypes.includes('production') && (
+        <div className="row">
+          <span className="muted small">写作、口语里用上 {note.usedCount} 次</span>
+          <button type="button" className="pill" onClick={() => void bumpUsed(note.id).then(() => toast('已记录'))}>用上了 +1</button>
+        </div>
+      )}
+    </>
+  );
+  const contrastExtra = note.contrastGroup ? (
+    <button type="button" className="pill" onClick={() => void leaveContrast(note.id).then(() => { toast('已移出易混组，辨析卡已删除（复习记录保留）'); onClose(); })}>移出易混组</button>
+  ) : null;
+  return (
+    <Modal title="编辑笔记" onClose={onClose}
+      footer={<>
+        <button type="button" className={`btn footer-left${confirmDel ? ' is-danger' : ' is-danger-ghost'}`} title="删除这条笔记和它的所有卡片" onClick={() => void remove()} onBlur={() => setConfirmDel(false)}>{confirmDel ? '再点一次确认删除' : '删除'}</button>
+        {tried && errs.count > 0 && <span className="red small">还有 {errs.count} 处要改</span>}
+        <button type="button" className="btn" onClick={onClose}>取消</button>
+        <button type="button" className="btn is-primary" onClick={() => void save()}>保存</button>
+      </>}>
+      <NoteForm d={d} setD={setD} s={s} labels={labels} mode="edit" note={note} groupMates={groupMates} onSubmit={() => void save()} meta={meta} contrastExtra={contrastExtra} showErrors={tried} />
+    </Modal>
+  );
+}
+
+/** 句框笔记的编辑（句框、功能、例句、任务 / 槽位 / 透镜） */
+function FrameEditor({ note, onClose }: { note: Note; onClose: () => void }) {
   const s = useDeckSettings(note.deckId);
   const decks = useDecks();
   const [f, setF] = useState({
@@ -64,8 +149,6 @@ export function NoteEditor({ note, onClose }: { note: Note; onClose: () => void 
   });
   const isFrame = !!note.frame;
   const TYPES = isFrame ? FRAME_TYPES : CARD_TYPES;
-  const allNotes = useNotes();
-  const groupMates = note.contrastGroup ? (allNotes ?? []).filter((n) => n.contrastGroup === note.contrastGroup && n.id !== note.id) : [];
   const [confirmDel, setConfirmDel] = useState(false);
   const set = <K extends keyof typeof f>(k: K, v: (typeof f)[K]) => setF((x) => ({ ...x, [k]: v }));
   const altSentences = f.alts.split('\n').map((x) => x.trim()).filter(Boolean);
@@ -111,7 +194,6 @@ export function NoteEditor({ note, onClose }: { note: Note; onClose: () => void 
   // 预览用编辑中的内容
   const draft: Note = { ...note, ...f, altSentences, altIntents, cueFamily: f.cueFamily || null, source: f.source || null, extra: f.extra || null, promptFr: f.promptFr || null, intentZh: f.intentZh || null, hint: f.hint || null, clozeHint: f.clozeHint || null, clozeSentence: f.clozeSentence || null, etymology: f.etymology || null, answerFr: f.answerFr || null };
   const labels: [string, string, string] = s ? [langLabel(s.sourceLang), langLabel(s.targetLang1), langLabel(s.targetLang2)] : ['', '', ''];
-  const wantProd = f.cardTypes.includes('production');
   return (
     <Modal title="编辑笔记" onClose={onClose}
       footer={<><button type="button" className={`btn footer-left${confirmDel ? ' is-danger' : ' is-danger-ghost'}`} title="删除这条笔记和它的所有卡片" onClick={() => void remove()} onBlur={() => setConfirmDel(false)}>{confirmDel ? '再点一次确认删除' : '删除'}</button><button type="button" className="btn" onClick={onClose}>取消</button><button type="button" className="btn is-primary" disabled={errors.length > 0} onClick={() => void save()}>保存</button></>}>
@@ -132,7 +214,7 @@ export function NoteEditor({ note, onClose }: { note: Note; onClose: () => void 
           </div>
         </div>
       </div>
-      {isFrame && (
+      {(
         <>
           {text('lemma', '句框（⬚ = 要填的位置）', "例如：Interdire ⬚ ne ferait que déplacer le problème.")}
           {text('meaningZh', '功能（正面，写论证功能，不写中文句子）', '例如：反事实：禁止只会把问题挪到别处')}
@@ -151,57 +233,6 @@ export function NoteEditor({ note, onClose }: { note: Note; onClose: () => void 
           </div>
           {text('source', '出处', '例如：LENTILLES · ① 反事实')}
         </>
-      )}
-      {!isFrame && <>
-      {text('sentence', '例句', '用 {{…}} 标出要考的部分，例如：les enfants ont perdu leurs {{repères}}')}
-      {f.sentence.trim() && <><ClozeMarker value={f.sentence} onChange={(v) => set('sentence', v)} /><p className="muted small" style={{ marginTop: -6, marginBottom: 10 }}>点词标记 / 取消考查部分（认读卡加粗、挖空卡挖掉）</p></>}
-      {text('lemma', `单词（${labels[0]}）`, '旧卡的正面；有例句时可留空')}
-      {text('meaningZh', `意思（${labels[1]}）`)}
-      {text('meaningEn', `意思（${labels[2]}）`)}
-      {text('cueFamily', '词族线索', '例如：repérer 找出、标出')}
-      {text('source', '出处', '例如：InnerFrench · 第 12 集')}
-      {text('extra', '补充', '例如：≠ se tenir à 扶住')}
-      {text('etymology', '词源（可选，认读 / 挖空卡背面显示）', '例如：tentacule 触手 + -aire → 像触手一样四处伸展的')}
-      </>}
-      {f.cardTypes.includes('cloze') && <>
-        {text('clozeSentence', '挖空例句（可选，和上面的例句不同更好记）', '同样用 {{…}} 标出挖掉的部分；不填就用上面的例句')}
-        {f.clozeSentence.trim() && <ClozeMarker value={f.clozeSentence} onChange={(v) => set('clozeSentence', v)} />}
-      </>}
-      {(f.cardTypes.includes('recognition') || f.cardTypes.includes('cloze')) && (
-        <label className="field">
-          <span className="field-label">备用例句（可选，每行一句，用 {'{{…}}'} 标出；认读 / 挖空卡每次复习轮换）</span>
-          <textarea className="bulk" rows={3} value={f.alts} placeholder="Elle a fini par {{trouver preneur}} pour son vieux vélo." onChange={(e) => set('alts', e.target.value)} />
-        </label>
-      )}
-      {f.cardTypes.includes('cloze') && text('clozeHint', '挖空提示（可选，横线处显示，只用于挖空主句）', `写横线处的意思，例如：飞越（复合过去时）；不写答案的词或原形，不只写「介词」这类标签；只挖介词、冠词等小词时留空即可（上下文决定答案）。备用例句各写各的：{{答案::提示}}。留空时正面显示${labels[1]}意思（只挖小词时不显示）`)}
-      {note.contrastGroup && (
-        <div className="contrast-edit">
-          <span className="field-label">易混组：和 {groupMates.map((n) => n.lemma).join(' / ') || '（其他笔记已删除）'} 辨析，每条笔记一张辨析卡</span>
-          {contrastLeaks({ lemma: f.lemma, sentence: f.sentence, altSentences }, groupMates).map((w) => <p key={w} className="warn small">⚠ 辨析卡{w}</p>)}
-          <label className="field">
-            <span className="field-label">辨析说明（这个词和组里其他词的区别，辨析卡背面显示）</span>
-            <input value={f.contrastNote} placeholder="例如：抽象地给…染上色彩（经历、情绪）；colorer 多指字面上色" onChange={(e) => set('contrastNote', e.target.value)} />
-          </label>
-          <button type="button" className="pill" onClick={() => void leaveContrast(note.id).then(() => { toast('已移出易混组，辨析卡已删除（复习记录保留）'); onClose(); })}>移出易混组</button>
-        </div>
-      )}
-      {wantProd && (
-        <fieldset className="prod">
-          <legend>产出卡</legend>
-          {text('promptFr', `${labels[0]}题面（正面，用 {{…}} 高亮一个更简单的说法，不能用答案里的词）`, "例如：Après le déménagement, les enfants {{ne savaient plus où ils en étaient}}.")}
-          {f.promptFr.trim() && <ClozeMarker value={f.promptFr} onChange={(v) => set('promptFr', v)} />}
-          {text('answerFr', `${labels[0]}答案（背面，可用 {{…}} 高亮目标表达）`, "例如：Après le déménagement, les enfants {{ont perdu leurs repères}}.")}
-          {text('hint', '提示（可选；有法语题面时不用填，自动用答案句生成）', '例如：首字母 p… r…')}
-          {text('intentZh', `${labels[1]}注释（背面；没有${labels[0]}题面时作为正面）`, '例如：失去方向感、不知所措')}
-          <label className="field">
-            <span className="field-label">备用产出题（可选，每行：{labels[0]}题面 | {labels[0]}答案 | 提示 | {labels[1]}注释；每次复习轮换场景）</span>
-            <textarea className="bulk" rows={3} value={f.altIntents} placeholder="En arrivant en France, je {{ne savais plus du tout où j'en étais}}. | En arrivant en France, j'{{avais perdu mes repères}}. | p… r… | 失去方向感" onChange={(e) => set('altIntents', e.target.value)} />
-          </label>
-          <div className="row">
-            <span className="muted small">写作、口语里用上 {note.usedCount} 次</span>
-            <button type="button" className="pill" onClick={() => void bumpUsed(note.id).then(() => toast('已记录'))}>用上了 +1</button>
-          </div>
-        </fieldset>
       )}
       {errors.map((e) => <p key={e} className="form-error">{e}</p>)}
       {s && errors.length === 0 && <CardPreviews draft={draft} s={s} labels={labels} />}
