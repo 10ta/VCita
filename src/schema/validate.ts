@@ -147,15 +147,6 @@ export function productionErrors(n: Pick<Note, 'lemma' | 'cardTypes' | 'intentZh
 // 组员带的介词不同（servir à / se servir de）时，空后面紧跟的 à / de 也是线索。这些词要挖进空里，或者换个句子
 type ContrastNote = Pick<Note, 'lemma' | 'sentence'> & Partial<Pick<Note, 'altSentences'>>;
 /** 辨析卡正面选项上显示的词条：去掉括号里的例子 / 说明，只留第一种写法（「le sens de (l'humour, du devoir)」→「le sens de」），免得例子正好是句子里的词 */
-/** 表达群里遮住的答案：虚词照常显示，实词只留首字母（l'humour → l'h_____），让人先自己回想 */
-export function maskLabel(lemma: string): string {
-  return choiceLabel(lemma).replace(/[A-Za-zÀ-ÿœæŒÆ]+(?:-[A-Za-zÀ-ÿœæŒÆ]+)*/g, (w) => {
-    const k = w.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
-    if (FUNC.has(k) || w.length <= 1) return w;
-    return w[0] + w.slice(1).replace(/[^-]/g, '_');
-  });
-}
-
 export const choiceLabel = (lemma: string) => lemma.replace(/\s*[(（][^)）]*[)）]/g, '').split(/\s[;；｜|]\s?|；/)[0].replace(/\s+/g, ' ').trim() || lemma.trim();
 const lemmaCore = (lemma: string) => lemma.replace(/\(.*?\)|（.*?）/g, ' ').split(/[;,/｜|]/)[0].replace(/\b(qqch|qqn|qch|inf)\b\.?/gi, ' ').replace(/\s+/g, ' ').trim();
 const isPronominal = (lemma: string) => /^(se\s|s['’])/i.test(lemmaCore(lemma));

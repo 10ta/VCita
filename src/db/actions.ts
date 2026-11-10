@@ -1,7 +1,7 @@
 // 所有写操作。每次修改都更新 updatedAt（严格递增），删除一律打墓碑。
 import { db } from './db';
 import { SettingsSchema, type Card, type Clip, type Deck, type Encounter, type Text, type Note, type ReviewLog, type Settings } from '../schema';
-import { addDaysToDay, bumpIso, dayStartMs, fromIso, setTimeZone, studyDay, toIso } from '../lib/time';
+import { addDaysToDay, bumpIso, dayStartMs, fromIso, nextDayStartMs, setTimeZone, studyDay, toIso } from '../lib/time';
 import { relativeOverdue } from '../srs/queue';
 import { newId } from '../lib/id';
 import { paramsFor, schedule, type Rating } from '../srs/scheduler';
@@ -306,43 +306,78 @@ export async function answerCard(cardId: string, rating: Rating, opts: { now?: n
  * 只往后推，不会提前；今天已经复习过这张认读卡就不记。在 answerCard 的事务里调用
  */
 async function creditRecognition(noteId: string, now: number, s: Settings): Promise<{ before: Card; logId: string } | null> {
-  const today = studyDay(now, s.dayStartHour);
   const rec = (await db.cards.where('noteId').equals(noteId).toArray())
     .find((c) => c.type === 'recognition' && !c.deleted && !c.suspended && c.state === 'review');
-  if (!rec || (rec.lastReviewedAt && studyDay(fromIso(rec.lastReviewedAt), s.dayStartHour) === today)) return null;
-  const logs = await db.logs.where('cardId').equals(rec.id).toArray();
-  const mem = s.scheduler === 'fsrs' ? replayMemory(validWeights(s.fsrsWeights), logs, rec, s.dayStartHour) : null;
-  const r = schedule(rec, 3, now, paramsFor('recognition', s), Math.random, mem);
-  if (fromIso(r.card.due) <= fromIso(rec.due)) return null;
-  const after: Card = { ...r.card, updatedAt: bumpIso(rec.updatedAt, now) };
+  return rec ? creditImplicit(rec, 3, now, s) : null;
+}
+
+/** 给一张在复习中的卡记一次隐性评分：只往后推、不提前；今天已复习过就不记。在调用方的事务里执行 */
+async function creditImplicit(card: Card, rating: Rating, now: number, s: Settings): Promise<{ before: Card; logId: string } | null> {
+  const today = studyDay(now, s.dayStartHour);
+  if (card.lastReviewedAt && studyDay(fromIso(card.lastReviewedAt), s.dayStartHour) === today) return null;
+  const logs = await db.logs.where('cardId').equals(card.id).toArray();
+  const mem = s.scheduler === 'fsrs' ? replayMemory(validWeights(s.fsrsWeights), logs, card, s.dayStartHour) : null;
+  const r = schedule(card, rating, now, paramsFor(card.type, s), Math.random, mem);
+  if (fromIso(r.card.due) <= fromIso(card.due)) return null;
+  const after: Card = { ...r.card, updatedAt: bumpIso(card.updatedAt, now) };
   const log: ReviewLog = {
-    id: newId(), cardId: rec.id, noteId, ts: toIso(now), day: today, rating: 3,
-    prevState: rec.state, newState: after.state, prevInterval: rec.interval, newInterval: after.interval,
-    prevEase: rec.ease, newEase: after.ease, prevDue: rec.due, newDue: after.due,
+    id: newId(), cardId: card.id, noteId: card.noteId, ts: toIso(now), day: today, rating,
+    prevState: card.state, newState: after.state, prevInterval: card.interval, newInterval: after.interval,
+    prevEase: card.ease, newEase: after.ease, prevDue: card.due, newDue: after.due,
     elapsedMs: null, source: 'app', implicit: true, updatedAt: toIso(now), deleted: false,
   };
   await db.cards.put(after);
   await db.logs.put(log);
-  return { before: rec, logId: log.id };
+  return { before: card, logId: log.id };
+}
+
+export interface ClusterOutcome {
+  /** credited：往后推了；pulled：提前到明天；kept：没动（今天已复习、已经排得够远、明天本来就到期、或还没有在复习中的卡） */
+  kind: 'credited' | 'pulled' | 'kept';
+  /** 动的是哪张卡：有在复习中的产出卡就是产出卡，否则认读卡 */
+  type: Card['type'] | null;
+  from: string | null;
+  to: string | null;
+  /** 这条笔记累计没想起来的次数（最近 10 次以内） */
+  misses: number;
+  hasProduction: boolean;
 }
 
 /**
- * 表达群的顺带回忆：想起来了 → 这条笔记已在复习中的认读卡记一次隐性「良好」（只往后推，规则同产出卡顺带记认读）；
- * 没想起来 → 只在笔记上记下日期（最近 10 次），不动排期。返回想起来时是否推后了
+ * 表达群的纯回忆（只告诉还有几种说法，不给任何提示）：
+ * - 想起来了 → 产出卡（没有在复习中的产出卡就用认读卡）记一次隐性「困难」：自评、非正式出卡，保守地只往后推一点
+ * - 没想起来 → 同一张卡提前到明天到期，不写复习记录（FSRS 只看到明天那次正常复习）；并在笔记上记下日期
  */
-export async function clusterRecall(noteId: string, recalled: boolean): Promise<'credited' | 'skipped' | 'marked'> {
+export async function clusterRecall(noteId: string, recalled: boolean): Promise<ClusterOutcome> {
   const now = Date.now();
   const s = await getSettings();
-  if (recalled) {
-    const r = await db.transaction('rw', [db.cards, db.logs], () => creditRecognition(noteId, now, s));
-    return r ? 'credited' : 'skipped';
-  }
-  const n = await db.notes.get(noteId);
-  if (!n) return 'marked';
-  const day = toIso(now).slice(0, 10);
-  const misses = [...(n.recallMisses ?? []).filter((d) => d !== day), day].slice(-10);
-  await db.notes.put({ ...n, recallMisses: misses, updatedAt: bumpIso(n.updatedAt, now) });
-  return 'marked';
+  return db.transaction('rw', [db.cards, db.logs, db.notes], async () => {
+    const cards = (await db.cards.where('noteId').equals(noteId).toArray()).filter((c) => !c.deleted && !c.suspended);
+    const target = cards.find((c) => c.type === 'production' && c.state === 'review')
+      ?? cards.find((c) => c.type === 'recognition' && c.state === 'review');
+    const hasProduction = cards.some((c) => c.type === 'production');
+    const n = await db.notes.get(noteId);
+    let misses = n?.recallMisses?.length ?? 0;
+    const out = (kind: ClusterOutcome['kind'], to: string | null = null): ClusterOutcome =>
+      ({ kind, type: target?.type ?? null, from: target?.due ?? null, to, misses, hasProduction });
+    if (recalled) {
+      if (!target) return out('kept');
+      const r = await creditImplicit(target, 2, now, s);
+      return r ? out('credited', (await db.cards.get(target.id))!.due) : out('kept');
+    }
+    if (n) {
+      const day = studyDay(now, s.dayStartHour);
+      const list = [...(n.recallMisses ?? []).filter((d) => d !== day), day].slice(-10);
+      misses = list.length;
+      await db.notes.put({ ...n, recallMisses: list, updatedAt: bumpIso(n.updatedAt, now) });
+    }
+    if (!target) return out('kept');
+    const tomorrow = nextDayStartMs(now, s.dayStartHour);
+    if (fromIso(target.due) < dayStartMs(addDaysToDay(studyDay(now, s.dayStartHour), 2), s.dayStartHour)) return out('kept');
+    const due = toIso(tomorrow);
+    await db.cards.put({ ...target, due, updatedAt: bumpIso(target.updatedAt, now) });
+    return out('pulled', due);
+  });
 }
 
 /** 撤销：卡片恢复到作答前（用更新的 updatedAt 才能在同步时胜出），日志打墓碑 */

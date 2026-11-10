@@ -524,7 +524,10 @@ textarea.weights { width: 100%; font-family: var(--mono); font-size: 12px; }
 .cluster-mate { display: flex; flex-wrap: wrap; gap: 6px 10px; align-items: center; }
 .cluster-mate .cl-mean { color: var(--dim); min-width: 7em; }
 .cluster-mate.is-new .cl-mean { opacity: .6; }
-.cl-mask { font-family: var(--mono); letter-spacing: .04em; background: transparent; border: 1px solid #333; border-radius: 6px; padding: 2px 8px; color: var(--text); cursor: pointer; }
-.cl-mask:hover { border-color: var(--accent); }
 .cl-lemma { font-family: var(--serif); font-size: 15px; }
-.cl-btns { display: inline-flex; gap: 6px; }
+.cl-btns { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-top: 8px; }
+.cl-check { display: inline-flex; gap: 6px; align-items: center; cursor: pointer; }
+.cl-count { color: var(--accent); }
+.cl-ok { color: #6c6; }
+.cl-miss { color: #d88; }
+.cl-fresh { margin-top: 6px !important; }
