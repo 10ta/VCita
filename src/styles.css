@@ -516,3 +516,15 @@ textarea.weights { width: 100%; font-family: var(--mono); font-size: 12px; }
   .nf-prompt, .nf-legacy, .nf-row .form-error { margin-left: 0; }
 }
 .cue.usage { color: var(--text); font-size: 13.5px; }
+
+/* 表达群：背面同群的其他说法，答案遮住 */
+.cluster { margin-top: 14px; padding: 10px 12px; border: 1px dashed #333; border-radius: 8px; text-align: left; }
+.cluster-head { margin-bottom: 6px; }
+.cluster ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+.cluster-mate { display: flex; flex-wrap: wrap; gap: 6px 10px; align-items: center; }
+.cluster-mate .cl-mean { color: var(--dim); min-width: 7em; }
+.cluster-mate.is-new .cl-mean { opacity: .6; }
+.cl-mask { font-family: var(--mono); letter-spacing: .04em; background: transparent; border: 1px solid #333; border-radius: 6px; padding: 2px 8px; color: var(--text); cursor: pointer; }
+.cl-mask:hover { border-color: var(--accent); }
+.cl-lemma { font-family: var(--serif); font-size: 15px; }
+.cl-btns { display: inline-flex; gap: 6px; }

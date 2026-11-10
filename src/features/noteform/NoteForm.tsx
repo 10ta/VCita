@@ -9,6 +9,7 @@ import { contrastLeaks, hasCloze, noteErrors, promptErrors, blankIsFunctionWords
 import { autoMark, markedText, type Lemmatize } from '../../lib/markTarget';
 import { lemmaCandidates, useFrDict, useFrVerbs } from '../../lib/gender/dict';
 import { isFrench } from '../../ui/langs';
+import { useNotes } from '../../db/hooks';
 import { cardView, Cues } from '../CardFace';
 import { CARD_TYPES, ClozeMarker } from '../NoteParts';
 import { newRow, promptOf, rowFields, type Draft, type Row } from './model';
@@ -85,6 +86,12 @@ export function NoteForm({ d, setD, s, labels, mode, note, groupMates = [], onSu
   const [notice, setNotice] = useState<string | null>(null);
   const [editing, setEditing] = useState<Set<string>>(() => new Set(d.rows.filter((r) => !r.text.trim()).map((r) => r.key)));
   const group = note?.contrastGroup ?? null;
+  const allNotes = useNotes();
+  const clusters = useMemo(() => [...new Set((allNotes ?? []).map((n) => n.cluster?.trim()).filter((c): c is string => !!c))].sort((a, b) => a.localeCompare(b, 'zh')), [allNotes]);
+  const clusterMates = useMemo(() => {
+    const c = d.cluster.trim();
+    return c ? (allNotes ?? []).filter((n) => n.id !== note?.id && n.cluster?.trim() === c).map((n) => n.lemma) : [];
+  }, [allNotes, d.cluster, note?.id]);
   const errs = formErrors(d, group);
   const set = <K extends keyof Draft>(k: K, v: Draft[K]) => setD((x) => ({ ...x, [k]: v }));
   const setRow = (key: string, patch: Partial<Row>) => setD((x) => ({ ...x, rows: x.rows.map((r) => (r.key === key ? { ...r, ...patch } : r)) }));
@@ -194,7 +201,7 @@ export function NoteForm({ d, setD, s, labels, mode, note, groupMates = [], onSu
   // 预览用的笔记
   const draftNote: Note = useMemo(() => ({
     ...(note ?? BLANK), ...rowFields(d), lemma: d.lemma, meaningZh: d.meaningZh, meaningEn: d.meaningEn,
-    usage: d.usage || null, cueFamily: d.cueFamily || null, extra: d.extra || null, etymology: d.etymology || null, source: d.source || null, contrastNote: d.contrastNote || null,
+    usage: d.usage || null, cluster: d.cluster || null, cueFamily: d.cueFamily || null, extra: d.extra || null, etymology: d.etymology || null, source: d.source || null, contrastNote: d.contrastNote || null,
     cardTypes: [...d.cardTypes, ...(group ? ['contrast' as const] : [])],
   }), [d, note, group]);
 
@@ -220,6 +227,11 @@ export function NoteForm({ d, setD, s, labels, mode, note, groupMates = [], onSu
         </div>
         <label className="field"><span className="field-label">用法（可选，背面显示）· 考的结构 + 意思，同义的其他结构也写上</span>
           <input value={d.usage} placeholder="例如：s'occuper de + 名词 / + inf.：负责、照料（⚠ 不用 à）" onChange={(e) => set('usage', e.target.value)} /></label>
+        <label className="field"><span className="field-label">表达群（可选）· 同一个意思的几种说法填同一个群名，复习时背面顺带回想其他几种</span>
+          <input value={d.cluster} list="nf-clusters" placeholder="例如：说「很多」" onChange={(e) => set('cluster', e.target.value)} />
+          <datalist id="nf-clusters">{clusters.map((c) => <option key={c} value={c} />)}</datalist>
+          {clusterMates.length > 0 && <span className="muted small">同群：{clusterMates.join(' / ')}</span>}
+        </label>
       </section>
 
       <section className="nf-block">

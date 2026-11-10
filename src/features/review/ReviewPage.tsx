@@ -13,6 +13,7 @@ import { langLabel } from '../../ui/langs';
 import { syncIfAuto } from '../../sync/engine';
 import { CardStats, cardView, Cues, SpeakBtn, TYPE_LABEL } from '../CardFace';
 import { NoteEditor } from '../NoteEditor';
+import { ClusterStrip } from './ClusterStrip';
 import { Fr, useNoteFreqs } from '../FrText';
 import { diffWords, pickReference, summarize, type DiffOp } from '../../lib/diff';
 
@@ -329,6 +330,7 @@ export function ReviewPage({ deckId }: { deckId: string }) {
                     </div>
                   )}
                   <Cues note={note} only={split.cues === 'extra' ? 'extra' : undefined} />
+                  {notes && cards && <ClusterStrip note={note} notes={notes} cards={cards} />}
                   {(card.type === 'production' || card.type === 'frame' || card.type === 'apply') && (
                     <button type="button" className="pill" title="这个表达在写作或口语里用上了一次" onClick={() => void bumpUsed(note.id).then(() => toast(`已记录，累计用上 ${note.usedCount + 1} 次`))}>
                       用上了 +1（{note.usedCount}）

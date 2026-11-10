@@ -18,7 +18,7 @@ import { langLabel } from '../../ui/langs';
 import { CardStats, Cues, renderSentence, SpeakBtn, TYPE_LABEL } from '../CardFace';
 import { NoteEditor, ThemePicker } from '../NoteEditor';
 
-type Status = 'all' | 'new' | 'learning' | 'due' | 'leech' | 'suspended' | 'nosentence' | 'stable' | 'core' | 'needprod' | 'forgot' | 'lowease' | 'dup' | 'badprompt' | 'contrast' | 'confusable';
+type Status = 'all' | 'new' | 'learning' | 'due' | 'leech' | 'suspended' | 'nosentence' | 'stable' | 'core' | 'needprod' | 'forgot' | 'lowease' | 'dup' | 'badprompt' | 'contrast' | 'confusable' | 'cluster' | 'missed';
 // 后半部分是"分拣"用的筛选（改造方案 §6）：已稳定的保留；同源词选中后批量暂停；顽固卡补句子、加线索；核心词补产出卡
 const STATUS: Array<[Status, string, string?]> = [
   ['all', '全部'], ['due', '到期'], ['new', '新卡'], ['learning', '学习中'], ['suspended', '已暂停'],
@@ -30,6 +30,8 @@ const STATUS: Array<[Status, string, string?]> = [
   ['badprompt', '题面有误', '产出题的高亮没包住词条（词条的词露在高亮外）、高亮直接给出了答案，或辨析卡例句的空外面露出了答案线索（me suis、la / le、紧跟的介词）'],
   ['confusable', '可能易混', '意思相近（中文意思里有同一个不常见的词）或拼写只差一个字母；两两排在一起。选中后"设为易混组"，就会生成辨析卡'],
   ['contrast', '易混组', '已经设成易混组的笔记，同组排在一起'],
+  ['cluster', '表达群', '填了表达群的笔记，同群排在一起'],
+  ['missed', '群里没想起', '复习时在表达群里顺带回想、点了"没想起来"的笔记，最近的排前面'],
 ];
 type Sort = 'created' | 'lapses' | 'ease' | 'due' | 'reviewed' | 'freq';
 const SORTS: Array<[Sort, string]> = [['created', '最新添加'], ['lapses', '遗忘最多'], ['ease', '最难记'], ['due', '最早到期'], ['reviewed', '最近复习'], ['freq', '最常用']];
@@ -67,7 +69,7 @@ export function LibraryPage({ deckId }: { deckId: string }) {
   const [page, setPage] = useState(0);
   const [sel, setSel] = useState<Set<string>>(new Set());
   const [editing, setEditing] = useState<Note | null>(null);
-  const [batch, setBatch] = useState<null | 'theme' | 'deck' | 'date' | 'delete'>(null);
+  const [batch, setBatch] = useState<null | 'theme' | 'deck' | 'date' | 'cluster' | 'delete'>(null);
   const [focus, setFocus] = useState(readFocus);
   const [sort, setSort] = useState<Sort>('created');
   const [open, setOpen] = useState<Set<string>>(new Set());
@@ -123,7 +125,7 @@ export function LibraryPage({ deckId }: { deckId: string }) {
       .filter((n) => !theme || n.tags.includes(theme))
       .filter((n) => !origin || noteOrigin(n) === origin)
       .filter((n) => !day || n.createdAt.slice(0, 10) === day)
-      .filter((n) => !k || [n.lemma, n.sentence, n.meaningZh, n.meaningEn, n.source ?? '', ...(n.altSentences ?? [])].some((x) => x.toLowerCase().includes(k)))
+      .filter((n) => !k || [n.lemma, n.sentence, n.meaningZh, n.meaningEn, n.source ?? '', n.cluster ?? '', ...(n.altSentences ?? [])].some((x) => x.toLowerCase().includes(k)))
       .filter((n) => {
         const cs = cardsByNote.get(n.id) ?? [];
         switch (status) {
@@ -141,6 +143,8 @@ export function LibraryPage({ deckId }: { deckId: string }) {
           case 'lowease': return cs.some((c) => c.state !== 'new' && (fsrs && memories?.size ? (memories.get(c.id)?.d ?? 0) >= 7 : c.ease < 2));
           case 'contrast': return !!n.contrastGroup;
           case 'confusable': return confusable.has(n.id);
+          case 'cluster': return !!n.cluster?.trim();
+          case 'missed': return !!n.recallMisses?.length;
           case 'dup': return dups.has(n.id);
           case 'badprompt': return productionErrors(n).length > 0 || (!!n.contrastGroup && contrastLeaks(n, notes.filter((x) => x.contrastGroup === n.contrastGroup && x.id !== n.id)).length > 0);
         }
@@ -149,6 +153,8 @@ export function LibraryPage({ deckId }: { deckId: string }) {
         // 疑似重复：同组排在一起
         if (status === 'dup') { const d = dups.get(a.id)! - dups.get(b.id)!; if (d) return d; }
         if (status === 'confusable') { const d = confusable.get(a.id)![0] - confusable.get(b.id)![0]; if (d) return d; }
+        if (status === 'cluster' && a.cluster !== b.cluster) return (a.cluster ?? '').localeCompare(b.cluster ?? '', 'zh');
+        if (status === 'missed') { const x = a.recallMisses!.at(-1)!, y = b.recallMisses!.at(-1)!; if (x !== y) return x < y ? 1 : -1; }
         if (status === 'contrast' && a.contrastGroup !== b.contrastGroup) return (a.contrastGroup ?? '') < (b.contrastGroup ?? '') ? -1 : 1;
         if (sort === 'freq') { const d = (freqs?.get(b.id) ?? -1) - (freqs?.get(a.id) ?? -1); if (d) return d; }
         else if (sort !== 'created') {
@@ -230,6 +236,7 @@ export function LibraryPage({ deckId }: { deckId: string }) {
             <button type="button" className="pill" title="这几个词容易混：每条笔记生成一张辨析卡（看句子选用哪个词）。已经在别的易混组里的会整组并进来；没有带 {{…}} 例句的笔记跳过"
               onClick={() => void groupContrast(ids).then((k) => done(k ? `已设为易混组：${k} 条，各生成一张辨析卡` : '至少要两条带 {{…}} 例句的笔记'))}>设为易混组</button>
           )}
+          <button type="button" className="pill" title="同一个意思的几种说法：复习其中一条时，背面顺带回想其他几条（答案遮住）" onClick={() => setBatch('cluster')}>设表达群</button>
           <button type="button" className="pill" onClick={() => void resetNotes(ids).then(() => done(`已重置 ${ids.length} 条为新卡`))}>重置为新卡</button>
           <button type="button" className="pill is-danger" onClick={() => setBatch('delete')}>删除</button>
         </div>
@@ -262,6 +269,8 @@ export function LibraryPage({ deckId }: { deckId: string }) {
                   {card && <CardStats card={card} s={s} mem={memories?.get(card.id) ?? null} />}
                   {freqs?.get(n.id) != null && <span className="badge" title="Lexique 词频：每百万词出现次数（短语取最不常用的词）">频 {fmtFreq(freqs.get(n.id)!)}</span>}
                   {n.contrastGroup && <span className="badge t-contrast" title="易混组">易混：{notes.filter((x) => x.contrastGroup === n.contrastGroup && x.id !== n.id).map((x) => x.lemma).join(' / ')}</span>}
+                  {n.cluster?.trim() && <span className="badge" title="表达群：同一个意思的几种说法">群：{n.cluster}</span>}
+                  {!!n.recallMisses?.length && <span className="badge t-contrast" title={`在表达群里没想起来：${n.recallMisses.join('、')}`}>没想起 ×{n.recallMisses.length}</span>}
                   {status === 'confusable' && confusable.get(n.id) && <span className="badge t-contrast">{confusable.get(n.id)![1]}</span>}
                   {n.tags.map((t) => <span key={t} className="badge is-theme">{t}</span>)}
                   {!n.sentence && <span className="badge">待补句子</span>}
@@ -301,25 +310,27 @@ export function LibraryPage({ deckId }: { deckId: string }) {
 
       {editing && <NoteEditor note={editing} onClose={() => setEditing(null)} />}
       {study && <StudyDialog notes={sel.size ? list.filter((n) => sel.has(n.id)) : list} cardsByNote={cardsByNote} label={studyLabel(status, theme, kw, sel.size)} onClose={() => setStudy(false)} />}
-      {batch && <BatchDialog kind={batch} count={ids.length} decks={decks ?? []} onClose={() => setBatch(null)} onApply={async (v) => {
+      {batch && <BatchDialog kind={batch} count={ids.length} decks={decks ?? []} clusters={[...new Set(notes.map((n) => n.cluster?.trim()).filter((c): c is string => !!c))].sort((a, b) => a.localeCompare(b, 'zh'))} onClose={() => setBatch(null)} onApply={async (v) => {
         if (batch === 'theme') { await updateNotes(ids, () => ({ tags: v as Theme[] })); done(`已设置 ${ids.length} 条的主题`); }
         if (batch === 'deck') { await updateNotes(ids, () => ({ deckId: v as string })); done(`已移动 ${ids.length} 条`); }
         if (batch === 'date') { await updateNotes(ids, () => ({ createdAt: noonIso(v as string) })); done(`已修改 ${ids.length} 条的日期`); }
+        if (batch === 'cluster') { const c = (v as string).trim(); await updateNotes(ids, () => ({ cluster: c || null })); done(c ? `已把 ${ids.length} 条放进表达群「${c}」` : `已把 ${ids.length} 条移出表达群`); }
         if (batch === 'delete') { await deleteNotes(ids); done(`已删除 ${ids.length} 条`); }
       }} />}
     </div>
   );
 }
 
-function BatchDialog({ kind, count, decks, onClose, onApply }: {
-  kind: 'theme' | 'deck' | 'date' | 'delete'; count: number; decks: Array<{ id: string; name: string }>;
+function BatchDialog({ kind, count, decks, clusters = [], onClose, onApply }: {
+  kind: 'theme' | 'deck' | 'date' | 'cluster' | 'delete'; count: number; decks: Array<{ id: string; name: string }>; clusters?: string[];
   onClose: () => void; onApply: (v: unknown) => Promise<void>;
 }) {
+  const [cluster, setCluster] = useState('');
   const [themes, setThemes] = useState<Theme[]>([]);
   const [deck, setDeck] = useState(decks[0]?.id ?? '');
   const [day, setDay] = useState(new Date().toISOString().slice(0, 10));
-  const title = { theme: '设置主题', deck: '移到牌组', date: '修改创建日期', delete: '确认删除' }[kind];
-  const value = { theme: themes, deck, date: day, delete: null }[kind];
+  const title = { theme: '设置主题', deck: '移到牌组', date: '修改创建日期', cluster: '设为表达群', delete: '确认删除' }[kind];
+  const value = { theme: themes, deck, date: day, cluster, delete: null }[kind];
   return (
     <Modal title={title} onClose={onClose} footer={<>
       <button type="button" className="btn" onClick={onClose}>取消</button>
@@ -328,6 +339,10 @@ function BatchDialog({ kind, count, decks, onClose, onApply }: {
       <p className="hint">对选中的 {count} 条笔记{kind === 'delete' ? '执行删除（复习日志保留，用于统计）。' : '生效：'}</p>
       {kind === 'theme' && <ThemePicker value={themes} onChange={setThemes} />}
       {kind === 'deck' && <select value={deck} onChange={(e) => setDeck(e.target.value)}>{decks.map((d) => <option key={d.id} value={d.id}>{d.name}</option>)}</select>}
+      {kind === 'cluster' && <>
+        <input value={cluster} list="lib-clusters" autoFocus placeholder="群名，例如：说「很多」（留空 = 移出表达群）" onChange={(e) => setCluster(e.target.value)} />
+        <datalist id="lib-clusters">{clusters.map((c) => <option key={c} value={c} />)}</datalist>
+      </>}
       {kind === 'date' && <input type="date" value={day} onChange={(e) => e.target.value && setDay(e.target.value)} />}
     </Modal>
   );

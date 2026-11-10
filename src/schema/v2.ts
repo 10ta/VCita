@@ -56,6 +56,11 @@ export const NoteV2 = z.looseObject({
   /** 用法：这张卡考的结构 + 意思，有同义的其他结构也写上（s'occuper de + 名词 / + inf.：负责、照料；⚠ 不用 à）。背面显示。
    *  optional：没写过的笔记不带这个键，同步文件不变 */
   usage: z.string().nullable().optional(),
+  /** 表达群：同一个功能的几种说法（「说"很多"」：nombre de / une écrasante majorité de…），值就是群名。
+   *  复习时背面列出同群的其他成员（遮住答案），顺带回忆。optional：同步文件不变 */
+  cluster: z.string().nullable().optional(),
+  /** 在表达群里被顺带回忆、却没想起来的日期（最近 10 次），只做标记，不影响排期 */
+  recallMisses: z.array(z.string()).optional(),
   answerFr: z.string().nullable().default(null),
   extra: z.string().nullable().default(null),
   source: z.string().nullable().default(null),

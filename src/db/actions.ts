@@ -82,7 +82,7 @@ export async function ensureDeck(): Promise<string> {
 
 // ---------- 笔记与卡片 ----------
 
-type NoteContent = Pick<Note, 'lemma' | 'sentence' | 'meaningZh' | 'meaningEn' | 'cueFamily' | 'promptFr' | 'intentZh' | 'hint' | 'clozeHint' | 'clozeSentence' | 'etymology' | 'answerFr' | 'extra' | 'source' | 'origin' | 'layer' | 'cardTypes' | 'tags' | 'altSentences' | 'altIntents' | 'contrastGroup' | 'contrastNote' | 'frame'>;
+type NoteContent = Pick<Note, 'lemma' | 'sentence' | 'meaningZh' | 'meaningEn' | 'cueFamily' | 'promptFr' | 'intentZh' | 'hint' | 'clozeHint' | 'clozeSentence' | 'etymology' | 'answerFr' | 'extra' | 'source' | 'origin' | 'layer' | 'cardTypes' | 'tags' | 'altSentences' | 'altIntents' | 'contrastGroup' | 'contrastNote' | 'frame' | 'usage' | 'cluster'>;
 export type NewNoteInput = { deckId: string; createdAtMs?: number } & Partial<NoteContent>;
 
 export function blankCard(note: Pick<Note, 'id' | 'deckId' | 'createdAt'>, type: Card['type'], s: Settings, stamp: string): Card {
@@ -115,6 +115,7 @@ export async function addNotes(inputs: NewNoteInput[]): Promise<Array<{ noteId: 
       altSentences: input.altSentences ?? [], altIntents: input.altIntents ?? [],
       layer: input.layer ?? 'mid', cardTypes: input.cardTypes ?? ['recognition'], tags: input.tags ?? [],
       usedCount: 0, usedAt: [], rot: 0, contrastGroup: input.contrastGroup ?? null, contrastNote: input.contrastNote ?? null, frame: input.frame ?? null, legacy: null, updatedAt: stamp, deleted: false,
+      ...(input.usage ? { usage: input.usage } : {}), ...(input.cluster?.trim() ? { cluster: input.cluster.trim() } : {}),
     };
     notes.push(note);
     for (const t of note.cardTypes) cards.push(blankCard(note, t, s, stamp));
@@ -323,6 +324,25 @@ async function creditRecognition(noteId: string, now: number, s: Settings): Prom
   await db.cards.put(after);
   await db.logs.put(log);
   return { before: rec, logId: log.id };
+}
+
+/**
+ * 表达群的顺带回忆：想起来了 → 这条笔记已在复习中的认读卡记一次隐性「良好」（只往后推，规则同产出卡顺带记认读）；
+ * 没想起来 → 只在笔记上记下日期（最近 10 次），不动排期。返回想起来时是否推后了
+ */
+export async function clusterRecall(noteId: string, recalled: boolean): Promise<'credited' | 'skipped' | 'marked'> {
+  const now = Date.now();
+  const s = await getSettings();
+  if (recalled) {
+    const r = await db.transaction('rw', [db.cards, db.logs], () => creditRecognition(noteId, now, s));
+    return r ? 'credited' : 'skipped';
+  }
+  const n = await db.notes.get(noteId);
+  if (!n) return 'marked';
+  const day = toIso(now).slice(0, 10);
+  const misses = [...(n.recallMisses ?? []).filter((d) => d !== day), day].slice(-10);
+  await db.notes.put({ ...n, recallMisses: misses, updatedAt: bumpIso(n.updatedAt, now) });
+  return 'marked';
 }
 
 /** 撤销：卡片恢复到作答前（用更新的 updatedAt 才能在同步时胜出），日志打墓碑 */
