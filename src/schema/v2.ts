@@ -158,6 +158,8 @@ export const SettingsV2 = z.looseObject({
   /** 学习日按哪个时区切换（IANA 名，如 Asia/Shanghai）；null = 跟随设备 */
   timeZone: z.string().nullable().default(null),
   fuzz: z.boolean().default(true),
+  /** 间隔随机扰动的幅度：± 这么多百分比（fuzz 开着时生效） */
+  fuzzPercent: z.number().min(0).max(50).default(5),
   /** 新卡出现时机：mix = 均匀穿插在复习中；after = 复习完才出新卡 */
   newReviewOrder: z.enum(['mix', 'after']).default('mix'),
   /** 复习卡顺序：overdue = 相对逾期（逾期天数 ÷ 间隔）最大的先出；due = 按到期时间 */

@@ -15,7 +15,7 @@ export type SrsParams = Pick<
   Settings,
   | 'learningSteps' | 'relearnSteps' | 'graduatingInterval' | 'easyInterval' | 'startingEase' | 'minEase'
   | 'hardFactor' | 'easyBonus' | 'lapseFactor' | 'maxInterval' | 'leechThreshold' | 'dayStartHour' | 'fuzz'
-> & Partial<Pick<Settings, 'overdueBonusMaxDays' | 'scheduler' | 'desiredRetention' | 'fsrsWeights'>>;
+> & Partial<Pick<Settings, 'overdueBonusMaxDays' | 'scheduler' | 'desiredRetention' | 'fsrsWeights' | 'fuzzPercent'>>;
 
 const useFsrs = (p: SrsParams) => (p.scheduler ?? 'sm2') === 'fsrs';
 
@@ -62,9 +62,11 @@ function dueAfterMinutes(now: number, minutes: number, p: SrsParams): string {
   return toIso(now + minutes * MIN);
 }
 
+/** 间隔随机扰动 ±fuzzPercent%（默认 5%，至少 ±1 天）；3 天以下的间隔不扰动 */
 export function fuzzInterval(ivl: number, p: SrsParams, rand: () => number): number {
-  if (!p.fuzz || ivl < 3) return ivl;
-  const f = Math.max(1, Math.round(ivl * 0.05));
+  const pct = p.fuzz ? p.fuzzPercent ?? 5 : 0;
+  if (pct <= 0 || ivl < 3) return ivl;
+  const f = Math.max(1, Math.round((ivl * pct) / 100));
   return Math.min(p.maxInterval, ivl - f + Math.floor(rand() * (2 * f + 1)));
 }
 

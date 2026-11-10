@@ -91,6 +91,20 @@ describe('顽固卡', () => {
 });
 
 describe('扰动', () => {
+  it('幅度可以改：±20% 时间隔落在 80–120 之间，0 = 不扰动', () => {
+    const P20 = { ...P, fuzz: true, fuzzPercent: 20 };
+    const seen = new Set<number>();
+    for (let i = 0; i < 80; i++) {
+      const ivl = schedule(reviewCard({ interval: 40 }), 3, NOW, P20).card.interval;
+      const base = schedule(reviewCard({ interval: 40 }), 3, NOW, P).card.interval;
+      expect(Math.abs(ivl - base)).toBeLessThanOrEqual(Math.round(base * 0.2));
+      seen.add(ivl);
+    }
+    expect(seen.size).toBeGreaterThan(5);
+    const P0 = { ...P, fuzz: true, fuzzPercent: 0 };
+    expect(schedule(reviewCard({ interval: 40 }), 3, NOW, P0).card.interval).toBe(schedule(reviewCard({ interval: 40 }), 3, NOW, P).card.interval);
+  });
+
   it('打开扰动时间隔在 ±5% 内', () => {
     const PF = { ...P, fuzz: true };
     for (let i = 0; i < 50; i++) {

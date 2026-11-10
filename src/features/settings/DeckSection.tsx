@@ -7,6 +7,7 @@ import { LANGS, langLabel } from '../../ui/langs';
 import { setPrefs, usePrefs } from '../../ui/prefs';
 import { Modal } from '../../ui/Modal';
 import { toast } from '../../ui/toast';
+import { DEFAULTS, ResetDefaults, SectionHead, SetRow, save } from './fields';
 
 export function DeckSection() {
   const decks = useDecks();
@@ -36,7 +37,9 @@ export function DeckSection() {
   };
   return (
     <section id="decks">
-      <h2>牌组</h2>
+      <SectionHead title="牌组">
+        {s && <ResetDefaults s={s} keys={['sourceLang', 'targetLang1', 'targetLang2']} />}
+      </SectionHead>
       <ul className="deck-list">
         {decks.map((d) => {
           const st = stat(d.id);
@@ -47,7 +50,7 @@ export function DeckSection() {
                 <div><b>{d.name}</b>{on && <span className="badge is-current">当前</span>}</div>
                 <small className="muted">{st.notes} 条 · <span className="accent">{st.due} 到期</span> · <span className="blue">{st.fresh} 新</span>{st.leech ? <> · <span className="red">{st.leech} 待改造</span></> : null}</small>
                 {s && (
-                  <div className="deck-langs" title="这个牌组学什么语言、背面显示哪两种翻译；选「默认」跟 设置 → 界面 里的默认语言">
+                  <div className="deck-langs" title="这个牌组学什么语言、背面显示哪两种翻译；选「默认」跟下面的默认语言">
                     {(['sourceLang', 'targetLang1', 'targetLang2'] as const).map((k, i) => (
                       <label key={k} className="small">
                         <span className="muted">{['学习', '翻译 1', '翻译 2'][i]}</span>
@@ -75,6 +78,19 @@ export function DeckSection() {
           onKeyDown={(e) => { if (e.key === 'Enter' && !e.nativeEvent.isComposing) create(); }} />
         <button type="button" className="btn" disabled={!name.trim()} onClick={create}>新建牌组</button>
       </div>
+      {s && (
+        <>
+          <h3 className="set-sub">默认语言</h3>
+          {(['sourceLang', 'targetLang1', 'targetLang2'] as const).map((k, i) => (
+            <SetRow key={k} label={['学习语言', '翻译 1', '翻译 2'][i]} def={langLabel(DEFAULTS[k])}
+              hint={i === 0 ? '上面没单独设语言的牌组用这里的（比如以后加一个英语牌组，就在它那一行单独选）' : undefined}>
+              <select aria-label={`默认${['学习语言', '翻译 1', '翻译 2'][i]}`} value={s[k]} onChange={(e) => void save({ [k]: e.target.value })}>
+                {LANGS.map((l) => <option key={l.code} value={l.code}>{l.label}</option>)}
+              </select>
+            </SetRow>
+          ))}
+        </>
+      )}
       {renaming && (
         <Modal title="重命名牌组" onClose={() => setRenaming(null)} footer={<button type="button" className="btn is-primary" onClick={() => void renameDeck(renaming.id, renaming.name).then(() => setRenaming(null))}>保存</button>}>
           <input value={renaming.name} autoFocus onChange={(e) => setRenaming({ ...renaming, name: e.target.value })}
