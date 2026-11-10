@@ -40,3 +40,24 @@ it('an alternative prompt identical to the main one is not counted twice', () =>
   expect(variantCount(note).intents).toBe(2);
   expect([0, 1, 2, 3].map((v) => pickIntent(note, v).promptFr)).toEqual(['A {{b}}.', 'D {{e}}.', 'A {{b}}.', 'D {{e}}.']);
 });
+
+import { choiceLabel } from '../src/schema/validate';
+describe('contrast choices', () => {
+  it('option labels drop the examples in parentheses and later alternatives', () => {
+    expect(choiceLabel("le sens de (l'humour, du devoir)")).toBe('le sens de');
+    expect(choiceLabel('le sentiment de + inf.')).toBe('le sentiment de + inf.');
+    expect(choiceLabel('dépourvu de qqch ; prendre qqn au dépourvu')).toBe('dépourvu de qqch');
+    expect(choiceLabel('se tenir à (la rampe)')).toBe('se tenir à');
+  });
+  it('a word outside the blank that only this option carries gives the answer away', () => {
+    const r = contrastLeaks({ lemma: 'un vrai sens du rythme', sentence: 'Il a un vrai {{sens du}} rythme.' }, [{ lemma: 'le sentiment de + inf.' }]);
+    expect(r.join()).toMatch(/rythme/);
+    expect(contrastLeaks({ lemma: "le sens de (l'humour, du devoir)", sentence: "Il faut un vrai {{sens de}} l'humour pour supporter ce chef." }, [{ lemma: 'le sentiment de + inf.' }])).toEqual([]);
+  });
+});
+
+import { blankEchoes } from '../src/schema/validate';
+it('a blanked word that shows up again elsewhere in the sentence', () => {
+  expect(blankEchoes("Beaucoup de gens {{se vantent de}} ne rien comprendre, alors que personne n'oserait se vanter de ne pas savoir lire.")).toEqual(['vantent']);
+  expect(blankEchoes('Il faut un vrai {{sens de}} l\'humour pour supporter ce chef.')).toEqual([]);
+});

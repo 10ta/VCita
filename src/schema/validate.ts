@@ -84,7 +84,29 @@ export function noteErrors(n: Fields): string[] {
     const labels = [n.clozeHint ?? '', ...[n.sentence, cs, ...(n.altSentences ?? [])].flatMap(inlineHints)].filter(labelOnlyHint);
     if (labels.length) errs.push(`挖空提示只写了语法标签：${labels.map((x) => `「${x.trim()}」`).join('、')}（要写出横线处的意思，如"担心（+ 不定式）"，让答案唯一）`);
   }
+  // 挖空 / 辨析：空里的词在句子别处又出现了，等于把答案写在题面上
+  if (n.cardTypes.includes('cloze') || n.cardTypes.includes('contrast')) {
+    [n.sentence, cs, ...(n.altSentences ?? [])].forEach((x, i) => {
+      const e = x && hasCloze(x) ? blankEchoes(x) : [];
+      if (e.length) errs.push(`${i === 0 ? '例句' : i === 1 ? '挖空例句' : `备用例句第 ${i - 1} 句`}：要填的 ${e.join('、')} 在句子别处又出现了，等于给出答案（换个说法或换句子）`);
+    });
+  }
   return errs;
+}
+
+const stripAcc = (w: string) => w.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+/** 空里的实词（4 个字母以上）在空外面又出现了（同词或同词根：vanter ~ vantent）。返回这些词 */
+export function blankEchoes(sentence: string): string[] {
+  const inside = clozeTargets(sentence).join(' ');
+  const outside = sentence.replace(/\{\{.*?\}\}/g, ' ');
+  const words = (t: string) => (stripAcc(t).match(/[a-z\u00e6\u0153]{4,}/g) ?? []).filter((w) => !FUNC.has(w));
+  const out = words(outside);
+  const same = (a: string, b: string) => {
+    let k = 0;
+    while (k < a.length && k < b.length && a[k] === b[k]) k++;
+    return a === b || k >= Math.max(5, Math.min(a.length, b.length) - 1);
+  };
+  return [...new Set(words(inside).filter((w) => out.some((o) => same(w, o))))];
 }
 
 /** 一道产出题（主题或备用题）的校验：法语题面或中文意图至少一个，题面要用 {{…}} 标出要换掉的说法，且不能直接给出答案；
@@ -124,6 +146,8 @@ export function productionErrors(n: Pick<Note, 'lemma' | 'cardTypes' | 'intentZh
 // 空前面的 me suis / se 直接告诉你答案是代动词；组员阴阳性不同（la journée / le jour）时，空前面的 la / une / cette 直接给出答案；
 // 组员带的介词不同（servir à / se servir de）时，空后面紧跟的 à / de 也是线索。这些词要挖进空里，或者换个句子
 type ContrastNote = Pick<Note, 'lemma' | 'sentence'> & Partial<Pick<Note, 'altSentences'>>;
+/** 辨析卡正面选项上显示的词条：去掉括号里的例子 / 说明，只留第一种写法（「le sens de (l'humour, du devoir)」→「le sens de」），免得例子正好是句子里的词 */
+export const choiceLabel = (lemma: string) => lemma.replace(/\s*[(（][^)）]*[)）]/g, '').split(/\s[;；｜|]\s?|；/)[0].replace(/\s+/g, ' ').trim() || lemma.trim();
 const lemmaCore = (lemma: string) => lemma.replace(/\(.*?\)|（.*?）/g, ' ').split(/[;,/｜|]/)[0].replace(/\b(qqch|qqn|qch|inf)\b\.?/gi, ' ').replace(/\s+/g, ' ').trim();
 const isPronominal = (lemma: string) => /^(se\s|s['’])/i.test(lemmaCore(lemma));
 const hasEn = (lemma: string) => /^(s['’]en|en)\s/i.test(lemmaCore(lemma));
@@ -154,12 +178,19 @@ export function contrastLeaks(note: ContrastNote, mates: Array<Pick<Note, 'lemma
   const mixedGender = genders.every(Boolean) && new Set(genders).size > 1;
   const preps = new Set(all.map((n) => lemmaPrep(n.lemma)));
   const out: string[] = [];
+  // 选项上的词出现在空外面：只有这条笔记的选项有，等于直接指出答案
+  const wordsOf = (s: string) => new Set((s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').match(/[\p{L}]{3,}/gu) ?? []).filter((w) => !FUNC.has(w)));
+  const mine = wordsOf(choiceLabel(note.lemma));
+  const others = mates.map((m) => wordsOf(choiceLabel(m.lemma)));
   const sentences = [note.sentence, ...(note.altSentences ?? [])].filter((s) => s && hasCloze(s));
   sentences.forEach((s, i) => {
     const where = i === 0 ? '例句' : `备用例句 ${i}`;
     const at = s.indexOf('{{');
     const before = s.slice(0, at).replace(/\s+$/, ' ');
     const after = s.slice(s.indexOf('}}', at) + 2).trimStart().toLowerCase();
+    const outsideWords = wordsOf(before + ' ' + s.slice(s.indexOf('}}', at) + 2).replace(/\{\{.*?\}\}/g, ' '));
+    const giveaway = [...mine].filter((w) => outsideWords.has(w) && !others.every((o) => o.has(w)));
+    if (giveaway.length) out.push(`${where}：空外面的 ${giveaway.join('、')} 也出现在这个词的选项上，等于指出答案，换个句子或改词条`);
     if (mixedRefl && REFL_BEFORE.test(before)) out.push(`${where}：空前面的代词（me / se / me suis…）露出了答案是代动词，把它挖进空里或换个句子`);
     else if (mixedEn && EN_BEFORE.test(before)) out.push(`${where}：空前面的 en 露出了答案，把它挖进空里或换个句子`);
     if (mixedGender && (FEM_DET.test(before) || MASC_DET.test(before))) out.push(`${where}：空前面的冠词 / 限定词露出了阴阳性，组里的词阴阳性不同，把它挖进空里或换个句子`);

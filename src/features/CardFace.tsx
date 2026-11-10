@@ -7,7 +7,7 @@ import { speak } from '../lib/speech';
 import { frameMeta, pickTopic } from '../lib/frames';
 import { currentR, validWeights, type Memory } from '../srs/fsrs';
 import { Fr } from './FrText';
-import { blankIsFunctionWords, clozeTargets, hasCloze, hasInlineHint, hintLeaks } from '../schema/validate';
+import { blankIsFunctionWords, choiceLabel, clozeTargets, hasCloze, hasInlineHint, hintLeaks } from '../schema/validate';
 
 /** "survoler la Sibérie" → "s _ _ _ _ _ _ _   l _" ：每个词的首字母 + 其余字母数，标点和省音号原样 */
 export function letterPattern(t: string): string {
@@ -134,7 +134,7 @@ function contrastView(note: Note, group: Note[], s: Settings, labels: [string, s
       text: renderSentence(sent, 'blank'),
       speakText: '', lang: s.sourceLang, label: '辨析',
     },
-    hint: null, cues: 'extra', choices: options.map((m) => m.lemma),
+    hint: null, cues: 'extra', choices: options.map((m) => choiceLabel(m.lemma)),
     answers: [
       { text: renderSentence(sent), speakText: plainSentence(sent), lang: s.sourceLang, label: labels[0] },
       {
