@@ -341,12 +341,15 @@ export interface ClusterOutcome {
   /** 这条笔记累计没想起来的次数（最近 10 次以内） */
   misses: number;
   hasProduction: boolean;
+  /** 撤回用：改之前的卡、写下的隐性记录、改之前的 recallMisses */
+  undo: { noteId: string; card: Card | null; logId: string | null; misses: string[] | undefined | null };
 }
 
 /**
  * 表达群的纯回忆（只告诉还有几种说法，不给任何提示）：
  * - 想起来了 → 产出卡（没有在复习中的产出卡就用认读卡）记一次隐性「困难」：自评、非正式出卡，保守地只往后推一点
  * - 没想起来 → 同一张卡提前到明天到期，不写复习记录（FSRS 只看到明天那次正常复习）；并在笔记上记下日期
+ * 点错了可以用 undoClusterRecall 撤回（界面上绿 / 红 / 灰来回切换）
  */
 export async function clusterRecall(noteId: string, recalled: boolean): Promise<ClusterOutcome> {
   const now = Date.now();
@@ -358,16 +361,20 @@ export async function clusterRecall(noteId: string, recalled: boolean): Promise<
     const hasProduction = cards.some((c) => c.type === 'production');
     const n = await db.notes.get(noteId);
     let misses = n?.recallMisses?.length ?? 0;
+    const undo: ClusterOutcome['undo'] = { noteId, card: null, logId: null, misses: null };
     const out = (kind: ClusterOutcome['kind'], to: string | null = null): ClusterOutcome =>
-      ({ kind, type: target?.type ?? null, from: target?.due ?? null, to, misses, hasProduction });
+      ({ kind, type: target?.type ?? null, from: target?.due ?? null, to, misses, hasProduction, undo });
     if (recalled) {
       if (!target) return out('kept');
       const r = await creditImplicit(target, 2, now, s);
-      return r ? out('credited', (await db.cards.get(target.id))!.due) : out('kept');
+      if (!r) return out('kept');
+      undo.card = r.before; undo.logId = r.logId;
+      return out('credited', (await db.cards.get(target.id))!.due);
     }
     if (n) {
       const day = studyDay(now, s.dayStartHour);
       const list = [...(n.recallMisses ?? []).filter((d) => d !== day), day].slice(-10);
+      undo.misses = n.recallMisses;
       misses = list.length;
       await db.notes.put({ ...n, recallMisses: list, updatedAt: bumpIso(n.updatedAt, now) });
     }
@@ -375,8 +382,30 @@ export async function clusterRecall(noteId: string, recalled: boolean): Promise<
     const tomorrow = nextDayStartMs(now, s.dayStartHour);
     if (fromIso(target.due) < dayStartMs(addDaysToDay(studyDay(now, s.dayStartHour), 2), s.dayStartHour)) return out('kept');
     const due = toIso(tomorrow);
+    undo.card = target;
     await db.cards.put({ ...target, due, updatedAt: bumpIso(target.updatedAt, now) });
     return out('pulled', due);
+  });
+}
+
+/** 撤回一次表达群回忆：卡恢复原样（更新的 updatedAt 才能在同步时胜出），隐性记录打墓碑，recallMisses 恢复 */
+export async function undoClusterRecall(u: ClusterOutcome['undo']) {
+  await db.transaction('rw', [db.cards, db.logs, db.notes], async () => {
+    if (u.card) {
+      const cur = await db.cards.get(u.card.id);
+      await db.cards.put({ ...u.card, updatedAt: bumpIso(cur?.updatedAt ?? u.card.updatedAt) });
+    }
+    if (u.logId) {
+      const log = await db.logs.get(u.logId);
+      if (log) await db.logs.put({ ...log, deleted: true, updatedAt: bumpIso(log.updatedAt) });
+    }
+    if (u.misses !== null) {
+      const n = await db.notes.get(u.noteId);
+      if (n) {
+        const { recallMisses: _drop, ...rest } = n;
+        await db.notes.put({ ...rest, ...(u.misses?.length ? { recallMisses: u.misses } : {}), updatedAt: bumpIso(n.updatedAt) });
+      }
+    }
   });
 }
 

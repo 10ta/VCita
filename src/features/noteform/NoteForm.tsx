@@ -5,7 +5,7 @@
 //   ④ 背面补充、归类：默认收起
 import { useMemo, useState, type ReactNode } from 'react';
 import type { Card, Note, Settings } from '../../schema';
-import { contrastLeaks, hasCloze, noteErrors, promptErrors, blankIsFunctionWords } from '../../schema/validate';
+import { contrastLeaks, hasCloze, markErrors, noteErrors, promptErrors, blankIsFunctionWords } from '../../schema/validate';
 import { autoMark, markedText, type Lemmatize } from '../../lib/markTarget';
 import { lemmaCandidates, useFrDict, useFrVerbs } from '../../lib/gender/dict';
 import { isFrench } from '../../ui/langs';
@@ -263,6 +263,7 @@ export function NoteForm({ d, setD, s, labels, mode, note, groupMates = [], onSu
         </div>
         <p className="muted small">听力卡是认读卡的听力版：复习页右上的「听力卡」开关决定出不出。</p>
         {leaks.map((w) => <p key={w} className="warn small">⚠ 辨析卡{w}</p>)}
+        {markErrors(draftNote).map((w) => <p key={w} className="warn small">⚠ {w}</p>)}
         {contrastExtra}
         <Previews note={draftNote} s={s} labels={labels} mates={groupMates} ok={errs.count === 0} />
       </section>

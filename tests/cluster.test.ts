@@ -1,7 +1,7 @@
 import 'fake-indexeddb/auto';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { db } from '../src/db/db';
-import { addNotes, clearAllLocalData, clusterRecall, getSettings } from '../src/db/actions';
+import { addNotes, clearAllLocalData, clusterRecall, getSettings, undoClusterRecall } from '../src/db/actions';
 import { fromIso, nextDayStartMs, studyDay, toIso } from '../src/lib/time';
 import type { Card } from '../src/schema';
 
@@ -68,6 +68,21 @@ describe('表达群（纯回忆）', () => {
     expect((await db.cards.get(rec.id))!.due).toBe(rec.due);
   });
 
+  it('点错了可以撤回：绿 → 红 → 灰 都恢复原样', async () => {
+    const id = await seed(['recognition', 'production']);
+    const prod = await setReview(id, 'production', 9);
+    const ok = await clusterRecall(id, true);
+    expect(ok.kind).toBe('credited');
+    await undoClusterRecall(ok.undo);
+    expect((await db.cards.get(prod.id))!.due).toBe(prod.due);
+    expect((await db.logs.toArray()).every((l) => l.deleted)).toBe(true);
+    const miss = await clusterRecall(id, false);
+    expect(miss.kind).toBe('pulled');
+    await undoClusterRecall(miss.undo);
+    expect((await db.cards.get(prod.id))!.due).toBe(prod.due);
+    expect((await db.notes.get(id))!.recallMisses).toBeUndefined();
+  });
+
   it('还没进复习的卡：想起 / 没想起都不动排期', async () => {
     const id = await seed(['recognition']);
     expect(await clusterRecall(id, true)).toMatchObject({ kind: 'kept', type: null });
@@ -83,5 +98,30 @@ describe('表达群的意思', () => {
     expect(firstMeaning(n('铺天盖地的指控（un déluge de … 大量的……）'))).toBe('铺天盖地的指控');
     expect(firstMeaning(n('（惊讶得）缓不过神来（ne pas en revenir）'))).toBe('（惊讶得）缓不过神来');
     expect(firstMeaning(n('压倒性的多数；écrasant：压倒性的'))).toBe('压倒性的多数');
+  });
+});
+
+describe('考查部分 = 词条', async () => {
+  const { markErrors, markOffLemma, lemmaOutsideMark } = await import('../src/schema/validate');
+  it('标了别的词', () => {
+    expect(markOffLemma("{{Certains}} métiers restent très féminisés.", 'un métier très féminisé')).toBe(true);
+    expect(markOffLemma('Le sexe ne dit rien {{de}} ses compétences.', 'le candidat')).toBe(true);
+    expect(markOffLemma("C'est dans les erreurs {{qu'}}on apprend.", "c'est là où")).toBe(true);
+  });
+  it('词条里的小词、宾语代词、不规则变位不算', () => {
+    expect(markOffLemma('Je vais {{te}} renseigner.', 'renseigner qqn sur qqch')).toBe(false);
+    expect(markOffLemma("J'ai dû {{y}} renoncer.", 'renoncer à qqch / à + inf.')).toBe(false);
+    expect(markOffLemma('Les femmes accèdent rarement {{aux}} postes.', 'accéder à qqch')).toBe(false);
+    expect(markOffLemma('Il {{a nié}} les faits.', 'contester, nier')).toBe(false);
+    expect(markOffLemma("Toute la classe {{s'est tue}}.", 'se tait')).toBe(false);
+    expect(markOffLemma('Il a fait son {{TIG}}.', "un travail d'intérêt général (TIG)")).toBe(false);
+    expect(markOffLemma('pour que les mairies {{fassent}} plus', 'militer pour que (+ subjonctif)')).toBe(false);
+  });
+  it('主例句没把整个表达标进去', () => {
+    expect(lemmaOutsideMark('Il faut que tu te rendes compte {{de}} cette vérité.', 'se rendre compte de qqch')).toEqual(['compte']);
+    expect(lemmaOutsideMark('Il faut que tu {{te rendes compte de}} cette vérité.', 'se rendre compte de qqch')).toEqual([]);
+    expect(lemmaOutsideMark('Le juge était entouré de deux {{assesseurs}}.', "un assesseur = l'assistant d'un juge")).toEqual([]);
+    // 挖空例句 / 备用例句只考小词是允许的
+    expect(markErrors({ lemma: 'se rendre compte de qqch', sentence: 'Il faut que tu {{te rendes compte de}} ça.', clozeSentence: 'Il ne se rend pas compte {{de}} sa chance.' })).toEqual([]);
   });
 });

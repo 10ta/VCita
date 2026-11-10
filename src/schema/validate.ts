@@ -132,6 +132,47 @@ export function lemmaOutside(promptFr: string, answerTarget: string, lemma: stri
   return [...new Set(lw.filter((w) => outside.some((o) => sameStem(w, o)) && !target.some((t) => sameStem(w, t))))];
 }
 
+// ---- 考查部分要是词条本身 ----
+// 一条笔记只考它的词条：例句里 {{…}} 标的就是词条在句中的样子。错误笔记里顺带记下的别的错（certains 前不加冠词、
+// dire qch de qqn 的 de）不能拿来当某个例句的考查部分，否则认读卡高亮的是别的词，挖空卡的提示（词条的意思）也对不上
+const ALIAS: Record<string, string> = { au: 'a', aux: 'a', du: 'de', des: 'de', d: 'de', l: 'le', la: 'le', les: 'le', s: 'se', m: 'me', t: 'te', n: 'ne', c: 'ce', j: 'je', qu: 'que' };
+const OBJ = new Set('me m te t se s le la les l lui leur nous vous y en'.split(' '));
+const norm = (w: string) => ALIAS[w] ?? w;
+const verbStem = (w: string) => (w.length >= 4 ? w.replace(/(oir|er|ir|re)$/, '') : w);
+const near = (a: string, b: string) => norm(a) === norm(b) || (a.length >= 4 && b.length >= 4 && a.slice(0, 4) === b.slice(0, 4))
+  || (b.length >= 4 && verbStem(b).length >= 2 && verbStem(b) !== b && a.startsWith(verbStem(b)));
+/** 词条的第一种写法（不含括号里的说明、分号 / 斜杠后的其他写法） */
+const firstForm = (lemma: string) => lemma.replace(/\(.*?\)|（.*?）/g, ' ').split(/[;；｜|/,=]|\svs\.?\s/)[0];
+
+/** 例句的考查部分里一个词条的词都没有（标的是别的词）。词条带 qqn / qqch / 不定式 / 从句时，标宾语代词、从句动词也算考词条 */
+export function markOffLemma(sentence: string, lemma: string): boolean {
+  if (!hasCloze(sentence) || !lemma.trim()) return false;
+  const marked = words(clozeTargets(sentence).join(' '));
+  if (!marked.length) return false;
+  const lw = words(lemma);
+  if (marked.some((m) => lw.some((w) => near(m, w)))) return false;
+  if (/\b(qqn|qqch|qch)\b/i.test(lemma) && marked.every((m) => OBJ.has(m))) return false;
+  if (/subj|ind\.|indicatif|\bque\b|\binf\b/i.test(lemma)) return false;
+  return true;
+}
+
+/** 主例句：词条的实词出现在考查部分外面，却没标进去（如 se rendre compte de 只标了 de） */
+export function lemmaOutsideMark(sentence: string, lemma: string): string[] {
+  if (!hasCloze(sentence)) return [];
+  return lemmaOutside(sentence, clozeTargets(sentence).join(' '), firstForm(lemma)).filter((w) => w.length >= 4);
+}
+
+/** 一条笔记例句标注的问题；词库"题面有误"筛选用，也在编辑笔记里提示（不拦保存） */
+export function markErrors(n: Pick<Note, 'lemma' | 'sentence'> & Partial<Pick<Note, 'clozeSentence' | 'altSentences' | 'frame'>>): string[] {
+  if (n.frame) return [];
+  const errs: string[] = [];
+  const out = lemmaOutsideMark(n.sentence, n.lemma);
+  if (out.length) errs.push(`例句里词条的 ${out.join('、')} 在考查部分外面：{{…}} 要把整个表达标进去（认读卡高亮的就是它）`);
+  const all: Array<[string, string]> = [['例句', n.sentence], ['挖空例句', n.clozeSentence ?? ''], ...(n.altSentences ?? []).map((x, i) => [`备用例句第 ${i + 1} 句`, x] as [string, string])];
+  for (const [label, x] of all) if (x && markOffLemma(x, n.lemma)) errs.push(`${label}标的「${clozeTarget(x)}」不是词条：一条笔记只考词条，别的易错点写进补充或单独做一条`);
+  return errs;
+}
+
 /** 一条笔记所有产出题（主题 + 备用题）的问题；词库"题面有误"筛选用 */
 export function productionErrors(n: Pick<Note, 'lemma' | 'cardTypes' | 'intentZh' | 'answerFr'> & Partial<Pick<Note, 'promptFr' | 'altIntents'>>): string[] {
   if (!n.cardTypes.includes('production')) return [];

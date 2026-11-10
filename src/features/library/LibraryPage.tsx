@@ -5,7 +5,7 @@ import { findConfusables } from '../../srs/confusable';
 import { Fr, useNoteFreqs } from '../FrText';
 import { deleteNotes, groupContrast, resetNotes, setSuspended, updateNotes } from '../../db/actions';
 import { THEMES, noteOrigin, type Card, type Note, type NoteOrigin, type Theme } from '../../schema';
-import { contrastLeaks, productionErrors } from '../../schema/validate';
+import { contrastLeaks, markErrors, productionErrors } from '../../schema/validate';
 import { addDaysToDay, fromIso, noonIso, studyDay } from '../../lib/time';
 import { isDue } from '../../srs/scheduler';
 import { findDuplicates } from '../../srs/dups';
@@ -27,7 +27,7 @@ const STATUS: Array<[Status, string, string?]> = [
   // 弱项：在变成顽固卡之前先改句子、加线索
   ['forgot', '近 7 天忘过', '最近 7 个学习日里至少有一次评"忘了"'], ['lowease', '难记', '经常答困难或忘了的卡：FSRS 下难度 ≥ 7，SM-2 下倍率 < 2'],
   ['dup', '疑似重复', '单词、考查部分或整句相同，或例句高度相似；同组排在一起'],
-  ['badprompt', '题面有误', '产出题的高亮没包住词条（词条的词露在高亮外）、高亮直接给出了答案，或辨析卡例句的空外面露出了答案线索（me suis、la / le、紧跟的介词）'],
+  ['badprompt', '题面有误', '例句的考查部分不是词条、或没把整个表达标进去；产出题的高亮没包住词条（词条的词露在高亮外）、高亮直接给出了答案；或辨析卡例句的空外面露出了答案线索（me suis、la / le、紧跟的介词）'],
   ['confusable', '可能易混', '意思相近（中文意思里有同一个不常见的词）或拼写只差一个字母；两两排在一起。选中后"设为易混组"，就会生成辨析卡'],
   ['contrast', '易混组', '已经设成易混组的笔记，同组排在一起'],
   ['cluster', '表达群', '填了表达群的笔记，同群排在一起'],
@@ -146,7 +146,7 @@ export function LibraryPage({ deckId }: { deckId: string }) {
           case 'cluster': return !!n.cluster?.trim();
           case 'missed': return !!n.recallMisses?.length;
           case 'dup': return dups.has(n.id);
-          case 'badprompt': return productionErrors(n).length > 0 || (!!n.contrastGroup && contrastLeaks(n, notes.filter((x) => x.contrastGroup === n.contrastGroup && x.id !== n.id)).length > 0);
+          case 'badprompt': return productionErrors(n).length > 0 || markErrors(n).length > 0 || (!!n.contrastGroup && contrastLeaks(n, notes.filter((x) => x.contrastGroup === n.contrastGroup && x.id !== n.id)).length > 0);
         }
       })
       .sort((a, b) => {

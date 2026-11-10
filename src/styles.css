@@ -525,9 +525,12 @@ textarea.weights { width: 100%; font-family: var(--mono); font-size: 12px; }
 .cluster-mate .cl-mean { color: var(--dim); min-width: 7em; }
 .cluster-mate.is-new .cl-mean { opacity: .6; }
 .cl-lemma { font-family: var(--serif); font-size: 15px; }
-.cl-btns { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-top: 8px; }
-.cl-check { display: inline-flex; gap: 6px; align-items: center; cursor: pointer; }
+.cl-toggle { display: inline-flex; flex-wrap: wrap; gap: 4px 10px; align-items: baseline; text-align: left; background: transparent; color: var(--text); border: 1px solid #333; border-radius: 8px; padding: 4px 10px; cursor: pointer; font: inherit; }
+.cl-toggle .cl-mark { width: 1em; color: var(--dim); }
+.cl-toggle.is-ok { border-color: #3a7d44; background: rgba(80, 180, 100, .12); }
+.cl-toggle.is-ok .cl-mark { color: #6c6; }
+.cl-toggle.is-miss { border-color: #8a3a3a; background: rgba(220, 90, 90, .12); }
+.cl-toggle.is-miss .cl-mark { color: #e77; }
+.cl-out { color: var(--dim); }
 .cl-count { color: var(--accent); }
-.cl-ok { color: #6c6; }
-.cl-miss { color: #d88; }
 .cl-fresh { margin-top: 6px !important; }
