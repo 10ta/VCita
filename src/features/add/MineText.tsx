@@ -45,17 +45,19 @@ function MineFr() {
   const texts = useTexts();
   const [body, setBody] = useState('');
   const [source, setSource] = useState('');
-  const [off, setOff] = useState<Set<string>>(new Set()); // 取消勾选的生词
+  const [on, setOn] = useState<Set<string>>(new Set()); // 勾选的生词（默认全不选，挑要做卡的）
   const file = useRef<HTMLInputElement>(null);
 
   const sentences = useMemo(() => splitSentences(body).map((text) => ({ text, toks: annotate(text, index, dict) })), [body, index, dict]);
   const paras = useMemo(() => body.split(/\n+/).filter((p) => p.trim()).map((p) => annotate(p, index, dict)), [body, index, dict]);
   const cov = useMemo(() => coverage(paras.flat()), [paras]);
   const unknown = useMemo(() => unknownWords(sentences), [sentences]);
-  const chosen = unknown.filter((u) => !off.has(u.key));
+  const chosen = unknown.filter((u) => on.has(u.key));
+  const allOn = unknown.length > 0 && chosen.length === unknown.length;
+  const toggleAll = () => setOn(allOn ? new Set() : new Set(unknown.map((u) => u.key)));
   const colors = prefs.readColors;
 
-  const toggle = (k: string) => setOff((s) => { const n = new Set(s); if (n.has(k)) n.delete(k); else n.add(k); return n; });
+  const toggle = (k: string) => setOn((s) => { const n = new Set(s); if (n.has(k)) n.delete(k); else n.add(k); return n; });
   const copy = async () => {
     const text = chosen.map(mineLine).join('\n');
     try { await navigator.clipboard.writeText(text); toast(`已复制 ${chosen.length} 个生词，发给 Claude 做卡`); }
@@ -70,7 +72,7 @@ function MineFr() {
   const onFile = async (f: File | undefined) => {
     if (!f) return;
     const r = importFile(f.name, await f.text());
-    setBody(r.body); setSource(r.title); setOff(new Set());
+    setBody(r.body); setSource(r.title); setOn(new Set());
   };
   // 点一个词：选中它，划词气泡会接着读选区
   const click = (e: React.MouseEvent) => {
@@ -85,13 +87,13 @@ function MineFr() {
 
   return (
     <div className="mine">
-      <textarea className="read-input" rows={body ? 4 : 8} value={body} onChange={(e) => { setBody(e.target.value); setOff(new Set()); }}
+      <textarea className="read-input" rows={body ? 4 : 8} value={body} onChange={(e) => { setBody(e.target.value); setOn(new Set()); }}
         placeholder="粘贴一段法语（文章、社论、听写稿），下面会标出生词并列出它们所在的句子；也可以导入 .txt / .md / .srt / .vtt" />
       <div className="toolbar">
         <input className="grow" value={source} onChange={(e) => setSource(e.target.value)} placeholder="出处（可选，放进摘句篮时记下）" />
         <button type="button" className="btn" onClick={() => file.current?.click()}>导入文件</button>
         {!!texts?.length && (
-          <select aria-label="之前保存的文章" value="" onChange={(e) => { const t = texts.find((x) => x.id === e.target.value); if (t) { setBody(t.body); setSource(t.source || t.title); setOff(new Set()); } }}>
+          <select aria-label="之前保存的文章" value="" onChange={(e) => { const t = texts.find((x) => x.id === e.target.value); if (t) { setBody(t.body); setSource(t.source || t.title); setOn(new Set()); } }}>
             <option value="">之前保存的文章（{texts.length}）</option>
             {texts.map((t) => <option key={t.id} value={t.id}>{t.title}</option>)}
           </select>
@@ -111,6 +113,7 @@ function MineFr() {
 
           <div className="mine-head">
             <h3 className="sub">生词 {chosen.length}/{unknown.length}</h3>
+            {unknown.length > 0 && <button type="button" className="pill" onClick={toggleAll}>{allOn ? '取消全选' : '全选'}</button>}
             <span className="grow" />
             <button type="button" className={`pill${colors ? ' is-on' : ''}`} onClick={() => setPrefs({ readColors: !colors })}>原文标色</button>
             <button type="button" className="btn" disabled={!chosen.length} onClick={() => void toBasket()} title="放进摘句篮，晚上统一做">放进摘句篮</button>
@@ -121,8 +124,8 @@ function MineFr() {
             : (
               <ul className="mine-list">
                 {unknown.map((u) => (
-                  <li key={u.key} className={off.has(u.key) ? 'is-off' : undefined}>
-                    <label className="mine-pick"><input type="checkbox" checked={!off.has(u.key)} onChange={() => toggle(u.key)} /><b>{u.form}</b>{u.form.toLowerCase() !== u.key && <span className="muted small"> {u.key}</span>}{u.count > 1 && <span className="muted small"> ×{u.count}</span>}</label>
+                  <li key={u.key} className={on.has(u.key) ? undefined : 'is-off'}>
+                    <label className="mine-pick"><input type="checkbox" checked={on.has(u.key)} onChange={() => toggle(u.key)} /><b>{u.form}</b>{u.form.toLowerCase() !== u.key && <span className="muted small"> {u.key}</span>}{u.count > 1 && <span className="muted small"> ×{u.count}</span>}</label>
                     <span className="mine-sent muted small">{u.sentence}</span>
                     <button type="button" className="pill" title="其实认识：以后读到不再算生词" onClick={() => void markKnown(u)}>认识</button>
                   </li>
