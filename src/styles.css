@@ -529,8 +529,8 @@ textarea.weights { width: 100%; font-family: var(--mono); font-size: 12px; }
 .cl-toggle .cl-mark { width: 1em; color: var(--dim); }
 .cl-toggle.is-ok { border-color: #3a7d44; background: rgba(80, 180, 100, .12); }
 .cl-toggle.is-ok .cl-mark { color: #6c6; }
-.cl-toggle.is-miss { border-color: #8a3a3a; background: rgba(220, 90, 90, .12); }
-.cl-toggle.is-miss .cl-mark { color: #e77; }
+.cl-toggle.is-miss { border-color: #5a3434; border-style: dashed; background: rgba(220, 90, 90, .05); }
+.cl-toggle.is-miss .cl-mark { color: #b66; }
 .cl-out { color: var(--dim); }
 .cl-count { color: var(--accent); }
 .cl-fresh { margin-top: 6px !important; }
