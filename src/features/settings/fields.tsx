@@ -46,7 +46,7 @@ export const META: Partial<Record<Key, Meta>> = {
   freshShare: { kind: 'num', label: '新鲜那一份的占比', unit: '%', min: 0, max: 100, int: true },
   freshDays: { kind: 'num', label: '最近几天', hint: '这几天内添加的新卡算新鲜的', unit: '天', min: 1, int: true },
   reviewSort: { kind: 'sel', label: '复习卡顺序', hint: '相对逾期 = 逾期天数 ÷ 间隔', options: [['overdue', '相对逾期（最可能忘的先出）'], ['due', '按到期时间']] },
-  productionAfterRecognition: { kind: 'sw', label: '产出卡等认读卡学会再出', hint: '同一条笔记的认读卡进入复习（走完学习步骤）以后，才出它的产出卡：先认得，再练写得出，少出现连续忘的顽固卡' },
+  productionAfterRecognition: { kind: 'sw', label: '产出卡、辨析卡等认读卡学会再出', hint: '同一条笔记的认读卡进入复习（走完学习步骤）以后，才出它的产出卡和辨析卡：先认得，再练写得出、再和易混的词比，少出现连续忘的顽固卡' },
   // ---- 记忆算法 ----
   scheduler: { kind: 'sel', label: '算法', hint: 'FSRS：按「到期时还记得的概率」排期，参数可以用自己的复习记录优化（Anki 23.10 起的默认算法）。SM-2：旧算法，间隔 = 上次间隔 × 倍率', options: [['fsrs', 'FSRS-6'], ['sm2', 'SM-2']] },
   desiredRetention: { kind: 'num', label: '目标保持率 · 产出类', hint: '产出、挖空、句框、套用：要写得出来的卡，到期时还记得的概率。90% 是常用的平衡点；调高复习量增长很快（95% 约是 90% 的两倍），调低忘得多', unit: '%', min: 70, max: 99, int: true, scale: 100 },

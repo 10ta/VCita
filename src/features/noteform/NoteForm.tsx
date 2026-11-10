@@ -194,7 +194,7 @@ export function NoteForm({ d, setD, s, labels, mode, note, groupMates = [], onSu
   // 预览用的笔记
   const draftNote: Note = useMemo(() => ({
     ...(note ?? BLANK), ...rowFields(d), lemma: d.lemma, meaningZh: d.meaningZh, meaningEn: d.meaningEn,
-    cueFamily: d.cueFamily || null, extra: d.extra || null, etymology: d.etymology || null, source: d.source || null, contrastNote: d.contrastNote || null,
+    usage: d.usage || null, cueFamily: d.cueFamily || null, extra: d.extra || null, etymology: d.etymology || null, source: d.source || null, contrastNote: d.contrastNote || null,
     cardTypes: [...d.cardTypes, ...(group ? ['contrast' as const] : [])],
   }), [d, note, group]);
 
@@ -218,6 +218,8 @@ export function NoteForm({ d, setD, s, labels, mode, note, groupMates = [], onSu
           <label className="field"><span className="field-label">意思（{labels[2]}）</span>
             <input value={d.meaningEn} placeholder={mode === 'add' ? '留空自动翻译' : ''} onChange={(e) => set('meaningEn', e.target.value)} /></label>
         </div>
+        <label className="field"><span className="field-label">用法（可选，背面显示）· 考的结构 + 意思，同义的其他结构也写上</span>
+          <input value={d.usage} placeholder="例如：s'occuper de + 名词 / + inf.：负责、照料（⚠ 不用 à）" onChange={(e) => set('usage', e.target.value)} /></label>
       </section>
 
       <section className="nf-block">

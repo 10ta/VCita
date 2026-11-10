@@ -26,7 +26,7 @@ export interface Row {
 
 export interface Draft {
   lemma: string; meaningZh: string; meaningEn: string;
-  cueFamily: string; source: string; extra: string; etymology: string; contrastNote: string;
+  usage: string; cueFamily: string; source: string; extra: string; etymology: string; contrastNote: string;
   layer: Note['layer']; origin: NonNullable<Note['origin']>; cardTypes: Card['type'][]; tags: Theme[]; deckId: string; day: string;
   rows: Row[];
 }
@@ -88,7 +88,7 @@ export function fromNote(note: Note, origin: NonNullable<Note['origin']>): Draft
   }
   return {
     lemma: note.lemma, meaningZh: note.meaningZh, meaningEn: note.meaningEn,
-    cueFamily: note.cueFamily ?? '', source: note.source ?? '', extra: note.extra ?? '', etymology: note.etymology ?? '', contrastNote: note.contrastNote ?? '',
+    usage: note.usage ?? '', cueFamily: note.cueFamily ?? '', source: note.source ?? '', extra: note.extra ?? '', etymology: note.etymology ?? '', contrastNote: note.contrastNote ?? '',
     layer: note.layer, origin, cardTypes: note.cardTypes, tags: note.tags, deckId: note.deckId, day: note.createdAt.slice(0, 10),
     rows,
   };
@@ -124,6 +124,6 @@ export function rowFields(d: Pick<Draft, 'rows'>): Pick<Note, 'sentence' | 'altS
 
 export const otherFields = (d: Draft) => ({
   lemma: d.lemma.trim(), meaningZh: d.meaningZh.trim(), meaningEn: d.meaningEn.trim(),
-  cueFamily: nul(d.cueFamily), source: nul(d.source), extra: nul(d.extra), etymology: nul(d.etymology), contrastNote: nul(d.contrastNote),
+  usage: nul(d.usage), cueFamily: nul(d.cueFamily), source: nul(d.source), extra: nul(d.extra), etymology: nul(d.etymology), contrastNote: nul(d.contrastNote),
   layer: d.layer, tags: d.tags,
 });

@@ -42,7 +42,7 @@ export function AddPage({ deckId }: { deckId: string }) {
 // 单个添加：和编辑笔记同一套表单（noteform/NoteForm）。最快的用法：写表达、回车，生成认读卡，意思在后台翻译
 function blankDraft(deckId: string, origin: NoteOrigin, prefill?: ClipPrefill | null): Draft {
   const d: Draft = {
-    lemma: '', meaningZh: '', meaningEn: '', cueFamily: '', source: prefill?.source ?? '', extra: prefill?.extra ?? '', etymology: '', contrastNote: '',
+    lemma: '', meaningZh: '', meaningEn: '', usage: '', cueFamily: '', source: prefill?.source ?? '', extra: prefill?.extra ?? '', etymology: '', contrastNote: '',
     layer: 'mid', origin, cardTypes: ['recognition'], tags: [], deckId, day: todayInput(), rows: [],
   };
   const t = prefill?.text.trim() ?? '';

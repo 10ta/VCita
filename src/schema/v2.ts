@@ -53,6 +53,9 @@ export const NoteV2 = z.looseObject({
   clozeSentence: z.string().nullable().default(null),
   /** 词源 / 词根的极简讲解，认读卡和挖空卡背面显示，例如：tentacule 触手 + -aire → 像触手一样四处伸展的 */
   etymology: z.string().nullable().default(null),
+  /** 用法：这张卡考的结构 + 意思，有同义的其他结构也写上（s'occuper de + 名词 / + inf.：负责、照料；⚠ 不用 à）。背面显示。
+   *  optional：没写过的笔记不带这个键，同步文件不变 */
+  usage: z.string().nullable().optional(),
   answerFr: z.string().nullable().default(null),
   extra: z.string().nullable().default(null),
   source: z.string().nullable().default(null),

@@ -105,13 +105,13 @@ function pickNew(q: QueueInput, pool: Card[], today: string, newSeen: Set<string
   // 套用卡：同一条笔记的句框卡还没进入复习时不出
   const frameState = new Map<string, Card['state']>();
   for (const c of q.cards) if (c.type === 'frame' && !c.deleted) frameState.set(c.noteId, c.state);
-  // 产出卡：同一条笔记有认读卡、而认读卡还没进入复习时不出（先认得，再练写得出）
+  // 产出卡、辨析卡：同一条笔记有认读卡、而认读卡还没进入复习时不出（先认得，再练写得出 / 再和别的词比）
   const recState = new Map<string, Card['state']>();
   for (const c of q.cards) if (c.type === 'recognition' && !c.deleted && !c.suspended) recState.set(c.noteId, c.state);
   const gateProd = q.settings.productionAfterRecognition !== false;
   const due = pool.filter((c) => c.state === 'new' && studyDay(fromIso(c.createdAt), q.settings.dayStartHour) <= today
     && (c.type !== 'apply' || frameState.get(c.noteId) === 'review')
-    && (c.type !== 'production' || !gateProd || !recState.has(c.noteId) || recState.get(c.noteId) === 'review'));
+    && ((c.type !== 'production' && c.type !== 'contrast') || !gateProd || !recState.has(c.noteId) || recState.get(c.noteId) === 'review'));
   const notes = q.notes;
   const isFrame = (c: Card) => !!notes?.get(c.noteId)?.frame;
   const frameCands = notes ? due.filter(isFrame) : [];

@@ -45,6 +45,11 @@ describe('产出卡等认读卡学会再出', () => {
     expect(newIds([rev, mk('p1', 'a', 'production')])).toContain('p1');
     expect(newIds([mk('p2', 'b', 'production')])).toContain('p2');
   });
+  it('辨析卡也等认读卡学会：认得组里的词才比得出区别', () => {
+    expect(newIds([mk('r1', 'a', 'recognition'), mk('x1', 'a', 'contrast')])).toEqual(['r1']);
+    const rev = { ...mk('r1', 'a', 'recognition', 'review'), due: toIso(now + 5 * DAY) };
+    expect(newIds([rev, mk('x1', 'a', 'contrast')])).toContain('x1');
+  });
   it('关掉开关就不等', () => {
     expect(newIds([mk('r1', 'a', 'recognition'), mk('p1', 'a', 'production')], { ...S, productionAfterRecognition: false } as typeof S)).toContain('p1');
   });

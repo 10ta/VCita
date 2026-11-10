@@ -258,6 +258,7 @@ export function Cues({ note, only }: { note: Note; only?: 'extra' }) {
   const line1 = only ? '' : [note.cueFamily, note.source].filter(Boolean).join(' · ');
   return (
     <Fr>
+      {note.usage && <div className="cue usage" title="用法：这张卡考的结构">用法 · {note.usage}</div>}
       {note.etymology && <div className="cue etym" title="词源">⌁ {note.etymology}</div>}
       {line1 && <div className="cue">{line1}</div>}
       {note.extra && <div className="cue">{note.extra}</div>}
