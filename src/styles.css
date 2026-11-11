@@ -318,9 +318,11 @@ textarea.weights { width: 100%; font-family: var(--mono); font-size: 12px; }
 .cx-choices { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; margin: 0 0 12px; font-size: 18px; }
 .cx-choice { padding: 3px 12px; border: 1px solid var(--border); border-radius: 20px; background: var(--surface2); font-family: var(--serif); }
 .contrast-table { display: grid; gap: 6px; text-align: left; font-size: 14px; margin-top: 6px; }
-.cmp { display: grid; grid-template-columns: minmax(90px, auto) 1fr; gap: 0 10px; padding: 6px 10px; border-radius: 8px; border: 1px solid var(--border); }
-.cmp b { font-family: var(--serif); font-size: 16px; }
-.cmp .muted { grid-column: 1 / -1; font-size: 13px; }
+/* 词条和意思同一行放得下就并排，放不下（窄屏、长词条）意思整行换到下面，不再被挤成一条竖排 */
+.cmp { display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 10px; padding: 6px 10px; border-radius: 8px; border: 1px solid var(--border); }
+.cmp b { font-family: var(--serif); font-size: 16px; flex: 0 1 auto; min-width: 0; overflow-wrap: anywhere; }
+.cmp > span:not(.muted) { flex: 1 1 12em; min-width: 0; }
+.cmp .muted { flex-basis: 100%; font-size: 13px; }
 .cmp.is-answer { border-color: var(--green); }
 .badge.t-contrast:not(.is-type) { color: #c084fc; border-color: #c084fc55; }
 .contrast-edit { display: grid; gap: 6px; padding: 10px; border: 1px solid #c084fc44; border-radius: 10px; margin: 8px 0; }
