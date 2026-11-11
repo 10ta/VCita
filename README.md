@@ -305,6 +305,7 @@ tests/         单元测试（调度验收、队列规则、牌组合并、同�
   - **关闭**：不画线
   - 四种都能悬停（手机上点一下）看迷你条；以前关掉过旧的"名词按阴阳性着色"开关的，默认是关闭
 - 鼠标悬停名词或形容词（手机上点一下）弹出迷你条：`un / une` + 词；另一个性的形式（acteur ↔ actrice、beau ↔ belle）；按词尾的记忆规则，带**可靠度**（Lexique 里常用名词有多少符合）和**最常见的例外**，这个词本身是例外时标 ⚠；同形异义词（le tour / la tour）给两个意思，前面有冠词时突出这里用的那个；gens、amour、délice 这类特殊词单独说明
+- 也是动词变位的名词（approche、marche、demande、reste）同样能看：词典第 7 列记 `v`，只用于阴阳性，原形、词频、划词照旧按动词算；前面是主语 / 宾语代词、ne、c'est 或助动词时（il approche、j'ai été）按动词处理，不标
 - 规则表在 `src/lib/gender/rules.ts`（词尾、例词、记忆提示、同形异义词），可靠度和例外由 `scripts/build-fr-dict.mjs` 从词典数据算出写进 `stats.gen.ts`。例：-tion 100%、-ment 100%、-age 98%（例外 image、plage、cage）、-ure 95%、-té 79%（例外 côté、été）、-eur 只有 64%（la peur / le moteur 两性都多，要单独记）
 - 词典数据：Lexique 3.83（词频、词性、大部分名词的性）+ Lefff 3.4（补 Lexique 没标性别的名词，如 main、maison、voiture），生成 `src/lib/gender/fr-dict.txt`（约 2.6 MB，压缩后约 0.5 MB），第一次用到时才下载，文件名带哈希，浏览器长期缓存
   - 重新生成：`node scripts/build-fr-dict.mjs <Lexique383.txt> <lefff-3.4.mlex>`（原始文件不进仓库；Lexique383.txt 在 PyPI 的 pylexique 包里，Lefff 在 FrenchLefffLemmatizer 仓库里）

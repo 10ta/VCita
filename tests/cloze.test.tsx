@@ -80,9 +80,11 @@ describe('只挖虚词：答案由上下文决定，不给提示', () => {
     expect(blankText(v)).toBe('___');
     expect(v.hint).toBeNull();
   });
-  it('中文意思里写着答案时也不给', () => {
+  it('中文意思里带着答案的法语：去掉那部分再当提示；去掉后仍露出答案时不给', () => {
     const v = cardView('cloze', note({ sentence: 'Ce jeu va {{à l\'inverse de}} tout.', meaningZh: '与……相反（aller à l\'inverse de）' }), S, L);
-    expect(v.hint).toBeNull();
+    expect(v.hint).toBe('与……相反');
+    const w = cardView('cloze', note({ sentence: 'Ce jeu va {{à l\'inverse de}} tout.', meaningZh: 'inverse 相反' }), S, L);
+    expect(w.hint).toBeNull();
   });
   it('普通表达仍用中文意思当提示', () => {
     expect(cardView('cloze', note(), S, L).hint).toBe('飞越一个国家');

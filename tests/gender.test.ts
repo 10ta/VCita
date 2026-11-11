@@ -67,3 +67,18 @@ describe('阴阳性下划线设置', () => {
     expect(genderDisplayOf({ genderColors: false, genderDisplay: 'hover' })).toBe('hover');
   });
 });
+
+describe('也是动词变位的名词（approche、marche、demande）', () => {
+  const d = parseDict(readFileSync(new URL('../src/lib/gender/fr-dict.txt', import.meta.url), 'utf8'));
+  it('阴阳性面板查得到', () => {
+    expect(d.nounOf('approche')).toMatchObject({ pos: 'N', g: 'f', verbForm: true });
+    expect(genderInfo(d, 'approche', 'mon')).toMatchObject({ gender: 'f', pos: 'N' });
+    expect(genderInfo(d, 'demande')?.gender).toBe('f');
+    expect(genderInfo(d, 'marche')?.gender).toBe('f');
+  });
+  it('原形、词频照旧按动词：get 查不到，lemmaFreq 不受影响', () => {
+    expect(d.get('approche')).toBeUndefined();
+    expect(lemmaFreq(d, 'approcher')).toBe(lemmaFreq(d, 'approcher'));
+    expect(d.nounOf('maison')).toBe(d.get('maison'));
+  });
+});

@@ -36,6 +36,20 @@ function clozeLeaks(sentence: string, clozeHint: string | null | undefined): str
   const inline = [...sentence.matchAll(/\{\{[^}]*?::([^}]+?)\}\}/g)].map((m) => m[1]).join(' ');
   return hintLeaks(answer, `${clozeHint ?? ''} ${inline}`, true);
 }
+/**
+ * 挖空卡没写提示时自动用的提示：中文意思，但去掉带法语的部分（「甚至……这件事本身（même le fait d'avoir + p.p.）」
+ * 括号里就是答案，原来整条都不给，横线处就没有提示了）。只挖虚词、或去掉后还露出答案时不给
+ */
+export function autoClozeHint(meaningZh: string | null | undefined, sentence: string): string | null {
+  if (blankIsFunctionWords(sentence)) return null;
+  const segs = (meaningZh ?? '').split(/[；;]/)
+    .map((x) => x.replace(/\s*[(（][^)）]*[A-Za-zÀ-ÿœæ][^)）]*[)）]/g, '').trim())
+    .filter((x) => x && !/[A-Za-zÀ-ÿœæ]{2,}/.test(x));
+  const zh = segs.join('；');
+  if (!zh) return null;
+  return hintLeaks(clozeTargets(sentence).join(' '), zh, true).length ? null : zh;
+}
+
 /** 挖掉的只有虚词（介词、冠词、代词……如 se rend pas compte {{de}}）：答案由上下文决定，不需要提示，也不自动用中文意思当提示 */
 export function blankIsFunctionWords(sentence: string): boolean {
   const aw = words(clozeTargets(sentence).join(' '));

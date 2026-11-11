@@ -7,7 +7,7 @@ import { speak } from '../lib/speech';
 import { frameMeta, pickTopic } from '../lib/frames';
 import { currentR, validWeights, type Memory } from '../srs/fsrs';
 import { Fr } from './FrText';
-import { blankIsFunctionWords, choiceLabel, clozeTargets, hasCloze, hasInlineHint, hintLeaks } from '../schema/validate';
+import { autoClozeHint, choiceLabel, clozeTargets, hasCloze, hasInlineHint } from '../schema/validate';
 
 /** "survoler la Sibérie" → "s _ _ _ _ _ _ _   l _" ：每个词的首字母 + 其余字母数，标点和省音号原样 */
 export function letterPattern(t: string): string {
@@ -230,8 +230,7 @@ export function cardView(type: Card['type'], note: Note, s: Settings, labels: [s
     const noteHint = isMainCloze(note, variant) ? note.clozeHint?.trim() || null : null;
     // 横线处有专门的挖空提示时就不再另给。没有时用中文意思当提示，避免横线处有多种填法——
     // 但只挖了虚词（{{de}}）时答案由上下文决定，不给提示；中文意思里写着答案（意识到（se rendre compte de））时也不给
-    const zh = note.meaningZh.trim();
-    const hint = noteHint || hasInlineHint(sent) || blankIsFunctionWords(sent) || !zh || hintLeaks(clozeTargets(sent).join(' '), zh, true).length ? null : zh;
+    const hint = noteHint || hasInlineHint(sent) ? null : autoClozeHint(note.meaningZh, sent);
     return {
       question: { text: renderSentence(sent, 'blank', { hint: noteHint, letters: s.clozeLetters }), speakText: '', lang: s.sourceLang, label: labels[0] },
       hint, cues: 'all',

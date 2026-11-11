@@ -32,6 +32,7 @@ for (const r of rows) {
   (byForm.get(form) ?? byForm.set(form, []).get(form)).push(row);
 }
 const homo = new Set(HOMOGRAPHS.map((h) => h.word));
+const VERB_ONLY = new Set('est doit dit vit vis rit lut pus sus tins aura auras sois vaux ris lis lise lises sors pars fous'.split(' '));
 
 /** 名词的性：同形异义表 → 人工核对表 → Lexique → Lefff → 都没有时：常用词多是阴阳同形的指人名词（artiste、élève），
  *  算 b；不常用的记 ?（未知，悬停时按词尾推测） */
@@ -54,7 +55,16 @@ for (const [form, rs] of byForm) {
   rs.sort((a, b) => b.f - a.f || b.lf - a.lf);
   const top = rs[0];
   // 动词只留不定式（笔记的 lemma 用原形），名词 / 形容词全留（悬停要用变形）
-  if (top.pos === 'V' && top.lemma !== form) continue;
+  if (top.pos === 'V' && top.lemma !== form) {
+    // 这个形式最常见的是动词变位，但也是名词 / 形容词（approche、marche、demande）：留下名词 / 形容词那一行，
+    // 第 7 列记 v——只用于阴阳性显示，原形、词频照旧按动词算
+    // 只留名词（过去分词当形容词的 perdu、venu 不留）；太短、几乎总是动词的形式（est、dit、vit）不留
+    const na = rs.find((r) => r.pos === 'N');
+    if (na && form.length > 2 && !VERB_ONLY.has(form)) {
+      out.push([form, 'N', nounGender(form, rs.filter((r) => r.pos === 'N')), na.n, na.lemma === form ? '' : na.lemma, Math.round(na.lf * 100) / 100, 'v']);
+    }
+    continue;
+  }
   if (top.pos === 'O' && top.lf < 1) continue;
   let g = '';
   if (top.pos === 'N') g = nounGender(form, rs.filter((r) => r.pos === 'N'));
@@ -68,7 +78,7 @@ for (const [form, gs] of lefff) {
   out.push([form, 'N', homo.has(form) ? 'h' : GENDER_OVERRIDES[form] ?? (gs.size === 1 ? [...gs][0] : gs.size === 2 ? 'b' : '?'), '', '', 0]);
 }
 out.sort((a, b) => (a[0] < b[0] ? -1 : 1));
-const header = '# VCita 法语词典：形式\t词性(N/A/V/O)\t性(m/f/b 阴阳同形/h 同形异义/? 未知)\t数(s/p)\t原形(同形式时空)\t原形词频(每百万词)\n'
+const header = '# VCita 法语词典：形式\t词性(N/A/V/O)\t性(m/f/b 阴阳同形/h 同形异义/? 未知)\t数(s/p)\t原形(同形式时空)\t原形词频(每百万词)\t[v = 也是动词变位（approche、marche），只用于阴阳性显示，不参与原形和词频]\n'
   + '# 数据：Lexique 3.83 (CC BY-SA 4.0, lexique.org) + Lefff 3.4 (LGPL-LR)。由 scripts/build-fr-dict.mjs 生成\n';
 writeFileSync(new URL('../src/lib/gender/fr-dict.txt', import.meta.url), header + out.map((r) => r.join('\t')).join('\n') + '\n');
 

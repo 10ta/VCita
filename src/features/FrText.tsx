@@ -44,6 +44,8 @@ export function useNoteFreqs(): Map<string, number | null> | undefined {
 }
 
 const WORD = /(\p{L}+(?:-\p{L}+)*)/u;
+// 也是动词变位的名词（approche、marche、reste、été）前面是这些词时按动词处理：主语 / 宾语代词、ne、c'est、助动词（il a été、j'ai fait）
+const VERB_CUE = new Set('je j tu il elle on nous vous ils elles ne n se s me m te t y en lui leur qui c ce ça cela a ai as avons avez ont avait avais avaient avions aviez aura aurait est suis es sommes êtes sont était étais étaient été être avoir'.split(' '));
 const URL_RE = /https?:\/\/\S+/;
 const URL_SPLIT = /(https?:\/\/\S+)/;
 
@@ -66,8 +68,10 @@ export function Fr({ children }: { children: ReactNode }) {
         const prev = st.prev;
         st.prev = part;
         // 单个字母（j'、m'、字母 e）不算
-        const e = part.length > 1 ? dict.get(part) : undefined;
+        const e = part.length > 1 ? dict.nounOf(part) : undefined;
         if (!e || (e.pos !== 'N' && e.pos !== 'A')) return part;
+        // 也是动词变位的词（approche、marche）：前面是主语 / 宾语代词、ne 时是动词（il approche、ne marche pas），不标
+        if (e.verbForm && prev && VERB_CUE.has(prev.toLowerCase())) return part;
         const cls = (e.pos === 'N' && (e.g === 'm' || e.g === 'f') ? ` g-${e.g}` : '') + (st.target ? ' fw-t' : '');
         return <span key={`fw${st.key++}`} className={`fw${cls}`} data-fw={part} data-prev={prev ?? ''}>{part}</span>;
       });

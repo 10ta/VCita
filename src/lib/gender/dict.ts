@@ -9,9 +9,15 @@ import { HOMOGRAPHS, SPECIAL, matchRule, norm, type GenderRule } from './rules';
 export type Pos = 'N' | 'A' | 'V' | 'O';
 /** m / f；b = 阴阳同形（le / la ministre）；h = 同形异义（le / la tour）；? = 词典里没有性别 */
 export type DictGender = 'm' | 'f' | 'b' | 'h' | '?' | '';
-export interface Entry { form: string; pos: Pos; g: DictGender; n: 's' | 'p' | ''; lemma: string; freq: number }
+export interface Entry {
+  form: string; pos: Pos; g: DictGender; n: 's' | 'p' | ''; lemma: string; freq: number;
+  /** 这个形式也是动词变位（approche、marche、demande）：只在 nounOf 里查得到，原形、词频照旧按动词算 */
+  verbForm?: boolean;
+}
 export interface FrDict {
   get(word: string): Entry | undefined;
+  /** 阴阳性显示用：get 查不到时，再查"也是动词变位"的名词 / 形容词（Mon approche、la marche） */
+  nounOf(word: string): Entry | undefined;
   formsOf(lemma: string): Entry[];
   /** 词频排第 n 的原形的词频（每百万词）；n 超出时返回 0。阅读页用它判断"常用词前 N 个" */
   freqAtRank(n: number): number;
@@ -21,10 +27,13 @@ export function parseDict(text: string): FrDict {
   const map = new Map<string, Entry>();
   const byLemma = new Map<string, Entry[]>();
   const lemmaFreq = new Map<string, number>();
+  const verbForms = new Map<string, Entry>();
   for (const line of text.split('\n')) {
     if (!line || line.startsWith('#')) continue;
-    const [form, pos, g, n, lemma, freq] = line.split('\t');
+    const [form, pos, g, n, lemma, freq, flag] = line.split('\t');
     const e: Entry = { form, pos: pos as Pos, g: g as DictGender, n: n as Entry['n'], lemma: lemma || form, freq: Number(freq) || 0 };
+    // 也是动词变位的名词 / 形容词：单独存，不影响原形、词频、划词（那些照旧按动词）
+    if (flag === 'v') { e.verbForm = true; verbForms.set(form, e); (byLemma.get(e.lemma) ?? byLemma.set(e.lemma, []).get(e.lemma)!).push(e); continue; }
     map.set(form, e);
     if (e.freq > (lemmaFreq.get(e.lemma) ?? 0)) lemmaFreq.set(e.lemma, e.freq);
     if (e.pos === 'N' || e.pos === 'A') (byLemma.get(e.lemma) ?? byLemma.set(e.lemma, []).get(e.lemma)!).push(e);
@@ -32,6 +41,7 @@ export function parseDict(text: string): FrDict {
   let ranked: number[] | null = null;
   return {
     get: (w) => map.get(norm(w)),
+    nounOf: (w) => map.get(norm(w)) ?? verbForms.get(norm(w)),
     formsOf: (l) => byLemma.get(norm(l)) ?? [],
     freqAtRank: (n) => {
       ranked ??= [...lemmaFreq.values()].sort((a, b) => b - a);
@@ -176,7 +186,7 @@ export interface GenderInfo {
 }
 
 export function genderInfo(dict: FrDict, word: string, prev?: string | null): GenderInfo | null {
-  const e = dict.get(word);
+  const e = dict.nounOf(word);
   if (!e || (e.pos !== 'N' && e.pos !== 'A')) return null;
   const lemma = e.lemma;
   const want = e.g === 'm' ? 'f' : e.g === 'f' ? 'm' : null;
@@ -184,7 +194,7 @@ export function genderInfo(dict: FrDict, word: string, prev?: string | null): Ge
     ? [...new Set(dict.formsOf(lemma).filter((x) => x.pos === e.pos && x.g === want && (x.n === e.n || !x.n || !e.n)).map((x) => x.form))]
     : [];
   // 原形是阳性形式，查阴性词的"另一个性"时原形本身也算（actrice → acteur）
-  if (want === 'm' && lemma !== e.form && !other.includes(lemma) && dict.get(lemma)?.pos === e.pos) other.unshift(lemma);
+  if (want === 'm' && lemma !== e.form && !other.includes(lemma) && dict.nounOf(lemma)?.pos === e.pos) other.unshift(lemma);
   const homo = HOMOGRAPHS.find((h) => h.word === norm(e.form) || h.word === norm(lemma)) ?? null;
   let rule: RuleView | null = null;
   let fallback: GenderInfo['fallback'] = null;

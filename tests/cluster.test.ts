@@ -125,3 +125,16 @@ describe('考查部分 = 词条', async () => {
     expect(markErrors({ lemma: 'se rendre compte de qqch', sentence: 'Il faut que tu {{te rendes compte de}} ça.', clozeSentence: 'Il ne se rend pas compte {{de}} sa chance.' })).toEqual([]);
   });
 });
+
+describe('挖空卡自动提示', async () => {
+  const { autoClozeHint } = await import('../src/schema/validate');
+  it('中文意思里带法语的部分去掉，不再整条不给', () => {
+    expect(autoClozeHint("甚至……这件事本身（même le fait d'avoir + p.p.）", "{{Même le fait d'avoir}} cliqué sur cette vidéo.")).toBe('甚至……这件事本身');
+    expect(autoClozeHint("令人惊讶的；d'un naturel confondant 自然得惊人", 'Il est {{confondant}}.')).toBe('令人惊讶的');
+  });
+  it('只挖虚词、全是法语、去掉后仍露出答案：不给', () => {
+    expect(autoClozeHint('意识到', 'Il ne se rend pas compte {{de}} ça.')).toBeNull();
+    expect(autoClozeHint('Marie Trintignant 处于昏迷', 'dans {{un coma}}')).toBeNull();
+    expect(autoClozeHint('patrimoine 遗产', 'le {{patrimoine}} local')).toBeNull();
+  });
+});
