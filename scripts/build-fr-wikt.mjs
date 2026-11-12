@@ -4,7 +4,8 @@
 //   https://kaikki.org/dictionary/downloads/fr/fr-extract.jsonl.gz（压缩后约 700 MB，解压约 6.4 GB）
 //   内容来自 Wiktionnaire (fr.wiktionary.org)，CC BY-SA 4.0
 // 用法：node scripts/build-fr-wikt.mjs <fr-extract.jsonl.gz 的路径，或它的 https 网址>
-//   流式读取：不解压到磁盘、不整个读进内存；传网址时边下载边处理，连 700 MB 的压缩包也不落盘。
+//   流式读取：不解压到磁盘、不整个读进内存；传网址时边下载边处理，连 700 MB 的压缩包也不落盘，
+//   连接中途断开会自动从断点续传。
 // 规则：
 //   - 只保留 fr-dict.txt 里词频大于 0 的原形；同一个词多个词性的行合并
 //   - 链接词只保留在 fr-dict.txt 里出现的，按词频从高到低，每类最多 8 个
@@ -139,13 +140,28 @@ export const SPOT = {
   homophones: [['ver', 'verre'], ['ver', 'vert'], ['ver', 'vers'], ['seau', 'sceau'], ['seau', 'sot'], ['seau', 'saut'], ['cou', 'coup'], ['cou', 'coût']],
 };
 
-async function open(src) {
-  if (/^https?:\/\//.test(src)) {
-    const r = await fetch(src);
-    if (!r.ok || !r.body) throw new Error(`下载失败：${r.status} ${r.statusText}`);
-    return Readable.fromWeb(r.body);
+/** 从网址读：连接中途断了（kaikki 的服务器会断开长连接）就从断点用 Range 续传，最多连续失败 8 次 */
+export async function* httpChunks(url, { retries = 8, wait = 3000, log = (m) => process.stderr.write(m) } = {}) {
+  let offset = 0, fails = 0, total = null;
+  for (;;) {
+    try {
+      const r = await fetch(url, offset ? { headers: { Range: `bytes=${offset}-` } } : undefined);
+      if (offset && r.status !== 206) throw Object.assign(new Error(`服务器不支持断点续传（${r.status}）：先用 curl -C - 下载到本地，再把路径传给脚本`), { fatal: true });
+      if (!r.ok || !r.body) throw Object.assign(new Error(`下载失败：${r.status} ${r.statusText}`), { fatal: r.status >= 400 && r.status < 500 });
+      if (!offset) total = Number(r.headers.get('content-length')) || null;
+      for await (const chunk of r.body) { offset += chunk.length; fails = 0; yield chunk; }
+      if (total && offset < total) throw new Error(`连接提前结束（${offset} / ${total} 字节）`);
+      return;
+    } catch (e) {
+      if (e.fatal || ++fails > retries) throw e;
+      log(`\n连接断开（${e.cause?.code ?? e.message}），${Math.round(wait / 1000)} 秒后从 ${(offset / 1024 / 1024).toFixed(0)} MB 处续传（第 ${fails} 次重试）\n`);
+      await new Promise((ok) => setTimeout(ok, wait));
+    }
   }
-  return createReadStream(src);
+}
+
+async function open(src) {
+  return /^https?:\/\//.test(src) ? Readable.from(httpChunks(src), { objectMode: false }) : createReadStream(src);
 }
 
 async function main() {

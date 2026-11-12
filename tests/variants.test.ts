@@ -52,4 +52,14 @@ describe('内联提示与听力认读', () => {
     expect([v.listen, v.question.text, v.question.speakText, v.answers.length]).toEqual([true, '', 'A x.', 3]);
     expect(cardView('production', note(), S, L, 0, true).listen).toBeUndefined();
   });
+  it('只挖词条里一个小词的备用例句（faire l\'impasse {{sur}}）只给挖空卡：认读 / 听力 / 辨析卡不轮到它', () => {
+    const n = note({
+      lemma: "faire l'impasse sur qqch", sentence: "J'ai {{fait l'impasse sur}} le dernier chapitre.",
+      altSentences: ["Faute de temps, j'ai décidé de faire l'impasse {{sur}} la grammaire avant le test.", "On ne peut pas {{faire l'impasse sur}} la sécurité."],
+    });
+    expect([0, 1, 2].map((v) => pickSentence(n, 'recognition', v))).toEqual([n.sentence, n.altSentences[1], n.sentence]);
+    expect([0, 1, 2].map((v) => pickSentence(n, 'cloze', v))).toEqual([n.sentence, n.altSentences[0], n.altSentences[1]]);
+    const listen = cardView('recognition', n, S, L, 1, true);
+    expect(listen.answers[0].speakText).toBe("On ne peut pas faire l'impasse sur la sécurité.");
+  });
 });

@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { readFileSync } from 'node:fs';
 // @ts-expect-error 构建脚本是 .mjs，没有类型
-import { createBuilder } from '../scripts/build-fr-wikt.mjs';
+import { createBuilder, httpChunks } from '../scripts/build-fr-wikt.mjs';
+import { createServer } from 'node:http';
 import { etymOf, linksOf, parseEtym, parseLinks } from '../src/lib/wikt';
 import { head, headWord } from '../src/lib/headword';
 import { cueHas, toggleCue } from '../src/features/noteform/model';
@@ -108,5 +109,29 @@ describe('词族候选：点一下填进词族线索，再点一次去掉', () =
     expect(cueHas('repérer 找出、标出', 'repère')).toBe(false);
     expect(toggleCue('repérer 找出、标出；repère', 'repérer')).toBe('repère');
     expect(toggleCue('repère', 'repère')).toBe('');
+  });
+});
+
+describe('构建脚本从网址读：断线续传', () => {
+  it('连接中途断开两次，用 Range 从断点接上，内容一字节不差；不支持 Range 时报错', async () => {
+    const data = Buffer.from(Array.from({ length: 50000 }, (_, i) => i % 251));
+    let hits = 0, range = true;
+    const srv = createServer((q, r) => {
+      hits++;
+      const from = Number(/bytes=(\d+)-/.exec(q.headers.range ?? '')?.[1] ?? 0);
+      const ok = from > 0 && range;
+      r.writeHead(ok ? 206 : 200, { 'content-length': data.length - (ok ? from : 0) });
+      const body = ok ? data.subarray(from) : data;
+      if (hits <= 2) { r.write(body.subarray(0, 12000)); setTimeout(() => r.destroy(), 20); } else r.end(body);
+    });
+    await new Promise<void>((ok) => srv.listen(0, '127.0.0.1', ok));
+    const url = `http://127.0.0.1:${(srv.address() as { port: number }).port}/x.gz`;
+    const read = async () => { const out: Buffer[] = []; for await (const c of httpChunks(url, { wait: 1, log: () => undefined })) out.push(Buffer.from(c)); return Buffer.concat(out); };
+    try {
+      expect((await read()).equals(data)).toBe(true);
+      expect(hits).toBe(3);
+      hits = 0; range = false;
+      await expect(read()).rejects.toThrow(/断点续传/);
+    } finally { srv.close(); }
   });
 });

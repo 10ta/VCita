@@ -7,7 +7,7 @@ import { speak } from '../lib/speech';
 import { frameMeta, pickTopic } from '../lib/frames';
 import { currentR, validWeights, type Memory } from '../srs/fsrs';
 import { Fr } from './FrText';
-import { autoClozeHint, choiceLabel, clozeTargets, hasCloze, hasInlineHint } from '../schema/validate';
+import { autoClozeHint, choiceLabel, clozeTargets, hasCloze, hasInlineHint, lemmaOutsideMark } from '../schema/validate';
 
 /** "survoler la Sibérie" → "s _ _ _ _ _ _ _   l _" ：每个词的首字母 + 其余字母数，标点和省音号原样 */
 export function letterPattern(t: string): string {
@@ -57,7 +57,9 @@ export interface Face { text: ReactNode; speakText: string; lang: string; label:
 export function pickSentence(note: Note, kind: 'recognition' | 'cloze', variant = 0): string {
   const main = kind === 'cloze' && note.clozeSentence?.trim() && hasCloze(note.clozeSentence) ? note.clozeSentence : note.sentence;
   if (!main) return main;
-  const pool = [main, ...(note.altSentences ?? []).filter((x) => hasCloze(x))];
+  // 备用例句可以只挖词条里的一个小词（faire l'impasse {{sur}}）：那是给挖空卡练介词用的。认读 / 听力 / 辨析卡高亮（或挖掉）的
+  // 必须是整个表达，所以这些卡不轮到词条的实词还露在标注外面的句子
+  const pool = [main, ...(note.altSentences ?? []).filter((x) => hasCloze(x) && (kind === 'cloze' || !lemmaOutsideMark(x, note.lemma).length))];
   return pool[variant % pool.length];
 }
 /** 这次轮到的是不是主挖空句（笔记的挖空提示只为它写，备用例句挖的部分不同，用各自的 {{答案::提示}}） */
