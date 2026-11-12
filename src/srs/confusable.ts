@@ -2,14 +2,16 @@
 // 两种易混（干扰理论：相似的记忆互相干扰，是遗忘的主要原因之一）：
 //  - 意思相近：中文意思里有同一个不常见的词（teinter / colorer 都有"染上"）
 //  - 拼写相近：词头只差一个字母（amende / amande、ressembler / rassembler）
+// 传入 Wiktionnaire 索引（src/lib/wikt，可选）时再加两种，排在前面：
+//  - 近音：互为 paronymes（éminent / imminent、collision / collusion）
+//  - 同音：互为 homophones（ver / verre、seau / sceau）
+// 没有索引（没加载到、非法语牌组）时结果和以前完全一样。
 import type { Note } from '../schema';
-import { fold } from '../lib/gender/rules';
+import { head, headWord } from '../lib/headword';
+import type { WiktIndex } from '../lib/wikt';
 
 export interface ConfusablePair { a: string; b: string; reason: string }
 
-const FUNC = new Set('le la les l un une des de du d a au aux en et ou se s ne pas y que qu qui ce sa son ses leur leurs mon ma mes ton ta tes etre avoir faire qqch qqn pour par sur dans avec il elle est'.split(' '));
-/** 词条的第一个实词（去掉重音），用来比拼写 */
-const head = (lemma: string) => fold(lemma).replace(/\([^)]*\)/g, ' ').split(/[^a-z-]+/).find((w) => w.length > 1 && !FUNC.has(w)) ?? '';
 /** 中文意思里的词：按标点切开，去掉括号说明，至少两个汉字 */
 const zhTerms = (s: string) => [...new Set(s.replace(/[（(][^）)]*[）)]/g, ' ').replace(/…+|\.{3}/g, '').split(/[；;，,、/\s。:：|]+/).map((x) => x.replace(/^[把被让使对给在]|[的地得了着过]$/g, '').trim()).filter((x) => /^\p{Script=Han}{2,}$/u.test(x)))];
 
@@ -29,7 +31,7 @@ function lev(a: string, b: string, max: number): number {
   return prev[b.length];
 }
 
-export function findConfusables(notes: readonly Pick<Note, 'id' | 'lemma' | 'meaningZh' | 'contrastGroup' | 'deleted'>[]): ConfusablePair[] {
+export function findConfusables(notes: readonly Pick<Note, 'id' | 'lemma' | 'meaningZh' | 'contrastGroup' | 'deleted'>[], wikt?: WiktIndex | null): ConfusablePair[] {
   const live = notes.filter((n) => !n.deleted && n.lemma.trim());
   const pairs: ConfusablePair[] = [];
   const seen = new Set<string>();
@@ -41,6 +43,21 @@ export function findConfusables(notes: readonly Pick<Note, 'id' | 'lemma' | 'mea
   };
   const sameGroup = (x: (typeof live)[number], y: (typeof live)[number]) => !!x.contrastGroup && x.contrastGroup === y.contrastGroup;
 
+  // 近音 / 同音：Wiktionnaire 里任一方把另一方列为近音词 / 同音词（索引按词频截过，所以两个方向都查）
+  if (wikt?.size) {
+    const byHead = new Map<string, Array<(typeof live)[number]>>();
+    for (const n of live) { const h = headWord(n.lemma); if (h) (byHead.get(h) ?? byHead.set(h, []).get(h)!).push(n); }
+    for (const kind of ['paronyms', 'homophones'] as const) {
+      for (const [h, xs] of byHead) for (const w of wikt.get(h)?.[kind] ?? []) {
+        if (w === h) continue;
+        for (const x of xs) for (const y of byHead.get(w) ?? []) {
+          if (x.id === y.id || sameGroup(x, y)) continue;
+          const [p, q] = h.localeCompare(w, 'fr') < 0 ? [h, w] : [w, h];
+          add(x.id, y.id, `${kind === 'paronyms' ? '近音' : '同音'}：${p} / ${q}`);
+        }
+      }
+    }
+  }
   // 意思相近：同一个中文词只在 2–4 条笔记里出现（太常见的词如"影响"不算）
   const byTerm = new Map<string, Array<(typeof live)[number]>>();
   for (const n of live) for (const t of zhTerms(n.meaningZh)) (byTerm.get(t) ?? byTerm.set(t, []).get(t)!).push(n);

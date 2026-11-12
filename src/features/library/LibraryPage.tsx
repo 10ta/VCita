@@ -2,6 +2,8 @@ import { useEffect, useMemo, useState } from 'react';
 import { useCards, useDeckSettings, useDecks, useLogsSince, useMemories, useNotes } from '../../db/hooks';
 import type { Memory } from '../../srs/fsrs';
 import { findConfusables } from '../../srs/confusable';
+import { suggestClusters } from '../../srs/clusterSuggest';
+import { useWiktLinks } from '../../lib/wikt';
 import { Fr, useNoteFreqs } from '../FrText';
 import { deleteNotes, groupContrast, resetNotes, setSuspended, updateNotes } from '../../db/actions';
 import { THEMES, noteOrigin, type Card, type Note, type NoteOrigin, type Theme } from '../../schema';
@@ -14,7 +16,7 @@ import { NoteDetail } from './NoteDetail';
 import { usePrefs, setPrefs } from '../../ui/prefs';
 import { Modal } from '../../ui/Modal';
 import { toast } from '../../ui/toast';
-import { langLabel } from '../../ui/langs';
+import { isFrench, langLabel } from '../../ui/langs';
 import { CardStats, Cues, renderSentence, SpeakBtn, TYPE_LABEL } from '../CardFace';
 import { NoteEditor, ThemePicker } from '../NoteEditor';
 
@@ -28,9 +30,9 @@ const STATUS: Array<[Status, string, string?]> = [
   ['forgot', '近 7 天忘过', '最近 7 个学习日里至少有一次评"忘了"'], ['lowease', '难记', '经常答困难或忘了的卡：FSRS 下难度 ≥ 7，SM-2 下倍率 < 2'],
   ['dup', '疑似重复', '单词、考查部分或整句相同，或例句高度相似；同组排在一起'],
   ['badprompt', '题面有误', '例句的考查部分不是词条、或没把整个表达标进去；产出题的高亮没包住词条（词条的词露在高亮外）、高亮直接给出了答案；或辨析卡例句的空外面露出了答案线索（me suis、la / le、紧跟的介词）'],
-  ['confusable', '可能易混', '意思相近（中文意思里有同一个不常见的词）或拼写只差一个字母；两两排在一起。选中后"设为易混组"，就会生成辨析卡'],
+  ['confusable', '可能易混', '意思相近（中文意思里有同一个不常见的词）、拼写只差一个字母，或 Wiktionnaire 里互为近音词 / 同音词；两两排在一起。选中后"设为易混组"，就会生成辨析卡'],
   ['contrast', '易混组', '已经设成易混组的笔记，同组排在一起'],
-  ['cluster', '表达群', '填了表达群的笔记，同群排在一起'],
+  ['cluster', '表达群', '填了表达群的笔记，同群排在一起；上面列出 Wiktionnaire 里互为同义词、还不在同一个群里的笔记，点一下并成一群'],
   ['missed', '群里没想起', '复习时在表达群里顺带回想、点了"没想起来"的笔记，最近的排前面'],
 ];
 type Sort = 'created' | 'lapses' | 'ease' | 'due' | 'reviewed' | 'freq';
@@ -80,16 +82,20 @@ export function LibraryPage({ deckId }: { deckId: string }) {
   const memories = useMemories(s);
   const freqs = useNoteFreqs();
   const fsrs = s?.scheduler === 'fsrs';
+  // Wiktionnaire 索引（近音 / 同音 / 同义）：点到这两个筛选时才下载；没加载到时两处都和以前一样
+  const wikt = useWiktLinks((status === 'confusable' || status === 'cluster') && !!s && isFrench(s.sourceLang));
   // 可能易混：笔记 → [排序号, 原因]，同一对排在一起
   const confusable = useMemo(() => {
     const m = new Map<string, [number, string]>();
     if (status !== 'confusable' || !notes) return m;
-    findConfusables(notes.filter((n) => n.deckId === deckId)).forEach((p, i) => {
+    findConfusables(notes.filter((n) => n.deckId === deckId), wikt).forEach((p, i) => {
       if (!m.has(p.a)) m.set(p.a, [i, p.reason]);
       if (!m.has(p.b)) m.set(p.b, [i + 0.5, p.reason]);
     });
     return m;
-  }, [status, notes, deckId]);
+  }, [status, notes, deckId, wikt]);
+  // 表达群建议：互为同义词、又不在同一个群里
+  const clusterTips = useMemo(() => (status === 'cluster' && notes ? suggestClusters(notes.filter((n) => n.deckId === deckId), wikt) : []), [status, notes, deckId, wikt]);
   const dups = useMemo(() => (status === 'dup' && notes ? findDuplicates(notes.filter((n) => n.deckId === deckId)) : new Map<string, number>()), [status, notes, deckId]);
   useEffect(() => {
     const on = () => setFocus(readFocus());
@@ -239,6 +245,22 @@ export function LibraryPage({ deckId }: { deckId: string }) {
           <button type="button" className="pill" title="同一个意思的几种说法：复习其中一条时，背面顺带回想其他几条（答案遮住）" onClick={() => setBatch('cluster')}>设表达群</button>
           <button type="button" className="pill" onClick={() => void resetNotes(ids).then(() => done(`已重置 ${ids.length} 条为新卡`))}>重置为新卡</button>
           <button type="button" className="pill is-danger" onClick={() => setBatch('delete')}>删除</button>
+        </div>
+      )}
+
+      {clusterTips.length > 0 && !focus.note && (
+        <div className="cluster-tips">
+          <span className="muted small" title="Wiktionnaire 里互为同义词、还不在同一个群里的笔记。只是建议：点一下才加入，之后可以在「设表达群」里改群名或移出">可以并成一群（{clusterTips.length}）</span>
+          {clusterTips.slice(0, 12).map((t) => {
+            const a = notes.find((n) => n.id === t.a)!, b = notes.find((n) => n.id === t.b)!;
+            return (
+              <button key={`${t.a}|${t.b}`} type="button" className="pill is-suggest" title={`${a.lemma}：${a.meaningZh}\n${b.lemma}：${b.meaningZh}`}
+                onClick={() => void updateNotes(t.join, () => ({ cluster: t.cluster })).then(() => toast(`已放进表达群「${t.cluster}」：${t.join.map((id) => notes.find((n) => n.id === id)?.lemma).join(' / ')}`))}>
+                <span lang="fr">{a.lemma} ≈ {b.lemma}</span> → {t.fresh ? '新群' : '群'}「{t.cluster}」
+              </button>
+            );
+          })}
+          {clusterTips.length > 12 && <span className="muted small">还有 {clusterTips.length - 12} 组，处理完上面的会接着出</span>}
         </div>
       )}
 

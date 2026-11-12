@@ -127,3 +127,15 @@ export const otherFields = (d: Draft) => ({
   usage: nul(d.usage), cluster: nul(d.cluster), cueFamily: nul(d.cueFamily), source: nul(d.source), extra: nul(d.extra), etymology: nul(d.etymology), contrastNote: nul(d.contrastNote),
   layer: d.layer, tags: d.tags,
 });
+
+/** 词族线索里的条目（用 ；分开）：「repérer 找出、标出；le repère」 */
+const cueParts = (cue: string) => cue.split(/\s*[；;]\s*/).map((x) => x.trim()).filter(Boolean);
+const cueIs = (part: string, word: string) => part.toLowerCase() === word.toLowerCase() || part.toLowerCase().startsWith(`${word.toLowerCase()} `);
+/** 词族线索里有没有这个词 */
+export const cueHas = (cue: string, word: string) => cueParts(cue).some((p) => cueIs(p, word));
+/** 点词族候选：没有就加上（库里有这个词时带上它的意思），有就去掉 */
+export function toggleCue(cue: string, word: string, gloss?: string): string {
+  const parts = cueParts(cue);
+  if (parts.some((p) => cueIs(p, word))) return parts.filter((p) => !cueIs(p, word)).join('；');
+  return [...parts, gloss?.trim() ? `${word} ${gloss.trim()}` : word].join('；');
+}

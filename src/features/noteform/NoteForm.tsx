@@ -8,11 +8,13 @@ import type { Card, Note, Settings } from '../../schema';
 import { contrastLeaks, hasCloze, markErrors, noteErrors, promptErrors, blankIsFunctionWords } from '../../schema/validate';
 import { autoMark, markedText, type Lemmatize } from '../../lib/markTarget';
 import { lemmaCandidates, useFrDict, useFrVerbs } from '../../lib/gender/dict';
+import { etymOf, linksOf, useWiktEtym, useWiktLinks } from '../../lib/wikt';
+import { headWord } from '../../lib/headword';
 import { isFrench } from '../../ui/langs';
 import { useNotes } from '../../db/hooks';
 import { cardView, Cues } from '../CardFace';
 import { CARD_TYPES, ClozeMarker } from '../NoteParts';
-import { newRow, promptOf, rowFields, type Draft, type Row } from './model';
+import { cueHas, newRow, promptOf, rowFields, toggleCue, type Draft, type Row } from './model';
 
 /** 法语牌组：词形还原（词典 + 变位表，第一次用到时下载）；其他语言只靠词首比较 */
 export function useLemmatizer(lang: string | undefined): Lemmatize | undefined {
@@ -92,6 +94,20 @@ export function NoteForm({ d, setD, s, labels, mode, note, groupMates = [], onSu
     const c = d.cluster.trim();
     return c ? (allNotes ?? []).filter((n) => n.id !== note?.id && n.cluster?.trim() === c).map((n) => n.lemma) : [];
   }, [allNotes, d.cluster, note?.id]);
+  // Wiktionnaire 离线数据：展开「背面补充」时才下载；只给候选，不自动填
+  const [moreOpen, setMoreOpen] = useState(mode === 'add' && !!s.addShowMore);
+  const wantWikt = moreOpen && isFrench(s.sourceLang);
+  const wikt = useWiktLinks(wantWikt);
+  const wiktEtym = useWiktEtym(wantWikt);
+  const family = useMemo(() => {
+    const words = linksOf(wikt, d.lemma)?.family ?? [];
+    if (!words.length) return [];
+    const mine = new Map<string, string>();
+    for (const n of allNotes ?? []) if (!n.deleted && n.id !== note?.id) { const h = headWord(n.lemma); if (h && !mine.has(h)) mine.set(h, n.meaningZh); }
+    // 库里已有的排前面，其次按词频（索引里已经按词频排好）
+    return [...words.filter((w) => mine.has(w)), ...words.filter((w) => !mine.has(w))].map((w) => ({ w, zh: mine.get(w) }));
+  }, [wikt, d.lemma, allNotes, note?.id]);
+  const etymRef = etymOf(wiktEtym, d.lemma);
   const errs = formErrors(d, group);
   const set = <K extends keyof Draft>(k: K, v: Draft[K]) => setD((x) => ({ ...x, [k]: v }));
   const setRow = (key: string, patch: Partial<Row>) => setD((x) => ({ ...x, rows: x.rows.map((r) => (r.key === key ? { ...r, ...patch } : r)) }));
@@ -268,11 +284,24 @@ export function NoteForm({ d, setD, s, labels, mode, note, groupMates = [], onSu
         <Previews note={draftNote} s={s} labels={labels} mates={groupMates} ok={errs.count === 0} />
       </section>
 
-      <details className="nf-block nf-more" open={mode === 'add' ? s.addShowMore : undefined}>
+      <details className="nf-block nf-more" open={mode === 'add' ? s.addShowMore : undefined} onToggle={(e) => setMoreOpen((e.currentTarget as HTMLDetailsElement).open)}>
         <summary>背面补充 <span className="muted small">{[d.etymology, d.cueFamily, d.extra, d.source].filter((x) => x.trim()).length} / 4 已填 · 词源、词族、补充、出处</span></summary>
         <div className="grid2">
-          <label className="field"><span className="field-label">词源（认读卡背面必显示）</span><input value={d.etymology} placeholder="例如：poil 毛 → 顺着毛摸 = 顺着某人的意" onChange={(e) => set('etymology', e.target.value)} /></label>
-          <label className="field"><span className="field-label">词族线索</span><input value={d.cueFamily} placeholder="例如：repérer 找出、标出" onChange={(e) => set('cueFamily', e.target.value)} /></label>
+          <div className="field">
+            <label className="field"><span className="field-label">词源（认读卡背面必显示）</span><input value={d.etymology} placeholder="例如：poil 毛 → 顺着毛摸 = 顺着某人的意" onChange={(e) => set('etymology', e.target.value)} /></label>
+            {etymRef && <p className="nf-wikt muted small" lang="fr" title="Wiktionnaire 的词源原文，只作参考，不会自动填进去">Wiktionnaire · {etymRef}</p>}
+          </div>
+          <div className="field">
+            <label className="field"><span className="field-label">词族线索</span><input value={d.cueFamily} placeholder="例如：repérer 找出、标出" onChange={(e) => set('cueFamily', e.target.value)} /></label>
+            {family.length > 0 && (
+              <div className="nf-wikt row" title="Wiktionnaire 里的派生词 / 同族词：点一下填进词族线索，再点一次去掉；实线的是词库里已有的">
+                {family.map(({ w, zh }) => {
+                  const on = cueHas(d.cueFamily, w);
+                  return <button key={w} type="button" lang="fr" className={`pill nf-cand${on ? ' is-on' : ''}${zh != null ? ' is-mine' : ''}`} aria-pressed={on} title={zh || undefined} onClick={() => set('cueFamily', toggleCue(d.cueFamily, w, zh))}>{w}</button>;
+                })}
+              </div>
+            )}
+          </div>
           <label className="field"><span className="field-label">补充</span><input value={d.extra} placeholder="例如：≠ se tenir à 扶住" onChange={(e) => set('extra', e.target.value)} /></label>
           <label className="field"><span className="field-label">出处</span><input value={d.source} placeholder="例如：InnerFrench · 第 12 集" onChange={(e) => set('source', e.target.value)} /></label>
         </div>

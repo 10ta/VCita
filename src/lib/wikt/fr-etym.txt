@@ -1,0 +1,3 @@
+# VCita Wiktionnaire 词源：原形	词源原文（法语，第一条，最多 300 字符）
+# 数据：Wiktionnaire (fr.wiktionary.org, CC BY-SA 4.0)，经 kaikki.org / wiktextract 提取。由 scripts/build-fr-wikt.mjs 生成
+# （占位：还没生成。运行 node scripts/build-fr-wikt.mjs <fr-extract.jsonl.gz> 后提交）

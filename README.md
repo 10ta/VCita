@@ -10,6 +10,7 @@
 - **FSRS-6 调度**（可换回 SM-2）：按目标保持率排期，参数可以用自己的复习记录优化；四级评分、学习步骤、重学步骤、每日新卡上限、新卡穿插复习、相对逾期排序、一键分散积压、同一条笔记的卡当天只出一张；负荷预测比较不同的每日新卡数
 - **常用词先学**：新卡同一层里按 Lexique 词频从高到低出
 - **阴阳性**：卡面上的名词按阴阳性加下划线颜色，悬停看另一个性的形式和词尾规则（带可靠度和例外）
+- **Wiktionnaire 离线数据**：近音词、同音词、同义词、词族和词源原文做成随站点发布的索引，给易混组、表达群、词族线索、词源四处提供候选（只是建议，点一下才生效）
 - **产出卡逐词对照**：写出的答案和标准答案逐词比较，重音、阴阳性错误单独标出
 - **顽固卡**：遗忘达到阈值（默认 8 次）自动暂停，进入"待改造"
 - **输入即翻译**：回车立即入库，后台用 Google 翻译填两种目标语言，可以连续输入
@@ -224,15 +225,16 @@ VCita/
 src/
   schema/      数据结构（zod）与版本迁移
   db/          IndexedDB（Dexie）、写操作、查询 hooks
-  srs/         调度（FSRS-6 / SM-2）、出题队列、负荷预测、易混检测（纯函数）
+  srs/         调度（FSRS-6 / SM-2）、出题队列、负荷预测、易混检测、表达群建议（纯函数）
   sync/        GitHub 同步（与 TimeEncre 同源：API 封装、文件序列化、同步引擎、界面）
   io/          备份导入导出、批量导入、LWW 合并
-  lib/         时间、id、翻译与发音、逐词对照；gender/ 法语词典（词频、阴阳性）和词尾规则
+  lib/         时间、id、翻译与发音、逐词对照；gender/ 法语词典（词频、阴阳性）和词尾规则；
+               wikt/ Wiktionnaire 离线索引（近音、同音、同义、词族、词源）；headword.ts 取词条的第一个实词
   ui/          通用组件、快捷键、偏好
   features/    各页面（review / library / add / stats / decks / settings）
 functions/     CF Pages Function：发音代理
 api/           Vercel Edge Function：发音代理
-scripts/       build-fr-dict.mjs：从 Lexique / Lefff 生成词典数据
+scripts/       build-fr-dict.mjs：从 Lexique / Lefff 生成词典数据；build-fr-wikt.mjs：从 kaikki.org 的 Wiktionnaire 提取生成离线索引
 tests/         单元测试（调度验收、队列规则、牌组合并、同步，含内存版 GitHub 模拟）
 ```
 
@@ -324,6 +326,29 @@ tests/         单元测试（调度验收、队列规则、牌组合并、同�
 - 去掉某种卡会删除它（复习日志保留），再勾回来会恢复原来那张，进度不丢
 - 产出卡复习时可以先在输入框里写出答案，揭示后**逐词对照**（不自动判对错）：一样的绿色，你写的删除线、答案波浪下划线，只差重音、阴阳性写错（le / la、un / une、grand / grande）单独标出；只写了要换的部分就只和高亮部分比，写了整句就和整句比。首字母提示（H）由答案句自动生成：句子其余部分照常显示，只有要产出的部分给首字母（`L'enfance t… toute notre vie.`），笔记里的"提示"只用于没有法语题面的老卡。用上了就点"用上了 +1"
 - 旋转和题面切换只作用于认读卡
+
+
+### Wiktionnaire 离线数据
+
+Wiktionnaire 里的近音词（paronymes）、同音词（homophones）、同义词（synonymes）、词族（dérivés / apparentés）和词源原文，做成两份随站点发布的索引。只读、只给候选：不新增卡型和页面，不改存储格式，写进去的都是已有字段。
+
+- **可能易混**（词库筛选）多两种理由，排在最前面：库里两条笔记互为近音词 → `近音：éminent / imminent`；互为同音词 → `同音：ver / verre`。拼写差得远的（conjecture / conjoncture）、很短的词（cou / coup / coût）以前都找不出来。照旧选中后「设为易混组」才生成辨析卡
+- **表达群**（词库筛选）上方列出「可以并成一群」：库里两条笔记互为同义词、又不在同一个群里。点一下就加入：一边已经在群里，另一边并进去；都不在就新起一个群，名字取中文意思的第一个词（说「惊呆的」），之后可以用「设表达群」改名或移出。两边各有各的群时不建议
+- **词族线索**（笔记表单 → 背面补充）下方列出词族候选，库里已有的排前面（实线），其次按词频。点一个填进词族线索（库里有的带上它的中文意思，条目之间用 `；` 分开），再点一次去掉
+- **词源**（笔记表单 → 背面补充）下方小字显示 Wiktionnaire 的词源原文（法语），只作参考、**不自动填**：`etymology` 字段是你写的中文讲解
+- 多词表达按第一个实词查（`prendre qqn dans le sens du poil` → prendre、`s'occuper de` → occuper）。非法语牌组、索引没下载到时，四处都和没有这份数据时一样
+- 数据文件在 `src/lib/wikt/`，都是第一次用到时才下载（首屏不下载），文件名带哈希，浏览器长期缓存：
+  - `fr-links.txt`：`原形 \t 近音 \t 同音 \t 同义 \t 词族`，各列用 `,` 分隔（目标 ≤ 1.5 MB）。点到「可能易混」「表达群」筛选，或展开笔记表单的「背面补充」时下载
+  - `fr-etym.txt`：`原形 \t 词源原文`，取第一条、截到 300 字符（目标 ≤ 3 MB）。只有展开笔记表单的「背面补充」时下载
+  - 只收 `fr-dict.txt` 里词频大于 0 的原形；链接词只留词典里有的，按词频从高到低，每类最多 8 个；关系补成双向（Wiktionnaire 常常只有一边写了）；超过目标大小时从词频最低的原形开始丢
+- 重新生成（原始文件不进仓库；流式读取，不解压到磁盘。传网址时边下载边处理，700 MB 的压缩包也不落盘）：
+
+  ```
+  node scripts/build-fr-wikt.mjs https://kaikki.org/dictionary/downloads/fr/fr-extract.jsonl.gz
+  ```
+
+  也可以先下载再传路径：`node scripts/build-fr-wikt.mjs fr-extract.jsonl.gz`。跑完会打印两个文件的大小、词频前 5000 / 20000 的原形里各列非空的比例，以及几组验收词对（éminent / imminent、ver / verre / vert / vers、seau / sceau / sot / saut…）找没找到
+- 来源和许可：[kaikki.org](https://kaikki.org/dictionary/rawdata.html) 的法语维基词典提取（`fr-extract.jsonl.gz`，由 [wiktextract](https://github.com/tatuylonen/wiktextract) 生成，大约每周更新）。内容来自 Wiktionnaire（fr.wiktionary.org），CC BY-SA 4.0；`fr-links.txt`、`fr-etym.txt` 是它的衍生数据，沿用这个许可
 
 ## 分拣（迁移后整理旧卡）
 

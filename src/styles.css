@@ -536,3 +536,12 @@ textarea.weights { width: 100%; font-family: var(--mono); font-size: 12px; }
 .cl-out { color: var(--dim); }
 .cl-count { color: var(--accent); }
 .cl-fresh { margin-top: 6px !important; }
+
+/* Wiktionnaire 离线数据：词源参考、词族候选、表达群建议 */
+.field > label.field { margin-bottom: 0; }
+.nf-wikt { margin: 0; line-height: 1.45; }
+.nf-wikt.row { display: flex; flex-wrap: wrap; gap: 4px; }
+.nf-cand { border-style: dashed; padding: 2px 9px; }
+.nf-cand.is-mine, .nf-cand.is-on { border-style: solid; }
+.nf-cand.is-mine:not(.is-on) { color: var(--text); }
+.cluster-tips { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin: 0 0 10px; }

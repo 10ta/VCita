@@ -1,0 +1,3 @@
+# VCita Wiktionnaire 索引：原形	近音(paronymes)	同音(homophones)	同义(synonymes)	词族(dérivés / apparentés)；各列用 , 分隔，按词频从高到低，每类最多 8 个
+# 数据：Wiktionnaire (fr.wiktionary.org, CC BY-SA 4.0)，经 kaikki.org / wiktextract 提取。由 scripts/build-fr-wikt.mjs 生成
+# （占位：还没生成。运行 node scripts/build-fr-wikt.mjs <fr-extract.jsonl.gz> 后提交）
