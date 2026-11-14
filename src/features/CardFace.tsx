@@ -51,7 +51,11 @@ export function productionHint(answerFr: string): string {
 }
 export const plainSentence = (s: string) => s.replace(/\{\{(.*?)\}\}/g, (_, x: string) => x.split('::')[0]);
 
-export interface Face { text: ReactNode; speakText: string; lang: string; label: string }
+export interface Face {
+  text: ReactNode; speakText: string; lang: string; label: string;
+  /** 带 {{…}} 标注的原句（例句类的面才有）：复习页用它提前查目标表达的划词结果 */
+  raw?: string;
+}
 
 /** 第 variant 个版本（按复习次数轮换）：主句 / 主挖空句之后接备用例句 */
 export function pickSentence(note: Note, kind: 'recognition' | 'cloze', variant = 0): string {
@@ -88,7 +92,7 @@ export const variantCount = (note: Note) => ({
 export function faces(note: Note, s: Settings, labels: [string, string, string], variant = 0): Face[] {
   const sentence = pickSentence(note, 'recognition', variant);
   const front: Face = sentence
-    ? { text: renderSentence(sentence), speakText: plainSentence(sentence), lang: s.sourceLang, label: labels[0] }
+    ? { text: renderSentence(sentence), speakText: plainSentence(sentence), lang: s.sourceLang, label: labels[0], raw: sentence }
     : { text: note.lemma, speakText: note.lemma, lang: s.sourceLang, label: labels[0] };
   return [
     front,
@@ -138,7 +142,7 @@ function contrastView(note: Note, group: Note[], s: Settings, labels: [string, s
     },
     hint: null, cues: 'extra', choices: options.map((m) => choiceLabel(m.lemma)),
     answers: [
-      { text: renderSentence(sent), speakText: plainSentence(sent), lang: s.sourceLang, label: labels[0] },
+      { text: renderSentence(sent), speakText: plainSentence(sent), lang: s.sourceLang, label: labels[0], raw: sent },
       {
         text: (
           <span className="contrast-table">
@@ -206,7 +210,7 @@ export function cardView(type: Card['type'], note: Note, s: Settings, labels: [s
     // 背面：法语答案（{{…}} 高亮目标表达），有法语题面时中文意图作为注释
     const it = pickIntent(note, variant);
     const a = it.answerFr;
-    const answer: Face = { text: hasCloze(a) ? renderSentence(a) : a, speakText: plainSentence(a), lang: s.sourceLang, label: labels[0] };
+    const answer: Face = { text: hasCloze(a) ? renderSentence(a) : a, speakText: plainSentence(a), lang: s.sourceLang, label: labels[0], raw: hasCloze(a) ? a : undefined };
     if (it.promptFr) {
       return {
         question: { text: renderSentence(it.promptFr), speakText: plainSentence(it.promptFr), lang: s.sourceLang, label: `${labels[0]}题面` },
@@ -237,7 +241,7 @@ export function cardView(type: Card['type'], note: Note, s: Settings, labels: [s
       question: { text: renderSentence(sent, 'blank', { hint: noteHint, letters: s.clozeLetters }), speakText: '', lang: s.sourceLang, label: labels[0] },
       hint, cues: 'all',
       answers: [
-        { text: renderSentence(sent), speakText: plain, lang: s.sourceLang, label: labels[0] },
+        { text: renderSentence(sent), speakText: plain, lang: s.sourceLang, label: labels[0], raw: sent },
         { text: note.meaningZh, speakText: note.meaningZh, lang: s.targetLang1, label: labels[1] },
       ],
     };

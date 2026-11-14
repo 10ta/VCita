@@ -7,6 +7,14 @@ export interface MetaRow {
   value: unknown;
 }
 
+/** 发音音频的本机缓存：重听、离线都不用再请求（不同步，按最近使用淘汰） */
+export interface AudioRow {
+  key: string;
+  blob: Blob;
+  /** 最近一次用到的时间（毫秒） */
+  at: number;
+}
+
 export interface CacheRow {
   key: string;
   value: unknown;
@@ -26,6 +34,7 @@ class VocabDb extends Dexie {
   known!: EntityTable<Known, 'id'>;
   /** 查词 / 翻译结果的本机缓存（不同步） */
   cache!: Table<CacheRow, string>;
+  audio!: Table<AudioRow, string>;
 
   constructor() {
     super('vcita');
@@ -41,6 +50,8 @@ class VocabDb extends Dexie {
     this.version(2).stores({ clips: 'id, createdAt, status', cache: 'key' });
     // v3：阅读页的文章、遇见记录、手动标记的认识词
     this.version(3).stores({ texts: 'id, createdAt', encounters: 'id, key, textId, createdAt', known: 'id' });
+    // v4：发音音频缓存
+    this.version(4).stores({ audio: 'key, at' });
   }
 }
 

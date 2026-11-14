@@ -5,7 +5,9 @@ import { buildQueue } from '../../srs/queue';
 import { fmtNextIn, isDue, paramsFor, preview, type Rating } from '../../srs/scheduler';
 import { fmtDays, fmtLocalMoment, fmtMinutes, nextDayStartMs } from '../../lib/time';
 import { answerCustom, endCustom, nextQueue, pickCustom, restoreCustom, useCustom, type CustomSession } from '../../srs/custom';
-import { speak } from '../../lib/speech';
+import { preloadSpeech, speak } from '../../lib/speech';
+import { clozeTargets } from '../../schema/validate';
+import { prefetchLookup } from '../Lookup';
 import { usePrefs, setPrefs } from '../../ui/prefs';
 import { useHotkeys, useNow } from '../../ui/hooks';
 import { toast } from '../../ui/toast';
@@ -14,7 +16,7 @@ import { syncIfAuto } from '../../sync/engine';
 import { CardStats, cardView, Cues, SpeakBtn, TYPE_LABEL } from '../CardFace';
 import { NoteEditor } from '../NoteEditor';
 import { ClusterStrip } from './ClusterStrip';
-import { Fr, useNoteFreqs } from '../FrText';
+import { Fr, useFrDictCtx, useNoteFreqs } from '../FrText';
 import { diffWords, pickReference, summarize, type DiffOp } from '../../lib/diff';
 
 const RATINGS: Array<{ r: Rating; label: string; cls: string }> = [
@@ -117,6 +119,32 @@ export function ReviewPage({ deckId }: { deckId: string }) {
   const frontIsSource = !!split && !!s && split.question.lang === s.sourceLang && !!split.question.speakText;
   const sourceAnswer = split && s ? split.answers.find((a) => a.lang === s.sourceLang && a.speakText) : undefined;
   const lastSpoken = useRef<string | null>(null);
+  const frDict = useFrDictCtx();
+
+  // ---- 提前准备：让翻面、换卡时不用等网络 ----
+  // 1) 这张卡背面要读的法语答案：正面时就下载好
+  // 2) 下一张卡（按"这张已答"重排队列预测）出题时 / 翻面后要读的：现在就下载好
+  // 3) 这张卡的目标表达：现在就查好划词结果，翻面后悬停目标立即弹出
+  // 都只是预热缓存，预测错了也只是照旧现读、现查
+  useEffect(() => {
+    if (!split || !card || !s || !note) return;
+    for (const t of speechPlan(split, s.sourceLang, autoRead)) preloadSpeech(t.text, t.lang);
+    const faces = [split.question, ...split.answers].filter((f) => f.raw && f.lang === s.sourceLang);
+    const targets = new Map<string, string>();
+    for (const f of faces) for (const t of clozeTargets(f.raw!)) if (!targets.has(t)) targets.set(t, plainOf(f.raw!));
+    for (const [t, ctx] of [...targets].slice(0, 4)) prefetchLookup(t, ctx, frDict, s.sourceLang, s.targetLang1);
+    if (custom || !cards || !logs) return;
+    const sameNote = new Set(cards.filter((c) => c.noteId === card.noteId).map((c) => c.id));
+    const nq = buildQueue({ cards, todayLogs: logs, deckId, now, settings: s, skipped: new Set([...skipped, ...sameNote]), learnAheadAll, notes: noteMap, freq });
+    const nc = nq.next;
+    const nn = nc ? noteMap.get(nc.noteId) : undefined;
+    if (!nc || !nn) return;
+    const nListen = listenCards === 'all' || (listenCards === 'core' && nn.layer === 'core');
+    const nGroup = nn.contrastGroup ? (notes ?? []).filter((x) => x.contrastGroup === nn.contrastGroup && x.id !== nn.id) : [];
+    const ns = cardView(nc.type, nn, s, labels, nc.reps, nListen, nGroup);
+    for (const t of speechPlan(ns, s.sourceLang, autoRead, true)) preloadSpeech(t.text, t.lang);
+  }, [currentId, split?.question.speakText]); // eslint-disable-line react-hooks/exhaustive-deps
+
   useEffect(() => {
     if (!split || !card) return;
     // 听力卡出题时总要读（不读就没法答）；其他情况看「自动读」
@@ -397,4 +425,19 @@ function TypedDiff({ typed, answerFr }: { typed: string; answerFr: string }) {
       </div>
     </div>
   );
+}
+
+const plainOf = (raw: string) => raw.replace(/\{\{(.*?)\}\}/g, (_, x: string) => x.split('::')[0]);
+/**
+ * 这张卡按现在的设置会自动读哪些法语（和出题时的自动发音规则一致）：
+ * 题面是法语时，听力卡总要读、其他卡看「自动读」；题面不是法语时，开了「自动读」翻面后读法语答案。
+ * withBack：翻面后要读的也算上（预测下一张时）
+ */
+function speechPlan(split: ReturnType<typeof cardView>, sourceLang: string, autoRead: boolean, withBack = true): Array<{ text: string; lang: string }> {
+  const out: Array<{ text: string; lang: string }> = [];
+  const frontIsSource = split.question.lang === sourceLang && !!split.question.speakText;
+  if (frontIsSource && (autoRead || split.listen)) out.push({ text: split.question.speakText, lang: split.question.lang });
+  const ans = split.answers.find((a) => a.lang === sourceLang && a.speakText);
+  if (withBack && !frontIsSource && autoRead && ans) out.push({ text: ans.speakText, lang: ans.lang });
+  return out;
 }

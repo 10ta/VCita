@@ -1,4 +1,5 @@
 // 翻译和发音都直连 Google（不需要服务器），翻译失败时退到 MyMemory。
+import { db } from '../db/db';
 // 发音：index.html 里设了 <meta name="referrer" content="no-referrer">，Google TTS 不会因来源页面拒绝请求；
 // 依次尝试：同源代理 ./api/tts（CF Pages / Vercel 部署时随站点一起发布）→ 直连 Google → 浏览器自带语音。
 const TIMEOUT = 8000;
@@ -38,6 +39,67 @@ async function translateMyMemory(text: string, sl: string, tl: string): Promise<
   return Number(d?.responseStatus) === 200 && t && !/MYMEMORY WARNING|QUERY LENGTH LIMIT/i.test(t) ? t : null;
 }
 
+// ---- 发音缓存 ----
+// 同站代理 ./api/tts 能用时，音频先下载成 Blob 存进本机（db.audio），再播放：重听、下次再出现、离线都是零等待。
+// 直连 Google 是跨域的（拿不到音频数据），那条路照旧直接播放、不缓存。
+// 存最近用过的 AUDIO_MAX 条（一条约 10–30 KB，上限约 30–50 MB），超出时删最久没用的
+export const AUDIO_MAX = 2000;
+const audioKey = (text: string, lang: string) => `${lang}|${text}`;
+/** 代理是否可用：null = 还没试过 */
+let proxyOk: boolean | null = null;
+const fetching = new Map<string, Promise<Blob | null>>();
+let writes = 0;
+
+async function cachedAudio(key: string): Promise<Blob | null> {
+  try {
+    const row = await db.audio.get(key);
+    if (!row) return null;
+    void db.audio.update(key, { at: Date.now() }).catch(() => {});
+    return row.blob;
+  } catch { return null; }
+}
+async function storeAudio(key: string, blob: Blob) {
+  try {
+    await db.audio.put({ key, blob, at: Date.now() });
+    // 每写 50 条检查一次总数，超出时按最近使用时间删最旧的
+    if (++writes % 50 === 0) {
+      const n = await db.audio.count();
+      if (n > AUDIO_MAX) await db.audio.orderBy('at').limit(n - AUDIO_MAX).delete();
+    }
+  } catch { /* 存不下（隐私模式、空间满）就不缓存 */ }
+}
+/** 经同站代理下载音频（本机有就直接返回）。代理不可用（本地开发、没部署函数）返回 null，以后不再试 */
+function fetchAudio(text: string, lang: string): Promise<Blob | null> {
+  const key = audioKey(text, lang);
+  const hit = fetching.get(key);
+  if (hit) return hit;
+  const p = (async () => {
+    const c = await cachedAudio(key);
+    if (c) return c;
+    if (proxyOk === false) return null;
+    const ctrl = new AbortController();
+    const timer = setTimeout(() => ctrl.abort(), TIMEOUT);
+    try {
+      const r = await fetch(sources[0](text, lang), { signal: ctrl.signal });
+      const type = r.headers.get('content-type') ?? '';
+      if (!r.ok || !type.startsWith('audio')) { if (r.status === 404 || !type.startsWith('audio')) proxyOk = false; return null; }
+      const blob = await r.blob();
+      proxyOk = true;
+      if (blob.size > 0) void storeAudio(key, blob);
+      return blob.size > 0 ? blob : null;
+    } catch { return null; } finally { clearTimeout(timer); }
+  })();
+  fetching.set(key, p);
+  void p.finally(() => fetching.delete(key));
+  return p;
+}
+/** 提前下载一句的发音（下一张卡、翻面后要读的答案），播放时直接用本机的 */
+export function preloadSpeech(text: string, lang: string) {
+  const t = text?.trim();
+  if (!t || t.length > 200 || proxyOk === false) return;
+  void fetchAudio(t, lang);
+}
+
 const sources = [
   (q: string, tl: string) => `./api/tts?q=${encodeURIComponent(q)}&tl=${encodeURIComponent(tl)}`,
   (q: string, tl: string) => `https://translate.google.com/translate_tts?ie=UTF-8&client=tw-ob&tl=${encodeURIComponent(tl)}&q=${encodeURIComponent(q)}`,
@@ -51,9 +113,12 @@ function release(a: HTMLAudioElement) {
   try { a.pause(); a.removeAttribute('src'); a.load(); } catch { /* 忽略 */ }
 }
 
-function playUrl(url: string): Promise<void> {
+let currentBlobUrl: string | null = null;
+function playUrl(url: string, blobUrl = false): Promise<void> {
   return new Promise((resolve, reject) => {
     if (current) release(current);
+    if (currentBlobUrl) { URL.revokeObjectURL(currentBlobUrl); currentBlobUrl = null; }
+    if (blobUrl) currentBlobUrl = url;
     const a = new Audio(url);
     current = a;
     a.onended = () => { release(a); if (current === a) current = null; };
@@ -105,6 +170,21 @@ const playAfterGesture = (text: string, lang: string) => { pendingAuto = { text,
 export async function speak(text: string, lang: string) {
   if (!text) return;
   pendingAuto = null;
+  // 先走本机缓存 / 同站代理下载（能缓存）；拿不到再按原来的顺序直接播放
+  if (proxyOk !== false && text.length <= 200) {
+    const blob = await fetchAudio(text, lang);
+    if (blob) {
+      try {
+        await playUrl(URL.createObjectURL(blob), true);
+        working = 0;
+        return;
+      } catch (e) {
+        const name = (e as Error).name;
+        if (name === 'AbortError') return;
+        if (name === 'NotAllowedError') return playAfterGesture(text, lang);
+      }
+    }
+  }
   const order = working === null ? sources.map((_, i) => i) : [working];
   for (const i of order) {
     try {

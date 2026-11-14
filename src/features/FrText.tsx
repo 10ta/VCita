@@ -1,7 +1,7 @@
 // 法语文字里的名词 / 形容词：名词按阴阳性加下划线颜色（阳性蓝、阴性红），鼠标悬停（手机上点一下）弹出迷你条：
 // 这个词的性、另一个性的形式、按词尾的记忆规则（含可靠度和最常见的例外），同形异义词给两个意思。
 import { Children, cloneElement, createContext, isValidElement, useContext, useEffect, useMemo, useRef, useState, type ReactElement, type ReactNode } from 'react';
-import { genderInfo, lemmaFreq, useFrDict, type FrDict, type GenderInfo } from '../lib/gender/dict';
+import { genderInfo, lemmaFreq, loadVerbs, useFrDict, type FrDict, type GenderInfo } from '../lib/gender/dict';
 import { useDeckSettings, useNotes, useSettings } from '../db/hooks';
 import { usePrefs } from '../ui/prefs';
 import { isFrench } from '../ui/langs';
@@ -27,6 +27,13 @@ export function FrProvider({ children }: { children: ReactNode }) {
   const mode = genderDisplayOf(s);
   // 显示方式只靠 CSS 切换（<html data-gender>），换设置不用重新切词
   useEffect(() => { document.documentElement.dataset.gender = mode; }, [mode]);
+  // 词典加载完后，趁空闲把动词表（约 2 MB）也下载、解析好：第一次划词、出卡预查时就不用等
+  useEffect(() => {
+    if (!dict) return;
+    const w = window as Window & { requestIdleCallback?: (cb: () => void, o?: { timeout: number }) => number };
+    const go = () => void loadVerbs().catch(() => {});
+    if (w.requestIdleCallback) w.requestIdleCallback(go, { timeout: 5000 }); else window.setTimeout(go, 2000);
+  }, [dict]);
   return (
     <FrCtx.Provider value={{ dict }}>
       {children}
@@ -35,6 +42,9 @@ export function FrProvider({ children }: { children: ReactNode }) {
     </FrCtx.Provider>
   );
 }
+
+/** 当前加载好的法语词典（不是法语牌组、还没加载完时为 null） */
+export const useFrDictCtx = () => useContext(FrCtx).dict;
 
 /** 每条笔记的词频（词典加载完之前是 undefined） */
 export function useNoteFreqs(): Map<string, number | null> | undefined {

@@ -9,7 +9,8 @@ import { useDeckSettings, useKnown, useNotes } from '../db/hooks';
 import { usePrefs } from '../ui/prefs';
 import { isFrench } from '../ui/langs';
 import { addClip, recordEncounter, setKnown } from '../db/actions';
-import { canonicalLemma, lemmaCandidates, lemmaOf, useFrVerbs, type FrDict } from '../lib/gender/dict';
+import { canonicalLemma, lemmaCandidates, lemmaOf, loadVerbs, useFrVerbs, type FrDict, type FrVerbs } from '../lib/gender/dict';
+import { MASKED_SELECTOR } from './FrText';
 import { isFunctionWord, useReadingIndex } from '../lib/reading';
 import type { Encounter } from '../schema';
 import { externalLinks, lookupWiktionnaire, sentenceAround, translateCached, translateSenses, type DictResult } from '../lib/dictionary';
@@ -17,7 +18,13 @@ import { speak } from '../lib/speech';
 import { toast } from '../ui/toast';
 
 interface Anchor { top: number; bottom: number; left: number; width: number }
-interface Sel { text: string; context: string; anchor: Anchor; source: string | null; textId: string | null }
+interface Sel {
+  text: string; context: string; anchor: Anchor; source: string | null; textId: string | null;
+  /** 悬停打开的：鼠标离开词和气泡就关 */
+  hover?: boolean;
+  /** 悬停复习卡的目标表达打开的：不记"遇见"（它本来就有卡） */
+  passive?: boolean;
+}
 
 const MARGIN = 8;
 /** 宽度不超过 380（手机上占满减两边留白） */
@@ -66,18 +73,85 @@ function allowed(node: Node | null): boolean {
   return !el.closest('[data-no-lookup], input, textarea, select, [contenteditable="true"], .lookup-pop');
 }
 
+interface Found { dict: DictResult | null; zh: string[] | null; zhWhole: string | null; sentenceZh: string | null; textZh: string | null; error: boolean }
+interface Query { mode: Mode; bare: string; lemma: string | null; text: string; context: string; fr: boolean; sl: string; tl: string }
+
+/** 一次查询要的全部结果（Wiktionnaire 释义、释义机翻、整句机翻）。结果在本机缓存 4 周；进行中的同一查询共用一个请求 */
+const inflight = new Map<string, Promise<Found>>();
+function fetchFound(q: Query): Promise<Found> {
+  const k = JSON.stringify(q);
+  const hit = inflight.get(k);
+  if (hit) return hit;
+  const p = (async (): Promise<Found> => {
+    let error = false;
+    const wk = q.mode === 'sentence' || !q.fr ? Promise.resolve(null) : lookupWiktionnaire(q.lemma && q.lemma !== q.bare ? [q.lemma, q.bare] : [q.bare]).catch(() => { error = true; return null; });
+    const sentenceZh = q.mode !== 'sentence' && q.context && q.context !== q.text ? translateCached(q.context, q.sl, q.tl) : Promise.resolve(null);
+    const textZh = q.mode === 'word' && q.fr ? Promise.resolve(null) : translateCached(q.text, q.sl, q.tl);
+    const d = await wk;
+    const defs = (d?.entries ?? []).slice(0, 2).flatMap((e) => e.senses.slice(0, 4).map((x) => x.def));
+    const [zh, sz, tz] = await Promise.all([translateSenses(defs, q.sl, q.tl), sentenceZh, textZh]);
+    return { dict: d, zh: zh.lines, zhWhole: zh.lines ? null : zh.whole, sentenceZh: sz, textZh: tz, error };
+  })();
+  inflight.set(k, p);
+  // 网络失败的不留着，下次重查；成功的已进本机缓存，几分钟后从内存里清掉
+  p.then(() => window.setTimeout(() => inflight.delete(k), 5 * 60_000), () => inflight.delete(k));
+  return p;
+}
+function queryOf(text: string, context: string, dict: FrDict | null, verbs: FrVerbs | null, fr: boolean, sl: string, tl: string): Query {
+  const mode = modeOf(text);
+  const bare = mode === 'word' ? text.replace(ELISION, '') : text;
+  const lemma = mode === 'word' && dict ? lemmaOf(dict, verbs, bare)?.lemma ?? null : null;
+  return { mode, bare, lemma, text, context, fr, sl, tl };
+}
+
+/** 复习卡一出现就把目标表达的划词结果查好（翻面后悬停目标立即弹出，不用等网络）。不记遇见 */
+export function prefetchLookup(text: string, context: string, dict: FrDict | null, sl: string, tl: string) {
+  const t = text.replace(/\s+/g, ' ').trim();
+  if (!t || !hasLetter(t)) return;
+  const fr = sl.toLowerCase().startsWith('fr');
+  // 单词要等动词表才知道原形（和打开气泡时的查询一致，才能命中同一份结果）
+  const go = (verbs: FrVerbs | null) => void fetchFound(queryOf(t, context.trim() || t, dict, verbs, fr, sl, tl)).catch(() => {});
+  if (modeOf(t) === 'word' && fr) loadVerbs().then(go, () => go(null));
+  else go(null);
+}
+
+/** 鼠标下的那个词：文字节点里按字母往两边扩；指针不在这个词的方框里（指在空白处）返回 null */
+function wordAt(x: number, y: number): { text: string; range: Range } | null {
+  const d = document as Document & { caretPositionFromPoint?: (x: number, y: number) => { offsetNode: Node; offset: number } | null };
+  let node: Node | null = null, off = 0;
+  if (d.caretPositionFromPoint) { const p = d.caretPositionFromPoint(x, y); if (p) { node = p.offsetNode; off = p.offset; } }
+  else if (document.caretRangeFromPoint) { const r = document.caretRangeFromPoint(x, y); if (r) { node = r.startContainer; off = r.startOffset; } }
+  if (!node || node.nodeType !== Node.TEXT_NODE) return null;
+  const s = node.textContent ?? '';
+  const isL = (c: string | undefined) => !!c && /[\p{L}'’-]/u.test(c);
+  let a = off, b = off;
+  while (a > 0 && isL(s[a - 1])) a--;
+  while (b < s.length && isL(s[b])) b++;
+  const text = s.slice(a, b).replace(/^['’-]+|['’-]+$/g, '');
+  if (!text || !/\p{L}{2}/u.test(text)) return null;
+  const range = document.createRange();
+  range.setStart(node, a); range.setEnd(node, b);
+  const r = range.getBoundingClientRect();
+  if (x < r.left - 1 || x > r.right + 1 || y < r.top - 1 || y > r.bottom + 1) return null;
+  return { text, range };
+}
+const inRect = (x: number, y: number, a: Anchor, pad = 6) => x >= a.left - pad && x <= a.left + a.width + pad && y >= a.top - pad && y <= a.bottom + pad;
+
 export function LookupBubble({ dict }: { dict: FrDict | null }) {
   const [sel, setSel] = useState<Sel | null>(null);
   const box = useRef<HTMLDivElement>(null);
   const last = useRef('');
+  const cur = useRef<Sel | null>(null);
   useEffect(() => {
-    const close = () => { last.current = ''; setSel(null); };
+    const close = () => { last.current = ''; cur.current = null; window.clearTimeout(leaveTimer); setSel(null); };
     const read = () => {
       const s = window.getSelection();
       if (!s || s.isCollapsed || !s.rangeCount) return;
       const text = s.toString().replace(/\s+/g, ' ').trim();
       if (!text || text.length > 400 || !hasLetter(text) || !allowed(s.anchorNode) || !allowed(s.focusNode)) return;
-      const range = s.getRangeAt(0);
+      openRange(text, s.getRangeAt(0), {});
+    };
+    const openRange = (text: string, range: Range, extra: Pick<Sel, 'hover' | 'passive'>) => {
       const r = range.getBoundingClientRect();
       const key = `${text}@${Math.round(r.left)},${Math.round(r.top)}`;
       if (key === last.current) return;
@@ -86,13 +160,55 @@ export function LookupBubble({ dict }: { dict: FrDict | null }) {
       const context = modeOf(text) === 'sentence' ? text : sentenceAround(block, start, end) || text;
       const startEl = range.startContainer instanceof Element ? range.startContainer : range.startContainer.parentElement;
       const host = startEl?.closest('[data-lookup-source]');
-      setSel({
+      const next: Sel = {
         text, context, source: host?.getAttribute('data-lookup-source') || null,
         textId: startEl?.closest('[data-text-id]')?.getAttribute('data-text-id') || null,
-        anchor: { top: r.top, bottom: r.bottom, left: r.left, width: r.width },
-      });
+        anchor: { top: r.top, bottom: r.bottom, left: r.left, width: r.width }, ...extra,
+      };
+      cur.current = next;
+      setSel(next);
       window.dispatchEvent(new Event('vcita:lookup-open'));
     };
+
+    // ---- 悬停（只用鼠标；手机照旧长按选词）----
+    // 复习卡背面的目标表达（.cloze）：悬停 0.25 秒弹出（结果已在出卡时查好）；其他任何词：悬停满 1 秒弹出。
+    // 悬停打开的气泡，鼠标离开词和气泡就关；选中文字打开的气泡不被悬停替换
+    let hoverTimer: number | undefined;
+    let leaveTimer: number | undefined;
+    let hoverKey = '';
+    const hoverable = (el: Element | null) => !!el && allowed(el) && !el.closest(MASKED_SELECTOR) && !el.closest('button, a, label, .gender-pop');
+    const move = (e: PointerEvent) => {
+      if (e.pointerType !== 'mouse' || e.buttons) return;
+      const open = cur.current;
+      const overBox = !!box.current?.contains(e.target as Node);
+      if (open?.hover) {
+        window.clearTimeout(leaveTimer);
+        if (!overBox && !inRect(e.clientX, e.clientY, open.anchor)) leaveTimer = window.setTimeout(close, 350);
+      }
+      if (overBox || (open && !open.hover) || !(window.getSelection()?.isCollapsed ?? true)) { window.clearTimeout(hoverTimer); hoverKey = ''; return; }
+      const el = e.target instanceof Element ? e.target : null;
+      const target = el?.closest('b.cloze');
+      if (target && hoverable(target)) {
+        const text = (target.textContent ?? '').trim();
+        const k = `t:${text}`;
+        if (k === hoverKey) return;
+        hoverKey = k;
+        window.clearTimeout(hoverTimer);
+        hoverTimer = window.setTimeout(() => {
+          const range = document.createRange();
+          range.selectNodeContents(target);
+          openRange(text, range, { hover: true, passive: true });
+        }, 250);
+        return;
+      }
+      const w = hoverable(el) ? wordAt(e.clientX, e.clientY) : null;
+      const k = w ? `w:${w.text}@${Math.round(w.range.getBoundingClientRect().left)}` : '';
+      if (k === hoverKey) return;
+      hoverKey = k;
+      window.clearTimeout(hoverTimer);
+      if (w) hoverTimer = window.setTimeout(() => openRange(w.text, w.range, { hover: true }), 1000);
+    };
+    const leave = () => { window.clearTimeout(hoverTimer); hoverKey = ''; };
     let pointerDown = false;
     let timer: number | undefined;
     const down = (e: PointerEvent) => {
@@ -113,6 +229,8 @@ export function LookupBubble({ dict }: { dict: FrDict | null }) {
     const scroll = (e: Event) => { if (!box.current?.contains(e.target as Node)) close(); };
     document.addEventListener('pointerdown', down, true);
     document.addEventListener('pointerup', up, true);
+    document.addEventListener('pointermove', move, { passive: true });
+    document.documentElement.addEventListener('pointerleave', leave);
     document.addEventListener('selectionchange', change);
     window.addEventListener('keydown', key, true);
     window.addEventListener('scroll', scroll, true);
@@ -120,6 +238,10 @@ export function LookupBubble({ dict }: { dict: FrDict | null }) {
     window.addEventListener('hashchange', close);
     return () => {
       window.clearTimeout(timer);
+      window.clearTimeout(hoverTimer);
+      window.clearTimeout(leaveTimer);
+      document.removeEventListener('pointermove', move);
+      document.documentElement.removeEventListener('pointerleave', leave);
       document.removeEventListener('pointerdown', down, true);
       document.removeEventListener('pointerup', up, true);
       document.removeEventListener('selectionchange', change);
@@ -133,12 +255,10 @@ export function LookupBubble({ dict }: { dict: FrDict | null }) {
   const place = placeBubble(sel.anchor, window.innerWidth, window.innerHeight);
   return (
     <div ref={box} className="lookup-pop" style={place} role="dialog" aria-label={`查词：${sel.text}`}>
-      <LookupBody key={`${sel.text}|${sel.context}`} sel={sel} dict={dict} onClose={() => { last.current = ''; setSel(null); }} />
+      <LookupBody key={`${sel.text}|${sel.context}`} sel={sel} dict={dict} onClose={() => { last.current = ''; cur.current = null; setSel(null); }} />
     </div>
   );
 }
-
-interface Found { dict: DictResult | null; zh: string[] | null; zhWhole: string | null; sentenceZh: string | null; textZh: string | null; error: boolean }
 
 function LookupBody({ sel, dict, onClose }: { sel: Sel; dict: FrDict | null; onClose: () => void }) {
   const prefs = usePrefs();
@@ -163,26 +283,17 @@ function LookupBody({ sel, dict, onClose }: { sel: Sel; dict: FrDict | null; onC
 
   // 记一次遇见（单词按原形，表达按小写原样；长句不记）
   useEffect(() => {
-    if (mode === 'sentence' || !ready) return;
+    if (mode === 'sentence' || !ready || sel.passive) return;
     let alive = true;
     void recordEncounter({ key, form: bare, sentence: sel.context, textId: sel.textId, source: sel.source }).then((list) => alive && setSeen(list));
     return () => { alive = false; };
-  }, [mode, ready, key, bare, sel.context, sel.textId, sel.source]);
+  }, [mode, ready, key, bare, sel.context, sel.textId, sel.source, sel.passive]);
 
   useEffect(() => {
     if (!s || !ready) return;
     let alive = true;
-    const sl = s.sourceLang, tl = s.targetLang1;
-    void (async () => {
-      let error = false;
-      const wk = mode === 'sentence' || !fr ? Promise.resolve(null) : lookupWiktionnaire(lemma && lemma !== bare ? [lemma, bare] : [bare]).catch(() => { error = true; return null; });
-      const sentenceZh = mode !== 'sentence' && sel.context && sel.context !== sel.text ? translateCached(sel.context, sl, tl) : Promise.resolve(null);
-      const textZh = mode === 'word' && fr ? Promise.resolve(null) : translateCached(sel.text, sl, tl);
-      const d = await wk;
-      const defs = (d?.entries ?? []).slice(0, 2).flatMap((e) => e.senses.slice(0, 4).map((x) => x.def));
-      const [zh, sz, tz] = await Promise.all([translateSenses(defs, sl, tl), sentenceZh, textZh]);
-      if (alive) setFound({ dict: d, zh: zh.lines, zhWhole: zh.lines ? null : zh.whole, sentenceZh: sz, textZh: tz, error });
-    })();
+    void fetchFound({ mode, bare, lemma, text: sel.text, context: sel.context, fr, sl: s.sourceLang, tl: s.targetLang1 })
+      .then((f) => alive && setFound(f), () => alive && setFound({ dict: null, zh: null, zhWhole: null, sentenceZh: null, textZh: null, error: true }));
     return () => { alive = false; };
   }, [s, ready, mode, bare, lemma, sel.context, sel.text, fr]);
 
