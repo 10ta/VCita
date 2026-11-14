@@ -6,7 +6,7 @@ import { useLiveQuery } from 'dexie-react-hooks';
 import Dexie from 'dexie';
 import { db } from '../db/db';
 import { GitHub, GitHubError, parseRepo } from './github';
-import { applyRemoteFile, isOurFile, localFiles, type LocalData } from './files';
+import { applyRemoteFile, GZ, gitBlobSha, gitBlobShaBytes, gunzipText, gzipBytes, isOurFile, localFiles, type LocalData } from './files';
 import { toIso } from '../lib/time';
 
 export interface SyncConfig {
@@ -20,8 +20,10 @@ export interface SyncConfig {
 }
 
 export interface SyncState {
-  /** 上次同步时双方一致的各文件 blob SHA（路径相对于数据目录） */
+  /** 上次同步时双方一致的各文件 JSON 文本的 SHA（路径相对于数据目录，如 notes/2026-09.json） */
   fileShas: Record<string, string>;
+  /** 上次同步时远端各文件的 blob SHA（键是仓库里的实际路径，.json.gz 带后缀）。没有时按旧版：.json 的 blob SHA 就是文本 SHA */
+  remoteShas?: Record<string, string>;
   lastSyncAt?: string;
   lastCommit?: string;
 }
@@ -118,6 +120,8 @@ export function syncNow(): Promise<SyncResult> {
 async function runSync(): Promise<SyncResult> {
   const cfg = await getSyncConfig();
   if (!cfg) throw new Error('还没有配置同步');
+  if (typeof CompressionStream === 'undefined' || typeof DecompressionStream === 'undefined')
+    throw new Error('这个浏览器不支持压缩，无法同步（需要 Chrome 80+ / Safari 16.4+ / Firefox 113+）');
   setStatus({ phase: 'syncing' });
   try {
     const gh = githubFor(cfg);
@@ -143,7 +147,7 @@ async function attempt(gh: GitHub, cfg: SyncConfig): Promise<SyncResult | 'retry
   const prefix = `${dir}/`;
   const state = await getSyncState();
 
-  // 1. 读远端：当前分支头、数据目录下各文件的 blob SHA
+  // 1. 读远端：当前分支头、数据目录下各文件的 blob SHA（键是实际路径：新格式 xxx.json.gz，旧版 xxx.json）
   const head = await gh.getHead(cfg.branch);
   const remote = new Map<string, string>();
   let rootTree: string | null = null;
@@ -154,50 +158,75 @@ async function attempt(gh: GitHub, cfg: SyncConfig): Promise<SyncResult | 'retry
     for (const e of tree.tree) {
       if (e.type !== 'blob' || !e.path.startsWith(prefix)) continue;
       const rel = e.path.slice(prefix.length);
-      if (isOurFile(rel)) remote.set(rel, e.sha);
+      if (isOurFile(rel.endsWith(GZ) ? rel.slice(0, -GZ.length) : rel)) remote.set(rel, e.sha);
     }
   }
+  const lastSeen = (path: string) => state.remoteShas?.[path] ?? (path.endsWith(GZ) ? undefined : state.fileShas[path]);
 
-  // 2. 拉取：自上次同步以来远端变过的文件。并发下载（每个请求约 0.5–1 秒，逐个下载时 50 个文件要将近一分钟），
-  //    全部下载完再按顺序合并进本地
-  const toPull = [...remote].filter(([rel, sha]) => state.fileShas[rel] !== sha);
-  const texts = await mapPool(toPull, PULL_CONCURRENCY, ([, sha]) => gh.getBlobText(sha));
+  // 2. 拉取：自上次同步以来远端变过的文件（.json.gz 解压；还没升级的设备推上来的旧 .json 也照样拉）。
+  //    并发下载（每个请求约 0.5–1 秒，逐个下载时 50 个文件要将近一分钟），全部下载完再按顺序合并进本地
+  const toPull = [...remote].filter(([path, sha]) => lastSeen(path) !== sha);
+  const texts = await mapPool(toPull, PULL_CONCURRENCY, async ([path, sha]) =>
+    path.endsWith(GZ) ? gunzipText(await gh.getBlobBytes(sha)) : gh.getBlobText(sha));
   // 全部放在一个事务里合并：界面只刷新一次，而不是每个文件刷新一次
   if (toPull.length)
     await db.transaction('rw', [db.decks, db.notes, db.cards, db.logs, db.clips, db.texts, db.encounters, db.known, db.meta], async () => {
-      for (let i = 0; i < toPull.length; i++) await applyRemoteFile(toPull[i][0], texts[i]);
+      for (let i = 0; i < toPull.length; i++) {
+        const [path] = toPull[i];
+        await applyRemoteFile(path.endsWith(GZ) ? path.slice(0, -GZ.length) : path, texts[i]);
+      }
     });
   const pulled = toPull.length;
+  // 远端 .json.gz 现在的文本 SHA：这次拉了的现算，没拉的（没变）就是上次同步时一致的那个
+  const pulledText = new Map<string, string>();
+  for (let i = 0; i < toPull.length; i++) {
+    const [path] = toPull[i];
+    if (path.endsWith(GZ)) pulledText.set(path.slice(0, -GZ.length), await gitBlobSha(texts[i]));
+  }
 
-  // 3. 对比：合并后的本地文件 vs 远端（没变的文件直接用上次的序列化结果和 SHA）
+  // 3. 对比：合并后的本地文件 vs 远端。要推的：远端没有 .gz、远端还留着旧 .json（迁移），或文本不同
   const files = await localFiles();
   const localShas = new Map([...files].map(([rel, f]) => [rel, f.sha]));
-  const changed = [...files].filter(([rel, f]) => f.sha !== remote.get(rel)).map(([rel, f]) => [rel, f.text] as const);
+  const changed = [...files].filter(([rel, f]) => {
+    if (!remote.has(rel + GZ) || remote.has(rel)) return true;
+    return f.sha !== (pulledText.get(rel) ?? state.fileShas[rel]);
+  });
 
-  const finish = async (commit: string | null, pushed: number): Promise<SyncResult> => {
+  const finish = async (commit: string | null, pushed: number, nextRemote: Map<string, string>): Promise<SyncResult> => {
     await setSyncState({
-      fileShas: { ...Object.fromEntries(remote), ...Object.fromEntries(localShas) },
+      fileShas: { ...state.fileShas, ...Object.fromEntries(pulledText), ...Object.fromEntries(localShas) },
+      remoteShas: Object.fromEntries(nextRemote),
       lastSyncAt: toIso(Date.now()),
       lastCommit: commit ?? state.lastCommit,
     });
     return { pulled, pushed, commit };
   };
 
-  if (changed.length === 0) return finish(head, 0);
+  if (changed.length === 0) return finish(head, 0, remote);
 
-  // 4. 推送
+  // 4. 推送：每个文件压缩成 .json.gz 单独上传（每个请求都很小），再一次提交；同名旧 .json 一并删掉
   if (!head || !rootTree) {
     // 空仓库 / 分支不存在：先用 Contents API 建第一个文件，下一轮再走正常流程
     const first = changed.find(([rel]) => rel === 'profile.json') ?? changed[0];
-    await gh.putFile(prefix + first[0], first[1], `${dir}: 初始化`, cfg.branch);
+    const bytes = await gzipBytes(first[1].text);
+    await gh.putFile(prefix + first[0] + GZ, bytes, `${dir}: 初始化`, cfg.branch);
     // 记下刚推上去的版本，下一轮不会把它当成“远端变化”再拉一次
-    await setSyncState({ ...state, fileShas: { ...state.fileShas, [first[0]]: localShas.get(first[0])! } });
+    await setSyncState({
+      ...state,
+      fileShas: { ...state.fileShas, [first[0]]: first[1].sha },
+      remoteShas: { ...state.remoteShas, [first[0] + GZ]: await gitBlobShaBytes(bytes) },
+    });
     return 'retry';
   }
-  const tree = await gh.createTree(
-    rootTree,
-    changed.map(([rel, content]) => ({ path: prefix + rel, content })),
-  );
+  const blobs = await mapPool(changed, PULL_CONCURRENCY, async ([, f]) => gh.createBlob(await gzipBytes(f.text)));
+  const nextRemote = new Map(remote);
+  const entries: Array<{ path: string; sha: string | null }> = [];
+  changed.forEach(([rel], i) => {
+    entries.push({ path: prefix + rel + GZ, sha: blobs[i] });
+    nextRemote.set(rel + GZ, blobs[i]);
+    if (remote.has(rel)) { entries.push({ path: prefix + rel, sha: null }); nextRemote.delete(rel); }
+  });
+  const tree = await gh.createTree(rootTree, entries);
   const names = [...new Set(changed.map(([rel]) => rel.replace(/\.json$/, '').replace(/^logs\/(\d{4}-\d{2})\/(\d{2})$/, 'logs/$1-$2')))];
   const commit = await gh.createCommit(`${dir}: 更新 ${names.length > 6 ? `${names.slice(0, 6).join(', ')} 等 ${names.length} 个文件` : names.join(', ')}`, tree.sha, [head]);
   try {
@@ -206,7 +235,7 @@ async function attempt(gh: GitHub, cfg: SyncConfig): Promise<SyncResult | 'retry
     if (e instanceof GitHubError && e.status === 422) return 'retry';
     throw e;
   }
-  return finish(commit.sha, changed.length);
+  return finish(commit.sha, changed.length, nextRemote);
 }
 
 // ---------- 待同步计数 ----------

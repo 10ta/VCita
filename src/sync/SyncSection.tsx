@@ -102,6 +102,7 @@ function SyncForm({
       </label>
       <p className="hint">
         令牌只授权这一个仓库、只开 Contents: Read and write。它保存在这台设备的浏览器里，不会随备份导出。
+        直连 GitHub 不通时自动改走本站转发（令牌会经过你自己部署的转发函数，不记录、不保存）。
         注意它能读写整个仓库，不只是数据目录（和 TimeEncre 共用仓库时，两边的令牌都能读写对方的数据）。
       </p>
       {error && <p className="form-error" role="alert">{error}</p>}

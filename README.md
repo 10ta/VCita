@@ -24,7 +24,7 @@
 - **自定义学习**：用词库的筛选结果临时开一轮（Anki 的筛选牌组）
 - **批量导入**：每行一条，`句子（含 {{…}}）| 中文 | 英语 | 出处 | 主题`
 - **8 个主题**：TRAVAIL · SOCIÉTÉ · TECHNOLOGIE · ENVIRONNEMENT · MÉDIAS · ÉDUCATION · SANTÉ · GÉNÉRAL
-- **GitHub 同步**：每次同步一个提交，多设备按"较新者胜出"合并；没有改动不产生提交
+- **GitHub 同步**：每次同步一个提交，多设备按"较新者胜出"合并；没有改动不产生提交。仓库里存 `.json.gz`；直连 api.github.com 不通时自动改走本站转发 `/api/gh`
 - 发音走 Google TTS；部署在 CF Pages / Vercel 时随站点发布一个同源代理，不可用时退回浏览器自带语音（只用对应语言的声音，没有就不读）。刷新后浏览器不允许自动播放，自动发音会等第一次按键或点击时再播
 - 发音缓存：代理可用时，音频下载后存进本机（IndexedDB 的 audio 表，不同步），按最近使用保留 2000 条（约 30–50 MB），重听、再出现、离线都不用再请求；直连 Google 拿不到音频数据，那条路照旧直接播放
 - 提前准备：出卡时就下载这张卡翻面后要读的法语，并按"这张已答"预测下一张卡、下载它出题时 / 翻面后要读的（规则和自动发音一致）；同时把这张卡和预测的下一张卡的目标表达（含产出卡题面上高亮的换说法）的划词结果查好。都只是预热缓存，预测错了照旧现读现查
@@ -68,7 +68,7 @@ npm run build    # 产物在 dist/
 3. **Save and Deploy**。构建日志里应该能看到 `vite build` 和 `✓ built in …`
 4. 打开 `https://<项目名>.pages.dev`，应该看到"第一次打开"的三选一页面
 
-`functions/api/tts.js` 会自动发布为 Pages Function（发音代理），不需要额外设置。
+`functions/api/tts.js`、`functions/api/gh.js` 会自动发布为 Pages Function（发音代理、GitHub 同步转发），不需要额外设置。
 
 **已经用错误配置部署过**：项目 → **Settings** → **Builds & deployments** → **Build configuration** → **Edit**，按上表改好，
 然后到 **Deployments**，对最新一次点 **⋯ → Retry deployment**。
@@ -89,7 +89,7 @@ npm run build    # 产物在 dist/
 
 3. **Deploy**，完成后打开 `https://<项目名>.vercel.app`
 
-`api/tts.js` 会自动发布为 Edge Function（发音代理）。
+`api/tts.js`、`api/gh.js` 会自动发布为 Edge Function（发音代理、GitHub 同步转发）。
 Node 版本：项目 → **Settings** → **General** → **Node.js Version** 选 22.x（`.node-version` 通常已生效，这里确认一下）。
 
 **改配置后重新部署**：项目 → **Settings** → **Build and Deployment** 改好后，到 **Deployments**，对最新一次点 **⋯ → Redeploy**。
@@ -100,6 +100,7 @@ Node 版本：项目 → **Settings** → **General** → **Node.js Version** �
 |---|---|
 | 打开站点 | 看到"第一次打开"三选一（空白页 = 没有构建，见上文） |
 | 访问 `https://<站点>/api/tts?q=bonjour&tl=fr` | 浏览器播放或下载一段 mp3（发音代理正常） |
+| 访问 `https://<站点>/api/gh?p=/repos/<你>/<数据仓库>` | 返回 JSON（没带令牌时是 GitHub 的 404 / 401 信息，说明转发函数在工作）；返回网页说明函数没发布 |
 | 添加页输入一个词 | 几秒内出现中文和英文翻译 |
 | 设置 → GitHub 同步 → 检查并保存 | 显示仓库信息，没有报错 |
 
@@ -202,17 +203,21 @@ Node 版本：项目 → **Settings** → **General** → **Node.js Version** �
 每个文件都有 `schemaVersion`（当前为 2），读取时经 `src/schema/index.ts` 的迁移链升级到当前版本；
 遇到比程序新的版本会拒绝写入。结构定义见 `src/schema/v2.ts`。
 
-数据仓库中的布局：
+数据仓库中的布局（每个文件 gzip 压缩，带 `.gz` 后缀）：
 
 ```
 VCita/
-  profile.json              牌组、设置
-  notes/2026-09.json        笔记，按创建月份
-  cards/2026-09.json        卡片调度状态，按所属笔记的创建月份
-  logs/2026-10/02.json      复习日志，按学习日
+  profile.json.gz              牌组、设置
+  notes/2026-09.json.gz        笔记，按创建月份
+  cards/2026-09.json.gz        卡片调度状态，按所属笔记的创建月份
+  logs/2026-10/02.json.gz      复习日志，按学习日
 ```
 
 复习日志按天分文件，所以每次同步只会改当天这一个日志文件。
+
+- **压缩**：体积约为原来的 1/10。"本地改了没有、远端改了没有"按解压后的 JSON 文本的 SHA 判断（不同浏览器压缩出的字节可能不同）。每个文件单独上传（`POST /git/blobs`），再一次提交，单个请求都很小
+- **旧版迁移**：读取时 `.json` 和 `.json.gz` 都认。第一次用新版同步时，把旧的 `.json` 换成 `.json.gz`（同一个提交里删掉旧文件）。还没升级的设备又推了 `.json` 时，两份都拉下来合并，再留 `.gz`、删 `.json`。还没升级的设备看不到 `.gz`，所以**每台设备都要先刷新到新版再同步**
+- **本站转发**：先直连 api.github.com（第一次最多等 8 秒），连不上就改走 `/api/gh`（`functions/api/gh.js` / `api/gh.js`，随站点发布），并记住 1 天。转发只放行同步用到的几个接口（ref / commits / trees / blobs / contents），令牌在请求头里原样转给 GitHub，函数不记录、不保存。建议令牌用细粒度令牌、只授权数据仓库、只开 Contents 读写、设过期时间
 
 **合并规则**：
 
@@ -236,8 +241,8 @@ src/
                wikt/ Wiktionnaire 离线索引（近音、同音、同义、词族、词源）；headword.ts 取词条的第一个实词
   ui/          通用组件、快捷键、偏好
   features/    各页面（review / library / add / stats / decks / settings）
-functions/     CF Pages Function：发音代理
-api/           Vercel Edge Function：发音代理
+functions/     CF Pages Function：发音代理、GitHub 同步转发
+api/           Vercel Edge Function：发音代理、GitHub 同步转发
 scripts/       build-fr-dict.mjs：从 Lexique / Lefff 生成词典数据；build-fr-wikt.mjs：从 kaikki.org 的 Wiktionnaire 提取生成离线索引
 tests/         单元测试（调度验收、队列规则、牌组合并、同步，含内存版 GitHub 模拟）
 ```

@@ -47,8 +47,10 @@ export function canonicalize(v: unknown): unknown {
 export const serialize = (obj: unknown): string => JSON.stringify(canonicalize(obj), null, 2) + '\n';
 
 /** 与 `git hash-object` 相同的 blob SHA-1 */
-export async function gitBlobSha(text: string): Promise<string> {
-  const body = new TextEncoder().encode(text);
+export const gitBlobSha = (text: string): Promise<string> => gitBlobShaBytes(new TextEncoder().encode(text));
+
+/** 同上，二进制内容（仓库里的 .json.gz） */
+export async function gitBlobShaBytes(body: Uint8Array): Promise<string> {
   const head = new TextEncoder().encode(`blob ${body.length}\0`);
   const buf = new Uint8Array(head.length + body.length);
   buf.set(head);
@@ -57,6 +59,18 @@ export async function gitBlobSha(text: string): Promise<string> {
   if (!globalThis.crypto?.subtle) return sha1Hex(buf);
   const digest = await crypto.subtle.digest('SHA-1', buf);
   return [...new Uint8Array(digest)].map((b) => b.toString(16).padStart(2, '0')).join('');
+}
+
+// ---- 仓库里存 gzip ----
+// 文件在仓库里是 <路径>.json.gz（体积约为原来的 1/10，经本站转发时也远低于 Vercel 4.5 MB 的单次上限）。
+// "本地改了没有 / 远端改了没有"仍按 JSON 文本的 SHA 判断：不同浏览器压缩出的字节可能不同，比文本才稳定
+export const GZ = '.gz';
+export async function gzipBytes(text: string): Promise<Uint8Array> {
+  const blob = await new Response(new Blob([text]).stream().pipeThrough(new CompressionStream('gzip'))).blob();
+  return new Uint8Array(await blob.arrayBuffer());
+}
+export async function gunzipText(bytes: Uint8Array): Promise<string> {
+  return new Response(new Blob([bytes as BlobPart]).stream().pipeThrough(new DecompressionStream('gzip'))).text();
 }
 
 export const PROFILE_PATH = 'profile.json';

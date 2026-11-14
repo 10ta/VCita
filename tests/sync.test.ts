@@ -3,7 +3,8 @@ import { beforeEach, describe, expect, it } from 'vitest';
 import { db } from '../src/db/db';
 import { answerCard, clearAllLocalData, undoAnswer, updateNote } from '../src/db/actions';
 import { disconnectSync, pendingFiles, saveSyncConfig, syncNow } from '../src/sync/engine';
-import { gitBlobSha } from '../src/sync/files';
+import { buildLocalFiles, gitBlobSha } from '../src/sync/files';
+import { resetRoute } from '../src/sync/github';
 import { seedData } from './seedData';
 import { FakeGitHub } from './fakeGithub';
 
@@ -18,6 +19,7 @@ async function newDevice() {
 }
 
 beforeEach(async () => {
+  resetRoute();
   gh = new FakeGitHub();
   globalThis.fetch = gh.fetch as typeof fetch;
   await newDevice();
@@ -130,3 +132,77 @@ describe('GitHub 同步', () => {
     expect(gh.files()['TimeEncre/profile.json']).toBe('{"x":1}\n');
   });
 });
+
+describe('仓库里存 gzip、旧版 .json 自动迁移', () => {
+  it('推上去的都是 .json.gz', async () => {
+    await seed();
+    await syncNow();
+    const ours = gh.paths().filter((p) => p.startsWith('VCita/'));
+    expect(ours.length).toBeGreaterThan(3);
+    expect(ours.every((p) => p.endsWith('.json.gz'))).toBe(true);
+    expect(await pendingFiles()).toBe(0);
+  });
+
+  it('旧版仓库（.json）：拉下来，换成 .json.gz 推回去、删掉旧文件；再同步不产生提交', async () => {
+    await seed();
+    const old = Object.fromEntries([...(await buildLocalFiles())].map(([rel, text]) => [`VCita/${rel}`, text]));
+    await gh.commitFiles(old, 'old app');
+    const before = { notes: await db.notes.count(), cards: await db.cards.count(), logs: await db.logs.count() };
+    await newDevice();
+    const r = await syncNow();
+    expect(r.pulled).toBe(Object.keys(old).length);
+    expect(r.pushed).toBe(Object.keys(old).length);
+    expect({ notes: await db.notes.count(), cards: await db.cards.count(), logs: await db.logs.count() }).toEqual(before);
+    const ours = gh.paths().filter((p) => p.startsWith('VCita/'));
+    expect(ours.every((p) => p.endsWith('.json.gz'))).toBe(true);
+    expect(ours.length).toBe(Object.keys(old).length);
+    const head = gh.head;
+    expect((await syncNow()).pushed).toBe(0);
+    expect(gh.head).toBe(head);
+  });
+
+  it('还没升级的设备又推了旧 .json：两份都合并，留 .gz、删 .json', async () => {
+    await seed();
+    await syncNow();
+    const notesPath = Object.keys(gh.files()).find((p) => p.includes('/notes/'))!;
+    const remote = JSON.parse(gh.files()[notesPath]);
+    const n2 = remote.notes.find((n: { id: string }) => n.id === 'n_old2');
+    n2.meaningZh = '旧版设备改的';
+    n2.updatedAt = new Date(Date.now() + 1000).toISOString();
+    await gh.commitFiles({ [notesPath]: JSON.stringify(remote, null, 2) + '\n' }, 'old app');
+    expect(gh.paths()).toContain(notesPath);
+    await syncNow();
+    expect((await db.notes.get('n_old2'))!.meaningZh).toBe('旧版设备改的');
+    expect(gh.paths()).not.toContain(notesPath);
+    expect(JSON.parse(gh.files()[notesPath]).notes.find((n: { id: string }) => n.id === 'n_old2').meaningZh).toBe('旧版设备改的');
+  });
+});
+
+describe('连不上 GitHub 时经本站转发', () => {
+  it('直连不通：自动改走 ./api/gh，之后一直走转发', async () => {
+    gh.directDown = true;
+    await seed();
+    await syncNow();
+    expect(gh.viaProxy).toBeGreaterThan(0);
+    expect(gh.paths().some((p) => p.endsWith('.json.gz'))).toBe(true);
+    await newDevice();
+    const n = gh.viaProxy;
+    await syncNow();
+    expect(gh.viaProxy).toBeGreaterThan(n);
+    expect(await db.notes.count()).toBeGreaterThan(0);
+  });
+
+  it('直连不通、也没部署转发：明确报错', async () => {
+    gh.directDown = true;
+    gh.proxyUp = false;
+    await seed();
+    await expect(syncNow()).rejects.toThrow(/本站转发都不通/);
+  });
+
+  it('直连能用时不走转发', async () => {
+    await seed();
+    await syncNow();
+    expect(gh.viaProxy).toBe(0);
+  });
+});
+
