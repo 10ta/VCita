@@ -78,7 +78,10 @@ interface Query { mode: Mode; bare: string; lemma: string | null; text: string; 
 
 /** 一次查询要的全部结果（Wiktionnaire 释义、释义机翻、整句机翻）。结果在本机缓存 4 周；进行中的同一查询共用一个请求 */
 const inflight = new Map<string, Promise<Found>>();
-function fetchFound(q: Query): Promise<Found> {
+/** 空白统一：出卡时预查用的句子和悬停时从页面上取的句子，空格 / 不换行空格可能不同 */
+const squash = (s: string) => s.replace(/[\s\u00a0\u202f]+/g, ' ').trim();
+function fetchFound(q0: Query): Promise<Found> {
+  const q = { ...q0, text: squash(q0.text), context: squash(q0.context), bare: squash(q0.bare) };
   const k = JSON.stringify(q);
   const hit = inflight.get(k);
   if (hit) return hit;

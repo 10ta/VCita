@@ -129,10 +129,13 @@ export function ReviewPage({ deckId }: { deckId: string }) {
   useEffect(() => {
     if (!split || !card || !s || !note) return;
     for (const t of speechPlan(split, s.sourceLang, autoRead)) preloadSpeech(t.text, t.lang);
-    const faces = [split.question, ...split.answers].filter((f) => f.raw && f.lang === s.sourceLang);
-    const targets = new Map<string, string>();
-    for (const f of faces) for (const t of clozeTargets(f.raw!)) if (!targets.has(t)) targets.set(t, plainOf(f.raw!));
-    for (const [t, ctx] of [...targets].slice(0, 4)) prefetchLookup(t, ctx, frDict, s.sourceLang, s.targetLang1);
+    const lookAhead = (v: ReturnType<typeof cardView>) => {
+      const faces = [v.question, ...v.answers].filter((f) => f.raw && f.lang === s.sourceLang);
+      const targets = new Map<string, string>();
+      for (const f of faces) for (const t of clozeTargets(f.raw!)) if (!targets.has(t)) targets.set(t, plainOf(f.raw!));
+      for (const [t, ctx] of [...targets].slice(0, 4)) prefetchLookup(t, ctx, frDict, s.sourceLang, s.targetLang1);
+    };
+    lookAhead(split);
     if (custom || !cards || !logs) return;
     const sameNote = new Set(cards.filter((c) => c.noteId === card.noteId).map((c) => c.id));
     const nq = buildQueue({ cards, todayLogs: logs, deckId, now, settings: s, skipped: new Set([...skipped, ...sameNote]), learnAheadAll, notes: noteMap, freq });
@@ -143,6 +146,8 @@ export function ReviewPage({ deckId }: { deckId: string }) {
     const nGroup = nn.contrastGroup ? (notes ?? []).filter((x) => x.contrastGroup === nn.contrastGroup && x.id !== nn.id) : [];
     const ns = cardView(nc.type, nn, s, labels, nc.reps, nListen, nGroup);
     for (const t of speechPlan(ns, s.sourceLang, autoRead, true)) preloadSpeech(t.text, t.lang);
+    // 下一张卡的目标表达也提前一张查好：到它的时候早就查完了
+    lookAhead(ns);
   }, [currentId, split?.question.speakText]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
@@ -358,7 +363,7 @@ export function ReviewPage({ deckId }: { deckId: string }) {
                     </div>
                   )}
                   <Cues note={note} only={split.cues === 'extra' ? 'extra' : undefined} />
-                  {notes && cards && <ClusterStrip note={note} notes={notes} cards={cards} />}
+                  {notes && cards && <ClusterStrip note={note} notes={notes} cards={cards} shown={split.question.speakText || split.promptFr || ''} />}
                   {(card.type === 'production' || card.type === 'frame' || card.type === 'apply') && (
                     <button type="button" className="pill" title="这个表达在写作或口语里用上了一次" onClick={() => void bumpUsed(note.id).then(() => toast(`已记录，累计用上 ${note.usedCount + 1} 次`))}>
                       用上了 +1（{note.usedCount}）

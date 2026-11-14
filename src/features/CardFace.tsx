@@ -213,7 +213,7 @@ export function cardView(type: Card['type'], note: Note, s: Settings, labels: [s
     const answer: Face = { text: hasCloze(a) ? renderSentence(a) : a, speakText: plainSentence(a), lang: s.sourceLang, label: labels[0], raw: hasCloze(a) ? a : undefined };
     if (it.promptFr) {
       return {
-        question: { text: renderSentence(it.promptFr), speakText: plainSentence(it.promptFr), lang: s.sourceLang, label: `${labels[0]}题面` },
+        question: { text: renderSentence(it.promptFr), speakText: plainSentence(it.promptFr), lang: s.sourceLang, label: `${labels[0]}题面`, raw: it.promptFr },
         // 有法语题面时提示由答案句自动生成（笔记里手写的整句首字母提示会把题面上已有的词也遮住）
         hint: hasCloze(a) ? productionHint(a) : it.hint, cues: 'extra', answerFr: a,
         meaningHint: plainSentence(it.intentZh).trim() || null,

@@ -4,6 +4,20 @@ import { clusterRecall, undoClusterRecall, type ClusterOutcome } from '../../db/
 import { daysBetween, fmtDays, fromIso, studyDay } from '../../lib/time';
 import { useSettings } from '../../db/hooks';
 import { Fr } from '../FrText';
+import { head } from '../../lib/headword';
+import { fold } from '../../lib/gender/rules';
+
+const words = (s: string) => fold(s.toLowerCase()).split(/[^a-z-]+/).filter(Boolean);
+
+/** 同群的其他说法；这张卡上已经出现的不算（产出卡题面用同群的 informer 当换说法时，"还有 1 种"就是题面上那个） */
+export function clusterMates(note: Pick<Note, 'id' | 'cluster'>, notes: Note[], shown = ''): Note[] {
+  const name = note.cluster?.trim();
+  if (!name) return [];
+  const seen = words(shown);
+  const onCard = (m: Note) => { const h = head(m.lemma); return h.length > 2 && seen.some((w) => w === h || (h.length >= 5 && w.startsWith(h.slice(0, 5)))); };
+  return notes.filter((n) => n.id !== note.id && !n.deleted && n.cluster?.trim() === name && !onCard(n))
+    .sort((a, b) => a.lemma.localeCompare(b.lemma, 'fr'));
+}
 
 const MAX = 6;
 /** 第一个中文意思；括号里带法语的去掉（「铺天盖地的指控（un déluge de …）」会直接露出答案） */
@@ -17,11 +31,10 @@ const TYPE: Partial<Record<Card['type'], string>> = { production: '产出', reco
  * 点「看答案」就算做了这次回想：每行先是淡红「没想起 → 明天」（还没生效），想起来的点一下变绿，立即往后推（再点撤回）；
  * 翻到下一张卡时，没点绿的才按「没想起来」生效（那张卡提前到明天）。不点「看答案」什么都不记
  */
-export function ClusterStrip({ note, notes, cards }: { note: Note; notes: Note[]; cards: Card[] }) {
+export function ClusterStrip({ note, notes, cards, shown = '' }: { note: Note; notes: Note[]; cards: Card[]; shown?: string }) {
   const name = note.cluster?.trim();
   if (!name) return null;
-  const mates = notes.filter((n) => n.id !== note.id && !n.deleted && n.cluster?.trim() === name)
-    .sort((a, b) => a.lemma.localeCompare(b.lemma, 'fr'));
+  const mates = clusterMates(note, notes, shown);
   if (!mates.length) return null;
   const learned = new Set(cards.filter((c) => !c.deleted && c.state !== 'new').map((c) => c.noteId));
   return <Strip key={note.id} name={name} known={mates.filter((m) => learned.has(m.id)).slice(0, MAX)} fresh={mates.filter((m) => !learned.has(m.id))} />;

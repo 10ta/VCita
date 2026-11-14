@@ -138,3 +138,16 @@ describe('挖空卡自动提示', async () => {
     expect(autoClozeHint('patrimoine 遗产', 'le {{patrimoine}} local')).toBeNull();
   });
 });
+
+
+describe('卡上已出现的说法不再让人回想', async () => {
+  const { clusterMates } = await import('../src/features/review/ClusterStrip');
+  const n = (id: string, lemma: string) => ({ id, lemma, cluster: '告知', deleted: false }) as never;
+  const notes = [n('a', 'renseigner qqn sur qqch'), n('b', 'informer qqn de qqch'), n('d', 'avertir qqn de qqch')];
+  it('产出卡题面用了同群的 informer：只剩 avertir', () => {
+    expect(clusterMates(notes[0], notes, "je vais t'informer").map((x: { id: string }) => x.id)).toEqual(['d']);
+  });
+  it('没有题面时都在', () => {
+    expect(clusterMates(notes[0], notes).length).toBe(2);
+  });
+});
