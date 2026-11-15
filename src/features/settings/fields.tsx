@@ -11,7 +11,7 @@ import { langLabel } from '../../ui/langs';
 import { Modal } from '../../ui/Modal';
 
 /** 所有设置的默认值，直接从 schema 取，和代码里的默认值永远一致 */
-export const DEFAULTS: Settings = { ...SettingsV2.parse({ updatedAt: '1970-01-01T00:00:00.000Z' }), genderDisplay: 'focus' };
+export const DEFAULTS: Settings = { ...SettingsV2.parse({ updatedAt: '1970-01-01T00:00:00.000Z' }), genderDisplay: 'focus', zoneHeads: 'icon' };
 
 type Key = keyof Settings;
 type Opt = readonly [string, string];
@@ -74,6 +74,11 @@ export const META: Partial<Record<Key, Meta>> = {
     kind: 'sel', label: '阴阳性下划线',
     hint: '名词下划线：阳性蓝、阴性红。只标考查部分：注意力留在要学的词上，句子其余部分干净；悬停：鼠标移到名词上才出现；关闭：不画线。哪种都能悬停（手机上点一下）看性别、另一个性的形式和词尾规则',
     options: [['focus', '只标考查部分'], ['always', '所有名词'], ['hover', '悬停时显示'], ['off', '关闭（悬停仍显示说明）']],
+  },
+  zoneHeads: {
+    kind: 'sel', label: '背面分区标题',
+    hint: '背面固定分区（用法、其他语境、词源、词族、注意、出处）的标题样式。图标：形状一眼可辨；区色：图标再加上每个区自己的颜色，认得最快，但卡面颜色更多',
+    options: [['text', '只有文字'], ['icon', '线性图标 + 文字'], ['tint', '图标 + 区色']],
   },
   knownTop: { kind: 'num', label: '常用词前 N 个算认识', hint: '短文挖词里，词频（Lexique）最高的前 N 个原形不算生词、算进已知覆盖率', unit: '个', min: 0, int: true, zero: '只按自己的卡和手动标的「认识」' },
   addShowMore: { kind: 'sw', label: '添加页默认展开「背面补充」', hint: '词源、词族线索、补充、出处。关闭后需要时点「背面补充」展开' },
@@ -158,7 +163,7 @@ export function Field({ k, s, hint, label }: { k: Key; s: Settings; hint?: React
   let ctl: ReactNode = null;
   if (m.kind === 'num') ctl = <NumCtl k={k} s={s} />;
   else if (m.kind === 'sel') {
-    const cur = k === 'genderDisplay' ? genderDisplayOf(s) : (s[k] as string);
+    const cur = k === 'genderDisplay' ? genderDisplayOf(s) : ((s[k] ?? DEFAULTS[k]) as string);
     ctl = (
       <select aria-label={m.label} value={cur} onChange={(e) => void save({ [k]: e.target.value })}>
         {m.options.map(([v, l]) => <option key={v} value={v}>{l}{v === DEFAULTS[k] ? '（默认）' : ''}</option>)}
@@ -216,7 +221,7 @@ export function WeightsField({ s }: { s: Settings }) {
 /** 恢复默认：列出这一组里和默认值不同的项，确认后改回默认 */
 export function ResetDefaults({ s, keys, note }: { s: Settings; keys: Key[]; note?: string }) {
   const [open, setOpen] = useState(false);
-  const cur = (k: Key) => (k === 'genderDisplay' ? genderDisplayOf(s) : s[k]);
+  const cur = (k: Key) => (k === 'genderDisplay' ? genderDisplayOf(s) : s[k] ?? DEFAULTS[k]);
   const diffs = keys.filter((k) => JSON.stringify(cur(k)) !== JSON.stringify(DEFAULTS[k]));
   // 扰动的开关和幅度合成一行显示
   const rows = diffs.filter((k) => k !== 'fuzz').map((k) => (k === 'fuzzPercent'

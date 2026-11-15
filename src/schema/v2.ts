@@ -223,6 +223,9 @@ export const SettingsV2 = z.looseObject({
   /** 名词阴阳性下划线（阳性蓝、阴性红）：focus = 只标考查部分里的名词；always = 所有名词；hover = 鼠标移上去才显示；off = 不显示。
    *  四种都能悬停（手机上点一下）看性别和规则。没设过时按旧开关推断 */
   genderDisplay: z.enum(['focus', 'always', 'hover', 'off']).optional(),
+  /** 卡片背面分区标题：text = 只有文字；icon = 线性图标 + 文字；tint = 图标带区色。没设过 = icon。
+   *  optional：没改过的设置序列化出来不变 */
+  zoneHeads: z.enum(['text', 'icon', 'tint']).optional(),
   /** 阅读页：词频最高的前 N 个原形算「认识」（不标色、算进覆盖率）。0 = 只按自己的卡和手动标记 */
   knownTop: z.number().int().min(0).default(2000),
   /** 每日新卡里留给句框（语块库）的张数；没用完的让给单词 */

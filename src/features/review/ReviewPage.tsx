@@ -13,11 +13,13 @@ import { useHotkeys, useNow } from '../../ui/hooks';
 import { toast } from '../../ui/toast';
 import { langLabel } from '../../ui/langs';
 import { syncIfAuto } from '../../sync/engine';
-import { CardStats, cardView, Cues, SpeakBtn, TYPE_LABEL } from '../CardFace';
+import { CardStats, cardView, SpeakBtn, TYPE_LABEL } from '../CardFace';
+import { BackZones, zoneHeadsOf } from '../BackZones';
 import { NoteEditor } from '../NoteEditor';
 import { ClusterStrip } from './ClusterStrip';
 import { Fr, useFrDictCtx, useNoteFreqs } from '../FrText';
 import { diffWords, pickReference, summarize, type DiffOp } from '../../lib/diff';
+import type { Card } from '../../schema';
 
 const RATINGS: Array<{ r: Rating; label: string; cls: string }> = [
   { r: 1, label: '忘了', cls: 'r1' }, { r: 2, label: '困难', cls: 'r2' }, { r: 3, label: '良好', cls: 'r3' }, { r: 4, label: '容易', cls: 'r4' },
@@ -234,6 +236,8 @@ export function ReviewPage({ deckId }: { deckId: string }) {
   const pv = card ? preview(card, paramsFor(card.type, s), now, mem) : null;
   const PRACTICE: Record<Rating, string> = { 1: '稍后再练', 2: '本轮最后', 3: '本轮完成', 4: '本轮完成' };
   const btnNote = (r: Rating) => (!scheduled ? PRACTICE[r] : pv ? `${fmtNextIn(pv[r], fmtMinutes, fmtDays)}后` : '');
+  // 评分标准直接写在按钮上（以前在按钮上面单独一行）
+  const gradeCrit = (r: Rating) => (card && split ? gradeCriterion(split.listen ? 'listen' : card.type, r, peek) : '');
   // 下一次换天，用本地时间说（设置里的切换时间 + 时区换算过来）
   const rollover = fmtLocalMoment(nextDayStartMs(now, s.dayStartHour), now);
   const limitLine = `今日已学：新卡 ${q.done.newDone}/${s.newPerDay} · 复习 ${q.done.reviewDone}${s.reviewsPerDay ? `/${s.reviewsPerDay}` : ''}`
@@ -352,6 +356,7 @@ export function ReviewPage({ deckId }: { deckId: string }) {
                       <SpeakBtn text={a.speakText} lang={a.lang} />
                     </div>
                   ))}
+                  {note.sense && <div className="sense-tag" title="义项：这张卡考的是这个词的哪一个意思">义项 · {note.sense}</div>}
                   {split.promptPhrase && split.promptFr && (
                     <div className="prompt-phrase small">
                       <span className="muted">题面说法 </span><b>{split.promptPhrase}</b>
@@ -363,30 +368,19 @@ export function ReviewPage({ deckId }: { deckId: string }) {
                       </button>
                     </div>
                   )}
-                  <Cues note={note} only={split.cues === 'extra' ? 'extra' : undefined} />
-                  {notes && cards && <ClusterStrip note={note} notes={notes} cards={cards} shown={split.question.speakText || split.promptFr || ''} />}
                   {(card.type === 'production' || card.type === 'frame' || card.type === 'apply') && (
                     <button type="button" className="pill" title="这个表达在写作或口语里用上了一次" onClick={() => void bumpUsed(note.id).then(() => toast(`已记录，累计用上 ${note.usedCount + 1} 次`))}>
                       用上了 +1（{note.usedCount}）
                     </button>
                   )}
+                  <BackZones note={note} heads={zoneHeadsOf(s)} />
+                  {notes && cards && <ClusterStrip note={note} notes={notes} cards={cards} shown={split.question.speakText || split.promptFr || ''} />}
                 </div>
-                {(card.type !== 'recognition' || split.listen) && (
-                  <p className="muted small grade-guide">
-                    {split.listen
-                      ? peek === 2 ? '看了要听的部分才懂 → 忘了' : peek === 1 ? '看了上下文才听懂 → 最多困难' : '2–3 秒内没听懂 → 困难；听不出来 → 忘了'
-                      : card.type === 'contrast' ? '选对、说得出为什么 → 良好；选对但靠猜 → 困难；选错 → 忘了'
-                      : card.type === 'frame' ? '句框想得出、只有小词或配合错 → 困难；想不起句框 → 忘了'
-                      : card.type === 'apply' ? '句框用对、语法锁都满足 → 良好；句框对但语法锁有错 → 困难；写不出来 → 忘了'
-                      : card.type === 'paraphrase' ? '说出的断言和正确选项意思一致 → 良好；方向对、但漏了目的 / 否定 / 情态 → 困难；说反了或说不出 → 忘了'
-                      : '表达想出来了、只是形式错 → 困难；表达想不出来 → 忘了'}
-                  </p>
-                )}
                 <div className="grades">
                   {RATINGS.map(({ r, label, cls }) => (
                     <button key={r} type="button" className={`grade ${cls}`} onClick={() => void answer(r)}>
                       <b>{label}</b>
-                      <small>{btnNote(r)}</small>
+                      <small>{[btnNote(r), gradeCrit(r)].filter(Boolean).join(' · ')}</small>
                       <kbd>{r}</kbd>
                     </button>
                   ))}
@@ -402,6 +396,19 @@ export function ReviewPage({ deckId }: { deckId: string }) {
       {editing && note && <NoteEditor note={note} onClose={() => setEditing(false)} />}
     </div>
   );
+}
+
+/** 评分按钮上的标准：哪种情况按哪个键。听力卡看了上下文 / 文字以后标准跟着变 */
+export function gradeCriterion(kind: Card['type'] | 'listen', r: Rating, peek: 0 | 1 | 2 = 0): string {
+  const T: Partial<Record<Card['type'] | 'listen', Partial<Record<Rating, string>>>> = {
+    listen: { 1: peek === 2 ? '看了文字才懂' : '听不出来', 2: peek === 1 ? '看了上下文才懂' : '2–3 秒才听懂' },
+    production: { 1: '想不出来', 2: '想出来但形式错' },
+    contrast: { 1: '选错', 2: '选对但靠猜', 3: '选对、说得出为什么' },
+    frame: { 1: '想不起句框', 2: '只错小词或配合' },
+    apply: { 1: '写不出来', 2: '语法锁有错', 3: '句框和语法锁都对' },
+    paraphrase: { 1: '说反或说不出', 2: '漏了否定 / 情态', 3: '和正确选项一致' },
+  };
+  return T[kind]?.[r] ?? '';
 }
 
 const opText = (o: DiffOp) => (o.op === 'same' ? o.text : o.op === 'extra' ? o.typed : o.expected);
