@@ -148,6 +148,11 @@ describe('错题挖点的复制格式', () => {
       '正确：Son existence doit être officialisée.', '我选：Son traitement est peu efficace', '为什么：以为 reconnu 是"治好"',
     ].join('\n'));
   });
+  it('整篇原文写在最后；旧草稿没有这一栏也能复制', () => {
+    expect(errBlock({ ...e, passage: 'Plus de peur\nque de mal.' }, 0).split('\n').pop()).toBe('全文：Plus de peur que de mal.');
+    const { passage: _, ...old } = { ...e, passage: '' };
+    expect(errBlock(old as ErrDraft, 0)).not.toContain('全文');
+  });
   it('至少要有原文句、正确选项和错选', () => {
     expect(errReady(e)).toBe(true);
     expect(errReady({ ...e, wrong: '' })).toBe(false);

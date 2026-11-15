@@ -1,13 +1,14 @@
 // 错题挖点：做完一组 TCF 题，把错题（和蒙对的）一条条记下：题干、原文答案句、正确选项、我的错选、我为什么选它、绊脚点。
-// 一键复制成固定格式交给 Claude，按 vcita-cards 做成错题卡（origin = error）：改写对卡、义项卡或挖空卡，每道只抽一个点。
+// 一键复制成固定格式交给 Claude：Claude 逐题讲根因，并把整篇原文里「每个词都认识、合起来不懂」的语块和义项列出来；
+// 用户勾出真不懂的，再按 vcita-cards 做成错题卡（origin = error）：语块卡、义项卡。
 // 只存在这台设备的浏览器里（不同步），复制完可以清空。
 import { useEffect, useState } from 'react';
 import { toast } from '../../ui/toast';
 
-export interface ErrDraft { id: string; source: string; question: string; sentence: string; answer: string; wrong: string; why: string; trip: string }
+export interface ErrDraft { id: string; source: string; question: string; sentence: string; answer: string; wrong: string; why: string; trip: string; passage?: string }
 
 const KEY = 'vcita.errDrafts';
-const blank = (source = ''): ErrDraft => ({ id: Math.random().toString(36).slice(2, 10), source, question: '', sentence: '', answer: '', wrong: '', why: '', trip: '' });
+const blank = (source = ''): ErrDraft => ({ id: Math.random().toString(36).slice(2, 10), source, question: '', sentence: '', answer: '', wrong: '', why: '', trip: '', passage: '' });
 
 function load(): ErrDraft[] {
   try { const v = JSON.parse(localStorage.getItem(KEY) ?? '[]'); return Array.isArray(v) ? v : []; } catch { return []; }
@@ -21,8 +22,8 @@ export const errReady = (e: ErrDraft) => !!(e.sentence.trim() && e.answer.trim()
 
 /** 复制给 Claude 的格式：每道题一段，以 ERR 开头 */
 export function errBlock(e: ErrDraft, i: number): string {
-  const rows: Array<[string, string]> = [['出处', e.source], ['题干', e.question], ['原文', e.sentence], ['正确', e.answer], ['我选', e.wrong], ['为什么', e.why], ['绊脚点', e.trip]];
-  return [`ERR ${i + 1}`, ...rows.filter(([, v]) => v.trim()).map(([k, v]) => `${k}：${v.trim().replace(/\s*\n\s*/g, ' ')}`)].join('\n');
+  const rows: Array<[string, string]> = [['出处', e.source], ['题干', e.question], ['原文', e.sentence], ['正确', e.answer], ['我选', e.wrong], ['为什么', e.why], ['绊脚点', e.trip], ['全文', e.passage ?? '']];
+  return [`ERR ${i + 1}`, ...rows.filter(([, v]) => (v ?? '').trim()).map(([k, v]) => `${k}：${v.trim().replace(/\s*\n\s*/g, ' ')}`)].join('\n');
 }
 
 const FIELDS: Array<[keyof Omit<ErrDraft, 'id'>, string, string, boolean?]> = [
@@ -32,6 +33,7 @@ const FIELDS: Array<[keyof Omit<ErrDraft, 'id'>, string, string, boolean?]> = [
   ['wrong', '我的错选', 'Son traitement est peu efficace'],
   ['why', '我为什么选它（当时的推理）', '定位到 pas encore reconnu，以为是"还没被治好"……', true],
   ['trip', '绊脚点（可选：哪个词或结构读错了）', 'reconnu'],
+  ['passage', '整篇原文（可选，建议贴：Claude 会把整篇里看似认识、合起来不懂的语块都列出来）', 'Plus de peur que de mal pour ce petit garçon…', true],
 ];
 
 export function MineErrors() {
@@ -57,15 +59,15 @@ export function MineErrors() {
 
   return (
     <div className="mine-errors">
-      <p className="muted small">做完一组题，错的和蒙对的各记一条。只要写清当时为什么选它，Claude 会判断陷阱类型和根因，每道抽一个点做成错题卡（新卡最先出）。记录只存在这台设备上。</p>
+      <p className="muted small">做完一组题，错的和蒙对的各记一条。写清当时为什么选它，最好贴上整篇原文。Claude 逐题讲根因，并列出整篇里看似认识、合起来不懂的语块；你勾出真不懂的，再做成错题卡（新卡最先出）。记录只存在这台设备上。</p>
       <label className="field"><span className="field-label">出处（接下来几道都沿用）</span>
         <input value={cur.source} placeholder="例如：TCF CE 题库 · 第 12 套" onChange={(e) => set('source', e.target.value)} />
       </label>
       {FIELDS.map(([k, label, ph, area]) => (
         <label key={k} className="field"><span className="field-label">{label}</span>
           {area
-            ? <textarea rows={2} value={cur[k]} placeholder={ph} onChange={(e) => set(k, e.target.value)} />
-            : <input value={cur[k]} placeholder={ph} onChange={(e) => set(k, e.target.value)} />}
+            ? <textarea rows={2} value={cur[k] ?? ''} placeholder={ph} onChange={(e) => set(k, e.target.value)} />
+            : <input value={cur[k] ?? ''} placeholder={ph} onChange={(e) => set(k, e.target.value)} />}
         </label>
       ))}
       <div className="toolbar">
