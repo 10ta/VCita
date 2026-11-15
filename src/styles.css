@@ -520,6 +520,7 @@ textarea.weights { width: 100%; font-family: var(--mono); font-size: 12px; }
 .cue.usage { color: var(--text); font-size: 13.5px; }
 /* 义项：认读卡考的是哪一个意思 */
 .cue.sense { color: var(--text); font-size: 13.5px; }
+.cue.contexts > div { padding-left: .6em; }
 /* 改写对卡（TCF 错题） */
 .para-q { display: inline-flex; flex-direction: column; gap: 10px; align-items: center; }
 .para-stem { font-size: .78em; color: var(--dim); }

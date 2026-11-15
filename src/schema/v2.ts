@@ -66,6 +66,9 @@ export const NoteV2 = z.looseObject({
   cluster: z.string().nullable().optional(),
   /** 义项：这张卡考的是这个词的哪一个意思（raison：理性，≠ 原因）。认读卡背面最先显示。optional：同步文件不变 */
   sense: z.string().nullable().optional(),
+  /** 其他语境：这个词在别的搭配里的意思，一条一行「搭配 → 意思」（établissement scolaire → 学校）。只作参考、不考，
+   *  认读 / 挖空卡背面显示。查单个词的词典分不清的多义词才写，最多三条。optional：同步文件不变 */
+  contexts: z.array(z.string()).optional(),
   /** 在表达群里被顺带回忆、却没想起来的日期（最近 10 次），只做标记，不影响排期 */
   recallMisses: z.array(z.string()).optional(),
   answerFr: z.string().nullable().default(null),

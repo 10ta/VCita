@@ -6,6 +6,7 @@ import { buildQueue } from '../src/srs/queue';
 import { retentionFor } from '../src/srs/scheduler';
 import { cardView, Cues } from '../src/features/CardFace';
 import { errBlock, errReady, type ErrDraft } from '../src/features/add/MineErrors';
+import { contextLines, fromNote, otherFields } from '../src/features/noteform/model';
 import { noteErrors } from '../src/schema/validate';
 import { addNotes, clearAllLocalData, getSettings } from '../src/db/actions';
 import { exportBundle, importBundle } from '../src/io/bundle';
@@ -111,6 +112,23 @@ describe('义项', () => {
     expect('sense' in n).toBe(false);
     expect('paraphrase' in n).toBe(false);
     expect(serialize(n)).not.toMatch(/sense|paraphrase/);
+  });
+});
+
+describe('其他语境', () => {
+  const note = { sense: '机构（≠ 建立）', contexts: ['un établissement scolaire → 学校', "l'établissement des faits → 确立"] } as unknown as Note;
+  it('认读 / 挖空卡背面列出，产出类（只显示补充）不列', () => {
+    const all = renderToStaticMarkup(<Cues note={note} />);
+    expect(all).toContain('其他语境');
+    expect(all).toContain('↳ un établissement scolaire → 学校');
+    expect(renderToStaticMarkup(<Cues note={note} only="extra" />)).not.toContain('其他语境');
+  });
+  it('表单里一行一条；清空后不留空数组，没写过的笔记不多出键', () => {
+    expect(contextLines(' a → x \n\n b → y ')).toEqual(['a → x', 'b → y']);
+    expect(contextLines('  \n ')).toBeUndefined();
+    const n = parseNote({ id: 'n', deckId: 'd', createdAt: toIso(0), updatedAt: toIso(0), lemma: 'a', sentence: '{{a}}' });
+    const out = JSON.parse(JSON.stringify(otherFields(fromNote(n, 'list'))));
+    expect('sense' in out || 'contexts' in out).toBe(false);
   });
 });
 

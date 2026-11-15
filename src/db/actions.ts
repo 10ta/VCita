@@ -82,7 +82,7 @@ export async function ensureDeck(): Promise<string> {
 
 // ---------- 笔记与卡片 ----------
 
-type NoteContent = Pick<Note, 'lemma' | 'sentence' | 'meaningZh' | 'meaningEn' | 'cueFamily' | 'promptFr' | 'intentZh' | 'hint' | 'clozeHint' | 'clozeSentence' | 'etymology' | 'answerFr' | 'extra' | 'source' | 'origin' | 'layer' | 'cardTypes' | 'tags' | 'altSentences' | 'altIntents' | 'contrastGroup' | 'contrastNote' | 'frame' | 'usage' | 'cluster' | 'sense' | 'paraphrase'>;
+type NoteContent = Pick<Note, 'lemma' | 'sentence' | 'meaningZh' | 'meaningEn' | 'cueFamily' | 'promptFr' | 'intentZh' | 'hint' | 'clozeHint' | 'clozeSentence' | 'etymology' | 'answerFr' | 'extra' | 'source' | 'origin' | 'layer' | 'cardTypes' | 'tags' | 'altSentences' | 'altIntents' | 'contrastGroup' | 'contrastNote' | 'frame' | 'usage' | 'cluster' | 'sense' | 'contexts' | 'paraphrase'>;
 export type NewNoteInput = { deckId: string; createdAtMs?: number } & Partial<NoteContent>;
 
 export function blankCard(note: Pick<Note, 'id' | 'deckId' | 'createdAt'>, type: Card['type'], s: Settings, stamp: string): Card {
@@ -117,6 +117,7 @@ export async function addNotes(inputs: NewNoteInput[]): Promise<Array<{ noteId: 
       usedCount: 0, usedAt: [], rot: 0, contrastGroup: input.contrastGroup ?? null, contrastNote: input.contrastNote ?? null, frame: input.frame ?? null, legacy: null, updatedAt: stamp, deleted: false,
       ...(input.usage ? { usage: input.usage } : {}), ...(input.cluster?.trim() ? { cluster: input.cluster.trim() } : {}),
       ...(input.sense?.trim() ? { sense: input.sense.trim() } : {}), ...(input.paraphrase ? { paraphrase: input.paraphrase } : {}),
+      ...(input.contexts?.length ? { contexts: input.contexts } : {}),
     };
     notes.push(note);
     for (const t of note.cardTypes) cards.push(blankCard(note, t, s, stamp));

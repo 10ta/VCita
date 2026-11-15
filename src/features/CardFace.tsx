@@ -295,6 +295,11 @@ export function Cues({ note, only }: { note: Note; only?: 'extra' }) {
     <Fr>
       {note.sense && <div className="cue sense" title="义项：这张卡考的是这个词的哪一个意思">义项 · {note.sense}</div>}
       {note.usage && <div className="cue usage" title="用法：这张卡考的结构">用法 · {note.usage}</div>}
+      {!only && !!note.contexts?.length && (
+        <div className="cue contexts" title="其他语境：这个词在别的搭配里的意思，只作参考，不考">
+          其他语境{note.contexts.map((c) => <div key={c}>↳ {c}</div>)}
+        </div>
+      )}
       {note.etymology && <div className="cue etym" title="词源">⌁ {note.etymology}</div>}
       {line1 && <div className="cue">{line1}</div>}
       {note.extra && <div className="cue">{note.extra}</div>}
