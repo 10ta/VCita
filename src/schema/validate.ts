@@ -192,6 +192,11 @@ export function markErrors(n: Pick<Note, 'lemma' | 'sentence'> & Partial<Pick<No
   if (out.length) errs.push(`例句里词条的 ${out.join('、')} 在考查部分外面：{{…}} 要把整个表达标进去（认读卡高亮的就是它）`);
   const all: Array<[string, string]> = [['例句', n.sentence], ['挖空例句', n.clozeSentence ?? ''], ...(n.altSentences ?? []).map((x, i) => [`备用例句第 ${i + 1} 句`, x] as [string, string])];
   for (const [label, x] of all) if (x && markOffLemma(x, n.lemma)) errs.push(`${label}标的「${clozeTarget(x)}」不是词条：一条笔记只考词条，别的易错点写进补充或单独做一条`);
+  // 备用例句和主例句一样：认读、挖空都会轮到它，只标了表达的一部分（faire l'impasse {{sur}}）就是考错了部分
+  (n.altSentences ?? []).forEach((x, i) => {
+    const o = lemmaOutsideMark(x, n.lemma);
+    if (o.length) errs.push(`备用例句第 ${i + 1} 句里词条的 ${o.join('、')} 在考查部分外面：{{…}} 要把整个表达标进去`);
+  });
   return errs;
 }
 

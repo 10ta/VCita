@@ -7,7 +7,7 @@ import { retentionFor } from '../src/srs/scheduler';
 import { cardView, Cues } from '../src/features/CardFace';
 import { errBlock, errReady, type ErrDraft } from '../src/features/add/MineErrors';
 import { contextLines, fromNote, otherFields } from '../src/features/noteform/model';
-import { noteErrors } from '../src/schema/validate';
+import { markErrors, noteErrors } from '../src/schema/validate';
 import { addNotes, clearAllLocalData, getSettings } from '../src/db/actions';
 import { exportBundle, importBundle } from '../src/io/bundle';
 import { db } from '../src/db/db';
@@ -129,6 +129,14 @@ describe('其他语境', () => {
     const n = parseNote({ id: 'n', deckId: 'd', createdAt: toIso(0), updatedAt: toIso(0), lemma: 'a', sentence: '{{a}}' });
     const out = JSON.parse(JSON.stringify(otherFields(fromNote(n, 'list'))));
     expect('sense' in out || 'contexts' in out).toBe(false);
+  });
+});
+
+describe('备用例句只标了一部分', () => {
+  it('和主例句一样报出来', () => {
+    const n = { lemma: "faire l'impasse sur qqch", sentence: "Inès a décidé de {{faire l'impasse sur}} le dernier chapitre.", altSentences: ["J'ai décidé de faire l'impasse {{sur}} la grammaire."] };
+    expect(markErrors(n).join()).toMatch(/备用例句第 1 句里词条的 .*impasse/);
+    expect(markErrors({ ...n, altSentences: ["J'ai décidé de {{faire l'impasse sur}} la grammaire."] })).toEqual([]);
   });
 });
 
