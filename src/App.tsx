@@ -8,6 +8,8 @@ import { useHotkeys, useNow } from './ui/hooks';
 import { Toaster } from './ui/toast';
 import { ErrorBoundary } from './ui/ErrorBoundary';
 import { AutoSync, SyncBadge } from './sync/SyncBadge';
+import { UpdateBadge } from './ui/UpdateBadge';
+import { Logo } from './ui/Logo';
 import { ReviewPage } from './features/review/ReviewPage';
 import { LibraryPage } from './features/library/LibraryPage';
 import { AddPage } from './features/add/AddPage';
@@ -93,13 +95,14 @@ export function App() {
   return (
     <div className="app">
       <header className="top">
-        <a className="brand" href="#/review"><span className="mark">鍛</span>VCita</a>
+        <a className="brand" href="#/review"><Logo />VCita</a>
         {decks && decks.length > 1 && (
           <select className="deck-select" value={deckId ?? ''} onChange={(e) => setPrefs({ deckId: e.target.value })} aria-label="当前牌组">
             {decks.map((d) => <option key={d.id} value={d.id}>{d.name}</option>)}
           </select>
         )}
         <span className="grow" />
+        <UpdateBadge />
         <ErrorBoundary area="同步状态"><SyncBadge /></ErrorBoundary>
         <button type="button" className="help-btn" onClick={() => setHelp(true)} title="说明 (?)">?</button>
       </header>

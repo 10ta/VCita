@@ -97,3 +97,24 @@ describe('评分按钮上的标准', () => {
     expect(gradeCriterion('recognition', 3)).toBe('');
   });
 });
+
+describe('补充里用 。 隔开的标记、近义 / 另义', () => {
+  // 真实卡（s'affranchir de qqch）：高频、原文、近义、另义写在同一行，用 。 隔开
+  const z = backZones(note({
+    usage: "s'affranchir de qqch：摆脱（束缚、规则、依赖）",
+    extra: "高频：s'affranchir des contraintes / des règles / de la tutelle de qqn。原文：s'affranchir d'une histoire ancienne（摆脱一段旧事）。近义：se libérer de、se défaire de。另义：affranchir une lettre 贴邮票",
+  }));
+  it('高频只剩搭配本身，原文进出处', () => {
+    expect(z.use[1]).toEqual({ fr: "s'affranchir des contraintes / des règles / de la tutelle de qqn", zh: '' });
+    expect(z.src).toEqual(["原文：s'affranchir d'une histoire ancienne（摆脱一段旧事）"]);
+  });
+  it('近义进用法、标上「近义」；另义进其他语境', () => {
+    expect(z.use.slice(2)).toEqual([{ fr: 'se libérer de', zh: '近义' }, { fr: 'se défaire de', zh: '近义' }]);
+    expect(z.ctx).toEqual([{ fr: 'affranchir une lettre', zh: '贴邮票' }]);
+    expect(z.more).toEqual([]);
+  });
+  it('笔记写了其他语境时，补充里的其他义不重复的照样列出', () => {
+    expect(backZones(note({ contexts: ['les prescriptions du règlement → 规定、指令'], extra: '其他义：规定、指令；法律时效' })).ctx.map((e) => e.zh))
+      .toEqual(['规定、指令', '法律时效']);
+  });
+});

@@ -124,13 +124,13 @@ export function ReviewPage({ deckId }: { deckId: string }) {
   const frDict = useFrDictCtx();
 
   // ---- 提前准备：让翻面、换卡时不用等网络 ----
-  // 1) 这张卡背面要读的法语答案：正面时就下载好
-  // 2) 下一张卡（按"这张已答"重排队列预测）出题时 / 翻面后要读的：现在就下载好
+  // 1) 这张卡题面和背面每一个能读的面：正面时就下载好
+  // 2) 下一张卡（按"这张已答"重排队列预测）的题面和背面：现在就下载好。不管设置会不会自动读——手动点喇叭也不用等
   // 3) 这张卡的目标表达：现在就查好划词结果，翻面后悬停目标立即弹出
   // 都只是预热缓存，预测错了也只是照旧现读、现查
   useEffect(() => {
     if (!split || !card || !s || !note) return;
-    for (const t of speechPlan(split, s.sourceLang, autoRead)) preloadSpeech(t.text, t.lang);
+    for (const t of speakables(split)) preloadSpeech(t.text, t.lang);
     const lookAhead = (v: ReturnType<typeof cardView>) => {
       const faces = [v.question, ...v.answers].filter((f) => f.raw && f.lang === s.sourceLang);
       const targets = new Map<string, string>();
@@ -147,7 +147,7 @@ export function ReviewPage({ deckId }: { deckId: string }) {
     const nListen = listenCards === 'all' || (listenCards === 'core' && nn.layer === 'core');
     const nGroup = nn.contrastGroup ? (notes ?? []).filter((x) => x.contrastGroup === nn.contrastGroup && x.id !== nn.id) : [];
     const ns = cardView(nc.type, nn, s, labels, nc.reps, nListen, nGroup);
-    for (const t of speechPlan(ns, s.sourceLang, autoRead, true)) preloadSpeech(t.text, t.lang);
+    for (const t of speakables(ns)) preloadSpeech(t.text, t.lang);
     // 下一张卡的目标表达也提前一张查好：到它的时候早就查完了
     lookAhead(ns);
   }, [currentId, split?.question.speakText]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -237,7 +237,7 @@ export function ReviewPage({ deckId }: { deckId: string }) {
   const PRACTICE: Record<Rating, string> = { 1: '稍后再练', 2: '本轮最后', 3: '本轮完成', 4: '本轮完成' };
   const btnNote = (r: Rating) => (!scheduled ? PRACTICE[r] : pv ? `${fmtNextIn(pv[r], fmtMinutes, fmtDays)}后` : '');
   // 评分标准直接写在按钮上（以前在按钮上面单独一行）
-  const gradeCrit = (r: Rating) => (card && split ? gradeCriterion(split.listen ? 'listen' : card.type, r, peek) : '');
+  const gradeCrit = (r: Rating) => (card && split ? gradeCriterion(split.listen ? 'listen' : card.type, r, peek) || GRADE_GENERIC[r] : '');
   // 下一次换天，用本地时间说（设置里的切换时间 + 时区换算过来）
   const rollover = fmtLocalMoment(nextDayStartMs(now, s.dayStartHour), now);
   const limitLine = `今日已学：新卡 ${q.done.newDone}/${s.newPerDay} · 复习 ${q.done.reviewDone}${s.reviewsPerDay ? `/${s.reviewsPerDay}` : ''}`
@@ -378,11 +378,7 @@ export function ReviewPage({ deckId }: { deckId: string }) {
                 </div>
                 <div className="grades">
                   {RATINGS.map(({ r, label, cls }) => (
-                    <button key={r} type="button" className={`grade ${cls}`} onClick={() => void answer(r)}>
-                      <b>{label}</b>
-                      <small>{[btnNote(r), gradeCrit(r)].filter(Boolean).join(' · ')}</small>
-                      <kbd>{r}</kbd>
-                    </button>
+                    <GradeButton key={r} cls={cls} label={label} r={r} when={btnNote(r)} tip={gradeCrit(r)} onPick={() => void answer(r)} />
                   ))}
                 </div>
               </>
@@ -395,6 +391,29 @@ export function ReviewPage({ deckId }: { deckId: string }) {
       )}
       {editing && note && <NoteEditor note={note} onClose={() => setEditing(false)} />}
     </div>
+  );
+}
+
+const GRADE_GENERIC: Record<Rating, string> = { 1: '没想起来', 2: '想起来但很吃力', 3: '正常想起', 4: '毫不费力' };
+
+/**
+ * 评分按钮：鼠标停 0.35 秒才显示评分标准，离开或按下立即消失。提示不接收鼠标事件，不会挡住第一次点击；
+ * 手指点按不显示（标准在 ? 说明 → 复习 → 评分里）
+ */
+function GradeButton({ cls, label, r, when, tip, onPick }: { cls: string; label: string; r: Rating; when: string; tip: string; onPick: () => void }) {
+  const [show, setShow] = useState(false);
+  const timer = useRef(0);
+  const hide = () => { window.clearTimeout(timer.current); setShow(false); };
+  useEffect(() => () => window.clearTimeout(timer.current), []);
+  return (
+    <button type="button" className={`grade ${cls}`} onClick={onPick}
+      onPointerEnter={(e) => { if (e.pointerType !== 'mouse' || !tip) return; window.clearTimeout(timer.current); timer.current = window.setTimeout(() => setShow(true), 350); }}
+      onPointerLeave={hide} onPointerDown={hide}>
+      <b>{label}</b>
+      <small>{when}</small>
+      <kbd>{r}</kbd>
+      {show && <span className="grade-tip" role="tooltip">{tip}</span>}
+    </button>
   );
 }
 
@@ -441,17 +460,11 @@ function TypedDiff({ typed, answerFr }: { typed: string; answerFr: string }) {
   );
 }
 
-const plainOf = (raw: string) => raw.replace(/\{\{(.*?)\}\}/g, (_, x: string) => x.split('::')[0]);
-/**
- * 这张卡按现在的设置会自动读哪些法语（和出题时的自动发音规则一致）：
- * 题面是法语时，听力卡总要读、其他卡看「自动读」；题面不是法语时，开了「自动读」翻面后读法语答案。
- * withBack：翻面后要读的也算上（预测下一张时）
- */
-function speechPlan(split: ReturnType<typeof cardView>, sourceLang: string, autoRead: boolean, withBack = true): Array<{ text: string; lang: string }> {
-  const out: Array<{ text: string; lang: string }> = [];
-  const frontIsSource = split.question.lang === sourceLang && !!split.question.speakText;
-  if (frontIsSource && (autoRead || split.listen)) out.push({ text: split.question.speakText, lang: split.question.lang });
-  const ans = split.answers.find((a) => a.lang === sourceLang && a.speakText);
-  if (withBack && !frontIsSource && autoRead && ans) out.push({ text: ans.speakText, lang: ans.lang });
-  return out;
+/** 一张卡所有能读出来的面（题面 + 背面每一个答案），提前下载用；去重 */
+export function speakables(v: { question: { speakText: string; lang: string }; answers: Array<{ speakText: string; lang: string }> }): Array<{ text: string; lang: string }> {
+  const seen = new Set<string>();
+  return [v.question, ...v.answers].filter((f) => f.speakText?.trim()).map((f) => ({ text: f.speakText, lang: f.lang }))
+    .filter((t) => { const k = `${t.lang}|${t.text}`; if (seen.has(k)) return false; seen.add(k); return true; });
 }
+
+const plainOf = (raw: string) => raw.replace(/\{\{(.*?)\}\}/g, (_, x: string) => x.split('::')[0]);

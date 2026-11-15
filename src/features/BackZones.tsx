@@ -1,7 +1,8 @@
 // 卡片背面的固定分区：用法 | 其他语境 / 词源 | 词族 / 注意（按需）/ 出处。
 // 四个格子位置永远不变，没内容时显示虚线占位，看熟以后眼睛可以直接跳到想看的格子。
-// 「补充」字段按开头的标记拆进各区：高频 → 用法；⚠ ❌ 已有卡 语法锁 → 注意；原文 句意 TCF 错题 → 出处；
-// 其他义 → 其他语境（笔记没写其他语境时）；认不出的放在出处下面的「补充」。
+// 「补充」字段按开头的标记拆进各区：高频 近义 同义 也说 → 用法；⚠ ❌ 已有卡 语法锁 → 注意；原文 句意 TCF 错题 → 出处；
+// 其他义 另义 → 其他语境（和笔记的其他语境重复的不再列）；认不出的放在出处下面的「补充」。
+// 标记前面可以是换行，也可以是 ；或 。
 import type { ReactNode } from 'react';
 import type { Note, Settings } from '../schema';
 import { Fr } from './FrText';
@@ -15,12 +16,13 @@ export type ZoneHeads = NonNullable<Settings['zoneHeads']>;
 export const zoneHeadsOf = (s: Pick<Settings, 'zoneHeads'> | undefined): ZoneHeads => s?.zoneHeads ?? 'icon';
 
 const HAN = /[㐀-鿿]/;
-const MARKS = '高频|⚠|❌|🔴|已有卡|语法锁|原文形式|原文|句意|TCF 错题|其他义';
-const SPLIT = new RegExp(`[；;]\\s*(?=(?:${MARKS}))`);
+const MARKS = '高频|近义|同义|也可说|也说|⚠|❌|🔴|已有卡|语法锁|原文形式|原文|句意|TCF 错题|其他义|另义';
+const SPLIT = new RegExp(`[；;。]\\s*(?=(?:${MARKS}))`);
+const trimEnd = (x: string) => x.trim().replace(/[。；;]+$/, '').trim();
 
 /** 一条「法语 + 中文」：fr：zh、fr → zh、或者第一个汉字之前是法语；整段包在括号里的中文去掉括号 */
 export function splitEntry(raw: string): Entry {
-  const s = raw.trim();
+  const s = trimEnd(raw);
   let m = /^(.+?)\s*：\s*(.+)$/s.exec(s);
   if (m && !HAN.test(m[1])) return { fr: m[1].trim(), zh: m[2].trim() };
   m = /^(.+?)\s+→\s+(.+)$/s.exec(s);
@@ -35,7 +37,7 @@ export function splitEntry(raw: string): Entry {
   zh = zh.trim();
   const wrapped = /^[（(]([^（()）]*)[）)]$/.exec(zh);
   if (wrapped) zh = wrapped[1];
-  return { fr: fr.trim().replace(/[，,:：]$/, '').trim(), zh };
+  return { fr: fr.trim().replace(/[，,:：。]$/, '').trim(), zh: zh.replace(/[。；]+$/, '') };
 }
 
 /** 一串条目：；分隔；没有中文的一条再按 、 分（attraper la grippe、le vaccin contre la grippe） */
@@ -50,19 +52,21 @@ export function backZones(note: Note): Zones {
   const z: Zones = { use: [], ctx: [], ety: note.etymology?.trim() || null, fam: [], warn: [], src: [], more: [], sourceUrl: null };
   if (note.usage?.trim()) z.use.push(splitEntry(note.usage));
   const otherSense: Entry[] = [];
-  const segs = (note.extra ?? '').split('\n').flatMap((l) => l.split(SPLIT)).map((x) => x.trim()).filter(Boolean);
+  const segs = (note.extra ?? '').split('\n').flatMap((l) => l.split(SPLIT)).map(trimEnd).filter(Boolean);
   for (const seg of segs) {
     const m = new RegExp(`^(${MARKS})\\s*[：:]?\\s*`).exec(seg);
     const mark = m?.[1];
     const rest = m ? seg.slice(m[0].length) : seg;
     if (mark === '高频') z.use.push(...items(rest));
+    else if (mark === '近义' || mark === '同义' || mark === '也说' || mark === '也可说') z.use.push(...items(rest).map((e) => (e.zh ? e : { ...e, zh: mark })));
     else if (mark === '⚠') z.warn.push(rest);
     else if (mark === '❌' || mark === '🔴' || mark === '已有卡' || mark === '语法锁') z.warn.push(seg);
     else if (mark === '原文' || mark === '原文形式' || mark === '句意' || mark === 'TCF 错题') z.src.push(seg);
-    else if (mark === '其他义') otherSense.push(...rest.split(/[；;]/).map((x) => x.trim()).filter(Boolean).map(splitEntry));
+    else if (mark === '其他义' || mark === '另义') otherSense.push(...rest.split(/[；;]/).map((x) => x.trim()).filter(Boolean).map(splitEntry));
     else z.more.push(seg);
   }
-  z.ctx = note.contexts?.length ? note.contexts.map(splitEntry) : otherSense;
+  const ctx = note.contexts ?? [];
+  z.ctx = [...ctx.map(splitEntry), ...otherSense.filter((e) => !ctx.some((c) => c.includes(e.zh || e.fr)))];
   if (note.cueFamily?.trim()) z.fam = family(note.cueFamily);
   const src = note.source?.trim();
   if (src) {
@@ -85,14 +89,14 @@ const ICON: Record<ZoneKey, ReactNode> = {
   src: <><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z" /><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z" /></>,
 };
 
-function Head({ k, count }: { k: ZoneKey; count?: number }) {
+function Head({ k, count, empty }: { k: ZoneKey; count?: number; empty?: boolean }) {
   return (
     <div className="z-head">
       <span className="z-title">
         <svg className="z-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">{ICON[k]}</svg>
         {LABEL[k]}
       </span>
-      {!!count && <span className="z-count">{count}</span>}
+      {empty ? <span className="z-none">—</span> : !!count && <span className="z-count">{count}</span>}
     </div>
   );
 }
@@ -114,8 +118,8 @@ function Zone({ k, count, children }: { k: ZoneKey; count?: number; children?: R
   const empty = !children;
   return (
     <div className={`zone z-${k}${empty ? ' is-empty' : ''}`}>
-      <Head k={k} count={empty ? undefined : count} />
-      {empty ? <span className="z-none">—</span> : children}
+      <Head k={k} count={count} empty={empty} />
+      {children}
     </div>
   );
 }
