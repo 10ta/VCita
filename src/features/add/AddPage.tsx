@@ -12,14 +12,16 @@ import { langLabel } from '../../ui/langs';
 import { usePrefs, setPrefs } from '../../ui/prefs';
 import { toast } from '../../ui/toast';
 import { OriginPicker, ThemePicker } from '../NoteEditor';
+import { TYPE_LABEL } from '../CardFace';
 import { BulkImport } from './BulkImport';
 import { MineText } from './MineText';
+import { MineErrors } from './MineErrors';
 import { ClipBasket, type ClipPrefill } from './ClipBasket';
 
 const todayInput = () => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`; };
 
 export function AddPage({ deckId }: { deckId: string }) {
-  const [tab, setTab] = useState<'one' | 'text' | 'bulk' | 'basket'>(() => (location.hash.includes('basket') ? 'basket' : location.hash.includes('text') || location.hash.startsWith('#/read') ? 'text' : 'one'));
+  const [tab, setTab] = useState<'one' | 'text' | 'errors' | 'bulk' | 'basket'>(() => (location.hash.includes('basket') ? 'basket' : location.hash.includes('errors') ? 'errors' : location.hash.includes('text') || location.hash.startsWith('#/read') ? 'text' : 'one'));
   const [prefill, setPrefill] = useState<ClipPrefill | null>(null);
   const clips = useClips();
   const todo = clips?.filter((c) => c.status === 'todo').length ?? 0;
@@ -28,11 +30,13 @@ export function AddPage({ deckId }: { deckId: string }) {
       <div className="toolbar">
         <button type="button" className={`pill${tab === 'one' ? ' is-on' : ''}`} onClick={() => setTab('one')}>单个添加</button>
         <button type="button" className={`pill${tab === 'text' ? ' is-on' : ''}`} onClick={() => setTab('text')} title="粘贴短文，标出生词，一键复制给 Claude 做卡">短文挖词</button>
+        <button type="button" className={`pill${tab === 'errors' ? ' is-on' : ''}`} onClick={() => setTab('errors')} title="记下 TCF 错题（原文句、正确选项、错选、为什么选它），一键复制给 Claude 做错题卡">错题</button>
         <button type="button" className={`pill${tab === 'bulk' ? ' is-on' : ''}`} onClick={() => setTab('bulk')}>批量导入</button>
         <button type="button" className={`pill${tab === 'basket' ? ' is-on' : ''}`} onClick={() => setTab('basket')}>摘句篮{todo ? ` ${todo}` : ''}</button>
       </div>
       {tab === 'one' ? <AddOne key={prefill?.clipId ?? 'blank'} deckId={deckId} prefill={prefill} />
         : tab === 'text' ? <MineText deckId={deckId} />
+        : tab === 'errors' ? <MineErrors />
         : tab === 'bulk' ? <BulkImport deckId={deckId} />
         : <ClipBasket onMake={(p) => { setPrefill(p); setPrefs({ addOrigin: 'mined' }); setTab('one'); }} />}
     </div>
@@ -134,7 +138,7 @@ function AddOne({ deckId, prefill }: { deckId: string; prefill?: ClipPrefill | n
           <li key={n.id}>
             <b>{n.lemma || clozeTarget(n.sentence)}</b><span className="arrow">→</span>
             <span>{n.meaningZh || (pending.has(n.id) ? '…' : '')}</span><span className="sep">/</span><span className="t2">{n.meaningEn || (pending.has(n.id) ? '…' : '')}</span>
-            {n.cardTypes.filter((t) => t !== 'recognition').map((t) => <span key={t} className={`badge is-type t-${t}`}>{t === 'production' ? '产出' : t === 'cloze' ? '挖空' : t === 'contrast' ? '辨析' : t}</span>)}
+            {n.cardTypes.filter((t) => t !== 'recognition').map((t) => <span key={t} className={`badge is-type t-${t}`}>{TYPE_LABEL[t]}</span>)}
           </li>
         ))}
       </ul>

@@ -14,6 +14,11 @@ export const FRAME_TYPES: Array<[Card['type'], string, string]> = [
   ['apply', '套用', '功能 + 一个随机主题，用句框写一整句，自评'],
 ];
 
+/** 改写对笔记的卡型（TCF 错题） */
+export const PARAPHRASE_TYPES: Array<[Card['type'], string, string]> = [
+  ['paraphrase', '改写', '原文句 + 题干，先说出作者断言什么，再对照正确选项'],
+];
+
 export { toTokens, fromTokens } from '../lib/markTarget';
 
 /** 把句子显示成可点的词：点一下标记 / 取消考查部分 */
@@ -34,7 +39,7 @@ export function ClozeMarker({ value, onChange, readOnly }: { value: string; onCh
 
 /** 选中卡型的正反面预览 */
 export function CardPreviews({ draft, s, labels }: { draft: Note; s: Settings; labels: [string, string, string] }) {
-  const types = [...CARD_TYPES, ...FRAME_TYPES].filter(([t]) => draft.cardTypes.includes(t));
+  const types = [...CARD_TYPES, ...FRAME_TYPES, ...PARAPHRASE_TYPES].filter(([t]) => draft.cardTypes.includes(t));
   if (!types.length) return null;
   return (
     <div className="previews">

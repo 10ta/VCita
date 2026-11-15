@@ -18,7 +18,12 @@ export const THEMES = ['TRAVAIL', 'SOCIÉTÉ', 'TECHNOLOGIE', 'ENVIRONNEMENT', '
 export const ThemeV2 = z.enum(THEMES);
 /** contrast = 辨析卡：易混组里的几个词放在一起，看句子选哪一个（由易混组自动生成，不在编辑器里勾选） */
 /** frame = 句框卡：正面是功能（"反事实：禁令只会转移问题"），写出句框；apply = 套用卡：功能 + 一个随机主题，用句框写一整句，自评 */
-export const CARD_TYPES = ['recognition', 'production', 'cloze', 'contrast', 'frame', 'apply'] as const;
+/** paraphrase = 改写对卡：TCF 错题里「原文句子 ↔ 正确选项」的一对。正面原文句 + 题干，先说出作者断言什么；背面正确选项、桥、当时的错选 */
+export const CARD_TYPES = ['recognition', 'production', 'cloze', 'contrast', 'frame', 'apply', 'paraphrase'] as const;
+/** 错题的陷阱类型：原词复现 / 极性反了 / 常识替换 / 排除错了选生词 / 假朋友或单一释义 */
+export const TRAPS = ['verbatim', 'polarity', 'common-sense', 'unknown-pick', 'false-friend'] as const;
+/** 错题的根因层：骨架 / 义项 / 固定表达 / 情境替换 */
+export const ROOTS = ['skeleton', 'sense', 'chunk', 'situation'] as const;
 export const CARD_STATES = ['new', 'learning', 'review', 'relearning'] as const;
 
 export const DeckV2 = z.looseObject({
@@ -59,14 +64,17 @@ export const NoteV2 = z.looseObject({
   /** 表达群：同一个功能的几种说法（「说"很多"」：nombre de / une écrasante majorité de…），值就是群名。
    *  复习时背面列出同群的其他成员（遮住答案），顺带回忆。optional：同步文件不变 */
   cluster: z.string().nullable().optional(),
+  /** 义项：这张卡考的是这个词的哪一个意思（raison：理性，≠ 原因）。认读卡背面最先显示。optional：同步文件不变 */
+  sense: z.string().nullable().optional(),
   /** 在表达群里被顺带回忆、却没想起来的日期（最近 10 次），只做标记，不影响排期 */
   recallMisses: z.array(z.string()).optional(),
   answerFr: z.string().nullable().default(null),
   extra: z.string().nullable().default(null),
   source: z.string().nullable().default(null),
-  /** 来源类型：mined = 挖矿卡（从自己的输入里摘的，越新越该先学）；list = 词表卡（批量导入，按核心度慢慢消化）。
+  /** 来源类型：mined = 挖矿卡（从自己的输入里摘的，越新越该先学）；list = 词表卡（批量导入，按核心度慢慢消化）；
+   *  error = 错题卡（TCF 错题里导致选错的那个点：义项、骨架、改写对），新卡最先出。
    *  null = 没标过，按"出处"推断：填了出处算挖矿，没填算词表（见 noteOrigin） */
-  origin: z.enum(['mined', 'list']).nullable().default(null),
+  origin: z.enum(['mined', 'list', 'error']).nullable().default(null),
   /** 备用例句（同样用 {{…}} 标出）：认读卡和挖空卡每次复习轮换，避免记住的是句子而不是词 */
   altSentences: z.array(z.string()).default([]),
   /** 备用产出题：同一个表达换一个场景，产出卡每次复习轮换 */
@@ -83,6 +91,19 @@ export const NoteV2 = z.looseObject({
   contrastGroup: z.string().nullable().default(null),
   /** 辨析说明：这个词和组里其他词的区别（辨析卡背面显示），如"抽象地给…染上色彩（经历、情绪）" */
   contrastNote: z.string().nullable().default(null),
+  /** 改写对（只有改写对卡的笔记有）：sentence = 原文句（{{…}} 标出决定答案的骨架或词），lemma = 那个骨架或词。optional：同步文件不变 */
+  paraphrase: z.looseObject({
+    /** 题干：Quel constat est dressé ? */
+    question: z.string(),
+    /** 正确选项（换了词的说法） */
+    answer: z.string(),
+    /** 桥：原文哪个词 / 骨架和选项的哪部分等价（reconnu 官方承认 = officialiser） */
+    bridge: z.string().default(''),
+    /** 当时的错选 */
+    wrong: z.string().nullable().default(null),
+    trap: z.enum(TRAPS).nullable().default(null),
+    root: z.enum(ROOTS).nullable().default(null),
+  }).nullable().optional(),
   /** 迁移时原样保存的旧卡对象 */
   legacy: z.unknown().nullable().default(null),
   /** 写作句框（语块库）：有它的笔记是句框，lemma = 句框（⬚ 是要填的位置），meaningZh = 功能，sentence = 填好的例句，extra = 语法锁 */

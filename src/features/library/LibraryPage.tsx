@@ -20,6 +20,7 @@ import { isFrench, langLabel } from '../../ui/langs';
 import { CardStats, Cues, renderSentence, SpeakBtn, TYPE_LABEL } from '../CardFace';
 import { NoteEditor, ThemePicker } from '../NoteEditor';
 
+const ORIGIN_SHORT: Record<NoteOrigin, string> = { mined: '挖矿', list: '词表', error: '错题' };
 type Status = 'all' | 'new' | 'learning' | 'due' | 'leech' | 'suspended' | 'nosentence' | 'stable' | 'core' | 'needprod' | 'forgot' | 'lowease' | 'dup' | 'badprompt' | 'contrast' | 'confusable' | 'cluster' | 'missed';
 // 后半部分是"分拣"用的筛选（改造方案 §6）：已稳定的保留；同源词选中后批量暂停；顽固卡补句子、加线索；核心词补产出卡
 const STATUS: Array<[Status, string, string?]> = [
@@ -196,10 +197,11 @@ export function LibraryPage({ deckId }: { deckId: string }) {
           <option value="">全部主题</option>
           {THEMES.map((t) => <option key={t} value={t}>{t}</option>)}
         </select>
-        <select value={origin} title="挖矿卡：从自己输入里摘的；词表卡：批量导入的。没标过的按有没有填出处推断" onChange={(e) => { setOrigin(e.target.value as NoteOrigin | ''); resetPage(); }}>
+        <select value={origin} title="挖矿卡：从自己输入里摘的；词表卡：批量导入的；错题卡：TCF 错题里抽出来的。没标过的按有没有填出处推断" onChange={(e) => { setOrigin(e.target.value as NoteOrigin | ''); resetPage(); }}>
           <option value="">全部来源</option>
           <option value="mined">挖矿卡</option>
           <option value="list">词表卡</option>
+          <option value="error">错题卡</option>
         </select>
         <input type="date" value={day} onChange={(e) => { setDay(e.target.value); resetPage(); }} title="按创建日期筛选" />
         {day && <button type="button" className="pill" onClick={() => setDay('')}>✕</button>}
@@ -238,6 +240,7 @@ export function LibraryPage({ deckId }: { deckId: string }) {
           <button type="button" className="pill" onClick={() => void updateNotes(ids, () => ({ layer: 'mid' })).then(() => done(`已设为中频 ${ids.length} 条`))}>设为中频</button>
           <button type="button" className="pill" title="从自己输入里摘的：新卡额度按来源拆分时最新的先出" onClick={() => void updateNotes(ids, () => ({ origin: 'mined' })).then(() => done(`已设为挖矿 ${ids.length} 条`))}>设为挖矿</button>
           <button type="button" className="pill" title="批量导入的词表：按核心 → 中频慢慢消化" onClick={() => void updateNotes(ids, () => ({ origin: 'list' })).then(() => done(`已设为词表 ${ids.length} 条`))}>设为词表</button>
+          <button type="button" className="pill" title="TCF 错题里抽出来的：新卡最先出" onClick={() => void updateNotes(ids, () => ({ origin: 'error' })).then(() => done(`已设为错题 ${ids.length} 条`))}>设为错题</button>
           {sel.size >= 2 && sel.size <= 5 && (
             <button type="button" className="pill" title="这几个词容易混：每条笔记生成一张辨析卡（看句子选用哪个词）。已经在别的易混组里的会整组并进来；没有带 {{…}} 例句的笔记跳过"
               onClick={() => void groupContrast(ids).then((k) => done(k ? `已设为易混组：${k} 条，各生成一张辨析卡` : '至少要两条带 {{…}} 例句的笔记'))}>设为易混组</button>
@@ -297,7 +300,7 @@ export function LibraryPage({ deckId }: { deckId: string }) {
                   {n.tags.map((t) => <span key={t} className="badge is-theme">{t}</span>)}
                   {!n.sentence && <span className="badge">待补句子</span>}
                   {n.layer === 'core' && <span className="badge is-core">核心</span>}
-                  <span className="badge" title={n.origin ? undefined : '没标过，按有没有填出处推断'}>{noteOrigin(n) === 'mined' ? '挖矿' : '词表'}{n.origin ? '' : '?'}</span>
+                  <span className="badge" title={n.origin ? undefined : '没标过，按有没有填出处推断'}>{ORIGIN_SHORT[noteOrigin(n)]}{n.origin ? '' : '?'}</span>
                   {cs.filter((c) => c.type !== 'recognition').map((c) => <span key={c.id} className={`badge is-type t-${c.type}`}>{TYPE_LABEL[c.type]}</span>)}
                   {n.usedCount > 0 && <span className="badge" title="写作、口语里用上的次数">用上 {n.usedCount}</span>}
                   {dups.has(n.id) && <span className="badge is-dup" title="同组的笔记疑似重复，可以删掉或暂停其中一条">重复组 {dups.get(n.id)}</span>}
@@ -378,7 +381,7 @@ function studyLabel(status: Status, theme: string, kw: string, selected: number)
 
 /** 开一轮自定义学习：选卡型、张数、顺序 */
 function StudyDialog({ notes, cardsByNote, label, onClose }: { notes: Note[]; cardsByNote: Map<string, Card[]>; label: string; onClose: () => void }) {
-  const [types, setTypes] = useState<Card['type'][]>(['recognition', 'production', 'cloze', 'contrast']);
+  const [types, setTypes] = useState<Card['type'][]>(['recognition', 'production', 'cloze', 'contrast', 'paraphrase']);
   const [limit, setLimit] = useState('50');
   const [shuffle, setShuffle] = useState(true);
   const pool = notes.flatMap((n) => (cardsByNote.get(n.id) ?? []).filter((c) => !c.suspended && types.includes(c.type)));
@@ -397,7 +400,7 @@ function StudyDialog({ notes, cardsByNote, label, onClose }: { notes: Note[]; ca
       <p className="hint">范围：{label}，{notes.length} 条笔记、{pool.length} 张卡（不含已暂停）。</p>
       <div className="field"><span className="field-label">卡型</span>
         <div className="chips">
-          {(['recognition', 'production', 'cloze', 'contrast'] as const).map((t) => (
+          {(['recognition', 'production', 'cloze', 'contrast', 'paraphrase'] as const).map((t) => (
             <button key={t} type="button" className={`chip${types.includes(t) ? ' is-on' : ''}`} aria-pressed={types.includes(t)}
               onClick={() => setTypes(types.includes(t) ? types.filter((x) => x !== t) : [...types, t])}>{TYPE_LABEL[t]}</button>
           ))}

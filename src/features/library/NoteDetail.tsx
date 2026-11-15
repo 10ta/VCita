@@ -12,7 +12,8 @@ const fmtIvl = (d: number | null) => (d === null ? '—' : d === 0 ? '0' : fmtDa
 export function NoteDetail({ noteId, cards, s }: { noteId: string; cards: Card[]; s: Settings }) {
   const logs = useNoteLogs(noteId);
   const typeOf = new Map(cards.map((c) => [c.id, c.type]));
-  const sorted = [...cards].sort((a, b) => ['recognition', 'production', 'cloze', 'contrast'].indexOf(a.type) - ['recognition', 'production', 'cloze', 'contrast'].indexOf(b.type));
+  const ORDER = ['recognition', 'production', 'cloze', 'contrast', 'frame', 'apply', 'paraphrase'];
+  const sorted = [...cards].sort((a, b) => ORDER.indexOf(a.type) - ORDER.indexOf(b.type));
   return (
     <div className="note-detail">
       {sorted.map((c) => {

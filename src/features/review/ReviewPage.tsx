@@ -323,8 +323,8 @@ export function ReviewPage({ deckId }: { deckId: string }) {
               </>
             ) : split.hint && <div className="cue">提示：{split.hint}</div>}
             <CardStats card={card} s={s} center mem={mem} />
-            {(card.type === 'production' || card.type === 'frame') && !revealed && (
-              <input className="type-in" value={typed} placeholder={card.type === 'frame' ? '先写出句框（可选，要填的位置写 ⬚ 或随便填），回车显示答案' : '先写出法语（可选），回车显示答案'} onChange={(e) => setTyped(e.target.value)}
+            {(card.type === 'production' || card.type === 'frame' || card.type === 'paraphrase') && !revealed && (
+              <input className="type-in" value={typed} placeholder={card.type === 'frame' ? '先写出句框（可选，要填的位置写 ⬚ 或随便填），回车显示答案' : card.type === 'paraphrase' ? '先写出作者断言什么（可选，中文法语都行），回车显示答案' : '先写出法语（可选），回车显示答案'} onChange={(e) => setTyped(e.target.value)}
                 onKeyDown={(e) => { if (e.key === 'Enter' && !e.nativeEvent.isComposing) { e.preventDefault(); setRevealed(true); (e.target as HTMLInputElement).blur(); } }} />
             )}
             {!revealed && split.listen && split.answers[0]?.text && (
@@ -345,6 +345,7 @@ export function ReviewPage({ deckId }: { deckId: string }) {
               <>
                 <div className="answer">
                   {(card.type === 'production' || card.type === 'frame') && typed.trim() && split.answerFr && <TypedDiff typed={typed} answerFr={split.answerFr} />}
+                  {card.type === 'paraphrase' && typed.trim() && <div className="cue para-typed">你写的：{typed.trim()}</div>}
                   {split.answers.map((a, i) => (
                     <div key={i} className={i === 0 ? 'a1' : 'a2'}>
                       <span>{a.text ? (a.lang === s.sourceLang ? <Fr>{a.text}</Fr> : a.text) : <i className="muted">（{a.label}为空）</i>}</span>
@@ -377,6 +378,7 @@ export function ReviewPage({ deckId }: { deckId: string }) {
                       : card.type === 'contrast' ? '选对、说得出为什么 → 良好；选对但靠猜 → 困难；选错 → 忘了'
                       : card.type === 'frame' ? '句框想得出、只有小词或配合错 → 困难；想不起句框 → 忘了'
                       : card.type === 'apply' ? '句框用对、语法锁都满足 → 良好；句框对但语法锁有错 → 困难；写不出来 → 忘了'
+                      : card.type === 'paraphrase' ? '说出的断言和正确选项意思一致 → 良好；方向对、但漏了目的 / 否定 / 情态 → 困难；说反了或说不出 → 忘了'
                       : '表达想出来了、只是形式错 → 困难；表达想不出来 → 忘了'}
                   </p>
                 )}

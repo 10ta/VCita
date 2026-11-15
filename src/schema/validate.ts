@@ -68,7 +68,7 @@ export function labelOnlyHint(hint: string | null | undefined): boolean {
 }
 const inlineHints = (s: string) => [...s.matchAll(/\{\{[^}]*?::([^}]+?)\}\}/g)].map((m) => m[1]);
 
-type Fields = Pick<Note, 'lemma' | 'sentence' | 'cardTypes' | 'intentZh' | 'answerFr'> & Partial<Pick<Note, 'clozeSentence' | 'clozeHint' | 'promptFr' | 'altSentences' | 'frame'>>;
+type Fields = Pick<Note, 'lemma' | 'sentence' | 'cardTypes' | 'intentZh' | 'answerFr'> & Partial<Pick<Note, 'clozeSentence' | 'clozeHint' | 'promptFr' | 'altSentences' | 'frame' | 'paraphrase'>>;
 
 export function noteErrors(n: Fields): string[] {
   const errs: string[] = [];
@@ -76,6 +76,14 @@ export function noteErrors(n: Fields): string[] {
   if (n.frame) {
     if (!n.cardTypes.length) errs.push('至少选一种卡');
     if (!n.lemma.trim()) errs.push('句框不能为空');
+    return errs;
+  }
+  // 改写对（TCF 错题）：原文句标出决定答案的部分，有题干和正确选项；只出改写卡
+  if (n.paraphrase) {
+    if (!hasCloze(n.sentence)) errs.push('原文句里要用 {{…}} 标出决定答案的骨架或词');
+    if (!n.paraphrase.question.trim()) errs.push('题干不能为空');
+    if (!n.paraphrase.answer.trim()) errs.push('正确选项不能为空');
+    if (n.cardTypes.join() !== 'paraphrase') errs.push('改写对笔记只生成改写卡');
     return errs;
   }
   const cloze = hasCloze(n.sentence);

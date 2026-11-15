@@ -83,7 +83,7 @@ export function computeStats(input: { cards: Card[]; notes: Note[]; logs: Review
       x.total++; x.pass += l.rating >= 2 ? 1 : 0;
     }
   }
-  const order = ['recognition', 'production', 'cloze', 'contrast'];
+  const order = ['recognition', 'production', 'cloze', 'contrast', 'frame', 'apply', 'paraphrase'];
   const byType = [...tt.entries()].sort((a, b) => order.indexOf(a[0]) - order.indexOf(b[0])).map(([type, e]) => ({
     type: type as Card['type'], ret: ret(e.pass, e.total), medianSec: quantile(e.secs, 0.5), p90Sec: quantile(e.secs, 0.9), reviews: e.reviews,
   }));

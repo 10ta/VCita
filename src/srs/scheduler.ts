@@ -20,7 +20,8 @@ export type SrsParams = Pick<
 const useFsrs = (p: SrsParams) => (p.scheduler ?? 'sm2') === 'fsrs';
 
 /** 认读类卡（认得就行）用较低的目标保持率，产出类（要写得出来）用较高的 */
-export const isRecognitionType = (type: Card['type']) => type === 'recognition' || type === 'contrast';
+/** 认读类：认得就行（认读、辨析、改写对），用较低的目标保持率 */
+export const isRecognitionType = (type: Card['type']) => type === 'recognition' || type === 'contrast' || type === 'paraphrase';
 export function retentionFor(type: Card['type'], s: Pick<Settings, 'desiredRetention'> & Partial<Pick<Settings, 'retentionRecognition'>>): number {
   return isRecognitionType(type) ? s.retentionRecognition ?? s.desiredRetention : s.desiredRetention;
 }

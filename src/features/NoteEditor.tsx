@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Modal } from '../ui/Modal';
-import { THEMES, noteOrigin, type Note, type NoteOrigin, type Theme } from '../schema';
+import { ROOTS, ROOT_LABEL, THEMES, TRAPS, TRAP_LABEL, noteOrigin, type Note, type NoteOrigin, type Paraphrase, type Theme } from '../schema';
 import { defaultCardTypes, hasCloze, noteErrors, promptErrors } from '../schema/validate';
 import { bumpUsed, deleteNotes, leaveContrast, updateNote } from '../db/actions';
 import { useDeckSettings, useDecks, useNotes } from '../db/hooks';
@@ -27,6 +27,7 @@ export function ThemePicker({ value, onChange }: { value: Theme[]; onChange: (v:
 export const ORIGINS: [NoteOrigin, string, string][] = [
   ['mined', '挖矿', '从自己的输入里摘的（视频、阅读、对话、写作）：语境越新越好记，新卡额度按来源拆分时最新的先出'],
   ['list', '词表', '批量导入的词表（B1 / B2 等）：哪天学都一样，按核心 → 中频慢慢消化'],
+  ['error', '错题', 'TCF 错题里抽出来的点（以为认识的义项、骨架、改写对）：新卡最先出'],
 ];
 
 export function OriginPicker({ value, onChange }: { value: NoteOrigin; onChange: (v: NoteOrigin) => void }) {
@@ -52,7 +53,7 @@ export function parseAltIntent(line: string): Note['altIntents'][number] {
 }
 
 export function NoteEditor({ note, onClose }: { note: Note; onClose: () => void }) {
-  return note.frame ? <FrameEditor note={note} onClose={onClose} /> : <WordEditor note={note} onClose={onClose} />;
+  return note.frame ? <FrameEditor note={note} onClose={onClose} /> : note.paraphrase ? <ParaphraseEditor note={note} onClose={onClose} /> : <WordEditor note={note} onClose={onClose} />;
 }
 
 /** 单词 / 表达笔记的编辑：一个表达、一张例句表（见 noteform/NoteForm） */
@@ -234,6 +235,90 @@ function FrameEditor({ note, onClose }: { note: Note; onClose: () => void }) {
           {text('source', '出处', '例如：LENTILLES · ① 反事实')}
         </>
       )}
+      {errors.map((e) => <p key={e} className="form-error">{e}</p>)}
+      {s && errors.length === 0 && <CardPreviews draft={draft} s={s} labels={labels} />}
+      <div className="field"><span className="field-label">主题</span><ThemePicker value={f.tags} onChange={(v) => set('tags', v)} /></div>
+      <div className="row">
+        <label className="field"><span className="field-label">牌组</span>
+          <select value={f.deckId} onChange={(e) => set('deckId', e.target.value)}>{decks?.map((d) => <option key={d.id} value={d.id}>{d.name}</option>)}</select>
+        </label>
+        <label className="field"><span className="field-label">创建日期</span>
+          <input type="date" value={f.day} onChange={(e) => e.target.value && set('day', e.target.value)} />
+        </label>
+      </div>
+    </Modal>
+  );
+}
+
+/** 改写对笔记（TCF 错题）的编辑：原文句、题干、正确选项、桥、当时的错选、陷阱类型、根因层 */
+function ParaphraseEditor({ note, onClose }: { note: Note; onClose: () => void }) {
+  const s = useDeckSettings(note.deckId);
+  const decks = useDecks();
+  const p = note.paraphrase!;
+  const [f, setF] = useState({
+    lemma: note.lemma, sentence: note.sentence, meaningZh: note.meaningZh, source: note.source ?? '', extra: note.extra ?? '',
+    question: p.question, answer: p.answer, bridge: p.bridge ?? '', wrong: p.wrong ?? '', trap: p.trap ?? '', root: p.root ?? '',
+    origin: noteOrigin(note), tags: note.tags, deckId: note.deckId, day: note.createdAt.slice(0, 10),
+  });
+  const [confirmDel, setConfirmDel] = useState(false);
+  const set = <K extends keyof typeof f>(k: K, v: (typeof f)[K]) => setF((x) => ({ ...x, [k]: v }));
+  const nul = (x: string) => (x.trim() ? x.trim() : null);
+  const paraphrase = { ...p, question: f.question.trim(), answer: f.answer.trim(), bridge: f.bridge.trim(), wrong: nul(f.wrong), trap: (f.trap || null) as Paraphrase['trap'], root: (f.root || null) as Paraphrase['root'] };
+  const errors = noteErrors({ lemma: f.lemma, sentence: f.sentence, cardTypes: ['paraphrase'], intentZh: null, answerFr: null, paraphrase });
+  const save = async () => {
+    if (errors.length) return;
+    await updateNote(note.id, {
+      lemma: f.lemma.trim(), sentence: f.sentence.trim(), meaningZh: f.meaningZh.trim(), source: nul(f.source), extra: nul(f.extra),
+      paraphrase, cardTypes: ['paraphrase'], tags: f.tags, deckId: f.deckId,
+      origin: note.origin == null && f.origin === noteOrigin(note) ? null : f.origin,
+      ...(f.day !== note.createdAt.slice(0, 10) ? { createdAt: noonIso(f.day) } : {}),
+    });
+    toast('已保存');
+    onClose();
+  };
+  const remove = async () => {
+    if (!confirmDel) return setConfirmDel(true);
+    await deleteNotes([note.id]);
+    toast('已删除这条笔记');
+    onClose();
+  };
+  type TextKey = 'lemma' | 'sentence' | 'meaningZh' | 'source' | 'extra' | 'question' | 'answer' | 'bridge' | 'wrong';
+  const text = (k: TextKey, label: string, ph = '') => (
+    <label className="field">
+      <span className="field-label">{label}</span>
+      <input value={f[k]} placeholder={ph} onChange={(e) => set(k, e.target.value)}
+        onKeyDown={(e) => { if (e.key === 'Enter' && !e.nativeEvent.isComposing) void save(); }} />
+    </label>
+  );
+  const draft: Note = { ...note, lemma: f.lemma, sentence: f.sentence, meaningZh: f.meaningZh, source: nul(f.source), extra: nul(f.extra), paraphrase, cardTypes: ['paraphrase'] };
+  const labels: [string, string, string] = s ? [langLabel(s.sourceLang), langLabel(s.targetLang1), langLabel(s.targetLang2)] : ['', '', ''];
+  return (
+    <Modal title="编辑改写对" onClose={onClose}
+      footer={<><button type="button" className={`btn footer-left${confirmDel ? ' is-danger' : ' is-danger-ghost'}`} title="删除这条笔记和它的卡片" onClick={() => void remove()} onBlur={() => setConfirmDel(false)}>{confirmDel ? '再点一次确认删除' : '删除'}</button><button type="button" className="btn" onClick={onClose}>取消</button><button type="button" className="btn is-primary" disabled={errors.length > 0} onClick={() => void save()}>保存</button></>}>
+      {text('sentence', '原文句（{{…}} 标出决定答案的骨架或词）', "例如：c'est le mal du siècle et pourtant, il n'est {{pas encore reconnu}}.")}
+      {text('lemma', '标出的部分', '例如：ne pas être reconnu')}
+      {text('question', '题干', 'Quel constat est dressé à propos de ce syndrome ?')}
+      {text('answer', '正确选项', "Son existence doit être officialisée.")}
+      {text('bridge', '桥：原文哪部分和选项等价', 'reconnu 官方承认 = officialiser')}
+      {text('wrong', '当时的错选', 'Son traitement est peu efficace')}
+      <div className="row">
+        <label className="field"><span className="field-label">陷阱类型</span>
+          <select value={f.trap} onChange={(e) => set('trap', e.target.value)}>
+            <option value="">（未填）</option>
+            {TRAPS.map((t) => <option key={t} value={t}>{TRAP_LABEL[t]}</option>)}
+          </select>
+        </label>
+        <label className="field"><span className="field-label">根因层</span>
+          <select value={f.root} onChange={(e) => set('root', e.target.value)}>
+            <option value="">（未填）</option>
+            {ROOTS.map((r) => <option key={r} value={r}>{ROOT_LABEL[r]}</option>)}
+          </select>
+        </label>
+        <div className="field"><span className="field-label">来源</span><OriginPicker value={f.origin} onChange={(v) => set('origin', v)} /></div>
+      </div>
+      {text('meaningZh', '中文（可选：原文句的意思）')}
+      {text('extra', '补充（可选）')}
+      {text('source', '出处', '例如：TCF CE 题库 · 第 12 套 · 第 31 题')}
       {errors.map((e) => <p key={e} className="form-error">{e}</p>)}
       {s && errors.length === 0 && <CardPreviews draft={draft} s={s} labels={labels} />}
       <div className="field"><span className="field-label">主题</span><ThemePicker value={f.tags} onChange={(v) => set('tags', v)} /></div>

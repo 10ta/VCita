@@ -518,6 +518,15 @@ textarea.weights { width: 100%; font-family: var(--mono); font-size: 12px; }
   .nf-prompt, .nf-legacy, .nf-row .form-error { margin-left: 0; }
 }
 .cue.usage { color: var(--text); font-size: 13.5px; }
+/* 义项：认读卡考的是哪一个意思 */
+.cue.sense { color: var(--text); font-size: 13.5px; }
+/* 改写对卡（TCF 错题） */
+.para-q { display: inline-flex; flex-direction: column; gap: 10px; align-items: center; }
+.para-stem { font-size: .78em; color: var(--dim); }
+.para-bridge, .para-wrong { font-size: 14px; }
+.para-typed { color: var(--text); }
+.mine-errors textarea { width: 100%; }
+.row-btns { display: inline-flex; gap: 4px; }
 
 /* 表达群：背面同群的其他说法，答案遮住 */
 .cluster { margin-top: 14px; padding: 10px 12px; border: 1px dashed #333; border-radius: 8px; text-align: left; }

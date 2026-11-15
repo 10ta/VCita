@@ -7,7 +7,7 @@ import {
   BundleFileV2, CardV2, ClipV2, ClipsFileV2, EncounterV2, EncountersFileV2, KnownFileV2, KnownV2, TextV2, TextsFileV2, CardsFileV2, DeckV2, LogsFileV2, NoteV2, NotesFileV2, ProfileFileV2, ReviewLogV2, SettingsV2,
 } from './v2';
 
-export { THEMES, CARD_STATES, CARD_TYPES } from './v2';
+export { THEMES, CARD_STATES, CARD_TYPES, TRAPS, ROOTS } from './v2';
 export const CURRENT_SCHEMA_VERSION = 2;
 
 export const SettingsSchema = SettingsV2;
@@ -19,6 +19,11 @@ export type Settings = z.infer<typeof SettingsV2>;
 export type Theme = Note['tags'][number];
 export type CardState = Card['state'];
 export type NoteOrigin = NonNullable<Note['origin']>;
+export type Paraphrase = NonNullable<Note['paraphrase']>;
+export type Trap = NonNullable<Paraphrase['trap']>;
+export type Root = NonNullable<Paraphrase['root']>;
+export const TRAP_LABEL: Record<Trap, string> = { verbatim: '原词复现', polarity: '极性反了', 'common-sense': '常识替换', 'unknown-pick': '排除错了选生词', 'false-friend': '假朋友或单一释义' };
+export const ROOT_LABEL: Record<Root, string> = { skeleton: '骨架', sense: '义项', chunk: '固定表达', situation: '情境替换' };
 /** 笔记的来源类型：标过就用标的；没标过时填了"出处"算挖矿卡，否则算词表卡 */
 export const noteOrigin = (n: Partial<Pick<Note, 'origin' | 'source'>>): NoteOrigin => n.origin ?? (n.source?.trim() ? 'mined' : 'list');
 export type BundleFile = z.infer<typeof BundleFileV2>;

@@ -1,7 +1,7 @@
 // 卡片的展示：认读卡正面是句子（{{…}} 加粗）或旧卡的单词；背面是意思 + 线索。
 // 题面 = (卡片旋转 + 当前题面设置) 对应的那个字段，另外两个字段作为答案。
 import type { ReactNode } from 'react';
-import type { Card, Note, Settings } from '../schema';
+import { ROOT_LABEL, TRAP_LABEL, type Card, type Note, type Settings } from '../schema';
 import { dayStartMs, daysBetween, fmtDays, fromIso, studyDay } from '../lib/time';
 import { speak } from '../lib/speech';
 import { frameMeta, pickTopic } from '../lib/frames';
@@ -107,7 +107,7 @@ export function quizSplit(note: Note, s: Settings, labels: [string, string, stri
   return { question: f[0], answers: f.slice(1) };
 }
 
-export const TYPE_LABEL: Record<Card['type'], string> = { recognition: '认读', production: '产出', cloze: '挖空', contrast: '辨析', frame: '句框', apply: '套用' };
+export const TYPE_LABEL: Record<Card['type'], string> = { recognition: '认读', production: '产出', cloze: '挖空', contrast: '辨析', frame: '句框', apply: '套用', paraphrase: '改写' };
 
 export interface CardView {
   question: Face;
@@ -195,11 +195,41 @@ function frameView(type: 'frame' | 'apply', note: Note, s: Settings, labels: [st
   };
 }
 
+/**
+ * 改写对卡（TCF 错题）：正面是原文句（决定答案的骨架或词加粗）+ 题干，先说出作者断言什么、肯定还是否定；
+ * 背面是正确选项、桥（原文哪部分和选项等价）、当时的错选和陷阱类型。认得就行，自评
+ */
+function paraphraseView(note: Note, s: Settings, labels: [string, string, string]): CardView {
+  const p = note.paraphrase;
+  const sent = note.sentence;
+  const trap = [p?.trap ? TRAP_LABEL[p.trap] : '', p?.root ? `根因：${ROOT_LABEL[p.root]}` : ''].filter(Boolean).join(' · ');
+  return {
+    question: {
+      text: (
+        <span className="para-q">
+          <span>{renderSentence(sent)}</span>
+          {p?.question && <span className="para-stem">❓ {p.question}</span>}
+        </span>
+      ),
+      speakText: plainSentence(sent), lang: s.sourceLang, label: '原文', raw: sent,
+    },
+    hint: '先用一句话说出作者断言什么（肯定还是否定），再翻面',
+    cues: 'extra',
+    answers: [
+      { text: p?.answer ?? '', speakText: p?.answer ?? '', lang: s.sourceLang, label: '正确选项' },
+      ...(p?.bridge ? [{ text: <span className="para-bridge">桥：{p.bridge}</span>, speakText: '', lang: s.targetLang1, label: '桥' }] : []),
+      ...(p?.wrong ? [{ text: <span className="para-wrong">当时错选：<span lang={s.sourceLang}>{p.wrong}</span>{trap && <span className="muted"> · {trap}</span>}</span>, speakText: '', lang: s.targetLang1, label: '错选' }] : []),
+      ...(note.meaningZh ? [{ text: note.meaningZh, speakText: note.meaningZh, lang: s.targetLang1, label: labels[1] }] : []),
+    ],
+  };
+}
+
 /** 三种卡的正反面。旋转和题面切换只作用于认读卡 */
 /** variant：第几个版本，复习时传卡片的复习次数，每次复习轮换一个句子 / 场景 */
 export function cardView(type: Card['type'], note: Note, s: Settings, labels: [string, string, string], variant = 0, listen = false, group: Note[] = []): CardView {
   if (type === 'contrast') return contrastView(note, group, s, labels, variant);
   if (type === 'frame' || type === 'apply') return frameView(type, note, s, labels, variant);
+  if (type === 'paraphrase') return paraphraseView(note, s, labels);
   // 听力认读：正面只有声音，翻面显示句子和两个翻译
   if (listen && type === 'recognition' && note.sentence) {
     const f = faces(note, s, labels, variant);
@@ -263,6 +293,7 @@ export function Cues({ note, only }: { note: Note; only?: 'extra' }) {
   const line1 = only ? '' : [note.cueFamily, note.source].filter(Boolean).join(' · ');
   return (
     <Fr>
+      {note.sense && <div className="cue sense" title="义项：这张卡考的是这个词的哪一个意思">义项 · {note.sense}</div>}
       {note.usage && <div className="cue usage" title="用法：这张卡考的结构">用法 · {note.usage}</div>}
       {note.etymology && <div className="cue etym" title="词源">⌁ {note.etymology}</div>}
       {line1 && <div className="cue">{line1}</div>}

@@ -11,6 +11,7 @@
 //     额度拆分（newSplit）：每日新卡上限的 freshShare% 留给"新鲜"的卡，越新越先出；其余额度按上面的顺序消化积压。
 //       source = 挖矿卡算新鲜（从自己输入里摘的，语境越新越好记）；recent = 最近 freshDays 天添加的算新鲜；off = 不拆。
 //       一份用不完的额度让给另一份；出卡顺序：新鲜份额 → 其余份额 → 互相让出的部分
+//     错题卡（origin = error，TCF 错题里抽出来的点）：不管怎么拆，在各自的份额里都排最前；按来源拆时算新鲜
 //     句框（语块库）：每日新卡上限里留 frameNewPerDay 张给句框笔记的卡（默认 3），没用完的让给单词；
 //       套用卡要等同一条句框的句框卡进入复习（学会了句框）才出
 //  4. 同一条笔记的卡当天只出一张（今天已答过这条笔记的其他卡，推到明天）；同一个易混组的辨析卡当天也只出一张
@@ -79,12 +80,20 @@ function newCardSort(q: QueueInput): (a: Card, b: Card) => number {
 
 const newestFirst = (a: Card, b: Card) => -byCreated(a, b);
 
+/** 错题卡排在最前（同为错题或同不是时返回 0，交给后面的排序） */
+function errorFirst(q: QueueInput, sort: (a: Card, b: Card) => number): (a: Card, b: Card) => number {
+  const notes = q.notes;
+  if (!notes) return sort;
+  const isErr = (c: Card) => { const n = notes.get(c.noteId); return n && noteOrigin(n) === 'error' ? 1 : 0; };
+  return (a, b) => isErr(b) - isErr(a) || sort(a, b);
+}
+
 /** 新卡里哪些算"新鲜"的；不拆分（或按来源拆却没有笔记信息）时返回 null */
 function freshTest(q: QueueInput, today: string): ((c: Card) => boolean) | null {
   const mode = q.settings.newSplit ?? 'off';
   if (mode === 'source' && q.notes) {
     const notes = q.notes;
-    return (c) => { const n = notes.get(c.noteId); return !!n && noteOrigin(n) === 'mined'; };
+    return (c) => { const n = notes.get(c.noteId); return !!n && noteOrigin(n) !== 'list'; };
   }
   if (mode === 'recent') {
     const from = addDaysToDay(today, 1 - (q.settings.freshDays ?? 7));
@@ -134,7 +143,7 @@ function pickNew(q: QueueInput, pool: Card[], today: string, newSeen: Set<string
 /** 单词新卡：按 newSort 排序，按 newSplit 拆额度（见文件开头） */
 function pickWords(q: QueueInput, candidates: Card[], today: string, newSeen: Set<string>, newPerDay: number): Card[] {
   const newLimit = Math.max(0, newPerDay - newSeen.size);
-  const sort = newCardSort(q);
+  const sort = errorFirst(q, newCardSort(q));
   const isFresh = freshTest(q, today);
   if (!isFresh) return onePerNote(candidates.sort(sort)).slice(0, newLimit);
 
@@ -143,7 +152,7 @@ function pickWords(q: QueueInput, candidates: Card[], today: string, newSeen: Se
   for (const id of newSeen) { const c = byId.get(id); if (c && isFresh(c)) seenFresh++; }
   const freshQuota = Math.round((newPerDay * (q.settings.freshShare ?? 60)) / 100);
   const otherQuota = newPerDay - freshQuota;
-  const fresh = onePerNote(candidates.filter(isFresh).sort(newestFirst));
+  const fresh = onePerNote(candidates.filter(isFresh).sort(errorFirst(q, newestFirst)));
   const other = onePerNote(candidates.filter((c) => !isFresh(c)).sort(sort));
   const f = Math.min(fresh.length, Math.max(0, freshQuota - seenFresh), newLimit);
   const o = Math.min(other.length, Math.max(0, otherQuota - (newSeen.size - seenFresh)), newLimit - f);
