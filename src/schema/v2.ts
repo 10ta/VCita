@@ -64,6 +64,9 @@ export const NoteV2 = z.looseObject({
   /** 表达群：同一个功能的几种说法（「说"很多"」：nombre de / une écrasante majorité de…），值就是群名。
    *  复习时背面列出同群的其他成员（遮住答案），顺带回忆。optional：同步文件不变 */
   cluster: z.string().nullable().optional(),
+  /** 话题：意思相关、但不能互相替换的说法放在同一个话题下（「能力」：être capable de、j'ai beau faire、inné）。
+   *  一条笔记可以属于几个话题；背面「关联」里列出同话题的其他卡，只展示、不考。optional：同步文件不变 */
+  topics: z.array(z.string()).optional(),
   /** 义项：这张卡考的是这个词的哪一个意思（raison：理性，≠ 原因）。认读卡背面最先显示。optional：同步文件不变 */
   sense: z.string().nullable().optional(),
   /** 其他语境：这个词在别的搭配里的意思，一条一行「搭配 → 意思」（établissement scolaire → 学校）。只作参考、不考，

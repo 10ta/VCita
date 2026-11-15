@@ -118,3 +118,20 @@ describe('补充里用 。 隔开的标记、近义 / 另义', () => {
       .toEqual(['规定、指令', '法律时效']);
   });
 });
+
+describe('图 5 / 图 7 的拆分', () => {
+  it('中文义里的 ；不再拆出一条没有法语的条目', () => {
+    expect(backZones(note({ cueFamily: 'preuve 证据 · prouver 证明 · éprouver 感受；考验 · une épreuve 考验；考试科目' })).fam).toEqual([
+      { fr: 'preuve', zh: '证据' }, { fr: 'prouver', zh: '证明' }, { fr: 'éprouver', zh: '感受；考验' }, { fr: 'une épreuve', zh: '考验；考试科目' },
+    ]);
+  });
+  it('｜ 分开的几段、回译 / 误写 / 朴素版各回各区，和出处重复的不再列', () => {
+    const z = backZones(note({
+      source: '回译 202610T1',
+      extra: '⚠ 无人称结构 mieux vaut + inf. 里不能放 toi-même ｜ ⚠ propre 放名词前、不加冠词 ｜ 朴素版：venir voir par toi-même ｜ 回译 202610T1，误写：mieux vaut regarder toi-même',
+    }));
+    expect(z.warn).toEqual(['无人称结构 mieux vaut + inf. 里不能放 toi-même', 'propre 放名词前、不加冠词', '误写：mieux vaut regarder toi-même']);
+    expect(z.use).toEqual([{ fr: 'venir voir par toi-même', zh: '朴素版' }]);
+    expect(z.src).toEqual(['回译 202610T1']);
+  });
+});

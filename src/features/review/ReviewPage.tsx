@@ -17,6 +17,7 @@ import { CardStats, cardView, SpeakBtn, TYPE_LABEL } from '../CardFace';
 import { BackZones, zoneHeadsOf } from '../BackZones';
 import { NoteEditor } from '../NoteEditor';
 import { ClusterStrip } from './ClusterStrip';
+import { Related } from './Related';
 import { Fr, useFrDictCtx, useNoteFreqs } from '../FrText';
 import { diffWords, pickReference, summarize, type DiffOp } from '../../lib/diff';
 import type { Card } from '../../schema';
@@ -375,6 +376,7 @@ export function ReviewPage({ deckId }: { deckId: string }) {
                   )}
                   <BackZones note={note} heads={zoneHeadsOf(s)} />
                   {notes && cards && <ClusterStrip note={note} notes={notes} cards={cards} shown={split.question.speakText || split.promptFr || ''} />}
+                  {notes && <Related note={note} notes={notes} />}
                 </div>
                 <div className="grades">
                   {RATINGS.map(({ r, label, cls }) => (

@@ -5,7 +5,7 @@ import { findConfusables } from '../../srs/confusable';
 import { suggestClusters } from '../../srs/clusterSuggest';
 import { useWiktLinks } from '../../lib/wikt';
 import { Fr, useNoteFreqs } from '../FrText';
-import { deleteNotes, groupContrast, resetNotes, setSuspended, updateNotes } from '../../db/actions';
+import { deleteNotes, groupContrast, mergeNotes, resetNotes, setSuspended, updateNotes } from '../../db/actions';
 import { THEMES, noteOrigin, type Card, type Note, type NoteOrigin, type Theme } from '../../schema';
 import { contrastLeaks, markErrors, productionErrors } from '../../schema/validate';
 import { addDaysToDay, fromIso, noonIso, studyDay } from '../../lib/time';
@@ -72,7 +72,8 @@ export function LibraryPage({ deckId }: { deckId: string }) {
   const [page, setPage] = useState(0);
   const [sel, setSel] = useState<Set<string>>(new Set());
   const [editing, setEditing] = useState<Note | null>(null);
-  const [batch, setBatch] = useState<null | 'theme' | 'deck' | 'date' | 'cluster' | 'delete'>(null);
+  const [batch, setBatch] = useState<null | 'theme' | 'deck' | 'date' | 'cluster' | 'topic' | 'delete'>(null);
+  const [merging, setMerging] = useState(false);
   const [focus, setFocus] = useState(readFocus);
   const [sort, setSort] = useState<Sort>('created');
   const [open, setOpen] = useState<Set<string>>(new Set());
@@ -132,7 +133,7 @@ export function LibraryPage({ deckId }: { deckId: string }) {
       .filter((n) => !theme || n.tags.includes(theme))
       .filter((n) => !origin || noteOrigin(n) === origin)
       .filter((n) => !day || n.createdAt.slice(0, 10) === day)
-      .filter((n) => !k || [n.lemma, n.sentence, n.meaningZh, n.meaningEn, n.source ?? '', n.cluster ?? '', ...(n.altSentences ?? [])].some((x) => x.toLowerCase().includes(k)))
+      .filter((n) => !k || [n.lemma, n.sentence, n.meaningZh, n.meaningEn, n.source ?? '', n.cluster ?? '', ...(n.topics ?? []), ...(n.altSentences ?? [])].some((x) => x.toLowerCase().includes(k)))
       .filter((n) => {
         const cs = cardsByNote.get(n.id) ?? [];
         switch (status) {
@@ -246,6 +247,10 @@ export function LibraryPage({ deckId }: { deckId: string }) {
               onClick={() => void groupContrast(ids).then((k) => done(k ? `已设为易混组：${k} 条，各生成一张辨析卡` : '至少要两条带 {{…}} 例句的笔记'))}>设为易混组</button>
           )}
           <button type="button" className="pill" title="同一个意思的几种说法：复习其中一条时，背面顺带回想其他几条（答案遮住）" onClick={() => setBatch('cluster')}>设表达群</button>
+          <button type="button" className="pill" title="意思相关、但不能互相替换：背面「关联」里列出同话题的卡，只展示不考。一条笔记可以有几个话题" onClick={() => setBatch('topic')}>加话题</button>
+          {sel.size >= 2 && sel.size <= 6 && (
+            <button type="button" className="pill" title="同一个词的同一个义项：合成一条笔记，其他搭配变成轮换例句、轮换题面和用法" onClick={() => setMerging(true)}>合并</button>
+          )}
           <button type="button" className="pill" onClick={() => void resetNotes(ids).then(() => done(`已重置 ${ids.length} 条为新卡`))}>重置为新卡</button>
           <button type="button" className="pill is-danger" onClick={() => setBatch('delete')}>删除</button>
         </div>
@@ -295,6 +300,7 @@ export function LibraryPage({ deckId }: { deckId: string }) {
                   {freqs?.get(n.id) != null && <span className="badge" title="Lexique 词频：每百万词出现次数（短语取最不常用的词）">频 {fmtFreq(freqs.get(n.id)!)}</span>}
                   {n.contrastGroup && <span className="badge t-contrast" title="易混组">易混：{notes.filter((x) => x.contrastGroup === n.contrastGroup && x.id !== n.id).map((x) => x.lemma).join(' / ')}</span>}
                   {n.cluster?.trim() && <span className="badge" title="表达群：同一个意思的几种说法">群：{n.cluster}</span>}
+                  {(n.topics ?? []).map((t) => <span key={t} className="badge" title="话题：意思相关、不能互相替换">话题：{t}</span>)}
                   {!!n.recallMisses?.length && <span className="badge t-contrast" title={`在表达群里没想起来：${n.recallMisses.join('、')}`}>没想起 ×{n.recallMisses.length}</span>}
                   {status === 'confusable' && confusable.get(n.id) && <span className="badge t-contrast">{confusable.get(n.id)![1]}</span>}
                   {n.tags.map((t) => <span key={t} className="badge is-theme">{t}</span>)}
@@ -335,11 +341,16 @@ export function LibraryPage({ deckId }: { deckId: string }) {
 
       {editing && <NoteEditor note={editing} onClose={() => setEditing(null)} />}
       {study && <StudyDialog notes={sel.size ? list.filter((n) => sel.has(n.id)) : list} cardsByNote={cardsByNote} label={studyLabel(status, theme, kw, sel.size)} onClose={() => setStudy(false)} />}
-      {batch && <BatchDialog kind={batch} count={ids.length} decks={decks ?? []} clusters={[...new Set(notes.map((n) => n.cluster?.trim()).filter((c): c is string => !!c))].sort((a, b) => a.localeCompare(b, 'zh'))} onClose={() => setBatch(null)} onApply={async (v) => {
+      {merging && <MergeDialog notes={list.filter((n) => sel.has(n.id))} cardsByNote={cardsByNote} onClose={() => setMerging(false)} onMerge={async (keep, rest) => {
+        const r = await mergeNotes(keep, rest);
+        setMerging(false); done(`已合并成一条${r.moved ? `，挪过来 ${r.moved} 张卡（复习记录保留）` : ''}`);
+      }} />}
+      {batch && <BatchDialog kind={batch} count={ids.length} decks={decks ?? []} clusters={batch === 'topic' ? [...new Set(notes.flatMap((n) => n.topics ?? []))].sort((a, b) => a.localeCompare(b, 'zh')) : [...new Set(notes.map((n) => n.cluster?.trim()).filter((c): c is string => !!c))].sort((a, b) => a.localeCompare(b, 'zh'))} onClose={() => setBatch(null)} onApply={async (v) => {
         if (batch === 'theme') { await updateNotes(ids, () => ({ tags: v as Theme[] })); done(`已设置 ${ids.length} 条的主题`); }
         if (batch === 'deck') { await updateNotes(ids, () => ({ deckId: v as string })); done(`已移动 ${ids.length} 条`); }
         if (batch === 'date') { await updateNotes(ids, () => ({ createdAt: noonIso(v as string) })); done(`已修改 ${ids.length} 条的日期`); }
         if (batch === 'cluster') { const c = (v as string).trim(); await updateNotes(ids, () => ({ cluster: c || null })); done(c ? `已把 ${ids.length} 条放进表达群「${c}」` : `已把 ${ids.length} 条移出表达群`); }
+        if (batch === 'topic') { const t = (v as string).trim(); if (t) { await updateNotes(ids, (n) => ({ topics: [...new Set([...(n.topics ?? []), t])] })); done(`已给 ${ids.length} 条加上话题「${t}」`); } }
         if (batch === 'delete') { await deleteNotes(ids); done(`已删除 ${ids.length} 条`); }
       }} />}
     </div>
@@ -347,15 +358,15 @@ export function LibraryPage({ deckId }: { deckId: string }) {
 }
 
 function BatchDialog({ kind, count, decks, clusters = [], onClose, onApply }: {
-  kind: 'theme' | 'deck' | 'date' | 'cluster' | 'delete'; count: number; decks: Array<{ id: string; name: string }>; clusters?: string[];
+  kind: 'theme' | 'deck' | 'date' | 'cluster' | 'topic' | 'delete'; count: number; decks: Array<{ id: string; name: string }>; clusters?: string[];
   onClose: () => void; onApply: (v: unknown) => Promise<void>;
 }) {
   const [cluster, setCluster] = useState('');
   const [themes, setThemes] = useState<Theme[]>([]);
   const [deck, setDeck] = useState(decks[0]?.id ?? '');
   const [day, setDay] = useState(new Date().toISOString().slice(0, 10));
-  const title = { theme: '设置主题', deck: '移到牌组', date: '修改创建日期', cluster: '设为表达群', delete: '确认删除' }[kind];
-  const value = { theme: themes, deck, date: day, cluster, delete: null }[kind];
+  const title = { theme: '设置主题', deck: '移到牌组', date: '修改创建日期', cluster: '设为表达群', topic: '加话题', delete: '确认删除' }[kind];
+  const value = { theme: themes, deck, date: day, cluster, topic: cluster, delete: null }[kind];
   return (
     <Modal title={title} onClose={onClose} footer={<>
       <button type="button" className="btn" onClick={onClose}>取消</button>
@@ -368,7 +379,36 @@ function BatchDialog({ kind, count, decks, clusters = [], onClose, onApply }: {
         <input value={cluster} list="lib-clusters" autoFocus placeholder="群名，例如：说「很多」（留空 = 移出表达群）" onChange={(e) => setCluster(e.target.value)} />
         <datalist id="lib-clusters">{clusters.map((c) => <option key={c} value={c} />)}</datalist>
       </>}
+      {kind === 'topic' && <>
+        <input value={cluster} list="lib-topics" autoFocus placeholder="话题名，例如：能力、做不到（已有的话题保留，这个加上去）" onChange={(e) => setCluster(e.target.value)} />
+        <datalist id="lib-topics">{clusters.map((c) => <option key={c} value={c} />)}</datalist>
+      </>}
       {kind === 'date' && <input type="date" value={day} onChange={(e) => e.target.value && setDay(e.target.value)} />}
+    </Modal>
+  );
+}
+
+/** 合并：选保留哪一条（默认复习次数最多的），其余并进来 */
+function MergeDialog({ notes, cardsByNote, onClose, onMerge }: {
+  notes: Note[]; cardsByNote: Map<string, Card[]>; onClose: () => void; onMerge: (keep: string, rest: string[]) => Promise<void>;
+}) {
+  const reps = (n: Note) => (cardsByNote.get(n.id) ?? []).reduce((a, c) => a + c.reps, 0);
+  const [keep, setKeep] = useState(() => [...notes].sort((a, b) => reps(b) - reps(a))[0]?.id ?? '');
+  return (
+    <Modal title="合并笔记" onClose={onClose} footer={<>
+      <button type="button" className="btn" onClick={onClose}>取消</button>
+      <button type="button" className="btn is-primary" disabled={!keep} onClick={() => void onMerge(keep, notes.filter((n) => n.id !== keep).map((n) => n.id))}>合并</button>
+    </>}>
+      <p className="hint">同一个词的同一个义项只留一条。保留的那条不变；其余几条的例句、产出题变成它的轮换版本，用法列进背面的用法区。
+        保留的那条没有的卡型（比如产出卡），连卡带复习记录挪过来；其余的卡删除。合并后可以在编辑里把词条改成通用的写法（reconnaître qqch）。</p>
+      <div className="merge-list">
+        {notes.map((n) => (
+          <label key={n.id} className={`merge-item${keep === n.id ? ' is-on' : ''}`}>
+            <input type="radio" name="merge-keep" checked={keep === n.id} onChange={() => setKeep(n.id)} />
+            <span><b lang="fr">{n.lemma}</b> <span className="muted">{n.meaningZh}</span><br /><span className="muted small">{(cardsByNote.get(n.id) ?? []).filter((c) => !c.deleted).map((c) => TYPE_LABEL[c.type]).join(' · ')} · 复习 {reps(n)} 次{keep === n.id ? ' · 保留' : ''}</span></span>
+          </label>
+        ))}
+      </div>
     </Modal>
   );
 }

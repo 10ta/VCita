@@ -16,8 +16,10 @@ export type ZoneHeads = NonNullable<Settings['zoneHeads']>;
 export const zoneHeadsOf = (s: Pick<Settings, 'zoneHeads'> | undefined): ZoneHeads => s?.zoneHeads ?? 'icon';
 
 const HAN = /[㐀-鿿]/;
-const MARKS = '高频|近义|同义|也可说|也说|⚠|❌|🔴|已有卡|语法锁|原文形式|原文|句意|TCF 错题|其他义|另义';
-const SPLIT = new RegExp(`[；;。]\\s*(?=(?:${MARKS}))`);
+const MARKS = '高频|近义|同义|也可说|也说|朴素版|⚠|❌|🔴|误写|已有卡|语法锁|原文形式|原文|句意|回译|TCF 错题|其他义|另义';
+/** 标记前面的分隔：换行、｜（任何时候都拆），或者 ；。， 后面紧跟标记 */
+const SPLIT = new RegExp(`[；;。，,]\\s*(?=(?:${MARKS}))`);
+const BAR = /\s*[｜|]\s*/;
 const trimEnd = (x: string) => x.trim().replace(/[。；;]+$/, '').trim();
 
 /** 一条「法语 + 中文」：fr：zh、fr → zh、或者第一个汉字之前是法语；整段包在括号里的中文去掉括号 */
@@ -41,27 +43,38 @@ export function splitEntry(raw: string): Entry {
 }
 
 /** 一串条目：；分隔；没有中文的一条再按 、 分（attraper la grippe、le vaccin contre la grippe） */
-const items = (s: string) => s.split(/[；;]/).map((x) => x.trim()).filter(Boolean)
-  .flatMap((x) => (HAN.test(x) ? [x] : x.split('、').map((y) => y.trim()).filter(Boolean)))
-  .map(splitEntry);
+const items = (s: string) => attachZh(s.split(/[；;]/).map((x) => x.trim()).filter(Boolean)
+  .flatMap((x) => (HAN.test(x) ? [x] : x.split('、').map((y) => y.trim()).filter(Boolean))));
+
+const LATIN = /[A-Za-zÀ-ÖØ-öø-ÿŒœ]/;
+/** 拆开后没有法语的一段是上一条中文义的一部分（éprouver 感受；考验）：并回上一条 */
+function attachZh(parts: string[]): Entry[] {
+  const out: Entry[] = [];
+  for (const p of parts) {
+    const last = out[out.length - 1];
+    if (last && !LATIN.test(p) && last.fr) last.zh = last.zh ? `${last.zh}；${p}` : p;
+    else out.push(splitEntry(p));
+  }
+  return out;
+}
 
 /** 词族：a 意 · b 意，或 a（意）、b（意） */
-const family = (s: string) => s.split(/\s+·\s+|[；;]|(?<=[）)])\s*[、,，]\s*/).map((x) => x.trim()).filter(Boolean).map(splitEntry);
+const family = (s: string) => attachZh(s.split(/\s+·\s+|[；;]|(?<=[）)])\s*[、,，]\s*/).map((x) => x.trim()).filter(Boolean));
 
 export function backZones(note: Note): Zones {
   const z: Zones = { use: [], ctx: [], ety: note.etymology?.trim() || null, fam: [], warn: [], src: [], more: [], sourceUrl: null };
   if (note.usage?.trim()) z.use.push(splitEntry(note.usage));
   const otherSense: Entry[] = [];
-  const segs = (note.extra ?? '').split('\n').flatMap((l) => l.split(SPLIT)).map(trimEnd).filter(Boolean);
+  const segs = (note.extra ?? '').split('\n').flatMap((l) => l.split(BAR)).flatMap((l) => l.split(SPLIT)).map(trimEnd).filter(Boolean);
   for (const seg of segs) {
     const m = new RegExp(`^(${MARKS})\\s*[：:]?\\s*`).exec(seg);
     const mark = m?.[1];
     const rest = m ? seg.slice(m[0].length) : seg;
     if (mark === '高频') z.use.push(...items(rest));
-    else if (mark === '近义' || mark === '同义' || mark === '也说' || mark === '也可说') z.use.push(...items(rest).map((e) => (e.zh ? e : { ...e, zh: mark })));
+    else if (mark === '近义' || mark === '同义' || mark === '也说' || mark === '也可说' || mark === '朴素版') z.use.push(...items(rest).map((e) => (e.zh ? e : { ...e, zh: mark })));
     else if (mark === '⚠') z.warn.push(rest);
-    else if (mark === '❌' || mark === '🔴' || mark === '已有卡' || mark === '语法锁') z.warn.push(seg);
-    else if (mark === '原文' || mark === '原文形式' || mark === '句意' || mark === 'TCF 错题') z.src.push(seg);
+    else if (mark === '❌' || mark === '🔴' || mark === '误写' || mark === '已有卡' || mark === '语法锁') z.warn.push(seg);
+    else if (mark === '原文' || mark === '原文形式' || mark === '句意' || mark === '回译' || mark === 'TCF 错题') z.src.push(seg);
     else if (mark === '其他义' || mark === '另义') otherSense.push(...rest.split(/[；;]/).map((x) => x.trim()).filter(Boolean).map(splitEntry));
     else z.more.push(seg);
   }
@@ -73,6 +86,7 @@ export function backZones(note: Note): Zones {
     if (/^https?:\/\//.test(src)) z.sourceUrl = src;
     else z.src.unshift(src);
   }
+  z.src = [...new Set(z.src.map((x) => x.trim()))];
   return z;
 }
 
@@ -141,7 +155,7 @@ const neq = (t: string) => t.split(/(≠)/).map((x, i) => (x === '≠' ? <b key=
 
 /** 「原文：…」这类带标签的一行：标签变淡 */
 function Labeled({ text }: { text: string }) {
-  const m = /^(原文形式|原文|句意|TCF 错题|已有卡|语法锁)\s*[：:]\s*/.exec(text);
+  const m = /^(原文形式|原文|句意|TCF 错题|已有卡|语法锁|误写)\s*[：:]\s*/.exec(text);
   return m ? <><span className="z-lbl">{m[1]}</span>{neq(text.slice(m[0].length))}</> : <>{neq(text)}</>;
 }
 

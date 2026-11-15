@@ -26,7 +26,7 @@ export interface Row {
 
 export interface Draft {
   lemma: string; meaningZh: string; meaningEn: string;
-  usage: string; sense: string; contexts: string; cluster: string; cueFamily: string; source: string; extra: string; etymology: string; contrastNote: string;
+  usage: string; sense: string; contexts: string; cluster: string; topics: string; cueFamily: string; source: string; extra: string; etymology: string; contrastNote: string;
   layer: Note['layer']; origin: NonNullable<Note['origin']>; cardTypes: Card['type'][]; tags: Theme[]; deckId: string; day: string;
   rows: Row[];
 }
@@ -88,7 +88,7 @@ export function fromNote(note: Note, origin: NonNullable<Note['origin']>): Draft
   }
   return {
     lemma: note.lemma, meaningZh: note.meaningZh, meaningEn: note.meaningEn,
-    usage: note.usage ?? '', sense: note.sense ?? '', contexts: (note.contexts ?? []).join('\n'), cluster: note.cluster ?? '', cueFamily: note.cueFamily ?? '', source: note.source ?? '', extra: note.extra ?? '', etymology: note.etymology ?? '', contrastNote: note.contrastNote ?? '',
+    usage: note.usage ?? '', sense: note.sense ?? '', contexts: (note.contexts ?? []).join('\n'), cluster: note.cluster ?? '', topics: (note.topics ?? []).join('、'), cueFamily: note.cueFamily ?? '', source: note.source ?? '', extra: note.extra ?? '', etymology: note.etymology ?? '', contrastNote: note.contrastNote ?? '',
     layer: note.layer, origin, cardTypes: note.cardTypes, tags: note.tags, deckId: note.deckId, day: note.createdAt.slice(0, 10),
     rows,
   };
@@ -123,6 +123,8 @@ export function rowFields(d: Pick<Draft, 'rows'>): Pick<Note, 'sentence' | 'altS
 }
 
 /** 其他语境：一行一条，空行去掉；一条都没有时返回 undefined */
+/** 话题：、，, ; 分开，去重；一个都没有时返回 undefined（不写这个键） */
+export const topicList = (t: string): string[] | undefined => { const xs = [...new Set(t.split(/[、，,;；\n]/).map((x) => x.trim()).filter(Boolean))]; return xs.length ? xs : undefined; };
 export const contextLines = (t: string): string[] | undefined => { const xs = t.split('\n').map((x) => x.trim()).filter(Boolean); return xs.length ? xs : undefined; };
 
 export const otherFields = (d: Draft) => ({
@@ -130,7 +132,7 @@ export const otherFields = (d: Draft) => ({
   usage: nul(d.usage),
   // 义项、其他语境：空着时不写这个键（没写过的笔记同步文件不变）
   sense: d.sense.trim() || undefined, contexts: contextLines(d.contexts),
-  cluster: nul(d.cluster), cueFamily: nul(d.cueFamily), source: nul(d.source), extra: nul(d.extra), etymology: nul(d.etymology), contrastNote: nul(d.contrastNote),
+  cluster: nul(d.cluster), topics: topicList(d.topics), cueFamily: nul(d.cueFamily), source: nul(d.source), extra: nul(d.extra), etymology: nul(d.etymology), contrastNote: nul(d.contrastNote),
   layer: d.layer, tags: d.tags,
 });
 

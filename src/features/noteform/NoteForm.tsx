@@ -14,7 +14,7 @@ import { isFrench } from '../../ui/langs';
 import { useNotes } from '../../db/hooks';
 import { cardView, Cues } from '../CardFace';
 import { CARD_TYPES, ClozeMarker } from '../NoteParts';
-import { contextLines, cueHas, newRow, promptOf, rowFields, toggleCue, type Draft, type Row } from './model';
+import { contextLines, topicList, cueHas, newRow, promptOf, rowFields, toggleCue, type Draft, type Row } from './model';
 
 /** 法语牌组：词形还原（词典 + 变位表，第一次用到时下载）；其他语言只靠词首比较 */
 export function useLemmatizer(lang: string | undefined): Lemmatize | undefined {
@@ -90,6 +90,7 @@ export function NoteForm({ d, setD, s, labels, mode, note, groupMates = [], onSu
   const group = note?.contrastGroup ?? null;
   const allNotes = useNotes();
   const clusters = useMemo(() => [...new Set((allNotes ?? []).map((n) => n.cluster?.trim()).filter((c): c is string => !!c))].sort((a, b) => a.localeCompare(b, 'zh')), [allNotes]);
+  const topics = useMemo(() => [...new Set((allNotes ?? []).flatMap((n) => n.topics ?? []))].sort((a, b) => a.localeCompare(b, 'zh')), [allNotes]);
   const clusterMates = useMemo(() => {
     const c = d.cluster.trim();
     return c ? (allNotes ?? []).filter((n) => n.id !== note?.id && n.cluster?.trim() === c).map((n) => n.lemma) : [];
@@ -217,7 +218,7 @@ export function NoteForm({ d, setD, s, labels, mode, note, groupMates = [], onSu
   // 预览用的笔记
   const draftNote: Note = useMemo(() => ({
     ...(note ?? BLANK), ...rowFields(d), lemma: d.lemma, meaningZh: d.meaningZh, meaningEn: d.meaningEn,
-    usage: d.usage || null, sense: d.sense || null, contexts: contextLines(d.contexts), cluster: d.cluster || null, cueFamily: d.cueFamily || null, extra: d.extra || null, etymology: d.etymology || null, source: d.source || null, contrastNote: d.contrastNote || null,
+    usage: d.usage || null, sense: d.sense || null, contexts: contextLines(d.contexts), cluster: d.cluster || null, topics: topicList(d.topics), cueFamily: d.cueFamily || null, extra: d.extra || null, etymology: d.etymology || null, source: d.source || null, contrastNote: d.contrastNote || null,
     cardTypes: [...d.cardTypes, ...(group ? ['contrast' as const] : [])],
   }), [d, note, group]);
 
@@ -253,6 +254,10 @@ export function NoteForm({ d, setD, s, labels, mode, note, groupMates = [], onSu
           <input value={d.cluster} list="nf-clusters" placeholder="例如：说「很多」" onChange={(e) => set('cluster', e.target.value)} />
           <datalist id="nf-clusters">{clusters.map((c) => <option key={c} value={c} />)}</datalist>
           {clusterMates.length > 0 && <span className="muted small">同群：{clusterMates.join(' / ')}</span>}
+        </label>
+        <label className="field"><span className="field-label">话题（可选，可以填几个，用、分开）· 意思相关、但不能互相替换的说法，背面「关联」里列出，只展示不考</span>
+          <input value={d.topics} list="nf-topics" placeholder="例如：能力、做不到" onChange={(e) => set('topics', e.target.value)} />
+          <datalist id="nf-topics">{topics.map((c) => <option key={c} value={c} />)}</datalist>
         </label>
       </section>
 

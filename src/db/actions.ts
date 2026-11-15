@@ -4,6 +4,7 @@ import { SettingsSchema, type Card, type Clip, type Deck, type Encounter, type T
 import { addDaysToDay, bumpIso, dayStartMs, fromIso, nextDayStartMs, setTimeZone, studyDay, toIso } from '../lib/time';
 import { relativeOverdue } from '../srs/queue';
 import { newId } from '../lib/id';
+import { planMerge } from '../lib/merge';
 import { paramsFor, schedule, type Rating } from '../srs/scheduler';
 import { replayMemory, validWeights } from '../srs/fsrs';
 
@@ -223,6 +224,24 @@ export const deleteNotes = (ids: string[]) => db.transaction('rw', [db.notes, db
   await tombstoneNotes(ids);
   for (const g of groups) await dissolveIfAlone(g);
 });
+
+/** 合并笔记：保留 keepId，其余笔记的例句、产出题、用法等并进来，保留笔记没有的卡型连卡带复习记录挪过来，
+ *  其余笔记和卡打墓碑（规划见 lib/merge.ts）。返回挪过来的卡数 */
+export async function mergeNotes(keepId: string, otherIds: string[]): Promise<{ moved: number; dropped: number }> {
+  return db.transaction('rw', [db.notes, db.cards, db.meta], async () => {
+    const keep = await db.notes.get(keepId);
+    const others = (await db.notes.bulkGet(otherIds.filter((x) => x !== keepId))).filter((n): n is Note => !!n && !n.deleted);
+    if (!keep || keep.deleted || !others.length) return { moved: 0, dropped: 0 };
+    const cards = await db.cards.where('noteId').anyOf([keepId, ...others.map((o) => o.id)]).toArray();
+    const plan = planMerge(keep, others, cards);
+    await db.cards.bulkPut([...plan.move, ...plan.drop].map((c) => ({ ...c, updatedAt: bumpIso(c.updatedAt) })));
+    const groups = new Set(others.map((o) => o.contrastGroup).filter((g): g is string => !!g && g !== plan.patch.contrastGroup));
+    await tombstoneNotes(others.map((o) => o.id));
+    await updateNote(keepId, plan.patch);
+    for (const g of groups) await dissolveIfAlone(g);
+    return { moved: plan.move.length, dropped: plan.drop.length };
+  });
+}
 
 export async function updateCards(ids: string[], fn: (c: Card) => Partial<Card>) {
   await db.transaction('rw', db.cards, async () => {
