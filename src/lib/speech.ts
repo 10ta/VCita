@@ -114,6 +114,17 @@ function release(a: HTMLAudioElement) {
 }
 
 let currentBlobUrl: string | null = null;
+/** 每次 speak / stopSpeech 加一：下载或等待声音列表期间被新的一次替换（换卡了），旧的就不再播放。
+ *  否则上一张卡的音频下载得慢，会在本卡的音频开始之后才播出来，把本卡的顶掉 */
+let gen = 0;
+
+/** 停下正在读的（换卡时调用）：正在播放的、还在下载的、等用户按键再播的都作废 */
+export function stopSpeech() {
+  gen++;
+  pendingAuto = null;
+  if (current) { release(current); current = null; }
+  try { globalThis.speechSynthesis?.cancel(); } catch { /* 忽略 */ }
+}
 function playUrl(url: string, blobUrl = false): Promise<void> {
   return new Promise((resolve, reject) => {
     if (current) release(current);
@@ -129,7 +140,7 @@ function playUrl(url: string, blobUrl = false): Promise<void> {
 
 /** 浏览器自带语音：必须找到对应语言的声音才读。刚打开页面时声音列表还是空的，等它加载（最多 1.5 秒）；
  *  找不到就不读——否则会用默认的英语声音去读法语 */
-async function speakNative(text: string, lang: string) {
+async function speakNative(text: string, lang: string, my: number) {
   const s = globalThis.speechSynthesis;
   if (!s) return;
   let voices = s.getVoices();
@@ -140,6 +151,7 @@ async function speakNative(text: string, lang: string) {
       setTimeout(done, 1500);
     });
   }
+  if (my !== gen) return;
   const base = lang.toLowerCase().split('-')[0];
   const voice = voices.find((v) => v.lang.toLowerCase() === lang.toLowerCase()) ?? voices.find((v) => v.lang.toLowerCase().split(/[-_]/)[0] === base);
   if (!voice) return;
@@ -170,9 +182,11 @@ const playAfterGesture = (text: string, lang: string) => { pendingAuto = { text,
 export async function speak(text: string, lang: string) {
   if (!text) return;
   pendingAuto = null;
+  const my = ++gen;
   // 先走本机缓存 / 同站代理下载（能缓存）；拿不到再按原来的顺序直接播放
   if (proxyOk !== false && text.length <= 200) {
     const blob = await fetchAudio(text, lang);
+    if (my !== gen) return;
     if (blob) {
       try {
         await playUrl(URL.createObjectURL(blob), true);
@@ -187,6 +201,7 @@ export async function speak(text: string, lang: string) {
   }
   const order = working === null ? sources.map((_, i) => i) : [working];
   for (const i of order) {
+    if (my !== gen) return;
     try {
       await playUrl(sources[i](text, lang));
       working = i;
@@ -197,6 +212,7 @@ export async function speak(text: string, lang: string) {
       if (name === 'NotAllowedError') return playAfterGesture(text, lang); // 来源没问题，只是还不允许自动播放
     }
   }
+  if (my !== gen) return;
   working = null;
-  await speakNative(text, lang);
+  await speakNative(text, lang, my);
 }

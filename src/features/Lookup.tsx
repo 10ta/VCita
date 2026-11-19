@@ -170,7 +170,8 @@ export function LookupBubble({ dict }: { dict: FrDict | null }) {
       };
       cur.current = next;
       setSel(next);
-      window.dispatchEvent(new Event('vcita:lookup-open'));
+      // 悬停打开的（复习卡目标表达）：阴阳性迷你条可以同时开着，挪到气泡另一边；选中文字打开的：迷你条关掉
+      window.dispatchEvent(new CustomEvent('vcita:lookup-open', { detail: { hover: !!extra.hover } }));
     };
 
     // ---- 悬停（只用鼠标；手机照旧长按选词）----
@@ -257,7 +258,7 @@ export function LookupBubble({ dict }: { dict: FrDict | null }) {
   if (!sel) return null;
   const place = placeBubble(sel.anchor, window.innerWidth, window.innerHeight);
   return (
-    <div ref={box} className="lookup-pop" style={place} role="dialog" aria-label={`查词：${sel.text}`}>
+    <div ref={box} className="lookup-pop" data-hover={sel.hover ? '' : undefined} style={place} role="dialog" aria-label={`查词：${sel.text}`}>
       <LookupBody key={`${sel.text}|${sel.context}`} sel={sel} dict={dict} onClose={() => { last.current = ''; cur.current = null; setSel(null); }} />
     </div>
   );

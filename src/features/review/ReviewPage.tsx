@@ -1,11 +1,11 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useCards, useDeckSettings, useMemories, useNotes, useTodayLogs } from '../../db/hooks';
-import { addClip, answerCard, bumpUsed, setSuspended, undoAnswer, type AnswerResult } from '../../db/actions';
+import { addClip, answerCard, bumpUsed, setSuspended, undoAnswer, updateNote, type AnswerResult } from '../../db/actions';
 import { buildQueue } from '../../srs/queue';
 import { fmtNextIn, isDue, paramsFor, preview, type Rating } from '../../srs/scheduler';
 import { fmtDays, fmtLocalMoment, fmtMinutes, nextDayStartMs } from '../../lib/time';
 import { answerCustom, endCustom, nextQueue, pickCustom, restoreCustom, useCustom, type CustomSession } from '../../srs/custom';
-import { preloadSpeech, speak } from '../../lib/speech';
+import { preloadSpeech, speak, stopSpeech } from '../../lib/speech';
 import { clozeTargets } from '../../schema/validate';
 import { prefetchLookup } from '../Lookup';
 import { usePrefs, setPrefs } from '../../ui/prefs';
@@ -20,7 +20,7 @@ import { ClusterStrip } from './ClusterStrip';
 import { Related } from './Related';
 import { Fr, useFrDictCtx, useNoteFreqs } from '../FrText';
 import { diffWords, pickReference, summarize, type DiffOp } from '../../lib/diff';
-import type { Card } from '../../schema';
+import type { Card, Note } from '../../schema';
 
 const RATINGS: Array<{ r: Rating; label: string; cls: string }> = [
   { r: 1, label: '忘了', cls: 'r1' }, { r: 2, label: '困难', cls: 'r2' }, { r: 3, label: '良好', cls: 'r3' }, { r: 4, label: '容易', cls: 'r4' },
@@ -44,6 +44,8 @@ export function ReviewPage({ deckId }: { deckId: string }) {
   const memories = useMemories(s);
   const freq = useNoteFreqs();
   const [currentId, setCurrentId] = useState<string | null>(null);
+  /** 刚作答、等数据库更新完再出下一张：这段时间显示空卡片，不闪"这一轮完成了" */
+  const [pending, setPending] = useState(false);
   const [revealed, setRevealed] = useState(false);
   const [editing, setEditing] = useState(false);
   const [skipped, setSkipped] = useState(() => new Set<string>());
@@ -81,6 +83,7 @@ export function ReviewPage({ deckId }: { deckId: string }) {
       // 刚答完产出卡紧接着就出同一条笔记的挖空卡。等日志也到了再选（最多等 3 秒）
       if (!logs?.some((l) => l.id === w.logId) && Date.now() - w.at < 3000) return;
       waitFor.current = null;
+      setPending(false);
     }
     // 还没翻面的卡要仍在可出的范围里：导入 / 同步可能把它改成明天才到期，或今天已答过它的兄弟卡，
     // 不检查的话它会一直挂着（计数 0 0 0 却还有卡）。翻面后（含撤销）不换，免得作答到一半被抽走
@@ -123,6 +126,9 @@ export function ReviewPage({ deckId }: { deckId: string }) {
   const sourceAnswer = split && s ? split.answers.find((a) => a.lang === s.sourceLang && a.speakText) : undefined;
   const lastSpoken = useRef<string | null>(null);
   const frDict = useFrDictCtx();
+  // 换卡（作答、跳过、撤销）时先停掉上一张还在读的；必须写在下面的自动发音之前，同一次渲染里先停、再读本卡
+  useEffect(() => { stopSpeech(); }, [currentId]);
+  useEffect(() => () => stopSpeech(), []);
 
   // ---- 提前准备：让翻面、换卡时不用等网络 ----
   // 1) 这张卡题面和背面每一个能读的面：正面时就下载好
@@ -205,6 +211,7 @@ export function ReviewPage({ deckId }: { deckId: string }) {
       answeredThisSession.current++;
       if (res.leechNow) toast(`遗忘达到 ${s.leechThreshold} 次，已自动暂停，放进"待改造"`, true);
       waitFor.current = { id: card.id, updatedAt: card.updatedAt, logId: res.logId, at: Date.now() };
+      setPending(true);
     }
     setCurrentId(null);
     setRevealed(false);
@@ -284,6 +291,9 @@ export function ReviewPage({ deckId }: { deckId: string }) {
             <button type="button" className="btn is-primary" onClick={() => { endCustom(); setCurrentId(null); undo.current = []; setUndoCount(0); }}>回到正常复习</button>
           </div>
         </div>
+      ) : (!card && (pending || nextId)) ? (
+        // 作答后到下一张出现之间（等数据库，通常不到半秒）：空卡片占位，不闪"这一轮完成了"
+        <div className="review-card is-wait" aria-busy="true" />
       ) : !card || !note || !split ? (
         <div className="empty">
           <div className="big-check">✓</div>
@@ -301,6 +311,7 @@ export function ReviewPage({ deckId }: { deckId: string }) {
             <button type="button" className="pill" onClick={skip} title="跳过 (S)">跳过</button>
             <button type="button" className="pill" onClick={() => void suspend()} title="暂停 (P)">暂停</button>
             <button type="button" className="pill" onClick={() => setEditing(true)} title="编辑 (E)">编辑</button>
+            <FixButton note={note} cardType={split.listen ? 'listen' : card.type} />
           </div>
           <div className="review-card" key={card.id} data-lookup-source={note.lemma || undefined} data-no-lookup={revealed ? undefined : ''}>
             <div className="badges">
@@ -357,7 +368,13 @@ export function ReviewPage({ deckId }: { deckId: string }) {
                       <SpeakBtn text={a.speakText} lang={a.lang} />
                     </div>
                   ))}
-                  {note.sense && <div className="sense-tag" title="义项：这张卡考的是这个词的哪一个意思">义项 · {note.sense}</div>}
+                  {(note.sense || freq?.get(note.id) != null) && (
+                    <div className="back-tags">
+                      {note.sense && <span className="sense-tag" title="义项：这张卡考的是这个词的哪一个意思">义项 · {note.sense}</span>}
+                      {freq?.get(note.id) != null && frDict && <FreqTag f={freq.get(note.id)!} rank={frDict.rankOf(freq.get(note.id)!)} />}
+                    </div>
+                  )}
+                  <MineBox note={note} />
                   {split.promptPhrase && split.promptFr && (
                     <div className="prompt-phrase small">
                       <span className="muted">题面说法 </span><b>{split.promptPhrase}</b>
@@ -376,7 +393,7 @@ export function ReviewPage({ deckId }: { deckId: string }) {
                   )}
                   <BackZones note={note} heads={zoneHeadsOf(s)} />
                   {notes && cards && <ClusterStrip note={note} notes={notes} cards={cards} shown={split.question.speakText || split.promptFr || ''} />}
-                  {notes && <Related note={note} notes={notes} />}
+                  {notes && <Related note={note} notes={notes} onEdit={() => setEditing(true)} />}
                 </div>
                 <div className="grades">
                   {RATINGS.map(({ r, label, cls }) => (
@@ -423,7 +440,7 @@ function GradeButton({ cls, label, r, when, tip, onPick }: { cls: string; label:
 export function gradeCriterion(kind: Card['type'] | 'listen', r: Rating, peek: 0 | 1 | 2 = 0): string {
   const T: Partial<Record<Card['type'] | 'listen', Partial<Record<Rating, string>>>> = {
     listen: { 1: peek === 2 ? '看了文字才懂' : '听不出来', 2: peek === 1 ? '看了上下文才懂' : '2–3 秒才听懂' },
-    production: { 1: '想不出来', 2: '想出来但形式错' },
+    production: { 1: '看了答案觉得陌生', 2: '形式错，或答了别的对说法（再点 ⚑ 题面不唯一）' },
     contrast: { 1: '选错', 2: '选对但靠猜', 3: '选对、说得出为什么' },
     frame: { 1: '想不起句框', 2: '只错小词或配合' },
     apply: { 1: '写不出来', 2: '语法锁有错', 3: '句框和语法锁都对' },
@@ -470,3 +487,70 @@ export function speakables(v: { question: { speakText: string; lang: string }; a
 }
 
 const plainOf = (raw: string) => raw.replace(/\{\{(.*?)\}\}/g, (_, x: string) => x.split('::')[0]);
+
+/** 词频档：Lexique 每百万词出现次数 + 在所有原形里大约排第几。短语取最不常用的那个实词 */
+function FreqTag({ f, rank }: { f: number; rank: number }) {
+  const band = rank <= 2000 ? '核心' : rank <= 5000 ? '常用' : rank <= 10000 ? '中频' : '低频';
+  const r = rank >= 1000 ? `${Math.round(rank / 100) / 10}k` : String(rank);
+  return (
+    <span className={`freq-tag is-${band === '核心' ? 'a' : band === '常用' ? 'b' : band === '中频' ? 'c' : 'd'}`}
+      title={`Lexique 词频：每百万词 ${f >= 10 ? Math.round(f) : f.toFixed(1)} 次，在所有原形里约排第 ${rank}（短语取最不常用的实词）`}>
+      词频 · {band} · 前 {r}
+    </span>
+  );
+}
+
+/** 我的句子：用这个表达说一句和自己有关的话（自我参照 + 自己生成，比多读几遍好记）。背面显示；点一下就能写、回车保存 */
+function MineBox({ note }: { note: Note }) {
+  const [open, setOpen] = useState(false);
+  const [v, setV] = useState(note.mine ?? '');
+  useEffect(() => { setOpen(false); setV(note.mine ?? ''); }, [note.id, note.mine]);
+  const save = async () => {
+    const t = v.trim();
+    if (t !== (note.mine ?? '')) { await updateNote(note.id, { mine: t || undefined }); toast(t ? '已保存我的句子' : '已删除我的句子'); }
+    setOpen(false);
+  };
+  if (open) {
+    return (
+      <div className="mine-box is-edit">
+        <input autoFocus lang="fr" value={v} placeholder={`用 ${note.lemma} 说一句你自己的事，回车保存`} onChange={(e) => setV(e.target.value)}
+          onKeyDown={(e) => { if (e.key === 'Enter' && !e.nativeEvent.isComposing) { e.preventDefault(); void save(); } if (e.key === 'Escape') { e.preventDefault(); setOpen(false); } }}
+          onBlur={() => void save()} />
+      </div>
+    );
+  }
+  return note.mine
+    ? <div className="mine-box" role="button" tabIndex={0} title="我的句子（点一下修改）" onClick={() => setOpen(true)}><span className="muted small">我的 · </span><Fr><span lang="fr">{note.mine}</span></Fr></div>
+    : <button type="button" className="pill mine-add" title="记不住时最有效：用它说一句和你自己有关的话（自己造的句子不用完全正确，下次复习会先看到它）" onClick={() => setOpen(true)}>✍ 造一句我的</button>;
+}
+
+const FIX_REASONS = ['题面不唯一', '题面看不懂', '题面比答案难', '答案不值得考', '考错了部分', '关联不对', '少了讲解'];
+/** ⚑ 待修：一键记下这张卡的问题（不评分、不打断复习），词库「待修」里集中处理 */
+function FixButton({ note, cardType }: { note: Note; cardType: string }) {
+  const [open, setOpen] = useState(false);
+  const [other, setOther] = useState('');
+  useEffect(() => { setOpen(false); setOther(''); }, [note.id]);
+  const add = async (reason: string) => {
+    const r = reason.trim();
+    if (!r) return;
+    const line = `${r}（${TYPE_LABEL[cardType as Card['type']] ?? (cardType === 'listen' ? '听认' : cardType)}）`;
+    const cur = note.fixme?.trim();
+    await updateNote(note.id, { fixme: cur ? (cur.includes(line) ? cur : `${cur}；${line}`) : line });
+    toast(`已标为待修：${r}（词库 → 待修）`);
+    setOpen(false);
+  };
+  return (
+    <span className="fix-wrap">
+      <button type="button" className={`pill${note.fixme ? ' is-on' : ''}`} onClick={() => setOpen((o) => !o)}
+        title={note.fixme ? `待修：${note.fixme}` : '这张卡有问题：一键记下，词库「待修」里集中改'}>⚑ {note.fixme ? '待修 ✓' : '待修'}</button>
+      {open && (
+        <div className="fix-menu" role="menu">
+          {FIX_REASONS.map((r) => <button key={r} type="button" className="pill" role="menuitem" onClick={() => void add(r)}>{r}</button>)}
+          <input value={other} placeholder="其他，回车" onChange={(e) => setOther(e.target.value)}
+            onKeyDown={(e) => { if (e.key === 'Enter' && !e.nativeEvent.isComposing) { e.preventDefault(); void add(other); } if (e.key === 'Escape') setOpen(false); }} />
+          {note.fixme && <button type="button" className="pill" onClick={() => void updateNote(note.id, { fixme: undefined }).then(() => { toast('已清除待修'); setOpen(false); })}>清除</button>}
+        </div>
+      )}
+    </span>
+  );
+}

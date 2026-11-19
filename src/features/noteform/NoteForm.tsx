@@ -12,6 +12,8 @@ import { etymOf, linksOf, useWiktEtym, useWiktLinks } from '../../lib/wikt';
 import { headWord } from '../../lib/headword';
 import { isFrench } from '../../ui/langs';
 import { useNotes } from '../../db/hooks';
+import { updateNotes } from '../../db/actions';
+import { toast } from '../../ui/toast';
 import { cardView, Cues } from '../CardFace';
 import { CARD_TYPES, ClozeMarker } from '../NoteParts';
 import { contextLines, topicList, cueHas, newRow, promptOf, rowFields, toggleCue, type Draft, type Row } from './model';
@@ -218,7 +220,7 @@ export function NoteForm({ d, setD, s, labels, mode, note, groupMates = [], onSu
   // 预览用的笔记
   const draftNote: Note = useMemo(() => ({
     ...(note ?? BLANK), ...rowFields(d), lemma: d.lemma, meaningZh: d.meaningZh, meaningEn: d.meaningEn,
-    usage: d.usage || null, sense: d.sense || null, contexts: contextLines(d.contexts), cluster: d.cluster || null, topics: topicList(d.topics), cueFamily: d.cueFamily || null, extra: d.extra || null, etymology: d.etymology || null, source: d.source || null, contrastNote: d.contrastNote || null,
+    usage: d.usage || null, sense: d.sense || null, mine: d.mine || null, contexts: contextLines(d.contexts), cluster: d.cluster || null, topics: topicList(d.topics), cueFamily: d.cueFamily || null, extra: d.extra || null, etymology: d.etymology || null, source: d.source || null, contrastNote: d.contrastNote || null,
     cardTypes: [...d.cardTypes, ...(group ? ['contrast' as const] : [])],
   }), [d, note, group]);
 
@@ -230,6 +232,13 @@ export function NoteForm({ d, setD, s, labels, mode, note, groupMates = [], onSu
 
   return (
     <div className="noteform">
+      {d.fixme.trim() && (
+        <div className="nf-fixme">
+          <label className="field"><span className="field-label">⚑ 待修（复习时标的）· 改好后点「已改好」清掉</span>
+            <input value={d.fixme} onChange={(e) => set('fixme', e.target.value)} /></label>
+          <button type="button" className="pill" onClick={() => set('fixme', '')}>已改好</button>
+        </div>
+      )}
       <section className="nf-block">
         <label className="field"><span className="field-label">表达（{labels[0]}）· 考什么只写这一次</span>
           <input ref={lemmaRef} className="nf-lemma" value={d.lemma} autoFocus={mode === 'add'} placeholder="例如：prendre qqn dans le sens du poil"
@@ -259,6 +268,10 @@ export function NoteForm({ d, setD, s, labels, mode, note, groupMates = [], onSu
           <input value={d.topics} list="nf-topics" placeholder="例如：能力、做不到" onChange={(e) => set('topics', e.target.value)} />
           <datalist id="nf-topics">{topics.map((c) => <option key={c} value={c} />)}</datalist>
         </label>
+        <TopicLinks topics={topicList(d.topics) ?? []} selfId={note?.id ?? null} notes={allNotes ?? []}
+          onAdoptTopic={(t) => set('topics', [...(topicList(d.topics) ?? []), t].join('、'))} />
+        <label className="field"><span className="field-label">我的句子（可选，背面最先显示）· 用这个表达说一句和你自己有关的话：自己造、和自己有关，比读十遍好记</span>
+          <input value={d.mine} lang="fr" placeholder="例如：Apprendre le français en trois ans, c'est un combat de longue haleine." onChange={(e) => set('mine', e.target.value)} /></label>
       </section>
 
       <section className="nf-block">
@@ -323,6 +336,47 @@ export function NoteForm({ d, setD, s, labels, mode, note, groupMates = [], onSu
       {meta && <details className="nf-block nf-more"><summary>归类 <span className="muted small">层级、来源、主题{mode === 'edit' ? '、牌组、日期' : ''}</span></summary>{meta}</details>}
 
       {showErrors && errs.all.map((e) => <p key={e} className="form-error">{e}</p>)}
+    </div>
+  );
+}
+
+/**
+ * 关联（同话题的卡）：列出每个话题下的其他笔记，× 立即把那一条移出这个话题；
+ * 「＋ 关联一条」搜词条，选中后立即把它放进这条笔记的第一个话题（这条笔记还没有话题时，借用对方的话题）
+ */
+function TopicLinks({ topics, selfId, notes, onAdoptTopic }: { topics: string[]; selfId: string | null; notes: Note[]; onAdoptTopic: (t: string) => void }) {
+  const [q, setQ] = useState('');
+  const live = useMemo(() => notes.filter((n) => !n.deleted && n.id !== selfId), [notes, selfId]);
+  const byTopic = topics.map((t) => ({ t, mates: live.filter((n) => (n.topics ?? []).includes(t)) }));
+  const link = (raw: string) => {
+    const key = raw.trim().toLowerCase();
+    if (!key) return;
+    const target = live.find((n) => n.lemma.trim().toLowerCase() === key);
+    if (!target) return toast('词库里没有这一条（要和词条一字不差，可以从下拉里选）', true);
+    const t = topics[0] ?? target.topics?.[0];
+    if (!t) return toast('两条都还没有话题：先在上面填一个话题名，再关联', true);
+    if (!topics.length) { onAdoptTopic(t); toast(`这条笔记用了「${target.lemma}」的话题「${t}」，保存后生效`); }
+    else void updateNotes([target.id], (n) => ({ topics: [...new Set([...(n.topics ?? []), t])] })).then(() => toast(`已把「${target.lemma}」放进话题「${t}」`));
+    setQ('');
+  };
+  return (
+    <div className="nf-links small">
+      {byTopic.map(({ t, mates }) => (
+        <div key={t} className="nf-link-row">
+          <span className="muted">关联 · {t}</span>
+          {mates.length ? mates.map((m) => (
+            <span key={m.id} className="pill nf-link" lang="fr">{m.lemma}
+              <button type="button" className="icon" aria-label={`把 ${m.lemma} 移出话题 ${t}`} title="移出这个话题（立即生效）"
+                onClick={() => void updateNotes([m.id], (n) => { const xs = (n.topics ?? []).filter((x) => x !== t); return { topics: xs.length ? xs : undefined }; }).then(() => toast(`已把「${m.lemma}」移出话题「${t}」`))}>×</button>
+            </span>
+          )) : <span className="muted">（还没有别的卡）</span>}
+        </div>
+      ))}
+      <div className="nf-link-row">
+        <input value={q} list="nf-lemmas" lang="fr" placeholder="＋ 关联一条：输入词条，回车" onChange={(e) => setQ(e.target.value)}
+          onKeyDown={(e) => { if (e.key === 'Enter' && !e.nativeEvent.isComposing) { e.preventDefault(); link(q); } }} />
+        <datalist id="nf-lemmas">{q.trim().length >= 2 && live.filter((n) => n.lemma.toLowerCase().includes(q.trim().toLowerCase())).slice(0, 20).map((n) => <option key={n.id} value={n.lemma} />)}</datalist>
+      </div>
     </div>
   );
 }

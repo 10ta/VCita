@@ -21,6 +21,8 @@ export interface FrDict {
   formsOf(lemma: string): Entry[];
   /** 词频排第 n 的原形的词频（每百万词）；n 超出时返回 0。阅读页用它判断"常用词前 N 个" */
   freqAtRank(n: number): number;
+  /** 词频为 f 的原形大约排第几（1 = 最常用）：复习卡背面显示「常用前 N」 */
+  rankOf(f: number): number;
 }
 
 export function parseDict(text: string): FrDict {
@@ -46,6 +48,13 @@ export function parseDict(text: string): FrDict {
     freqAtRank: (n) => {
       ranked ??= [...lemmaFreq.values()].sort((a, b) => b - a);
       return n <= 0 ? Infinity : ranked[Math.min(n, ranked.length) - 1] ?? 0;
+    },
+    rankOf: (f) => {
+      ranked ??= [...lemmaFreq.values()].sort((a, b) => b - a);
+      // 降序数组里第一个 < f 的位置 = 比它常用（或一样）的原形个数
+      let lo = 0, hi = ranked.length;
+      while (lo < hi) { const mid = (lo + hi) >> 1; if (ranked[mid] >= f) lo = mid + 1; else hi = mid; }
+      return Math.max(1, lo);
     },
   };
 }

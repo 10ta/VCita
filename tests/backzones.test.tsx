@@ -90,7 +90,7 @@ describe('渲染', () => {
 
 describe('评分按钮上的标准', () => {
   it('按卡型给标准；听力卡看了上下文 / 文字后跟着变', () => {
-    expect(gradeCriterion('production', 2)).toBe('想出来但形式错');
+    expect(gradeCriterion('production', 2)).toBe('形式错，或答了别的对说法（再点 ⚑ 题面不唯一）');
     expect(gradeCriterion('listen', 1)).toBe('听不出来');
     expect(gradeCriterion('listen', 1, 2)).toBe('看了文字才懂');
     expect(gradeCriterion('listen', 2, 1)).toBe('看了上下文才懂');

@@ -72,6 +72,10 @@ export const NoteV2 = z.looseObject({
   /** 其他语境：这个词在别的搭配里的意思，一条一行「搭配 → 意思」（établissement scolaire → 学校）。只作参考、不考，
    *  认读 / 挖空卡背面显示。查单个词的词典分不清的多义词才写，最多三条。optional：同步文件不变 */
   contexts: z.array(z.string()).optional(),
+  /** 我的句子：用户自己造的、和自己生活有关的一句（自我参照 + 生成效应，忘过的卡最需要）。背面最先显示。optional：同步文件不变 */
+  mine: z.string().nullable().optional(),
+  /** 待修：复习时一键标出的卡片问题（题面不唯一、题面看不懂、关联不对…），词库「待修」里列出，改好后清空。optional：同步文件不变 */
+  fixme: z.string().nullable().optional(),
   /** 在表达群里被顺带回忆、却没想起来的日期（最近 10 次），只做标记，不影响排期 */
   recallMisses: z.array(z.string()).optional(),
   answerFr: z.string().nullable().default(null),

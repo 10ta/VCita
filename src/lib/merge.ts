@@ -57,6 +57,8 @@ export function planMerge(keep: Note, others: Note[], cards: Card[]): MergePlan 
     extra,
     contexts: contexts.length ? contexts : undefined,
     topics: topics.length ? topics : undefined,
+    mine: joinUniq(all.map((n) => n.mine), '\n') || undefined,
+    fixme: joinUniq(all.map((n) => n.fixme), '；') || undefined,
     cueFamily: joinUniq(all.map((n) => n.cueFamily), ' · '),
     etymology: keep.etymology?.trim() || others.find((o) => o.etymology?.trim())?.etymology || null,
     source: joinUniq(all.map((n) => n.source), ' · '),

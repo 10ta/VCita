@@ -21,10 +21,10 @@ import { CardStats, Cues, renderSentence, SpeakBtn, TYPE_LABEL } from '../CardFa
 import { NoteEditor, ThemePicker } from '../NoteEditor';
 
 const ORIGIN_SHORT: Record<NoteOrigin, string> = { mined: '挖矿', list: '词表', error: '错题' };
-type Status = 'all' | 'new' | 'learning' | 'due' | 'leech' | 'suspended' | 'nosentence' | 'stable' | 'core' | 'needprod' | 'forgot' | 'lowease' | 'dup' | 'badprompt' | 'contrast' | 'confusable' | 'cluster' | 'missed';
+type Status = 'all' | 'new' | 'learning' | 'due' | 'leech' | 'suspended' | 'nosentence' | 'stable' | 'core' | 'needprod' | 'forgot' | 'lowease' | 'dup' | 'badprompt' | 'contrast' | 'confusable' | 'cluster' | 'missed' | 'fixme';
 // 后半部分是"分拣"用的筛选（改造方案 §6）：已稳定的保留；同源词选中后批量暂停；顽固卡补句子、加线索；核心词补产出卡
 const STATUS: Array<[Status, string, string?]> = [
-  ['all', '全部'], ['due', '到期'], ['new', '新卡'], ['learning', '学习中'], ['suspended', '已暂停'],
+  ['all', '全部'], ['fixme', '⚑ 待修', '复习时点了 ⚑ 待修的卡（题面不唯一、看不懂、关联不对…）：改好后在编辑里点「已改好」；也可以导出交给 Claude 批量改'], ['due', '到期'], ['new', '新卡'], ['learning', '学习中'], ['suspended', '已暂停'],
   ['stable', '已稳定', '间隔超过 30 天且遗忘不超过 1 次'], ['leech', '待改造', '遗忘达到阈值，已自动暂停'],
   ['nosentence', '待补句子', '迁移来的旧卡，还没有例句'], ['core', '核心'], ['needprod', '待补产出', '核心词还没有产出卡'],
   // 弱项：在变成顽固卡之前先改句子、加线索
@@ -153,6 +153,7 @@ export function LibraryPage({ deckId }: { deckId: string }) {
           case 'confusable': return confusable.has(n.id);
           case 'cluster': return !!n.cluster?.trim();
           case 'missed': return !!n.recallMisses?.length;
+          case 'fixme': return !!n.fixme?.trim();
           case 'dup': return dups.has(n.id);
           case 'badprompt': return productionErrors(n).length > 0 || markErrors(n).length > 0 || (!!n.contrastGroup && contrastLeaks(n, notes.filter((x) => x.contrastGroup === n.contrastGroup && x.id !== n.id)).length > 0);
         }
@@ -297,6 +298,7 @@ export function LibraryPage({ deckId }: { deckId: string }) {
                 {(prefs.showT1 || prefs.showT2) && <Cues note={n} />}
                 <div className="note-meta">
                   {card && <CardStats card={card} s={s} mem={memories?.get(card.id) ?? null} />}
+                  {n.fixme?.trim() && <span className="badge t-contrast" title="复习时标的待修问题">⚑ {n.fixme}</span>}
                   {freqs?.get(n.id) != null && <span className="badge" title="Lexique 词频：每百万词出现次数（短语取最不常用的词）">频 {fmtFreq(freqs.get(n.id)!)}</span>}
                   {n.contrastGroup && <span className="badge t-contrast" title="易混组">易混：{notes.filter((x) => x.contrastGroup === n.contrastGroup && x.id !== n.id).map((x) => x.lemma).join(' / ')}</span>}
                   {n.cluster?.trim() && <span className="badge" title="表达群：同一个意思的几种说法">群：{n.cluster}</span>}

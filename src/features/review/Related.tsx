@@ -16,7 +16,7 @@ export function topicMates(note: Pick<Note, 'id' | 'topics' | 'cluster'>, notes:
   })).filter((x) => x.mates.length);
 }
 
-export function Related({ note, notes }: { note: Note; notes: Note[] }) {
+export function Related({ note, notes, onEdit }: { note: Note; notes: Note[]; onEdit?: () => void }) {
   const topics = topicMates(note, notes);
   const contrast = note.contrastGroup ? notes.filter((n) => n.id !== note.id && !n.deleted && n.contrastGroup === note.contrastGroup) : [];
   if (!topics.length && !contrast.length) return null;
@@ -32,6 +32,7 @@ export function Related({ note, notes }: { note: Note; notes: Note[] }) {
             </span>
           </div>
         ))}
+        {onEdit && topics.length > 0 && <button type="button" className="pill rel-edit" title="在编辑里改话题、移出或加关联（E）" onClick={onEdit}>编辑关联</button>}
         {contrast.length > 0 && (
           <div className="rel-row">
             <span className="rel-label">易混</span>

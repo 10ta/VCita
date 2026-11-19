@@ -175,14 +175,17 @@ function GenderPopover({ dict }: { dict: FrDict }) {
       window.clearTimeout(hide.current);
       anchor.current = el;
       const r = el.getBoundingClientRect();
-      const below = r.bottom + 180 < window.innerHeight;
+      // 悬停目标表达时划词气泡也会打开（通常在词的下方）：迷你条放到气泡的另一边，两个都看得见
+      const pop = document.querySelector('.lookup-pop')?.getBoundingClientRect();
+      const below = pop && pop.top >= r.bottom - 2 ? false : pop && pop.bottom <= r.top + 2 ? true : r.bottom + 180 < window.innerHeight;
       setState({ info, x: Math.min(Math.max(8, r.left + r.width / 2 - 160), window.innerWidth - 328), y: below ? r.bottom + 6 : r.top - 6, below });
     };
     const fwOf = (e: Event) => (e.target as HTMLElement | null)?.closest?.('[data-fw]') as HTMLElement | null;
     // 触屏点一下之后浏览器会补发 mouseover / mouseout，别让它把刚打开的迷你条关掉
     let touchedAt = 0;
     // 正在选文字（拖选中）或划词气泡开着时不弹，免得两个弹层叠在一起
-    const busy = () => !!document.querySelector('.lookup-pop') || !(window.getSelection()?.isCollapsed ?? true);
+    // 悬停打开的气泡（data-hover）不算：目标表达的意思和里面某个名词的阴阳性要能同时看
+    const busy = () => !!document.querySelector('.lookup-pop:not([data-hover])') || !(window.getSelection()?.isCollapsed ?? true);
     const over = (e: Event) => { const el = fwOf(e); if (el && !busy() && !isMasked(el)) show(el); };
     const out = (e: Event) => {
       if (Date.now() - touchedAt < 1000 || !fwOf(e)) return;
@@ -197,7 +200,14 @@ function GenderPopover({ dict }: { dict: FrDict }) {
       else if (!el) close();
     };
     // 词被换掉（评分换卡、翻面重渲染）时 mouseout 不会触发，定时检查锚点还在不在
-    window.addEventListener('vcita:lookup-open', close);
+    // 选中文字打开气泡：关掉迷你条。悬停打开：气泡渲染出来后按它的位置把迷你条重新摆到另一边
+    let replace: number | undefined;
+    const onLookup = (e: Event) => {
+      if (!(e as CustomEvent<{ hover?: boolean }>).detail?.hover) return close();
+      window.clearTimeout(replace);
+      replace = window.setTimeout(() => { if (anchor.current?.isConnected) show(anchor.current); }, 60);
+    };
+    window.addEventListener('vcita:lookup-open', onLookup);
     const watch = window.setInterval(() => { if (anchor.current && !anchor.current.isConnected) close(); }, 250);
     document.addEventListener('mouseover', over);
     document.addEventListener('mouseout', out);
@@ -208,7 +218,8 @@ function GenderPopover({ dict }: { dict: FrDict }) {
     window.addEventListener('hashchange', close);
     return () => {
       window.clearInterval(watch);
-      window.removeEventListener('vcita:lookup-open', close);
+      window.clearTimeout(replace);
+      window.removeEventListener('vcita:lookup-open', onLookup);
       window.clearTimeout(hide.current);
       document.removeEventListener('mouseover', over);
       document.removeEventListener('mouseout', out);

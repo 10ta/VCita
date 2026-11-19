@@ -27,6 +27,8 @@ export interface Row {
 export interface Draft {
   lemma: string; meaningZh: string; meaningEn: string;
   usage: string; sense: string; contexts: string; cluster: string; topics: string; cueFamily: string; source: string; extra: string; etymology: string; contrastNote: string;
+  /** 我的句子、待修（空 = 不写这个键） */
+  mine: string; fixme: string;
   layer: Note['layer']; origin: NonNullable<Note['origin']>; cardTypes: Card['type'][]; tags: Theme[]; deckId: string; day: string;
   rows: Row[];
 }
@@ -89,6 +91,7 @@ export function fromNote(note: Note, origin: NonNullable<Note['origin']>): Draft
   return {
     lemma: note.lemma, meaningZh: note.meaningZh, meaningEn: note.meaningEn,
     usage: note.usage ?? '', sense: note.sense ?? '', contexts: (note.contexts ?? []).join('\n'), cluster: note.cluster ?? '', topics: (note.topics ?? []).join('、'), cueFamily: note.cueFamily ?? '', source: note.source ?? '', extra: note.extra ?? '', etymology: note.etymology ?? '', contrastNote: note.contrastNote ?? '',
+    mine: note.mine ?? '', fixme: note.fixme ?? '',
     layer: note.layer, origin, cardTypes: note.cardTypes, tags: note.tags, deckId: note.deckId, day: note.createdAt.slice(0, 10),
     rows,
   };
@@ -133,6 +136,8 @@ export const otherFields = (d: Draft) => ({
   // 义项、其他语境：空着时不写这个键（没写过的笔记同步文件不变）
   sense: d.sense.trim() || undefined, contexts: contextLines(d.contexts),
   cluster: nul(d.cluster), topics: topicList(d.topics), cueFamily: nul(d.cueFamily), source: nul(d.source), extra: nul(d.extra), etymology: nul(d.etymology), contrastNote: nul(d.contrastNote),
+  // 清空时写 undefined：同步文件里这个键消失（JSON 不写 undefined）
+  mine: d.mine.trim() || undefined, fixme: d.fixme.trim() || undefined,
   layer: d.layer, tags: d.tags,
 });
 
