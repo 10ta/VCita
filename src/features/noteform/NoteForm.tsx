@@ -270,8 +270,8 @@ export function NoteForm({ d, setD, s, labels, mode, note, groupMates = [], onSu
         </label>
         <TopicLinks topics={topicList(d.topics) ?? []} selfId={note?.id ?? null} notes={allNotes ?? []}
           onAdoptTopic={(t) => set('topics', [...(topicList(d.topics) ?? []), t].join('、'))} />
-        <label className="field"><span className="field-label">我的句子（可选，背面最先显示）· 用这个表达说一句和你自己有关的话：自己造、和自己有关，比读十遍好记</span>
-          <input value={d.mine} lang="fr" placeholder="例如：Apprendre le français en trois ans, c'est un combat de longue haleine." onChange={(e) => set('mine', e.target.value)} /></label>
+        <label className="field"><span className="field-label">我写过（作文、回译里用上这个表达的句子，一行一句；批改后由 Claude 填）· 背面显示最近两句</span>
+          <textarea rows={2} value={d.mine} lang="fr" onChange={(e) => set('mine', e.target.value)} /></label>
       </section>
 
       <section className="nf-block">

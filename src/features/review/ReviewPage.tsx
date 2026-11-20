@@ -16,7 +16,7 @@ import { syncIfAuto } from '../../sync/engine';
 import { CardStats, cardView, SpeakBtn, TYPE_LABEL } from '../CardFace';
 import { BackZones, zoneHeadsOf } from '../BackZones';
 import { NoteEditor } from '../NoteEditor';
-import { ClusterStrip } from './ClusterStrip';
+import { ClusterStrip, undoClusterLeave } from './ClusterStrip';
 import { Related } from './Related';
 import { Fr, useFrDictCtx, useNoteFreqs } from '../FrText';
 import { diffWords, pickReference, summarize, type DiffOp } from '../../lib/diff';
@@ -52,7 +52,11 @@ export function ReviewPage({ deckId }: { deckId: string }) {
   const [learnAheadAll, setLearnAheadAll] = useState(false);
   const [undoCount, setUndoCount] = useState(0);
   /** 撤销栈：正常调度的作答有 res；自定义学习另存作答前的队列 */
-  const undo = useRef<Array<{ cardId: string; res: AnswerResult | null; custom: CustomSession | null }>>([]);
+  const undo = useRef<Array<{ cardId: string; res: AnswerResult | null; custom: CustomSession | null; recKey: string }>>([]);
+  /** 这一次显示的标识（表达群撤销用）：换卡时换新的；撤销回来时沿用当时那次的 */
+  const recSeq = useRef(0);
+  const rec = useRef<{ id: string | null; key: string; restore: string | null }>({ id: null, key: '', restore: null });
+  if (rec.current.id !== currentId) rec.current = { id: currentId, key: rec.current.restore ?? `${currentId}#${++recSeq.current}`, restore: null };
   const custom = useCustom();
   const shownAt = useRef(Date.now());
   const answeredThisSession = useRef(0);
@@ -200,7 +204,7 @@ export function ReviewPage({ deckId }: { deckId: string }) {
     if (!card || !revealed) return;
     setLearnAheadAll(false);
     const res = scheduled ? await answerCard(card.id, r, { elapsedMs: Date.now() - shownAt.current }) : null;
-    undo.current.push({ cardId: card.id, res, custom });
+    undo.current.push({ cardId: card.id, res, custom, recKey: rec.current.key });
     if (undo.current.length > 30) undo.current.shift();
     setUndoCount(undo.current.length);
     if (custom) {
@@ -222,6 +226,9 @@ export function ReviewPage({ deckId }: { deckId: string }) {
     if (!last) return;
     setUndoCount(undo.current.length);
     if (last.res) await undoAnswer(last.res);
+    // 表达群：翻页时按「没想起来」生效的撤回，回到翻页前的状态
+    await undoClusterLeave(last.recKey);
+    if (currentId === last.cardId) rec.current.key = last.recKey; else rec.current.restore = last.recKey;
     if (last.custom) restoreCustom(last.custom);
     setSkipped((x) => { const n = new Set(x); n.delete(last.cardId); return n; });
     setCurrentId(last.cardId);
@@ -392,12 +399,15 @@ export function ReviewPage({ deckId }: { deckId: string }) {
                     </button>
                   )}
                   <BackZones note={note} heads={zoneHeadsOf(s)} />
-                  {notes && cards && <ClusterStrip note={note} notes={notes} cards={cards} shown={split.question.speakText || split.promptFr || ''} />}
+                  {notes && cards && <ClusterStrip note={note} notes={notes} cards={cards} shown={split.question.speakText || split.promptFr || ''} recKey={rec.current.key} />}
                   {notes && <Related note={note} notes={notes} onEdit={() => setEditing(true)} />}
                 </div>
                 <div className="grades">
                   {RATINGS.map(({ r, label, cls }) => (
-                    <GradeButton key={r} cls={cls} label={label} r={r} when={btnNote(r)} tip={gradeCrit(r)} onPick={() => void answer(r)} />
+                    <GradeButton key={r} cls={cls} label={label} r={r}
+                      when={!scheduled || s?.gradeIntervals ? btnNote(r) : ''}
+                      tip={[gradeCrit(r), scheduled && !s?.gradeIntervals && btnNote(r) ? `下次：${btnNote(r)}` : ''].filter(Boolean).join(' · ')}
+                      onPick={() => void answer(r)} />
                   ))}
                 </div>
               </>
@@ -429,7 +439,7 @@ function GradeButton({ cls, label, r, when, tip, onPick }: { cls: string; label:
       onPointerEnter={(e) => { if (e.pointerType !== 'mouse' || !tip) return; window.clearTimeout(timer.current); timer.current = window.setTimeout(() => setShow(true), 350); }}
       onPointerLeave={hide} onPointerDown={hide}>
       <b>{label}</b>
-      <small>{when}</small>
+      {when && <small>{when}</small>}
       <kbd>{r}</kbd>
       {show && <span className="grade-tip" role="tooltip">{tip}</span>}
     </button>
@@ -500,55 +510,65 @@ function FreqTag({ f, rank }: { f: number; rank: number }) {
   );
 }
 
-/** 我的句子：用这个表达说一句和自己有关的话（自我参照 + 自己生成，比多读几遍好记）。背面显示；点一下就能写、回车保存 */
+/** 我写过：作文、回译里用上这个表达的句子（批改后由 Claude 填进来），背面显示，复习时看到自己用过它的样子 */
 function MineBox({ note }: { note: Note }) {
-  const [open, setOpen] = useState(false);
-  const [v, setV] = useState(note.mine ?? '');
-  useEffect(() => { setOpen(false); setV(note.mine ?? ''); }, [note.id, note.mine]);
-  const save = async () => {
-    const t = v.trim();
-    if (t !== (note.mine ?? '')) { await updateNote(note.id, { mine: t || undefined }); toast(t ? '已保存我的句子' : '已删除我的句子'); }
-    setOpen(false);
-  };
-  if (open) {
-    return (
-      <div className="mine-box is-edit">
-        <input autoFocus lang="fr" value={v} placeholder={`用 ${note.lemma} 说一句你自己的事，回车保存`} onChange={(e) => setV(e.target.value)}
-          onKeyDown={(e) => { if (e.key === 'Enter' && !e.nativeEvent.isComposing) { e.preventDefault(); void save(); } if (e.key === 'Escape') { e.preventDefault(); setOpen(false); } }}
-          onBlur={() => void save()} />
-      </div>
-    );
-  }
-  return note.mine
-    ? <div className="mine-box" role="button" tabIndex={0} title="我的句子（点一下修改）" onClick={() => setOpen(true)}><span className="muted small">我的 · </span><Fr><span lang="fr">{note.mine}</span></Fr></div>
-    : <button type="button" className="pill mine-add" title="记不住时最有效：用它说一句和你自己有关的话（自己造的句子不用完全正确，下次复习会先看到它）" onClick={() => setOpen(true)}>✍ 造一句我的</button>;
+  if (!note.mine?.trim()) return null;
+  return (
+    <div className="mine-box" title="我写过（作文 / 回译里用上的句子）">
+      {note.mine.split('\n').filter(Boolean).slice(-2).map((x, i) => <div key={i}><span className="muted small">我写过 · </span><Fr><span lang="fr">{x}</span></Fr></div>)}
+    </div>
+  );
 }
 
-const FIX_REASONS = ['题面不唯一', '题面看不懂', '题面比答案难', '答案不值得考', '考错了部分', '关联不对', '少了讲解'];
-/** ⚑ 待修：一键记下这张卡的问题（不评分、不打断复习），词库「待修」里集中处理 */
+const FIX_REASONS = ['题面不唯一', '题面看不懂', '题面比答案难', '答案不值得考', '考错了部分', '介词错', '例句看不懂', '关联不对', '少了讲解'];
+const fixItems = (s: string | null | undefined) => (s ?? '').split('；').map((x) => x.trim()).filter(Boolean);
+/** ⚑ 待修：一键记下这张卡的问题（不评分、不打断复习），词库「待修」里集中处理。打开时列出已经记下的，点 × 删一条，再点原因也能取消 */
 function FixButton({ note, cardType }: { note: Note; cardType: string }) {
   const [open, setOpen] = useState(false);
   const [other, setOther] = useState('');
   useEffect(() => { setOpen(false); setOther(''); }, [note.id]);
-  const add = async (reason: string) => {
+  // 点菜单外面关掉
+  const wrap = useRef<HTMLSpanElement>(null);
+  useEffect(() => {
+    if (!open) return;
+    const down = (e: PointerEvent) => { if (!wrap.current?.contains(e.target as Node)) setOpen(false); };
+    window.addEventListener('pointerdown', down);
+    return () => window.removeEventListener('pointerdown', down);
+  }, [open]);
+  const items = fixItems(note.fixme);
+  const typeLabel = TYPE_LABEL[cardType as Card['type']] ?? (cardType === 'listen' ? '听认' : cardType);
+  const save = async (next: string[], msg: string) => {
+    await updateNote(note.id, { fixme: next.length ? next.join('；') : undefined });
+    toast(msg);
+  };
+  const lineOf = (r: string) => `${r}（${typeLabel}）`;
+  const toggle = (reason: string) => {
     const r = reason.trim();
     if (!r) return;
-    const line = `${r}（${TYPE_LABEL[cardType as Card['type']] ?? (cardType === 'listen' ? '听认' : cardType)}）`;
-    const cur = note.fixme?.trim();
-    await updateNote(note.id, { fixme: cur ? (cur.includes(line) ? cur : `${cur}；${line}`) : line });
-    toast(`已标为待修：${r}（词库 → 待修）`);
-    setOpen(false);
+    const line = lineOf(r);
+    if (items.includes(line)) return void save(items.filter((x) => x !== line), `已取消：${r}`);
+    void save([...items, line], `已标为待修：${r}（词库 → 待修）`);
+    setOther('');
   };
   return (
-    <span className="fix-wrap">
-      <button type="button" className={`pill${note.fixme ? ' is-on' : ''}`} onClick={() => setOpen((o) => !o)}
-        title={note.fixme ? `待修：${note.fixme}` : '这张卡有问题：一键记下，词库「待修」里集中改'}>⚑ {note.fixme ? '待修 ✓' : '待修'}</button>
+    <span className="fix-wrap" ref={wrap}>
+      <button type="button" className={`pill${items.length ? ' is-on' : ''}`} onClick={() => setOpen((o) => !o)}
+        title={items.length ? `待修：${items.join('；')}` : '这张卡有问题：一键记下，词库「待修」里集中改'}>⚑ {items.length ? `待修 ${items.length}` : '待修'}</button>
       {open && (
         <div className="fix-menu" role="menu">
-          {FIX_REASONS.map((r) => <button key={r} type="button" className="pill" role="menuitem" onClick={() => void add(r)}>{r}</button>)}
-          <input value={other} placeholder="其他，回车" onChange={(e) => setOther(e.target.value)}
-            onKeyDown={(e) => { if (e.key === 'Enter' && !e.nativeEvent.isComposing) { e.preventDefault(); void add(other); } if (e.key === 'Escape') setOpen(false); }} />
-          {note.fixme && <button type="button" className="pill" onClick={() => void updateNote(note.id, { fixme: undefined }).then(() => { toast('已清除待修'); setOpen(false); })}>清除</button>}
+          {items.length > 0 && (
+            <ul className="fix-list">
+              {items.map((x) => (
+                <li key={x}>{x}<button type="button" className="icon" aria-label={`删除：${x}`} title="删掉这一条" onClick={() => void save(items.filter((y) => y !== x), '已删除一条')}>×</button></li>
+              ))}
+            </ul>
+          )}
+          {FIX_REASONS.map((r) => {
+            const on = items.includes(lineOf(r));
+            return <button key={r} type="button" className={`pill${on ? ' is-on' : ''}`} role="menuitemcheckbox" aria-checked={on} onClick={() => toggle(r)}>{on ? '✓ ' : ''}{r}</button>;
+          })}
+          <input value={other} placeholder="其他（写具体些），回车" onChange={(e) => setOther(e.target.value)}
+            onKeyDown={(e) => { if (e.key === 'Enter' && !e.nativeEvent.isComposing) { e.preventDefault(); toggle(other); } if (e.key === 'Escape') setOpen(false); }} />
         </div>
       )}
     </span>

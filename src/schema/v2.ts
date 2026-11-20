@@ -233,6 +233,8 @@ export const SettingsV2 = z.looseObject({
   /** 卡片背面分区标题：text = 只有文字；icon = 线性图标 + 文字；tint = 图标带区色。没设过 = icon。
    *  optional：没改过的设置序列化出来不变 */
   zoneHeads: z.enum(['text', 'icon', 'tint']).optional(),
+  /** 评分按钮上显示下次间隔（「良好 · 16天后」）。默认不显示：只凭回想的感觉评分，间隔放在悬停提示里。optional：没改过的设置序列化不变 */
+  gradeIntervals: z.boolean().optional(),
   /** 阅读页：词频最高的前 N 个原形算「认识」（不标色、算进覆盖率）。0 = 只按自己的卡和手动标记 */
   knownTop: z.number().int().min(0).default(2000),
   /** 每日新卡里留给句框（语块库）的张数；没用完的让给单词 */

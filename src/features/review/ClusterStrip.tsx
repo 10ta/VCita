@@ -20,6 +20,22 @@ export function clusterMates(note: Pick<Note, 'id' | 'cluster'>, notes: Note[], 
 }
 
 const MAX = 6;
+
+/** 撤销用：一张卡（一次显示）离开时表达群的状态和「没想起来」的结果。recKey 由复习页给，每次显示一个 */
+interface StripState { open: boolean; ok: string[]; res: Record<string, ClusterOutcome> }
+const records = new Map<string, { state: StripState; missed: Promise<ClusterOutcome[]> }>();
+const restores = new Map<string, StripState>();
+/**
+ * 撤销一张卡时调用：撤回翻页时按「没想起来」生效的那几条，表达群恢复到翻页前的样子（展开、哪几条是绿的）。
+ * 点绿的那几条当时就已生效、翻页前也还是生效的，保持不动
+ */
+export async function undoClusterLeave(recKey: string) {
+  const r = records.get(recKey);
+  if (!r) return;
+  records.delete(recKey);
+  for (const o of (await r.missed).reverse()) await undoClusterRecall(o.undo);
+  restores.set(recKey, r.state);
+}
 /** 第一个中文意思；括号里带法语的去掉（「铺天盖地的指控（un déluge de …）」会直接露出答案） */
 export const firstMeaning = (n: Note) =>
   (n.meaningZh ?? '').split(/[；;]/)[0].replace(/\s*[(（][^)）]*[A-Za-zÀ-ÿœ][^)）]*[)）]/g, '').trim() || n.meaningEn || '（没写意思）';
@@ -31,21 +47,23 @@ const TYPE: Partial<Record<Card['type'], string>> = { production: '产出', reco
  * 点「看答案」就算做了这次回想：每行先是淡红「没想起 → 明天」（还没生效），想起来的点一下变绿，立即往后推（再点撤回）；
  * 翻到下一张卡时，没点绿的才按「没想起来」生效（那张卡提前到明天）。不点「看答案」什么都不记
  */
-export function ClusterStrip({ note, notes, cards, shown = '' }: { note: Note; notes: Note[]; cards: Card[]; shown?: string }) {
+export function ClusterStrip({ note, notes, cards, shown = '', recKey = '' }: { note: Note; notes: Note[]; cards: Card[]; shown?: string; recKey?: string }) {
   const name = note.cluster?.trim();
   if (!name) return null;
   const mates = clusterMates(note, notes, shown);
   if (!mates.length) return null;
   const learned = new Set(cards.filter((c) => !c.deleted && c.state !== 'new').map((c) => c.noteId));
-  return <Strip key={note.id} name={name} known={mates.filter((m) => learned.has(m.id)).slice(0, MAX)} fresh={mates.filter((m) => !learned.has(m.id))} />;
+  return <Strip key={`${note.id}|${recKey}`} recKey={recKey} name={name} known={mates.filter((m) => learned.has(m.id)).slice(0, MAX)} fresh={mates.filter((m) => !learned.has(m.id))} />;
 }
 
-function Strip({ name, known, fresh }: { name: string; known: Note[]; fresh: Note[] }) {
-  const [open, setOpen] = useState(false);
-  const [ok, setOk] = useState<Set<string>>(new Set());
-  const [res, setRes] = useState<Record<string, ClusterOutcome>>({});
+function Strip({ name, known, fresh, recKey }: { name: string; known: Note[]; fresh: Note[]; recKey: string }) {
+  // 撤销回来的：恢复翻页前的状态
+  const [init] = useState(() => { const r = restores.get(recKey); restores.delete(recKey); return r ?? null; });
+  const [open, setOpen] = useState(init?.open ?? false);
+  const [ok, setOk] = useState<Set<string>>(() => new Set(init?.ok ?? []));
+  const [res, setRes] = useState<Record<string, ClusterOutcome>>(init?.res ?? {});
   const chain = useRef<Promise<unknown>>(Promise.resolve());
-  const live = useRef({ open: false, ok: new Set<string>(), res: {} as Record<string, ClusterOutcome> });
+  const live = useRef({ open: init?.open ?? false, ok: new Set<string>(init?.ok ?? []), res: (init?.res ?? {}) as Record<string, ClusterOutcome> });
   const s = useSettings();
 
   // 翻到下一张卡（这一块卸载）时，展开过答案、又没点绿的按「没想起来」生效。
@@ -53,10 +71,17 @@ function Strip({ name, known, fresh }: { name: string; known: Note[]; fresh: Not
   const knownIds = useRef(known.map((m) => m.id));
   knownIds.current = known.map((m) => m.id);
   useEffect(() => () => {
-    const { open: o, ok: got } = live.current;
+    const { open: o, ok: got, res: r } = live.current;
     if (!o) return;
     const missed = knownIds.current.filter((id) => !got.has(id));
-    chain.current = chain.current.then(async () => { for (const id of missed) await clusterRecall(id, false); }).catch(() => {});
+    const done = chain.current.then(async () => {
+      const out: ClusterOutcome[] = [];
+      for (const id of missed) out.push(await clusterRecall(id, false));
+      return out;
+    }).catch(() => [] as ClusterOutcome[]);
+    chain.current = done;
+    if (recKey) records.set(recKey, { state: { open: true, ok: [...got], res: { ...r } }, missed: done });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const reveal = () => { live.current.open = true; setOpen(true); };

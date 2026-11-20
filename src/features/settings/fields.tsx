@@ -11,7 +11,7 @@ import { langLabel } from '../../ui/langs';
 import { Modal } from '../../ui/Modal';
 
 /** 所有设置的默认值，直接从 schema 取，和代码里的默认值永远一致 */
-export const DEFAULTS: Settings = { ...SettingsV2.parse({ updatedAt: '1970-01-01T00:00:00.000Z' }), genderDisplay: 'focus', zoneHeads: 'icon' };
+export const DEFAULTS: Settings = { ...SettingsV2.parse({ updatedAt: '1970-01-01T00:00:00.000Z' }), genderDisplay: 'focus', zoneHeads: 'icon', gradeIntervals: false };
 
 type Key = keyof Settings;
 type Opt = readonly [string, string];
@@ -75,6 +75,7 @@ export const META: Partial<Record<Key, Meta>> = {
     hint: '名词下划线：阳性蓝、阴性红。只标考查部分：注意力留在要学的词上，句子其余部分干净；悬停：鼠标移到名词上才出现；关闭：不画线。哪种都能悬停（手机上点一下）看性别、另一个性的形式和词尾规则',
     options: [['focus', '只标考查部分'], ['always', '所有名词'], ['hover', '悬停时显示'], ['off', '关闭（悬停仍显示说明）']],
   },
+  gradeIntervals: { kind: 'sw', label: '评分按钮显示下次间隔', hint: '关闭（默认）：按钮上只有 忘了 / 困难 / 良好 / 容易，间隔在悬停提示里。只凭回想的感觉评分，不因为「16 天后」太远改按困难——FSRS 要的是真实的回想情况' },
   zoneHeads: {
     kind: 'sel', label: '背面分区标题',
     hint: '背面固定分区（用法、其他语境、词源、词族、注意、出处）的标题样式。图标：形状一眼可辨；区色：图标再加上每个区自己的颜色，认得最快，但卡面颜色更多',

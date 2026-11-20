@@ -403,12 +403,13 @@ function UiSection({ s }: { s: Settings }) {
   return (
     <section id="ui">
       <SectionHead title="界面">
-        <ResetDefaults s={s} keys={['genderDisplay', 'zoneHeads', 'clozeLetters', 'addShowMore', 'knownTop']} />
+        <ResetDefaults s={s} keys={['genderDisplay', 'zoneHeads', 'clozeLetters', 'gradeIntervals', 'addShowMore', 'knownTop']} />
       </SectionHead>
       <h3 className="set-sub">卡片</h3>
       <Field k="genderDisplay" s={s} />
       <Field k="zoneHeads" s={s} />
       <Field k="clozeLetters" s={s} />
+      <Field k="gradeIntervals" s={s} />
       <h3 className="set-sub">添加与挖词</h3>
       <Field k="addShowMore" s={s} />
       <Field k="knownTop" s={s} />
