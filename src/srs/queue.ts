@@ -32,7 +32,7 @@ export interface QueueInput {
   now: number;
   settings: Pick<Settings, 'newPerDay' | 'reviewsPerDay' | 'dayStartHour'> & Partial<Pick<Settings, 'newReviewOrder' | 'reviewSort' | 'newSort' | 'focusTags' | 'newSplit' | 'freshShare' | 'freshDays' | 'frameNewPerDay' | 'productionAfterRecognition'>>;
   /** 新卡排序要用笔记的层级和主题；不传时只按添加时间 */
-  notes?: ReadonlyMap<string, Pick<Note, 'layer' | 'tags'> & Partial<Pick<Note, 'origin' | 'source' | 'contrastGroup' | 'frame'>>>;
+  notes?: ReadonlyMap<string, Pick<Note, 'layer' | 'tags'> & Partial<Pick<Note, 'origin' | 'source' | 'contrastGroup' | 'frame' | 'fixme'>>>;
   /** 笔记的词频（每百万词，见 lib/gender/dict.ts 的 lemmaFreq）；查不到的排在同一层的最后。不传时按添加时间 */
   freq?: ReadonlyMap<string, number | null>;
   /** 本轮跳过的卡 */
@@ -183,7 +183,9 @@ export function buildQueue(q: QueueInput): QueueState {
   const groupsToday = new Set(logs.filter((l) => typeOf.get(l.cardId) === 'contrast').map((l) => groupOf(l.noteId)).filter(Boolean));
   const sibling = (c: Card) => !cardsToday.has(c.id) && (notesToday.has(c.noteId) || (c.type === 'contrast' && groupsToday.has(groupOf(c.noteId))));
   const skipped = q.skipped ?? new Set<string>();
-  const pool = q.cards.filter((c) => c.deckId === q.deckId && !c.deleted && !c.suspended && !skipped.has(c.id) && !sibling(c));
+  // 标了 ⚑ 待修的笔记：改好（清掉待修）之前不出，到期的也先压着
+  const flagged = (c: Card) => !!q.notes?.get(c.noteId)?.fixme?.trim();
+  const pool = q.cards.filter((c) => c.deckId === q.deckId && !c.deleted && !c.suspended && !skipped.has(c.id) && !sibling(c) && !flagged(c));
 
   // 本学习日结束（下一个切换时间，按设置的时区）：明天才到期的学习卡不算进"今天还要学"
   const endOfToday = dayStartMs(addDaysToDay(today, 1), q.settings.dayStartHour);

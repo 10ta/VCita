@@ -91,7 +91,9 @@ export function ReviewPage({ deckId }: { deckId: string }) {
     }
     // 还没翻面的卡要仍在可出的范围里：导入 / 同步可能把它改成明天才到期，或今天已答过它的兄弟卡，
     // 不检查的话它会一直挂着（计数 0 0 0 却还有卡）。翻面后（含撤销）不换，免得作答到一半被抽走
-    const valid = card && !card.suspended && (custom ? custom.queue.includes(card.id) : card.deckId === deckId && (revealed || q.servable.has(card.id)));
+    // 正在看的卡刚被标了待修：留在屏幕上做完，之后不再出
+    const flaggedNow = !!(card && noteMap.get(card.noteId)?.fixme?.trim());
+    const valid = card && !card.suspended && (custom ? custom.queue.includes(card.id) : card.deckId === deckId && (revealed || flaggedNow || q.servable.has(card.id)));
     if (!valid) {
       setCurrentId(nextId);
       setRevealed(false);
@@ -196,6 +198,11 @@ export function ReviewPage({ deckId }: { deckId: string }) {
     return false;
   });
 
+  // 待修笔记（本牌组、有在用的卡）：改好前不出，底部提示一下数量
+  const flaggedCount = useMemo(() => {
+    const ids = new Set((notes ?? []).filter((n) => !n.deleted && n.fixme?.trim()).map((n) => n.id));
+    return new Set((cards ?? []).filter((c) => ids.has(c.noteId) && c.deckId === deckId && !c.deleted && !c.suspended).map((c) => c.noteId)).size;
+  }, [notes, cards, deckId]);
   if (!s || !q) return null;
 
   // 自定义学习里，没到期的卡只练习不调度
@@ -256,7 +263,7 @@ export function ReviewPage({ deckId }: { deckId: string }) {
   // 下一次换天，用本地时间说（设置里的切换时间 + 时区换算过来）
   const rollover = fmtLocalMoment(nextDayStartMs(now, s.dayStartHour), now);
   const limitLine = `今日已学：新卡 ${q.done.newDone}/${s.newPerDay} · 复习 ${q.done.reviewDone}${s.reviewsPerDay ? `/${s.reviewsPerDay}` : ''}`
-    + (q.reviewBacklog > 0 ? ` · 超出上限 ${q.reviewBacklog}` : '') + ` · ${rollover} 换天`;
+    + (q.reviewBacklog > 0 ? ` · 超出上限 ${q.reviewBacklog}` : '') + (flaggedCount ? ` · ⚑ 待修 ${flaggedCount} 条暂不出` : '') + ` · ${rollover} 换天`;
 
   return (
     <div className="page review">

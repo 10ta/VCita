@@ -277,3 +277,17 @@ describe('新卡额度拆分', () => {
     expect(q.next?.id).toBe(other.id);
   });
 });
+
+describe('待修', () => {
+  it('标了 ⚑ 待修的笔记不出（到期复习、新卡、学习中都不出）；清掉待修后照常出', () => {
+    const r = card({}), nw = card({ state: 'new' }), lr = card({ state: 'learning', due: toIso(NOW - 60000) }), ok = card({});
+    const flag = { layer: 'core' as const, tags: [], fixme: '题面不唯一（产出）' };
+    const plain = { layer: 'core' as const, tags: [] };
+    const notes = new Map([[r.noteId, flag], [nw.noteId, flag], [lr.noteId, flag], [ok.noteId, plain]]);
+    const q = buildQueue({ cards: [r, nw, lr, ok], todayLogs: [], deckId: 'd', now: NOW, settings: S, notes });
+    expect([...q.servable]).toEqual([ok.id]);
+    const cleared = new Map([...notes].map(([k]) => [k, plain]));
+    const q2 = buildQueue({ cards: [r, nw, lr, ok], todayLogs: [], deckId: 'd', now: NOW, settings: S, notes: cleared });
+    expect(q2.servable.size).toBe(4);
+  });
+});
