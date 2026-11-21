@@ -32,3 +32,12 @@ export async function importBundle(raw: unknown): Promise<Record<'decks' | 'note
     return r;
   });
 }
+
+const IMPORT_LABELS = { notes: '笔记', cards: '卡片', logs: '复习记录', decks: '牌组', clips: '摘句', texts: '短文', encounters: '遇见', known: '认识' } as const;
+/** 导入结果的提示：列出每个有变化的表。只改卡片的包（如批量暂停）也看得到「卡片更新 N」；全都没变时说明原因 */
+export function describeImport(r: Record<keyof typeof IMPORT_LABELS, MergeCount>): string {
+  const parts = (Object.keys(IMPORT_LABELS) as Array<keyof typeof IMPORT_LABELS>)
+    .filter((k) => r[k] && (r[k].added || r[k].updated))
+    .map((k) => `${IMPORT_LABELS[k]}新增 ${r[k].added}、更新 ${r[k].updated}`);
+  return parts.length ? `导入完成：${parts.join(' · ')}` : '导入完成：没有变化（本地的记录一样新或更新）';
+}

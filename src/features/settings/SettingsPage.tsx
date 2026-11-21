@@ -3,7 +3,7 @@ import { useAllLogs, useCards, useDecks, useMemories, useNotes, useSettings } fr
 import { validWeights } from '../../srs/fsrs';
 import { simulate, stepCounts } from '../../srs/simulate';
 import { clearAllLocalData, spreadBacklog } from '../../db/actions';
-import { exportBundle, importBundle } from '../../io/bundle';
+import { describeImport, exportBundle, importBundle } from '../../io/bundle';
 import { downloadBlob, readJsonFile } from '../../io/download';
 import { bundleText, canGzip, gzip } from '../../io/pack';
 import { dayStartMs, deviceTimeZone, fileStamp, fromIso, localClockOf, studyDay } from '../../lib/time';
@@ -92,7 +92,7 @@ function useActiveSection() {
 
 /* ---------------- 数据 ---------------- */
 
-const importedMsg = (r: Awaited<ReturnType<typeof importBundle>>) => `导入完成：笔记新增 ${r.notes.added}、更新 ${r.notes.updated}`;
+const importedMsg = describeImport;
 
 /** 导入一段备份 JSON 文本：不是 JSON、不是备份时只给一条简短提示。成功返回 true */
 async function importText(text: string): Promise<boolean> {

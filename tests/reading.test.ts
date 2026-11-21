@@ -7,7 +7,7 @@ import { db } from '../src/db/db';
 import { isEncounterKey } from '../src/lib/words';
 import { addNotes, addText, clearAllLocalData, deleteText, recordEncounter, setKnown, updateText } from '../src/db/actions';
 import { applyRemoteFile, buildLocalFiles, clearFileCache } from '../src/sync/files';
-import { exportBundle, importBundle } from '../src/io/bundle';
+import { describeImport, exportBundle, importBundle } from '../src/io/bundle';
 import type { Card, Note } from '../src/schema';
 
 const dict = parseDict(readFileSync(new URL('../src/lib/gender/fr-dict.txt', import.meta.url), 'utf8'));
@@ -142,5 +142,12 @@ describe('阅读数据：保存、同步、备份', () => {
     const r2 = await importBundle({ ...b, texts: undefined, encounters: undefined, known: undefined });
     expect(r2.texts.added).toBe(0);
     await addNotes([{ deckId: 'd', lemma: 'y' }]);
+  });
+  it('导入提示列出每个有变化的表：只改卡片的包也看得到', () => {
+    const z = { added: 0, updated: 0, kept: 0 };
+    const r = { decks: z, notes: z, cards: { added: 0, updated: 221, kept: 0 }, logs: z, clips: z, texts: z, encounters: z, known: z };
+    expect(describeImport(r)).toBe('导入完成：卡片新增 0、更新 221');
+    expect(describeImport({ ...r, cards: z })).toMatch(/没有变化/);
+    expect(describeImport({ ...r, notes: { added: 3, updated: 1, kept: 0 } })).toBe('导入完成：笔记新增 3、更新 1 · 卡片新增 0、更新 221');
   });
 });
