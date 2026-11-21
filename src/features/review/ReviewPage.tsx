@@ -203,6 +203,8 @@ export function ReviewPage({ deckId }: { deckId: string }) {
     const ids = new Set((notes ?? []).filter((n) => !n.deleted && n.fixme?.trim()).map((n) => n.id));
     return new Set((cards ?? []).filter((c) => ids.has(c.noteId) && c.deckId === deckId && !c.deleted && !c.suspended).map((c) => c.noteId)).size;
   }, [notes, cards, deckId]);
+  // 产出卡输入框自动聚焦：只在有鼠标 / 触控板的设备上（手机上自动弹键盘太打扰）
+  const finePointer = useMemo(() => { try { return window.matchMedia('(pointer: fine)').matches; } catch { return true; } }, []);
   if (!s || !q) return null;
 
   // 自定义学习里，没到期的卡只练习不调度
@@ -259,6 +261,7 @@ export function ReviewPage({ deckId }: { deckId: string }) {
   const PRACTICE: Record<Rating, string> = { 1: '稍后再练', 2: '本轮最后', 3: '本轮完成', 4: '本轮完成' };
   const btnNote = (r: Rating) => (!scheduled ? PRACTICE[r] : pv ? `${fmtNextIn(pv[r], fmtMinutes, fmtDays)}后` : '');
   // 评分标准直接写在按钮上（以前在按钮上面单独一行）
+  const task = TASKS[split?.listen ? 'listen' : card?.type ?? 'recognition'] ?? TASKS.recognition;
   const gradeCrit = (r: Rating) => (card && split ? gradeCriterion(split.listen ? 'listen' : card.type, r, peek) || GRADE_GENERIC[r] : '');
   // 下一次换天，用本地时间说（设置里的切换时间 + 时区换算过来）
   const rollover = fmtLocalMoment(nextDayStartMs(now, s.dayStartHour), now);
@@ -327,15 +330,15 @@ export function ReviewPage({ deckId }: { deckId: string }) {
             <button type="button" className="pill" onClick={() => setEditing(true)} title="编辑 (E)">编辑</button>
             <FixButton note={note} cardType={split.listen ? 'listen' : card.type} />
           </div>
-          <div className="review-card" key={card.id} data-lookup-source={note.lemma || undefined} data-no-lookup={revealed ? undefined : ''}>
+          <div className={`review-card k-${task.key}`} key={card.id} data-lookup-source={note.lemma || undefined} data-no-lookup={revealed ? undefined : ''}>
+            <TaskBand t={task} />
             <div className="badges">
-              <span className={`badge is-type t-${split.listen ? 'listen' : card.type}`}>{split.listen ? '听认' : TYPE_LABEL[card.type]}</span>
               {card.type === 'recognition' && !note.sentence && <span className="badge">待补句子</span>}
               {note.tags.map((t) => <span key={t} className="badge is-theme">{t}</span>)}
             </div>
             <div className="question">
               {split.listen
-                ? <span className="muted">闭眼听，听懂了再翻面</span>
+                ? <span className="muted">（只有声音）</span>
                 : <span>{!split.question.text ? <i className="muted">（{split.question.label}为空）</i> : split.question.lang === s.sourceLang ? <Fr>{split.question.text}</Fr> : split.question.text}</span>}
               <SpeakBtn text={split.question.speakText} lang={split.question.lang} size={20} />
             </div>
@@ -352,9 +355,23 @@ export function ReviewPage({ deckId }: { deckId: string }) {
                 )}
               </>
             ) : split.hint && <div className="cue">提示：{split.hint}</div>}
+            {card.type === 'production' && !revealed && (
+              <div className="type-in-wrap">
+                <label htmlFor="prod-in">你的说法（只写替换高亮的那部分也行）</label>
+                <input id="prod-in" className="type-in is-prod" value={typed} lang="fr" autoFocus={finePointer} autoComplete="off" spellCheck={false} placeholder="…"
+                  onChange={(e) => setTyped(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.nativeEvent.isComposing) return;
+                    const reveal = e.key === 'Enter' || (e.key === ' ' && !typed);
+                    if (reveal) { e.preventDefault(); setRevealed(true); (e.target as HTMLInputElement).blur(); }
+                    else if (e.key === 'Escape') (e.target as HTMLInputElement).blur();
+                  }} />
+                <span className="type-in-tip">Enter 对答案 · 空着按空格或 Enter 也行 · Esc 离开输入框后可用快捷键（H 提示）</span>
+              </div>
+            )}
             <CardStats card={card} s={s} center mem={mem} />
-            {(card.type === 'production' || card.type === 'frame' || card.type === 'paraphrase') && !revealed && (
-              <input className="type-in" value={typed} placeholder={card.type === 'frame' ? '先写出句框（可选，要填的位置写 ⬚ 或随便填），回车显示答案' : card.type === 'paraphrase' ? '先写出作者断言什么（可选，中文法语都行），回车显示答案' : '先写出法语（可选），回车显示答案'} onChange={(e) => setTyped(e.target.value)}
+            {(card.type === 'frame' || card.type === 'paraphrase') && !revealed && (
+              <input className="type-in" value={typed} placeholder={card.type === 'frame' ? '先写出句框（可选，要填的位置写 ⬚ 或随便填），回车显示答案' : '先写出作者断言什么（可选，中文法语都行），回车显示答案'} onChange={(e) => setTyped(e.target.value)}
                 onKeyDown={(e) => { if (e.key === 'Enter' && !e.nativeEvent.isComposing) { e.preventDefault(); setRevealed(true); (e.target as HTMLInputElement).blur(); } }} />
             )}
             {!revealed && split.listen && split.answers[0]?.text && (
@@ -370,7 +387,7 @@ export function ReviewPage({ deckId }: { deckId: string }) {
               </div>
             )}
             {!revealed ? (
-              <button type="button" className="show-btn" onClick={() => setRevealed(true)}>显示答案 <kbd>空格</kbd></button>
+              <button type="button" className="show-btn" onClick={() => setRevealed(true)}>{task.show} <kbd>{card.type === 'production' ? 'Enter' : '空格'}</kbd></button>
             ) : (
               <>
                 <div className="answer">
@@ -579,5 +596,33 @@ function FixButton({ note, cardType }: { note: Note; cardType: string }) {
         </div>
       )}
     </span>
+  );
+}
+
+/** 卡片顶部的任务条：一眼看出这张卡要你做什么（颜色 + 图标 + 动词 + 一句问题），按钮文字也跟着变 */
+interface Task { key: string; tone: 'blue' | 'orange' | 'green' | 'purple' | 'grey'; icon: keyof typeof TASK_ICON; verb: string; ask: string; show: string }
+const TASKS: Record<string, Task> = {
+  recognition: { key: 'recognition', tone: 'blue', icon: 'eye', verb: '看懂', ask: '高亮部分是什么意思？', show: '显示意思' },
+  listen: { key: 'listen', tone: 'blue', icon: 'ear', verb: '听懂', ask: '只听声音，听懂了再翻面', show: '显示原文' },
+  production: { key: 'production', tone: 'orange', icon: 'pen', verb: '说出来', ask: '用更地道的说法换掉高亮部分', show: '对答案' },
+  cloze: { key: 'cloze', tone: 'green', icon: 'blank', verb: '填空', ask: '横线处填什么？', show: '显示答案' },
+  contrast: { key: 'contrast', tone: 'purple', icon: 'split', verb: '选词', ask: '组里哪个词放进横线才对？', show: '显示答案' },
+  frame: { key: 'frame', tone: 'grey', icon: 'pen', verb: '写句框', ask: '按功能写出整句骨架', show: '显示答案' },
+  apply: { key: 'apply', tone: 'grey', icon: 'pen', verb: '套用', ask: '用这个句框在脑中写一句', show: '显示答案' },
+  paraphrase: { key: 'paraphrase', tone: 'grey', icon: 'eye', verb: '改写', ask: '作者实际断言了什么？', show: '显示答案' },
+};
+const TASK_ICON = {
+  eye: <><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z" /><circle cx="12" cy="12" r="3" /></>,
+  ear: <><path d="M3 14v-2a9 9 0 0 1 18 0v2" /><rect x="3" y="14" width="4" height="6" rx="1.5" /><rect x="17" y="14" width="4" height="6" rx="1.5" /></>,
+  pen: <><path d="M12 20h9" /><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z" /></>,
+  blank: <><path d="M4 17h16" /><path d="M8 13h8" strokeDasharray="2 2" /></>,
+  split: <><path d="M12 3v6" /><path d="M12 9l-6 6v6" /><path d="M12 9l6 6v6" /></>,
+};
+function TaskBand({ t }: { t: Task }) {
+  return (
+    <div className={`task-band tone-${t.tone}`}>
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">{TASK_ICON[t.icon]}</svg>
+      <span><b>{t.verb}</b><span className="ask"> · {t.ask}</span></span>
+    </div>
   );
 }
