@@ -217,7 +217,7 @@ function DailySection({ s }: { s: Settings }) {
           <select aria-label="每日切换时间" value={s.dayStartHour} onChange={(e) => void save({ dayStartHour: Number(e.target.value) })}>
             {Array.from({ length: 24 }, (_, h) => <option key={h} value={h}>{String(h).padStart(2, '0')}:00</option>)}
           </select>
-          <select aria-label="时区" value={s.timeZone ?? ''} onChange={(e) => void save({ timeZone: e.target.value || null })} style={{ maxWidth: 230 }}>
+          <select className="tz" aria-label="时区" value={s.timeZone ?? ''} onChange={(e) => void save({ timeZone: e.target.value || null })}>
             <option value="">跟随设备（{deviceTimeZone()}）</option>
             {zoneOptions().map((z) => <option key={z} value={z}>{z}</option>)}
           </select>

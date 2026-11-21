@@ -134,7 +134,8 @@ b.cloze { color: var(--accent); background: var(--accent-dim); border-radius: 4p
 .settings > section.is-danger h2 { color: var(--red); }
 .set-sub { font-family: var(--mono); font-size: 11px; font-weight: 400; color: var(--dim); text-transform: uppercase; letter-spacing: 1px; margin: 16px 0 2px; }
 h2 + .set-sub, .set-head + .set-sub { margin-top: 0; }
-.set-row { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 11px 0; border-top: 1px solid var(--border); }
+/* 控件放不下时整块换到说明下面一行（靠右），不去挤说明文字——手机上说明被挤成一字一行的竖条 */
+.set-row { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 16px; padding: 11px 0; border-top: 1px solid var(--border); }
 .set-sub + .set-row, h2 + .set-row, .set-head + .set-row { border-top: none; }
 .set-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 12px; }
 .settings .set-head h2 { margin: 0; }
@@ -143,13 +144,18 @@ h2 + .set-sub, .set-head + .set-sub { margin-top: 0; }
 .set-foot { text-align: center; margin: -4px 0 16px; }
 .reset-table { width: 100%; margin: 6px 0; }
 .reset-table td:nth-child(3) { color: var(--accent); }
-.set-text { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.set-text { display: flex; flex-direction: column; gap: 2px; min-width: 0; flex: 1 1 10em; }
 .set-text > span { font-size: 14px; }
 .set-text small { color: var(--dim); font-size: 12px; line-height: 1.45; }
-.set-ctl { display: flex; align-items: center; gap: 6px; flex: none; }
-.set-row.is-stack { flex-direction: column; align-items: stretch; gap: 8px; }
-.set-row.is-stack .set-ctl { flex: auto; }
-.set-ctl select { max-width: 240px; }
+.set-ctl { display: flex; flex-wrap: wrap; justify-content: flex-end; align-items: center; gap: 6px; flex: 0 1 auto; max-width: 100%; margin-left: auto; min-width: 0; }
+.set-ctl > .row { flex-wrap: nowrap; justify-content: flex-end; max-width: 100%; min-width: 0; }
+.set-ctl > .row > select { flex: none; }
+.set-ctl > .row > select.tz { flex: 0 1 auto; }
+.set-row.is-stack { flex-direction: column; flex-wrap: nowrap; align-items: stretch; gap: 8px; }
+.set-row.is-stack .set-text { flex: none; }
+.set-row.is-stack .set-ctl { flex: auto; margin-left: 0; justify-content: flex-start; }
+.set-ctl select { max-width: min(240px, 100%); min-width: 0; }
+.set-ctl select.tz { max-width: min(230px, 100%); }
 .set-ctl input.steps { width: 150px; font-family: var(--mono); }
 .num-unit { display: inline-flex; align-items: center; gap: 6px; }
 .num-unit input { width: 84px; text-align: right; font-family: var(--mono); }
@@ -219,7 +225,8 @@ h2 + .set-sub, .set-head + .set-sub { margin-top: 0; }
   .settings > section { padding: 14px 14px 4px; }
   .set-row { gap: 10px; }
   .set-row:has(.btn) { flex-wrap: wrap; }
-  .set-ctl select { max-width: 160px; }
+  /* 选项文字长的下拉框：放不下就整块换行，不截断成「穿插在复习中（默」 */
+  .set-ctl select { max-width: 100%; }
   .set-ctl input.steps { width: 104px; }
   .num-unit input { width: 66px; }
 }
@@ -650,8 +657,10 @@ textarea.weights { width: 100%; font-family: var(--mono); font-size: 12px; }
 .task-band { display: flex; align-items: center; gap: 10px; padding: 9px 14px; margin: -6px -4px 0; border-radius: 10px; text-align: left; font-size: 15px; }
 .task-band b { font-weight: 700; }
 .task-band svg { flex: none; }
-.task-band .task-text { flex: 1; min-width: 0; }
-.task-band .task-tags { display: flex; flex-wrap: wrap; gap: 6px; justify-content: flex-end; }
+.task-band { flex-wrap: wrap; row-gap: 6px; }
+.task-band .task-text { flex: 1 1 10em; min-width: 0; }
+.task-band .task-tags { display: flex; flex-wrap: wrap; gap: 6px; justify-content: flex-end; margin-left: auto; }
+.task-band .task-tags:empty { display: none; }
 .task-band .task-tags .badge { font-size: 11.5px; padding: 1px 9px; background: rgba(10, 10, 11, .35); }
 .task-band + .question { margin-top: 14px; }
 .tone-blue { background: rgba(96, 165, 250, .10); color: #93c2fb; } .tone-blue .ask { color: #8fa9cc; }
