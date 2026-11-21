@@ -4,6 +4,7 @@ import { beforeEach, describe, expect, it } from 'vitest';
 import { canonicalLemma, parseDict, parseVerbs, lemmaOf } from '../src/lib/gender/dict';
 import { annotate, buildIndex, coverage, coverageAdvice, importFile, parseSubtitles, stripMarkdown, tokenize } from '../src/lib/reading';
 import { db } from '../src/db/db';
+import { isEncounterKey } from '../src/lib/words';
 import { addNotes, addText, clearAllLocalData, deleteText, recordEncounter, setKnown, updateText } from '../src/db/actions';
 import { applyRemoteFile, buildLocalFiles, clearFileCache } from '../src/sync/files';
 import { exportBundle, importBundle } from '../src/io/bundle';
@@ -98,6 +99,10 @@ describe('阅读数据：保存、同步、备份', () => {
     expect(await recordEncounter({ key: 'Déroger', form: 'dérogeait', sentence: 'A.' })).toHaveLength(1);
     expect(await recordEncounter({ key: 'déroger', form: 'déroger', sentence: 'A.' })).toHaveLength(1);
     expect(await recordEncounter({ key: 'déroger', form: 'déroge', sentence: 'B.' })).toHaveLength(2);
+    // 虚词、汉字（选中了界面文字）、单个字母不记
+    for (const key of ['de', 'La', '提示', '一样] la photo', 'o', '✓avouer 想起来的点一下变绿']) expect(await recordEncounter({ key, form: key, sentence: 'C.' }), key).toEqual([]);
+    expect(await recordEncounter({ key: 'mettre en place', form: 'mettre en place', sentence: 'C.' })).toHaveLength(1);
+    expect(isEncounterKey('l\'aveu')).toBe(true);
   });
   it('认识：标记、取消（墓碑）', async () => {
     await setKnown('Pillage', true);
@@ -126,7 +131,7 @@ describe('阅读数据：保存、同步、备份', () => {
   });
   it('备份带上文章、遇见、认识；旧备份照样能导入', async () => {
     await addText({ title: 'A', body: 'x' });
-    await recordEncounter({ key: 'x', form: 'x', sentence: 'x' });
+    await recordEncounter({ key: 'xénon', form: 'xénon', sentence: 'x' });
     await setKnown('x', true);
     const b = await exportBundle();
     expect([b.texts.length, b.encounters.length, b.known.length]).toEqual([1, 1, 1]);

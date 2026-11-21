@@ -4,6 +4,7 @@ import { SettingsSchema, type Card, type Clip, type Deck, type Encounter, type T
 import { addDaysToDay, bumpIso, dayStartMs, fromIso, nextDayStartMs, setTimeZone, studyDay, toIso } from '../lib/time';
 import { relativeOverdue } from '../srs/queue';
 import { newId } from '../lib/id';
+import { isEncounterKey } from '../lib/words';
 import { planMerge } from '../lib/merge';
 import { paramsFor, schedule, type Rating } from '../srs/scheduler';
 import { replayMemory, validWeights } from '../srs/fsrs';
@@ -512,6 +513,8 @@ export async function deleteText(id: string) {
 /** 记一次遇见；同一个词在同一句里只记一次。返回这个词一共遇见过几次（不同的句子） */
 export async function recordEncounter(input: { key: string; form: string; sentence: string; textId?: string | null; source?: string | null }): Promise<Encounter[]> {
   const key = input.key.toLowerCase().trim();
+  // 虚词、汉字（选中了界面文字）、单个字母不记：它们会把「遇见两次以上」挤满
+  if (!isEncounterKey(key)) return [];
   // 读和写放在一个事务里：同时打开两次（开发模式下 effect 会跑两遍）也只记一条
   return db.transaction('rw', db.encounters, async () => {
     const all = (await db.encounters.where('key').equals(key).toArray()).filter((e) => !e.deleted);

@@ -5,6 +5,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { useClips, useEncounters, useKnown, useNotes, useSettings } from '../../db/hooks';
 import { addClip, deleteClip, setKnown, updateClip } from '../../db/actions';
 import { useReadingIndex } from '../../lib/reading';
+import { isEncounterKey } from '../../lib/words';
 import type { Clip, Note } from '../../schema';
 import { clozeTarget } from '../../schema/validate';
 import { renderSentence } from '../CardFace';
@@ -136,7 +137,8 @@ export function SeenTwice({ clips }: { clips: Clip[] }) {
     if (!encounters || !known || !index) return [];
     const inBasket = new Set(clips.filter((c) => c.status === 'todo').map((c) => c.text.toLowerCase()));
     const by = new Map<string, typeof encounters>();
-    for (const e of encounters) (by.get(e.key) ?? by.set(e.key, []).get(e.key)!).push(e);
+    // 旧记录里的虚词、汉字键（过滤加上之前记的）不列出
+    for (const e of encounters) if (!e.deleted && isEncounterKey(e.key)) (by.get(e.key) ?? by.set(e.key, []).get(e.key)!).push(e);
     return [...by].filter(([k, es]) => es.length >= 2 && !index.notes.has(k) && !known.has(k) && !inBasket.has(k))
       .map(([k, es]) => ({ key: k, list: es.sort((a, b) => (a.createdAt < b.createdAt ? 1 : -1)) }))
       .sort((a, b) => b.list.length - a.list.length || (a.list[0].createdAt < b.list[0].createdAt ? 1 : -1));

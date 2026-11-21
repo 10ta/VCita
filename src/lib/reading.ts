@@ -5,16 +5,15 @@ import { useCards, useKnown, useNotes, useSettings } from '../db/hooks';
 import { canonicalLemma, lemmaCandidates, lemmaOf, useFrDict, useFrVerbs, type FrDict, type FrVerbs } from './gender/dict';
 import { norm } from './gender/rules';
 import type { Card, Note, Text } from '../schema';
+import { FUNC } from './words';
 
 export type WordStatus = 'known' | 'learning' | 'new' | 'unknown';
 export interface Tok { text: string; key?: string; status?: WordStatus }
 
 /** 间隔达到这么多天算"已稳定"，阅读时当作认识 */
 export const STABLE_DAYS = 21;
-// 词频前 N 设成 0 时，这些虚词仍算认识
-const FUNC = new Set('le la les l un une des de du d à au aux en et ou se s ne pas y que qu qui ce cet cette ces sa son ses leur leurs mon ma mes ton ta tes nous vous il ils elle elles on je j me m te t lui eux pour par sur dans avec sans être avoir faire mais donc car si'.split(' '));
-/** 虚词（冠词、介词、代词、连词等） */
-export const isFunctionWord = (w: string) => FUNC.has(w.toLowerCase());
+// 词频前 N 设成 0 时，虚词（FUNC，见 words.ts）仍算认识
+export { isFunctionWord } from './words';
 const NOT_WORDS = /\([^)]*\)|\bqq(?:ch|n)\b|\+|…/gi;
 const WORD = /(\p{L}+(?:['’-]\p{L}+)*)/u;
 const ELISION = /^((?:[ldjmnstc]|qu|jusqu|lorsqu|puisqu|quoiqu)['’])(\p{L}.*)$/iu;
