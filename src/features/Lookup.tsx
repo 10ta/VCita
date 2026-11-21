@@ -259,6 +259,8 @@ export function LookupBubble({ dict }: { dict: FrDict | null }) {
   const place = placeBubble(sel.anchor, window.innerWidth, window.innerHeight);
   return (
     <div ref={box} className="lookup-pop" data-hover={sel.hover ? '' : undefined} style={place} role="dialog" aria-label={`查词：${sel.text}`}>
+      {/* 悬停打开时，阴阳性迷你条并进这里（FrText 的 GenderPopover 用 portal 渲染进来），看起来是同一张卡 */}
+      {sel.hover && <div className="lp-gender-slot" data-gender-slot="" />}
       <LookupBody key={`${sel.text}|${sel.context}`} sel={sel} dict={dict} onClose={() => { last.current = ''; cur.current = null; setSel(null); }} />
     </div>
   );
