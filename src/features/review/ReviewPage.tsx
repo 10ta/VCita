@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { useCards, useDeckSettings, useMemories, useNotes, useTodayLogs } from '../../db/hooks';
 import { addClip, answerCard, bumpUsed, setSuspended, undoAnswer, updateNote, type AnswerResult } from '../../db/actions';
 import { buildQueue } from '../../srs/queue';
@@ -331,11 +331,10 @@ export function ReviewPage({ deckId }: { deckId: string }) {
             <FixButton note={note} cardType={split.listen ? 'listen' : card.type} />
           </div>
           <div className={`review-card k-${task.key}`} key={card.id} data-lookup-source={note.lemma || undefined} data-no-lookup={revealed ? undefined : ''}>
-            <TaskBand t={task} />
-            <div className="badges">
+            <TaskBand t={task}>
               {card.type === 'recognition' && !note.sentence && <span className="badge">待补句子</span>}
               {note.tags.map((t) => <span key={t} className="badge is-theme">{t}</span>)}
-            </div>
+            </TaskBand>
             <div className="question">
               {split.listen
                 ? <span className="muted">（只有声音）</span>
@@ -618,11 +617,13 @@ const TASK_ICON = {
   blank: <><path d="M4 17h16" /><path d="M8 13h8" strokeDasharray="2 2" /></>,
   split: <><path d="M12 3v6" /><path d="M12 9l-6 6v6" /><path d="M12 9l6 6v6" /></>,
 };
-function TaskBand({ t }: { t: Task }) {
+/** 右侧放主题标签（GÉNÉRAL 等），不再单独占一行 */
+function TaskBand({ t, children }: { t: Task; children?: ReactNode }) {
   return (
     <div className={`task-band tone-${t.tone}`}>
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">{TASK_ICON[t.icon]}</svg>
-      <span><b>{t.verb}</b><span className="ask"> · {t.ask}</span></span>
+      <span className="task-text"><b>{t.verb}</b><span className="ask"> · {t.ask}</span></span>
+      <span className="task-tags">{children}</span>
     </div>
   );
 }
