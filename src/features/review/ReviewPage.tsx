@@ -130,9 +130,12 @@ export function ReviewPage({ deckId }: { deckId: string }) {
   const frontIsSource = !!split && !!s && split.question.lang === s.sourceLang && !!split.question.speakText;
   const sourceAnswer = split && s ? split.answers.find((a) => a.lang === s.sourceLang && a.speakText) : undefined;
   const lastSpoken = useRef<string | null>(null);
+  /** 撤销回来的卡：把它的法语再读一遍（听力卡没声音就没法答；回到背面也该能重听） */
+  const replay = useRef<string | null>(null);
   const frDict = useFrDictCtx();
   // 换卡（作答、跳过、撤销）时先停掉上一张还在读的；必须写在下面的自动发音之前，同一次渲染里先停、再读本卡
-  useEffect(() => { stopSpeech(); }, [currentId]);
+  // 同时清掉「这张已读过」的记号：答错的卡几分钟后（只剩它时立刻）又出现，id 和正反面都一样，以前会被当成已读过而不出声
+  useEffect(() => { stopSpeech(); lastSpoken.current = null; }, [currentId]);
   useEffect(() => () => stopSpeech(), []);
 
   // ---- 提前准备：让翻面、换卡时不用等网络 ----
@@ -166,6 +169,12 @@ export function ReviewPage({ deckId }: { deckId: string }) {
 
   useEffect(() => {
     if (!split || !card) return;
+    if (replay.current === card.id) {
+      replay.current = null;
+      const t = split.listen || frontIsSource ? split.question : sourceAnswer;
+      if ((autoRead || split.listen) && t?.speakText) { lastSpoken.current = `${card.id}:${split.listen ? 'l' : ''}:${revealed ? 'b' : 'f'}`; void speak(t.speakText, t.lang); }
+      return;
+    }
     // 听力卡出题时总要读（不读就没法答）；其他情况看「自动读」
     if (!autoRead && !(split.listen && !revealed)) return;
     const target = !revealed ? (frontIsSource ? split.question : null) : (frontIsSource ? null : sourceAnswer ?? null);
@@ -239,6 +248,7 @@ export function ReviewPage({ deckId }: { deckId: string }) {
     if (currentId === last.cardId) rec.current.key = last.recKey; else rec.current.restore = last.recKey;
     if (last.custom) restoreCustom(last.custom);
     setSkipped((x) => { const n = new Set(x); n.delete(last.cardId); return n; });
+    replay.current = last.cardId;
     setCurrentId(last.cardId);
     setRevealed(true);
     toast('已撤销');

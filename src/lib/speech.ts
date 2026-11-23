@@ -82,7 +82,9 @@ function fetchAudio(text: string, lang: string): Promise<Blob | null> {
     try {
       const r = await fetch(sources[0](text, lang), { signal: ctrl.signal });
       const type = r.headers.get('content-type') ?? '';
-      if (!r.ok || !type.startsWith('audio')) { if (r.status === 404 || !type.startsWith('audio')) proxyOk = false; return null; }
+      // 只有「代理不存在」才永久停用：404，或返回了网页（本地开发时是 index.html）。
+      // Google 偶尔限流（429 / 5xx）只是这一次失败，下次照样走代理——以前一次限流就整场停用代理，之后经常没声音
+      if (!r.ok || !type.startsWith('audio')) { if (r.status === 404 || (r.ok && !type.startsWith('audio'))) proxyOk = false; return null; }
       const blob = await r.blob();
       proxyOk = true;
       if (blob.size > 0) void storeAudio(key, blob);
@@ -96,8 +98,8 @@ function fetchAudio(text: string, lang: string): Promise<Blob | null> {
 /** 提前下载一句的发音（下一张卡、翻面后要读的答案），播放时直接用本机的 */
 export function preloadSpeech(text: string, lang: string) {
   const t = text?.trim();
-  if (!t || t.length > 200 || proxyOk === false) return;
-  void fetchAudio(t, lang);
+  if (!t || proxyOk === false) return;
+  for (const part of splitForTts(t)) void fetchAudio(part, lang);
 }
 
 const sources = [
@@ -125,17 +127,44 @@ export function stopSpeech() {
   if (current) { release(current); current = null; }
   try { globalThis.speechSynthesis?.cancel(); } catch { /* 忽略 */ }
 }
-function playUrl(url: string, blobUrl = false): Promise<void> {
+/** 每个音频播完 / 出错 / 被替换时 resolve，长句分段时等上一段读完再读下一段 */
+const endOf = new WeakMap<HTMLAudioElement, Promise<void>>();
+function playUrl(url: string, blobUrl = false): Promise<HTMLAudioElement> {
   return new Promise((resolve, reject) => {
     if (current) release(current);
     if (currentBlobUrl) { URL.revokeObjectURL(currentBlobUrl); currentBlobUrl = null; }
     if (blobUrl) currentBlobUrl = url;
     const a = new Audio(url);
     current = a;
-    a.onended = () => { release(a); if (current === a) current = null; };
-    a.onerror = () => reject(new Error('audio error'));
-    a.play().then(resolve, reject);
+    let finish: () => void = () => {};
+    endOf.set(a, new Promise<void>((r) => { finish = r; }));
+    a.onended = () => { release(a); if (current === a) current = null; finish(); };
+    a.onpause = () => { if (a.ended || !a.getAttribute('src')) finish(); };
+    a.onerror = () => { finish(); reject(new Error('audio error')); };
+    a.play().then(() => resolve(a), (e) => { finish(); reject(e); });
   });
+}
+
+/** Google TTS 一次最多约 200 字符：长句按句号、逗号切成几段依次读（以前超过 200 字直接退到浏览器自带语音，没有法语声音时就没声） */
+export function splitForTts(text: string, max = 180): string[] {
+  const t = text.trim();
+  if (t.length <= max) return [t];
+  const out: string[] = [];
+  let rest = t;
+  while (rest.length > max) {
+    const win = rest.slice(0, max + 1);
+    let cut = -1;
+    for (const re of [/[.!?…»]\s/g, /[;:]\s/g, /,\s/g, /\s/g]) {
+      let m: RegExpExecArray | null; let last = -1;
+      while ((m = re.exec(win))) last = m.index + 1;
+      if (last > max * 0.4) { cut = last; break; }
+    }
+    if (cut < 0) cut = max;
+    out.push(rest.slice(0, cut).trim());
+    rest = rest.slice(cut).trim();
+  }
+  if (rest) out.push(rest);
+  return out;
 }
 
 /** 浏览器自带语音：必须找到对应语言的声音才读。刚打开页面时声音列表还是空的，等它加载（最多 1.5 秒）；
@@ -159,7 +188,8 @@ async function speakNative(text: string, lang: string, my: number) {
   const u = new SpeechSynthesisUtterance(text);
   u.lang = voice.lang;
   u.voice = voice;
-  s.speak(u);
+  // Chrome：cancel 之后立刻 speak 偶尔会被吞掉，隔一下再读
+  setTimeout(() => { if (my === gen) s.speak(u); }, 60);
 }
 
 /**
@@ -179,40 +209,58 @@ if (typeof window !== 'undefined') {
 }
 const playAfterGesture = (text: string, lang: string) => { pendingAuto = { text, lang }; };
 
-export async function speak(text: string, lang: string) {
-  if (!text) return;
-  pendingAuto = null;
-  const my = ++gen;
-  // 先走本机缓存 / 同站代理下载（能缓存）；拿不到再按原来的顺序直接播放
-  if (proxyOk !== false && text.length <= 200) {
+type One = 'ok' | 'pending' | 'fail' | 'stale';
+/** 读一段（≤ 200 字）：本机缓存 / 同站代理 → 直连来源。返回是否开始播放 */
+async function speakOne(text: string, lang: string, my: number): Promise<One> {
+  if (proxyOk !== false) {
     const blob = await fetchAudio(text, lang);
-    if (my !== gen) return;
+    if (my !== gen) return 'stale';
     if (blob) {
       try {
         await playUrl(URL.createObjectURL(blob), true);
         working = 0;
-        return;
+        return 'ok';
       } catch (e) {
         const name = (e as Error).name;
-        if (name === 'AbortError') return;
-        if (name === 'NotAllowedError') return playAfterGesture(text, lang);
+        if (name === 'AbortError') return 'stale';
+        if (name === 'NotAllowedError') return 'pending';
+        // 本机缓存的音频坏了（解码失败）：删掉，下面从网络重来，下次也会重新下载
+        try { await db.audio.delete(audioKey(text, lang)); } catch { /* 忽略 */ }
       }
     }
   }
-  const order = working === null ? sources.map((_, i) => i) : [working];
+  const order = working === null ? sources.map((_, i) => i) : [working, ...sources.map((_, i) => i).filter((i) => i !== working)];
   for (const i of order) {
-    if (my !== gen) return;
+    if (my !== gen) return 'stale';
     try {
       await playUrl(sources[i](text, lang));
       working = i;
-      return;
+      return 'ok';
     } catch (e) {
       const name = (e as Error).name;
-      if (name === 'AbortError') return; // 被下一次播放打断，不算失败
-      if (name === 'NotAllowedError') return playAfterGesture(text, lang); // 来源没问题，只是还不允许自动播放
+      if (name === 'AbortError') return 'stale'; // 被下一次播放打断，不算失败
+      if (name === 'NotAllowedError') return 'pending'; // 来源没问题，只是还不允许自动播放
     }
   }
-  if (my !== gen) return;
-  working = null;
-  await speakNative(text, lang, my);
+  return 'fail';
+}
+
+export async function speak(text: string, lang: string) {
+  if (!text) return;
+  pendingAuto = null;
+  const my = ++gen;
+  const parts = splitForTts(text);
+  for (let k = 0; k < parts.length; k++) {
+    const r = await speakOne(parts[k], lang, my);
+    if (r === 'stale') return;
+    if (r === 'pending') return playAfterGesture(text, lang);
+    if (r === 'fail') {
+      if (my !== gen) return;
+      working = null;
+      // 网络来源都不行：剩下的整段交给浏览器自带语音
+      return speakNative(parts.slice(k).join(' '), lang, my);
+    }
+    // 长句：等这一段读完再读下一段
+    if (k < parts.length - 1 && current) { await endOf.get(current); if (my !== gen) return; }
+  }
 }

@@ -676,7 +676,8 @@ textarea.weights { width: 100%; font-family: var(--mono); font-size: 12px; }
 .tone-purple { background: rgba(192, 132, 252, .10); color: #cfa6fb; } .tone-purple .ask { color: #ad95c9; }
 .tone-grey { background: var(--surface2); color: #c9c7c4; } .tone-grey .ask { color: var(--dim); }
 /* 认读卡的高亮用蓝色（看懂它），产出卡保持橙色（换掉它） */
-.review-card.k-recognition .question b.cloze { color: #93c2fb; background: rgba(96, 165, 250, .16); }
+/* 听力卡的原文（正面遮住的那行、翻面后的答案）同样是「看懂」，也用蓝色 */
+.review-card.k-recognition .question b.cloze, .review-card.k-listen b.cloze { color: #93c2fb; background: rgba(96, 165, 250, .16); }
 /* 产出卡：底色和边框带一点橙，输入框常驻 */
 .review-card.k-production { background: #15130f; border-color: #4a2a18; }
 .review-card.k-production .show-btn { border-color: rgba(232, 68, 0, .45); background: rgba(232, 68, 0, .10); color: #ff8a5c; }
