@@ -1,8 +1,8 @@
-import { useEffect, useMemo, useState } from 'react';
-import { useCards, useDecks, useNotes, useOnboarded, useSettings, useTodayLogs } from './db/hooks';
+import { useEffect, useState } from 'react';
+import { useDecks, useOnboarded } from './db/hooks';
 import { ensureDeck } from './db/actions';
 import { useSyncConfig } from './sync/engine';
-import { buildQueue } from './srs/queue';
+import { useDeckQueue } from './features/review/useDeckQueue';
 import { usePrefs, setPrefs } from './ui/prefs';
 import { useHotkeys, useNow } from './ui/hooks';
 import { Toaster } from './ui/toast';
@@ -59,21 +59,13 @@ export function App() {
   const onboarded = useOnboarded();
   const decks = useDecks();
   const prefs = usePrefs();
-  const s = useSettings();
-  const cards = useCards();
-  const notes = useNotes();
-  // 计数也要知道哪些是句框（句框有自己的新卡份额）
-  const noteMap = useMemo(() => (notes ? new Map(notes.map((n) => [n.id, n])) : undefined), [notes]);
   const [now] = useNow(60_000);
-  const logs = useTodayLogs(s?.dayStartHour, now);
   const [help, setHelp] = useState(false);
 
   const deckId = decks?.find((d) => d.id === prefs.deckId)?.id ?? decks?.[0]?.id ?? null;
 
-  const counts = useMemo(
-    () => (s && cards && logs && deckId ? buildQueue({ cards, todayLogs: logs, deckId, now: Date.now(), settings: s, notes: noteMap }).counts : null),
-    [s, cards, logs, deckId, now, noteMap],
-  );
+  // 和复习页、统计页同一个队列（同一份新卡计划），数字一定一样
+  const counts = useDeckQueue(deckId, { now })?.counts ?? null;
 
   useEffect(() => {
     document.title = `${NAV.find((n) => n.key === route)?.label ?? ''} · VCita`;

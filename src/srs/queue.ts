@@ -18,6 +18,11 @@
 //  5. 都没有时，20 分钟内到期的学习卡提前出（Anki 的 learn ahead）；只提前本学习日内到期的，
 //     跨过换日时间的不提前（换天前 18 分钟不能把"1 天"步骤、换天后才到期的卡拿出来，它属于明天）；刚答完的那张不提前，
 //     否则只剩它时会立刻重复出现（例如重学卡点"困难"= 10 分钟后，却马上又出来）
+//  6. 每日新卡计划：每个学习日第一次出题时，把今天要出的新卡定下来（NewPlan，存在这台设备上），当天只从计划里出。
+//     计划之后才变得能出的卡（认读卡毕业放出的产出卡、改好的待修笔记、同步来的变化）明天再进计划，不会在清零后陆续冒出来；
+//     例外是计划之后新加 / 导入的笔记，可以补进今天没用完的额度。改了新卡相关的设置时计划重做。
+//     今天要复习的笔记（学习卡今天到期、或在今天的复习额度里）不进新卡计划：答完那张兄弟卡它就会被规则 4 挡住，
+//     算进去只会让新卡数在一天中途莫名变少
 import { isDue } from './scheduler';
 import { noteOrigin, type Card, type Note, type ReviewLog, type Settings } from '../schema';
 import { addDaysToDay, dayStartMs, fromIso, studyDay } from '../lib/time';
@@ -39,7 +44,34 @@ export interface QueueInput {
   skipped?: Set<string>;
   /** 用户点了"提前复习"：刚答完的那张也可以提前出 */
   learnAheadAll?: boolean;
+  /** 今天的新卡计划（见规则 6）。null = 还没有，按现在的情况做一份；不传 = 不用计划（每次重算，测试和预测下一张用） */
+  newPlan?: NewPlan | null;
 }
+
+/** 某个学习日、某个牌组的新卡计划 */
+export interface NewPlan {
+  day: string;
+  deckId: string;
+  /** 做计划时新卡相关设置的签名：设置变了就重做 */
+  sig: string;
+  /** 今天要出的新卡，按出卡顺序 */
+  ids: string[];
+  /** 做计划时已经有新卡的笔记：之后出现的其他笔记算"新加的"，可以补进今天的额度 */
+  knownNotes: string[];
+  madeAt: number;
+}
+
+/** 新卡比上限少时的原因（按笔记计数，和词库「新卡」筛选的条数对得上） */
+export interface NewInfo {
+  limit: number;
+  done: number;
+  left: number;
+  /** 牌组里还有新卡的笔记数（含暂停的），等于词库「新卡」筛选的条数 */
+  notesWithNew: number;
+  /** 今天不出的笔记数，按原因 */
+  waiting: Record<NewWait, number>;
+}
+export type NewWait = 'suspended' | 'fixme' | 'studied' | 'busy' | 'skipped' | 'gated' | 'later' | 'limit';
 
 export interface QueueState {
   next: Card | null;
@@ -55,6 +87,9 @@ export interface QueueState {
   /** 现在可以出的所有卡（到期学习卡、20 分钟内的提前学习卡、到期复习卡、今天的新卡）。
    *  正在显示的卡不在这里面（导入 / 同步改了它的状态、兄弟卡已答等）就该换一张 */
   servable: Set<string>;
+  /** 今天的新卡计划：和传进来的是同一个对象表示没变，不用保存 */
+  newPlan: NewPlan;
+  newInfo: NewInfo;
 }
 
 const byDue = (a: Card, b: Card) => fromIso(a.due) - fromIso(b.due) || (a.id < b.id ? -1 : 1);
@@ -109,18 +144,28 @@ function onePerNote(cards: Card[]): Card[] {
 }
 
 /** 今天还要出的新卡（已排好序）：句框先分走自己的份额，其余按单词的规则出 */
-function pickNew(q: QueueInput, pool: Card[], today: string, newSeen: Set<string>): Card[] {
-  const byId = new Map(q.cards.map((c) => [c.id, c]));
-  // 套用卡：同一条笔记的句框卡还没进入复习时不出
+/** 新卡要等同笔记的另一张卡学会才出：
+ *  套用卡等句框卡进入复习；产出卡、辨析卡等认读卡进入复习（先认得，再练写得出 / 再和别的词比） */
+function makeGate(q: QueueInput): (c: Card) => boolean {
   const frameState = new Map<string, Card['state']>();
   for (const c of q.cards) if (c.type === 'frame' && !c.deleted) frameState.set(c.noteId, c.state);
-  // 产出卡、辨析卡：同一条笔记有认读卡、而认读卡还没进入复习时不出（先认得，再练写得出 / 再和别的词比）
   const recState = new Map<string, Card['state']>();
   for (const c of q.cards) if (c.type === 'recognition' && !c.deleted && !c.suspended) recState.set(c.noteId, c.state);
   const gateProd = q.settings.productionAfterRecognition !== false;
-  const due = pool.filter((c) => c.state === 'new' && studyDay(fromIso(c.createdAt), q.settings.dayStartHour) <= today
-    && (c.type !== 'apply' || frameState.get(c.noteId) === 'review')
-    && ((c.type !== 'production' && c.type !== 'contrast') || !gateProd || !recState.has(c.noteId) || recState.get(c.noteId) === 'review'));
+  return (c) => (c.type === 'apply' && frameState.get(c.noteId) !== 'review')
+    || ((c.type === 'production' || c.type === 'contrast') && gateProd && recState.has(c.noteId) && recState.get(c.noteId) !== 'review');
+}
+
+const createdLater = (q: QueueInput, c: Card, today: string) => studyDay(fromIso(c.createdAt), q.settings.dayStartHour) > today;
+
+/** 影响新卡选择的设置；变了就重做今天的计划 */
+const planSig = (st: QueueInput['settings']) => JSON.stringify([st.newPerDay, st.newSort ?? null, st.focusTags ?? null, st.newSplit ?? null, st.freshShare ?? null,
+  st.freshDays ?? null, st.frameNewPerDay ?? null, st.productionAfterRecognition ?? null, st.dayStartHour]);
+
+function pickNew(q: QueueInput, pool: Card[], today: string, newSeen: Set<string>): Card[] {
+  const byId = new Map(q.cards.map((c) => [c.id, c]));
+  const gated = makeGate(q);
+  const due = pool.filter((c) => c.state === 'new' && !createdLater(q, c, today) && !gated(c));
   const notes = q.notes;
   const isFrame = (c: Card) => !!notes?.get(c.noteId)?.frame;
   const frameCands = notes ? due.filter(isFrame) : [];
@@ -201,7 +246,33 @@ export function buildQueue(q: QueueInput): QueueState {
     .sort(sortOverdue ? (a, b) => relativeOverdue(b, q.now) - relativeOverdue(a, q.now) || byDue(a, b) : byDue);
   const reviews = dueReviews.slice(0, reviewLimit);
 
-  const news = pickNew(q, pool, today, newSeen);
+  // 今天要复习的笔记：它的新卡今天出不了，一开始就不排进新卡（见规则 6）
+  const busyNotes = new Set([...learningToday, ...reviews].map((c) => c.noteId));
+  // 做计划不看"本轮跳过"（跳过只影响这一轮出卡顺序，不该让卡掉出今天的计划）；出卡时再滤掉跳过的
+  const newPool = q.cards.filter((c) => c.deckId === q.deckId && c.state === 'new' && !c.deleted && !c.suspended && !sibling(c) && !flagged(c) && !busyNotes.has(c.noteId));
+  const budget = Math.max(0, q.settings.newPerDay - newSeen.size);
+  const sig = planSig(q.settings);
+  const plan = q.newPlan;
+  let news: Card[];
+  let newPlan: NewPlan;
+  if (plan && plan.day === today && plan.deckId === q.deckId && plan.sig === sig) {
+    // 只从计划里出：已答、删掉、暂停、标了待修、今天兄弟卡已答的自然掉出去，不另外补
+    const avail = new Map(newPool.map((c) => [c.id, c]));
+    const kept = plan.ids.map((id) => avail.get(id)).filter((c): c is Card => !!c);
+    // 计划之后新加 / 导入的笔记：补进今天没用完的额度
+    const known = new Set(plan.knownNotes);
+    const added = budget > kept.length ? pickNew(q, newPool.filter((c) => !known.has(c.noteId)), today, newSeen).slice(0, budget - kept.length) : [];
+    news = [...kept, ...added].slice(0, budget).filter((c) => !skipped.has(c.id));
+    newPlan = added.length
+      ? { ...plan, ids: [...plan.ids, ...added.map((c) => c.id)], knownNotes: [...plan.knownNotes, ...new Set(added.map((c) => c.noteId))] }
+      : plan;
+  } else {
+    const picked = pickNew(q, newPool, today, newSeen);
+    news = picked.filter((c) => !skipped.has(c.id));
+    const knownNotes = [...new Set(q.cards.filter((c) => c.deckId === q.deckId && !c.deleted && c.state === 'new').map((c) => c.noteId))];
+    newPlan = { day: today, deckId: q.deckId, sig, ids: picked.map((c) => c.id), knownNotes, madeAt: q.now };
+  }
+  const newInfo = explainNew(q, today, news, newSeen.size, { notesToday, busyNotes, skipped, flagged });
 
   // 穿插：新卡的完成进度落后于复习的完成进度时出新卡，新卡就均匀分布在复习中
   let mixNew = false;
@@ -232,5 +303,56 @@ export function buildQueue(q: QueueInput): QueueState {
     canLearnAhead: !next && aheadAll.length > 0,
     // 只含计数里的卡（复习卡不含被每日上限挡住的）：servable ⊆ 计数，计数 0 0 0 时一定没有卡可出
     servable: new Set([...learningDue, ...aheadAll, ...reviews, ...news].map((c) => c.id)),
+    newPlan,
+    newInfo,
   };
+}
+
+/** 牌组里有新卡、今天却不出的笔记，各是什么原因（一条笔记只算一个原因，按下面的先后） */
+function explainNew(q: QueueInput, today: string, news: Card[], done: number,
+  ctx: { notesToday: Set<string>; busyNotes: Set<string>; skipped: Set<string>; flagged: (c: Card) => boolean }): NewInfo {
+  const gated = makeGate(q);
+  const byNote = new Map<string, Card[]>();
+  for (const c of q.cards) {
+    if (c.deckId !== q.deckId || c.deleted || c.state !== 'new') continue;
+    const l = byNote.get(c.noteId);
+    if (l) l.push(c); else byNote.set(c.noteId, [c]);
+  }
+  const shown = new Set(news.map((c) => c.noteId));
+  const waiting: Record<NewWait, number> = { suspended: 0, fixme: 0, studied: 0, busy: 0, skipped: 0, gated: 0, later: 0, limit: 0 };
+  for (const [noteId, cs] of byNote) {
+    if (shown.has(noteId)) continue;
+    const live = cs.filter((c) => !c.suspended);
+    const why: NewWait = !live.length ? 'suspended'
+      : ctx.flagged(live[0]) ? 'fixme'
+      : ctx.notesToday.has(noteId) ? 'studied'
+      : ctx.busyNotes.has(noteId) ? 'busy'
+      : live.every((c) => ctx.skipped.has(c.id)) ? 'skipped'
+      : live.every((c) => gated(c)) ? 'gated'
+      : live.every((c) => createdLater(q, c, today) || gated(c)) ? 'later'
+      : 'limit';
+    waiting[why]++;
+  }
+  return { limit: q.settings.newPerDay, done, left: news.length, notesWithNew: byNote.size, waiting };
+}
+
+/** 给人看的说明：今天新卡为什么是这个数 */
+export function newInfoText(i: NewInfo): string[] {
+  const out = [`今天新卡：已学 ${i.done}，还剩 ${i.left}，上限 ${i.limit}`];
+  const w = i.waiting;
+  const rest = Object.values(w).reduce((a, b) => a + b, 0);
+  if (!rest) return out;
+  out.push(`牌组里有新卡的笔记 ${i.notesWithNew} 条（词库「新卡」的条数），同一条笔记一天只出一张；今天不出的 ${rest} 条：`);
+  const label: Record<NewWait, string> = {
+    busy: '今天要复习它的另一张卡（明天再出新的那张）',
+    studied: '今天已经学过它的另一张卡',
+    gated: '产出 / 辨析 / 套用卡，等认读卡或句框卡先学会',
+    limit: '今天的额度用完了，排在后面',
+    fixme: '标了 ⚑ 待修',
+    suspended: '已暂停',
+    skipped: '本轮跳过了',
+    later: '今天之后才添加的',
+  };
+  for (const k of Object.keys(label) as NewWait[]) if (w[k]) out.push(`· ${label[k]}：${w[k]}`);
+  return out;
 }

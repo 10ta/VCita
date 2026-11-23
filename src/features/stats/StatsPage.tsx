@@ -1,9 +1,9 @@
 import { useMemo } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '../../db/db';
-import { useCards, useNotes, useSettings, useTodayLogs } from '../../db/hooks';
+import { useCards, useNotes, useSettings } from '../../db/hooks';
 import { computeStats, type Retention } from '../../srs/stats';
-import { buildQueue } from '../../srs/queue';
+import { useDeckQueue } from '../review/useDeckQueue';
 import { addDaysToDay, studyDay } from '../../lib/time';
 import { useNow } from '../../ui/hooks';
 import { TYPE_LABEL } from '../CardFace';
@@ -16,11 +16,10 @@ export function StatsPage({ deckId }: { deckId: string }) {
   const cards = useCards();
   const notes = useNotes();
   const [now] = useNow(60_000);
-  const todayLogs = useTodayLogs(s?.dayStartHour, now);
   const from = s ? addDaysToDay(studyDay(now, s.dayStartHour), -29) : null;
   const logs = useLiveQuery(async () => (from ? db.logs.where('day').aboveOrEqual(from).toArray() : []), [from]);
   const st = useMemo(() => (s && cards && notes && logs ? computeStats({ cards, notes, logs, now, dayStartHour: s.dayStartHour, deckId }) : null), [s, cards, notes, logs, now, deckId]);
-  const q = useMemo(() => (s && cards && todayLogs ? buildQueue({ cards, todayLogs, deckId, now, settings: s }) : null), [s, cards, todayLogs, deckId, now]);
+  const q = useDeckQueue(deckId, { now });
   if (!s || !st || !q) return null;
   const max = Math.max(1, ...st.forecast);
   return (

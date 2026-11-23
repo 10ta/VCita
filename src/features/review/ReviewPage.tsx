@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { useCards, useDeckSettings, useMemories, useNotes, useTodayLogs } from '../../db/hooks';
 import { addClip, answerCard, bumpUsed, setSuspended, undoAnswer, updateNote, type AnswerResult } from '../../db/actions';
-import { buildQueue } from '../../srs/queue';
+import { buildQueue, newInfoText } from '../../srs/queue';
+import { useDeckQueue } from './useDeckQueue';
 import { fmtNextIn, isDue, paramsFor, preview, type Rating } from '../../srs/scheduler';
 import { fmtDays, fmtLocalMoment, fmtMinutes, nextDayStartMs } from '../../lib/time';
 import { answerCustom, endCustom, nextQueue, pickCustom, restoreCustom, useCustom, type CustomSession } from '../../srs/custom';
@@ -50,6 +51,7 @@ export function ReviewPage({ deckId }: { deckId: string }) {
   const [editing, setEditing] = useState(false);
   const [skipped, setSkipped] = useState(() => new Set<string>());
   const [learnAheadAll, setLearnAheadAll] = useState(false);
+  const [showWhy, setShowWhy] = useState(false);
   const [undoCount, setUndoCount] = useState(0);
   /** 撤销栈：正常调度的作答有 res；自定义学习另存作答前的队列 */
   const undo = useRef<Array<{ cardId: string; res: AnswerResult | null; custom: CustomSession | null; recKey: string }>>([]);
@@ -66,10 +68,7 @@ export function ReviewPage({ deckId }: { deckId: string }) {
   const recentNotes = useRef<string[]>([]);
 
   const noteMap = useMemo(() => new Map((notes ?? []).map((n) => [n.id, n])), [notes]);
-  const q = useMemo(
-    () => (s && cards && logs ? buildQueue({ cards, todayLogs: logs, deckId, now, settings: s, skipped, learnAheadAll, notes: noteMap, freq }) : null),
-    [s, cards, logs, deckId, now, skipped, learnAheadAll, noteMap, freq],
-  );
+  const q = useDeckQueue(deckId, { now, skipped, learnAheadAll });
   const card = currentId ? cards?.find((c) => c.id === currentId) ?? null : null;
   const cardById = useMemo(() => new Map((cards ?? []).map((c) => [c.id, c])), [cards]);
   const customNext = custom ? pickCustom(custom.queue, cardById, recentNotes.current) : null;
@@ -153,7 +152,7 @@ export function ReviewPage({ deckId }: { deckId: string }) {
     lookAhead(split);
     if (custom || !cards || !logs) return;
     const sameNote = new Set(cards.filter((c) => c.noteId === card.noteId).map((c) => c.id));
-    const nq = buildQueue({ cards, todayLogs: logs, deckId, now, settings: s, skipped: new Set([...skipped, ...sameNote]), learnAheadAll, notes: noteMap, freq });
+    const nq = buildQueue({ cards, todayLogs: logs, deckId, now, settings: s, skipped: new Set([...skipped, ...sameNote]), learnAheadAll, notes: noteMap, freq, newPlan: q?.newPlan });
     const nc = nq.next;
     const nn = nc ? noteMap.get(nc.noteId) : undefined;
     if (!nc || !nn) return;
@@ -295,9 +294,10 @@ export function ReviewPage({ deckId }: { deckId: string }) {
         <div className="counts">
           <span className="c-learn" title={`学习中 / 重学：${rollover} 换天之前到期的（之后到期的算下一个学习日）`}>{q.counts.learning}</span>
           <span className="c-review" title={`今天到期的复习（${rollover} 换天）`}>{q.counts.review}</span>
-          <span className="c-new" title="今天还能学的新卡">{q.counts.new}</span>
+          <button type="button" className="c-new" title={`${newInfoText(q.newInfo).join('\n')}\n（点一下看说明）`} onClick={() => setShowWhy((v) => !v)}>{q.counts.new}</button>
         </div>
       )}
+      {!custom && showWhy && <NewWhy lines={newInfoText(q.newInfo)} onClose={() => setShowWhy(false)} />}
 
       {custom && !customNext ? (
         <div className="empty">
@@ -318,6 +318,11 @@ export function ReviewPage({ deckId }: { deckId: string }) {
           {q.nextLearningAt && <p className="muted">还有学习中的卡，{new Date(q.nextLearningAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} 到期</p>}
           {q.canLearnAhead && <button type="button" className="pill" onClick={() => setLearnAheadAll(true)}>现在就提前复习</button>}
           <p className="muted small">{limitLine}</p>
+          {q.newInfo.left === 0 && q.newInfo.done < q.newInfo.limit && Object.values(q.newInfo.waiting).some(Boolean) && (
+            <details className="new-why-inline"><summary className="muted small">新卡为什么没到上限？</summary>
+              {newInfoText(q.newInfo).slice(1).map((l) => <p key={l} className="muted small">{l}</p>)}
+            </details>
+          )}
           {q.reviewBacklog > 0 && <p className="muted small">还有 {q.reviewBacklog} 张到期的复习卡被每日复习上限挡住，拖到明天会更难记、越积越多。建议把复习上限设为 0（不限），觉得量大就减少每日新卡。</p>}
           {undoCount > 0 && <button type="button" className="pill" onClick={() => void doUndo()}>撤销上一次</button>}
         </div>
@@ -624,6 +629,17 @@ function TaskBand({ t, children }: { t: Task; children?: ReactNode }) {
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">{TASK_ICON[t.icon]}</svg>
       <span className="task-text"><b>{t.verb}</b><span className="ask"> · {t.ask}</span></span>
       <span className="task-tags">{children}</span>
+    </div>
+  );
+}
+
+/** 点蓝色新卡数弹出的说明：今天新卡为什么是这个数 */
+function NewWhy({ lines, onClose }: { lines: string[]; onClose: () => void }) {
+  return (
+    <div className="new-why" role="note">
+      <button type="button" className="icon" aria-label="关闭" onClick={onClose}>×</button>
+      {lines.map((l, i) => <p key={l} className={i ? 'muted small' : 'small'}>{l}</p>)}
+      <p className="muted small">今天的新卡在第一次出题时就定好了，当天不会再冒出新的（之后新加 / 导入的笔记除外）；改新卡相关设置会重排。</p>
     </div>
   );
 }

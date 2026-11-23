@@ -73,6 +73,13 @@ main { padding-top: 14px; }
 /* 复习 */
 .counts { display: flex; justify-content: center; gap: 14px; font-family: var(--mono); font-size: 13px; margin: 4px 0 10px; }
 .c-learn { color: var(--warn); } .c-review { color: var(--green); } .c-new { color: var(--blue); }
+button.c-new { font: inherit; background: none; border: none; padding: 0; cursor: pointer; text-decoration: underline dotted; text-underline-offset: 3px; }
+.new-why { position: relative; max-width: 520px; margin: 0 auto 12px; padding: 10px 34px 8px 14px; background: var(--surface); border: 1px solid var(--border); border-radius: 10px; }
+.new-why p { margin: 2px 0; line-height: 1.5; }
+.new-why .icon { position: absolute; top: 4px; right: 4px; }
+.new-why-inline { margin-top: 6px; }
+.new-why-inline summary { cursor: pointer; }
+.new-why-inline p { margin: 2px 0; }
 .review-nav { display: flex; justify-content: center; gap: 6px; margin-bottom: 10px; }
 .review-card.is-wait { min-height: 360px; opacity: .35; }
 .review-card { position: relative; background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 22px 20px 26px; text-align: center; }
