@@ -61,9 +61,20 @@ function attachZh(parts: string[]): Entry[] {
 /** 词族：a 意 · b 意，或 a（意）、b（意） */
 const family = (s: string) => attachZh(s.split(/\s+·\s+|[；;]|(?<=[）)])\s*[、,，]\s*/).map((x) => x.trim()).filter(Boolean));
 
-export function backZones(note: Note): Zones {
+const marks = (s: string | null | undefined) => [...(s ?? '').matchAll(/\{\{(.*?)\}\}/g)].map((m) => m[1].split('::')[0].trim()).filter(Boolean).join(' … ');
+/** 产出题的换说法 → 目标表达；没有法语题面时 null */
+export function plainPair(note: Pick<Note, 'promptFr' | 'answerFr' | 'promptKind'>): Entry | null {
+  const p = marks(note.promptFr), a = marks(note.answerFr);
+  if (!p || !a || p === a) return null;
+  return { fr: `${p} → ${a}`, zh: note.promptKind ? `朴素说法 · ${note.promptKind}` : '朴素说法' };
+}
+
+export function backZones(note: Note, plain = true): Zones {
   const z: Zones = { use: [], ctx: [], ety: note.etymology?.trim() || null, fam: [], warn: [], src: [], more: [], sourceUrl: null };
   if (note.usage?.trim()) z.use.push(splitEntry(note.usage));
+  // 朴素说法：产出题面高亮里的换说法 → 答案高亮（下位 / 平替），两个方向都看得到
+  const pp = plain ? plainPair(note) : null;
+  if (pp) z.use.push(pp);
   const otherSense: Entry[] = [];
   const segs = (note.extra ?? '').split('\n').flatMap((l) => l.split(BAR)).flatMap((l) => l.split(SPLIT)).map(trimEnd).filter(Boolean);
   for (const seg of segs) {
@@ -159,8 +170,8 @@ function Labeled({ text }: { text: string }) {
   return m ? <><span className="z-lbl">{m[1]}</span>{neq(text.slice(m[0].length))}</> : <>{neq(text)}</>;
 }
 
-export function BackZones({ note, heads }: { note: Note; heads: ZoneHeads }) {
-  const z = backZones(note);
+export function BackZones({ note, heads, plain = true }: { note: Note; heads: ZoneHeads; plain?: boolean }) {
+  const z = backZones(note, plain);
   const host = z.sourceUrl ? z.sourceUrl.replace(/^https?:\/\/(www\.)?/, '').split('/')[0] : '';
   return (
     <Fr>

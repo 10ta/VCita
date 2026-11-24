@@ -689,3 +689,11 @@ textarea.weights { width: 100%; font-family: var(--mono); font-size: 12px; }
 /* 悬停目标表达时：阴阳性并进查词气泡顶部，同一张卡 */
 .lp-gender-slot:empty { display: none; }
 .lp-gender { padding: 10px 14px; border-bottom: 1px solid var(--border); background: rgba(255, 255, 255, .02); font-size: 13px; display: flex; flex-direction: column; gap: 4px; }
+.rel-suspects .rel-item { display: inline-flex; align-items: baseline; gap: 4px; }
+.rel-yes, .rel-no { padding: 0 4px; font-size: 12px; line-height: 1.4; border-radius: 4px; color: var(--dim); }
+.rel-yes:hover { color: #4ade80; background: rgba(74, 222, 128, .12); }
+.rel-no:hover { color: #f87171; background: rgba(248, 113, 113, .12); }
+.z-plain .z-zh { color: var(--dim); }
+.d-sub.is-small ins { text-decoration-color: var(--warn); } .d-sub.is-small sup { color: var(--warn); }
+.d-flag, .stuck-btn { margin-left: 8px; font-size: 12px; padding: 1px 8px; }
+.stuck-btn { align-self: flex-start; margin: 6px 0 0; }

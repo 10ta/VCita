@@ -270,3 +270,26 @@ export function contrastLeaks(note: ContrastNote, mates: Array<Pick<Note, 'lemma
   });
   return out;
 }
+
+/** 内容缺项（只提醒，不拦保存）：词库「缺内容」筛选、编辑器保存前用。句框笔记不查 */
+export type GapKey = 'thin' | 'usage' | 'zh' | 'prompt' | 'concept';
+export const GAP_LABEL: Record<GapKey, string> = {
+  thin: '没有讲解（只有词源或什么都没有）', usage: '带介词 / 连接词，缺「用法」', zh: '中文意思不是以中文开头',
+  prompt: '产出题面的换说法超过 5 个词', concept: '还没有概念（关联靠它）',
+};
+const GOVERNED = /\s(à|au|aux|de|d'|du|des|pour|sur|avec|par|contre|envers|vers|en|dans|entre|que|qu')(\s|$)/i;
+export function contentGaps(n: Pick<Note, 'lemma' | 'meaningZh' | 'usage' | 'cueFamily' | 'contexts' | 'sense' | 'extra' | 'promptFr' | 'cardTypes' | 'topics' | 'frame'>, isConcept: (c: string) => boolean): GapKey[] {
+  if (n.frame) return [];
+  const out: GapKey[] = [];
+  const explained = !!(n.usage?.trim() || n.cueFamily?.trim() || n.contexts?.length || n.sense?.trim() || /(高频|近义|同义|也说|⚠)/.test(n.extra ?? ''));
+  if (!explained) out.push('thin');
+  const lemma = ` ${n.lemma.replace(/\([^)]*\)/g, ' ').replace(/’/g, "'")} `.replace(/(d'|qu')/gi, ' $1 ');
+  if (!n.usage?.trim() && GOVERNED.test(lemma.replace(/^\s*\S+/, ''))) out.push('usage');
+  if (!/^[\s（(]*[㐀-鿿]/.test(n.meaningZh || '')) out.push('zh');
+  if (n.cardTypes.includes('production') && n.promptFr) {
+    const hl = [...n.promptFr.matchAll(/\{\{(.*?)\}\}/g)].map((m) => m[1]).join(' ');
+    if (hl.split(/[\s']+/).filter(Boolean).length > 5) out.push('prompt');
+  }
+  if (!(n.topics ?? []).some(isConcept)) out.push('concept');
+  return out;
+}

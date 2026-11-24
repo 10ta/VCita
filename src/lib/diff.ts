@@ -2,7 +2,7 @@
 // 差别分三类：重音（只差重音符号）、阴阳性（le / la、un / une、grand / grande 这种同一个词的另一性）、其他。
 import { fold, norm } from './gender/rules';
 
-export type DiffKind = 'accent' | 'gender' | 'word';
+export type DiffKind = 'accent' | 'gender' | 'small' | 'word';
 export type DiffOp =
   | { op: 'same'; text: string }
   | { op: 'sub'; typed: string; expected: string; kind: DiffKind }
@@ -34,9 +34,14 @@ function isGenderVariant(a: string, b: string): boolean {
   return false;
 }
 
+/** 小词：介词、连接词、关系词、冠词、代词。核心词对了、小词错了的情况单独标出 */
+const SMALL = new Set("à au aux de du des d' en dans sur sous par pour avec sans contre vers envers chez entre que qu' qui dont où quand comme lorsque puisque le la les l' un une et ou mais donc car ni si s' y me m' te t' se nous vous lui leur eux moi toi soi ce c' ça".split(' '));
+export const isSmallWord = (w: string) => SMALL.has(norm(w).replace(/’/g, "'"));
+
 function classify(typed: string, expected: string): DiffKind {
   if (fold(typed) === fold(expected)) return 'accent';
   if (isGenderVariant(typed, expected)) return 'gender';
+  if (isSmallWord(typed) && isSmallWord(expected)) return 'small';
   return 'word';
 }
 
@@ -86,13 +91,17 @@ export function pickReference(typed: string, answerFr: string): { ref: string; w
   return Math.abs(t - whole) < Math.abs(t - part) ? { ref: plain, whole: true } : { ref: targets.join(' '), whole: false };
 }
 
-export function summarize(ops: DiffOp[]): { total: number; accent: number; gender: number } {
-  let total = 0, accent = 0, gender = 0;
+export function summarize(ops: DiffOp[]): { total: number; accent: number; gender: number; small: number; smallPairs: string[] } {
+  let total = 0, accent = 0, gender = 0, small = 0;
+  const smallPairs: string[] = [];
   for (const o of ops) {
     if (o.op === 'same' || (o.op !== 'sub' && /^[^\p{L}\d]$/u.test(o.op === 'missing' ? o.expected : o.typed))) continue;
     total++;
     if (o.op === 'sub' && o.kind === 'accent') accent++;
     if (o.op === 'sub' && o.kind === 'gender') gender++;
+    // 小词：写错的、漏写的、多写的介词 / 连接词 / 代词
+    const pair = o.op === 'sub' ? (o.kind === 'small' ? `${o.typed} → ${o.expected}` : '') : o.op === 'missing' ? (isSmallWord(o.expected) ? `漏了 ${o.expected}` : '') : (isSmallWord(o.typed) ? `多了 ${o.typed}` : '');
+    if (pair) { small++; smallPairs.push(pair); }
   }
-  return { total, accent, gender };
+  return { total, accent, gender, small, smallPairs };
 }

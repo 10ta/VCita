@@ -3,7 +3,8 @@ import 'fake-indexeddb/auto';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { planMerge } from '../src/lib/merge';
-import { Related, topicMates } from '../src/features/review/Related';
+import { Related } from '../src/features/review/Related';
+import { relatedOf } from '../src/srs/related';
 import { topicList } from '../src/features/noteform/model';
 import { parseNote, type Card, type Note } from '../src/schema';
 import { addNotes, clearAllLocalData, mergeNotes } from '../src/db/actions';
@@ -28,7 +29,7 @@ describe('话题', () => {
   const beau = note('beau', { lemma: "j'ai beau faire", meaningZh: '怎么努力也没用', topics: ['能力'] });
   const inne = note('inne', { lemma: 'inné(e)', meaningZh: '天生的', topics: ['能力', '天赋'] });
   it('同话题的其他卡；同表达群的不重复列（它们在表达群回想里）', () => {
-    expect(topicMates(capable, [capable, hauteur, beau, inne])[0].mates.map((n) => n.id)).toEqual(['inne', 'beau']);
+    expect(relatedOf(capable, [capable, hauteur, beau, inne]).concepts[0].mates.map((n) => n.id).sort()).toEqual(['beau', 'inne']);
   });
   it('关联块只在有话题或易混组时出现', () => {
     expect(renderToStaticMarkup(<Related note={capable} notes={[capable, hauteur, beau, inne]} />)).toContain('话题 · 能力');

@@ -405,7 +405,8 @@ export function ReviewPage({ deckId }: { deckId: string }) {
             ) : (
               <>
                 <div className="answer">
-                  {(card.type === 'production' || card.type === 'frame') && typed.trim() && split.answerFr && <TypedDiff typed={typed} answerFr={split.answerFr} />}
+                  {(card.type === 'production' || card.type === 'frame') && typed.trim() && split.answerFr && <TypedDiff typed={typed} answerFr={split.answerFr} note={note} />}
+                  {card.type === 'production' && note && <StuckButton note={note} />}
                   {card.type === 'paraphrase' && typed.trim() && <div className="cue para-typed">你写的：{typed.trim()}</div>}
                   {split.answers.map((a, i) => (
                     <div key={i} className={i === 0 ? 'a1' : 'a2'}>
@@ -422,7 +423,7 @@ export function ReviewPage({ deckId }: { deckId: string }) {
                   <MineBox note={note} />
                   {split.promptPhrase && split.promptFr && (
                     <div className="prompt-phrase small">
-                      <span className="muted">题面说法 </span><b>{split.promptPhrase}</b>
+                      <span className="muted" title="题面的说法和答案的关系：下位 = 更朴素、更弱、更泛；平替 = 意思等价、更简单">题面说法{note.promptKind && split.promptFr === note.promptFr ? ` · ${note.promptKind}` : ''} </span><b>{split.promptPhrase}</b>
                       <button type="button" className={`pill${promptSaved ? ' is-on' : ''}`} disabled={promptSaved}
                         title="题面这个说法也值得学：连同题面句子放进摘句篮，之后做成它自己的卡"
                         onClick={() => void addClip({ kind: 'expr', text: split.promptPhrase!, context: split.promptFr!, source: `产出卡题面（${note.lemma}）` })
@@ -436,7 +437,7 @@ export function ReviewPage({ deckId }: { deckId: string }) {
                       用上了 +1（{note.usedCount}）
                     </button>
                   )}
-                  <BackZones note={note} heads={zoneHeadsOf(s)} />
+                  <BackZones note={note} heads={zoneHeadsOf(s)} plain={card.type !== 'production'} />
                   {notes && cards && <ClusterStrip note={note} notes={notes} cards={cards} shown={split.question.speakText || split.promptFr || ''} recKey={rec.current.key} />}
                   {notes && <Related note={note} notes={notes} onEdit={() => setEditing(true)} />}
                 </div>
@@ -500,11 +501,13 @@ export function gradeCriterion(kind: Card['type'] | 'listen', r: Rating, peek: 0
 const opText = (o: DiffOp) => (o.op === 'same' ? o.text : o.op === 'extra' ? o.typed : o.expected);
 
 /** 自己写的和标准答案逐词对照：绿 = 一样；删除线 = 你写的；下划线 = 答案；重音、阴阳性单独标出 */
-function TypedDiff({ typed, answerFr }: { typed: string; answerFr: string }) {
+function TypedDiff({ typed, answerFr, note }: { typed: string; answerFr: string; note?: Note | null }) {
   const { ref, whole } = pickReference(typed, answerFr);
   const ops = diffWords(typed, ref);
   const sum = summarize(ops);
-  const KIND = { accent: '重音', gender: '阴阳性', word: '' } as const;
+  const KIND = { accent: '重音', gender: '阴阳性', small: '小词', word: '' } as const;
+  const smallLine = sum.small ? `介词错（产出：${sum.smallPairs.join('，')}）` : '';
+  const flagged = !!note && fixItems(note.fixme).includes(smallLine);
   return (
     <div className="typed">
       <div className="typed-line">
@@ -521,7 +524,13 @@ function TypedDiff({ typed, answerFr }: { typed: string; answerFr: string }) {
         })}
       </div>
       <div className={`small ${sum.total ? 'muted' : 'green'}`}>
-        {sum.total === 0 ? '✓ 和答案一样' : `${sum.total} 处不同${sum.accent ? ` · 重音 ${sum.accent}` : ''}${sum.gender ? ` · 阴阳性 ${sum.gender}` : ''}${sum.total === sum.accent ? '（只差重音 → 一般评"困难"）' : ''}`}
+        {sum.total === 0 ? '✓ 和答案一样' : `${sum.total} 处不同${sum.accent ? ` · 重音 ${sum.accent}` : ''}${sum.gender ? ` · 阴阳性 ${sum.gender}` : ''}${sum.small ? ` · 介词 / 小词 ${sum.small}` : ''}${sum.total === sum.accent ? '（只差重音 → 一般评"困难"）' : ''}`}
+        {note && sum.small > 0 && (
+          <button type="button" className={`pill d-flag${flagged ? ' is-on' : ''}`} title="记进 ⚑ 待修：这条的用法 / 注意区要把这个介词讲清楚（不另做卡）"
+            onClick={() => void updateNote(note.id, { fixme: (flagged ? fixItems(note.fixme).filter((x) => x !== smallLine) : [...fixItems(note.fixme), smallLine]).join('；') || undefined }).then(() => toast(flagged ? '已取消' : '已记下：介词错（词库 → 待修）'))}>
+            {flagged ? '✓ 已记下介词错' : '⚑ 记下介词错'}
+          </button>
+        )}
       </div>
     </div>
   );
@@ -558,7 +567,19 @@ function MineBox({ note }: { note: Note }) {
   );
 }
 
-const FIX_REASONS = ['题面不唯一', '题面看不懂', '题面比答案难', '答案不值得考', '考错了部分', '介词错', '例句看不懂', '关联不对', '少了讲解'];
+/** 产出卡翻面后：题面推不出答案时一键记进 ⚑ 待修（和 ⚑ 菜单里的「题面推不出」是同一条） */
+function StuckButton({ note }: { note: Note }) {
+  const line = `题面推不出（${TYPE_LABEL.production}）`;
+  const on = fixItems(note.fixme).includes(line);
+  return (
+    <button type="button" className={`pill stuck-btn${on ? ' is-on' : ''}`} title="从题面推不出这个答案：记进 ⚑ 待修，下批改题面"
+      onClick={() => void updateNote(note.id, { fixme: (on ? fixItems(note.fixme).filter((x) => x !== line) : [...fixItems(note.fixme), line]).join('；') || undefined }).then(() => toast(on ? '已取消' : '已记下：题面推不出（词库 → 待修）'))}>
+      {on ? '✓ 已记下题面推不出' : '题面推不出？'}
+    </button>
+  );
+}
+
+const FIX_REASONS = ['题面推不出', '题面不唯一', '题面看不懂', '题面比答案难', '答案不值得考', '考错了部分', '介词错', '例句看不懂', '关联不对', '少了讲解'];
 const fixItems = (s: string | null | undefined) => (s ?? '').split('；').map((x) => x.trim()).filter(Boolean);
 /** ⚑ 待修：一键记下这张卡的问题（不评分、不打断复习），词库「待修」里集中处理。打开时列出已经记下的，点 × 删一条，再点原因也能取消 */
 function FixButton({ note, cardType }: { note: Note; cardType: string }) {

@@ -5,7 +5,8 @@
 //   ④ 背面补充、归类：默认收起
 import { useMemo, useState, type ReactNode } from 'react';
 import type { Card, Note, Settings } from '../../schema';
-import { contrastLeaks, hasCloze, markErrors, noteErrors, promptErrors, blankIsFunctionWords } from '../../schema/validate';
+import { contrastLeaks, contentGaps, GAP_LABEL, hasCloze, markErrors, noteErrors, promptErrors, blankIsFunctionWords } from '../../schema/validate';
+import { CONCEPT_LIST, isConcept } from '../../lib/concepts';
 import { autoMark, markedText, type Lemmatize } from '../../lib/markTarget';
 import { lemmaCandidates, useFrDict, useFrVerbs } from '../../lib/gender/dict';
 import { etymOf, linksOf, useWiktEtym, useWiktLinks } from '../../lib/wikt';
@@ -92,7 +93,6 @@ export function NoteForm({ d, setD, s, labels, mode, note, groupMates = [], onSu
   const group = note?.contrastGroup ?? null;
   const allNotes = useNotes();
   const clusters = useMemo(() => [...new Set((allNotes ?? []).map((n) => n.cluster?.trim()).filter((c): c is string => !!c))].sort((a, b) => a.localeCompare(b, 'zh')), [allNotes]);
-  const topics = useMemo(() => [...new Set((allNotes ?? []).flatMap((n) => n.topics ?? []))].sort((a, b) => a.localeCompare(b, 'zh')), [allNotes]);
   const clusterMates = useMemo(() => {
     const c = d.cluster.trim();
     return c ? (allNotes ?? []).filter((n) => n.id !== note?.id && n.cluster?.trim() === c).map((n) => n.lemma) : [];
@@ -264,9 +264,10 @@ export function NoteForm({ d, setD, s, labels, mode, note, groupMates = [], onSu
           <datalist id="nf-clusters">{clusters.map((c) => <option key={c} value={c} />)}</datalist>
           {clusterMates.length > 0 && <span className="muted small">同群：{clusterMates.join(' / ')}</span>}
         </label>
-        <label className="field"><span className="field-label">话题（可选，可以填几个，用、分开）· 意思相关、但不能互相替换的说法，背面「关联」里列出，只展示不考</span>
-          <input value={d.topics} list="nf-topics" placeholder="例如：能力、做不到" onChange={(e) => set('topics', e.target.value)} />
-          <datalist id="nf-topics">{topics.map((c) => <option key={c} value={c} />)}</datalist>
+        <label className="field"><span className="field-label">概念（1–3 个，用、分开，从概念表里选）· 同概念的卡在背面「关联」里自动互相列出，只展示不考</span>
+          <input value={d.topics} list="nf-topics" placeholder="例如：愤怒、批评指责" onChange={(e) => set('topics', e.target.value)} />
+          <datalist id="nf-topics">{CONCEPT_LIST.map((c) => <option key={c} value={c} />)}</datalist>
+          {(topicList(d.topics) ?? []).filter((t) => !isConcept(t)).map((t) => <span key={t} className="warn small">⚠ 「{t}」不在概念表里（旧话题或自造名）：换成表里的概念，关联才算得准</span>)}
         </label>
         <TopicLinks topics={topicList(d.topics) ?? []} selfId={note?.id ?? null} notes={allNotes ?? []}
           onAdoptTopic={(t) => set('topics', [...(topicList(d.topics) ?? []), t].join('、'))} />
@@ -304,6 +305,7 @@ export function NoteForm({ d, setD, s, labels, mode, note, groupMates = [], onSu
         <p className="muted small">听力卡是认读卡的听力版：复习页右上的「听力卡」开关决定出不出。</p>
         {leaks.map((w) => <p key={w} className="warn small">⚠ 辨析卡{w}</p>)}
         {markErrors(draftNote).map((w) => <p key={w} className="warn small">⚠ {w}</p>)}
+        {contentGaps(draftNote, isConcept).map((g) => <p key={g} className="muted small">提醒：{GAP_LABEL[g]}</p>)}
         {contrastExtra}
         <Previews note={draftNote} s={s} labels={labels} mates={groupMates} ok={errs.count === 0} />
       </section>
@@ -341,8 +343,8 @@ export function NoteForm({ d, setD, s, labels, mode, note, groupMates = [], onSu
 }
 
 /**
- * 关联（同话题的卡）：列出每个话题下的其他笔记，× 立即把那一条移出这个话题；
- * 「＋ 关联一条」搜词条，选中后立即把它放进这条笔记的第一个话题（这条笔记还没有话题时，借用对方的话题）
+ * 关联（同概念的卡）：列出每个概念下的其他笔记，× 立即把那一条移出这个概念；
+ * 「＋ 关联一条」搜词条，选中后立即把它放进这条笔记的第一个概念（这条笔记还没有概念时，借用对方的概念）
  */
 function TopicLinks({ topics, selfId, notes, onAdoptTopic }: { topics: string[]; selfId: string | null; notes: Note[]; onAdoptTopic: (t: string) => void }) {
   const [q, setQ] = useState('');
@@ -353,10 +355,10 @@ function TopicLinks({ topics, selfId, notes, onAdoptTopic }: { topics: string[];
     if (!key) return;
     const target = live.find((n) => n.lemma.trim().toLowerCase() === key);
     if (!target) return toast('词库里没有这一条（要和词条一字不差，可以从下拉里选）', true);
-    const t = topics[0] ?? target.topics?.[0];
-    if (!t) return toast('两条都还没有话题：先在上面填一个话题名，再关联', true);
-    if (!topics.length) { onAdoptTopic(t); toast(`这条笔记用了「${target.lemma}」的话题「${t}」，保存后生效`); }
-    else void updateNotes([target.id], (n) => ({ topics: [...new Set([...(n.topics ?? []), t])] })).then(() => toast(`已把「${target.lemma}」放进话题「${t}」`));
+    const t = topics.find(isConcept) ?? topics[0] ?? target.topics?.find(isConcept) ?? target.topics?.[0];
+    if (!t) return toast('两条都还没有概念：先在上面从概念表里挑一个，再关联', true);
+    if (!topics.length) { onAdoptTopic(t); toast(`这条笔记用了「${target.lemma}」的概念「${t}」，保存后生效`); }
+    else void updateNotes([target.id], (n) => ({ topics: [...new Set([...(n.topics ?? []), t])] })).then(() => toast(`已把「${target.lemma}」放进概念「${t}」`));
     setQ('');
   };
   return (
@@ -366,8 +368,8 @@ function TopicLinks({ topics, selfId, notes, onAdoptTopic }: { topics: string[];
           <span className="muted">关联 · {t}</span>
           {mates.length ? mates.map((m) => (
             <span key={m.id} className="pill nf-link" lang="fr">{m.lemma}
-              <button type="button" className="icon" aria-label={`把 ${m.lemma} 移出话题 ${t}`} title="移出这个话题（立即生效）"
-                onClick={() => void updateNotes([m.id], (n) => { const xs = (n.topics ?? []).filter((x) => x !== t); return { topics: xs.length ? xs : undefined }; }).then(() => toast(`已把「${m.lemma}」移出话题「${t}」`))}>×</button>
+              <button type="button" className="icon" aria-label={`把 ${m.lemma} 移出概念 ${t}`} title="移出这个概念（立即生效）"
+                onClick={() => void updateNotes([m.id], (n) => { const xs = (n.topics ?? []).filter((x) => x !== t); return { topics: xs.length ? xs : undefined }; }).then(() => toast(`已把「${m.lemma}」移出概念「${t}」`))}>×</button>
             </span>
           )) : <span className="muted">（还没有别的卡）</span>}
         </div>

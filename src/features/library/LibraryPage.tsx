@@ -7,7 +7,8 @@ import { useWiktLinks } from '../../lib/wikt';
 import { Fr, useNoteFreqs } from '../FrText';
 import { deleteNotes, groupContrast, mergeNotes, resetNotes, setSuspended, updateNotes } from '../../db/actions';
 import { THEMES, noteOrigin, type Card, type Note, type NoteOrigin, type Theme } from '../../schema';
-import { contrastLeaks, markErrors, productionErrors } from '../../schema/validate';
+import { contrastLeaks, contentGaps, GAP_LABEL, markErrors, productionErrors } from '../../schema/validate';
+import { CONCEPT_LIST, isConcept } from '../../lib/concepts';
 import { addDaysToDay, fromIso, noonIso, studyDay } from '../../lib/time';
 import { isDue } from '../../srs/scheduler';
 import { findDuplicates } from '../../srs/dups';
@@ -21,10 +22,10 @@ import { CardStats, Cues, renderSentence, SpeakBtn, TYPE_LABEL } from '../CardFa
 import { NoteEditor, ThemePicker } from '../NoteEditor';
 
 const ORIGIN_SHORT: Record<NoteOrigin, string> = { mined: '挖矿', list: '词表', error: '错题' };
-type Status = 'all' | 'new' | 'learning' | 'due' | 'leech' | 'suspended' | 'nosentence' | 'stable' | 'core' | 'needprod' | 'forgot' | 'lowease' | 'dup' | 'badprompt' | 'contrast' | 'confusable' | 'cluster' | 'missed' | 'fixme';
+type Status = 'all' | 'new' | 'learning' | 'due' | 'leech' | 'suspended' | 'nosentence' | 'stable' | 'core' | 'needprod' | 'forgot' | 'lowease' | 'dup' | 'badprompt' | 'contrast' | 'confusable' | 'cluster' | 'missed' | 'fixme' | 'gaps';
 // 后半部分是"分拣"用的筛选（改造方案 §6）：已稳定的保留；同源词选中后批量暂停；顽固卡补句子、加线索；核心词补产出卡
 const STATUS: Array<[Status, string, string?]> = [
-  ['all', '全部'], ['fixme', '⚑ 待修', '复习时点了 ⚑ 待修的卡（题面不唯一、看不懂、关联不对…）：改好后在编辑里点「已改好」；也可以导出交给 Claude 批量改'], ['due', '到期'], ['new', '新卡'], ['learning', '学习中'], ['suspended', '已暂停'],
+  ['all', '全部'], ['fixme', '⚑ 待修', '复习时点了 ⚑ 待修的卡（题面不唯一、看不懂、关联不对…）：改好后在编辑里点「已改好」；也可以导出交给 Claude 批量改'], ['gaps', '缺内容', '没有讲解（只有词源）、带介词却缺用法、中文意思不是中文开头、产出题面太长、还没有概念：每条后面列出缺什么'], ['due', '到期'], ['new', '新卡'], ['learning', '学习中'], ['suspended', '已暂停'],
   ['stable', '已稳定', '间隔超过 30 天且遗忘不超过 1 次'], ['leech', '待改造', '遗忘达到阈值，已自动暂停'],
   ['nosentence', '待补句子', '迁移来的旧卡，还没有例句'], ['core', '核心'], ['needprod', '待补产出', '核心词还没有产出卡'],
   // 弱项：在变成顽固卡之前先改句子、加线索
@@ -154,6 +155,7 @@ export function LibraryPage({ deckId }: { deckId: string }) {
           case 'cluster': return !!n.cluster?.trim();
           case 'missed': return !!n.recallMisses?.length;
           case 'fixme': return !!n.fixme?.trim();
+          case 'gaps': return contentGaps(n, isConcept).length > 0;
           case 'dup': return dups.has(n.id);
           case 'badprompt': return productionErrors(n).length > 0 || markErrors(n).length > 0 || (!!n.contrastGroup && contrastLeaks(n, notes.filter((x) => x.contrastGroup === n.contrastGroup && x.id !== n.id)).length > 0);
         }
@@ -248,7 +250,7 @@ export function LibraryPage({ deckId }: { deckId: string }) {
               onClick={() => void groupContrast(ids).then((k) => done(k ? `已设为易混组：${k} 条，各生成一张辨析卡` : '至少要两条带 {{…}} 例句的笔记'))}>设为易混组</button>
           )}
           <button type="button" className="pill" title="同一个意思的几种说法：复习其中一条时，背面顺带回想其他几条（答案遮住）" onClick={() => setBatch('cluster')}>设表达群</button>
-          <button type="button" className="pill" title="意思相关、但不能互相替换：背面「关联」里列出同话题的卡，只展示不考。一条笔记可以有几个话题" onClick={() => setBatch('topic')}>加话题</button>
+          <button type="button" className="pill" title="给选中的笔记加一个概念（从概念表里选）：同概念的卡在背面「关联」里自动互相列出，只展示不考" onClick={() => setBatch('topic')}>加概念</button>
           {sel.size >= 2 && sel.size <= 6 && (
             <button type="button" className="pill" title="同一个词的同一个义项：合成一条笔记，其他搭配变成轮换例句、轮换题面和用法" onClick={() => setMerging(true)}>合并</button>
           )}
@@ -302,7 +304,8 @@ export function LibraryPage({ deckId }: { deckId: string }) {
                   {freqs?.get(n.id) != null && <span className="badge" title="Lexique 词频：每百万词出现次数（短语取最不常用的词）">频 {fmtFreq(freqs.get(n.id)!)}</span>}
                   {n.contrastGroup && <span className="badge t-contrast" title="易混组">易混：{notes.filter((x) => x.contrastGroup === n.contrastGroup && x.id !== n.id).map((x) => x.lemma).join(' / ')}</span>}
                   {n.cluster?.trim() && <span className="badge" title="表达群：同一个意思的几种说法">群：{n.cluster}</span>}
-                  {(n.topics ?? []).map((t) => <span key={t} className="badge" title="话题：意思相关、不能互相替换">话题：{t}</span>)}
+                  {(n.topics ?? []).map((t) => <span key={t} className={`badge${isConcept(t) ? '' : ' t-contrast'}`} title={isConcept(t) ? '概念：同概念的卡自动互相关联' : '旧话题：不在概念表里，换成概念表里的概念'}>{isConcept(t) ? '概念' : '话题'}：{t}</span>)}
+                  {status === 'gaps' && contentGaps(n, isConcept).map((g) => <span key={g} className="badge t-contrast">{GAP_LABEL[g]}</span>)}
                   {!!n.recallMisses?.length && <span className="badge t-contrast" title={`在表达群里没想起来：${n.recallMisses.join('、')}`}>没想起 ×{n.recallMisses.length}</span>}
                   {status === 'confusable' && confusable.get(n.id) && <span className="badge t-contrast">{confusable.get(n.id)![1]}</span>}
                   {n.tags.map((t) => <span key={t} className="badge is-theme">{t}</span>)}
@@ -347,12 +350,12 @@ export function LibraryPage({ deckId }: { deckId: string }) {
         const r = await mergeNotes(keep, rest);
         setMerging(false); done(`已合并成一条${r.moved ? `，挪过来 ${r.moved} 张卡（复习记录保留）` : ''}`);
       }} />}
-      {batch && <BatchDialog kind={batch} count={ids.length} decks={decks ?? []} clusters={batch === 'topic' ? [...new Set(notes.flatMap((n) => n.topics ?? []))].sort((a, b) => a.localeCompare(b, 'zh')) : [...new Set(notes.map((n) => n.cluster?.trim()).filter((c): c is string => !!c))].sort((a, b) => a.localeCompare(b, 'zh'))} onClose={() => setBatch(null)} onApply={async (v) => {
+      {batch && <BatchDialog kind={batch} count={ids.length} decks={decks ?? []} clusters={batch === 'topic' ? CONCEPT_LIST : [...new Set(notes.map((n) => n.cluster?.trim()).filter((c): c is string => !!c))].sort((a, b) => a.localeCompare(b, 'zh'))} onClose={() => setBatch(null)} onApply={async (v) => {
         if (batch === 'theme') { await updateNotes(ids, () => ({ tags: v as Theme[] })); done(`已设置 ${ids.length} 条的主题`); }
         if (batch === 'deck') { await updateNotes(ids, () => ({ deckId: v as string })); done(`已移动 ${ids.length} 条`); }
         if (batch === 'date') { await updateNotes(ids, () => ({ createdAt: noonIso(v as string) })); done(`已修改 ${ids.length} 条的日期`); }
         if (batch === 'cluster') { const c = (v as string).trim(); await updateNotes(ids, () => ({ cluster: c || null })); done(c ? `已把 ${ids.length} 条放进表达群「${c}」` : `已把 ${ids.length} 条移出表达群`); }
-        if (batch === 'topic') { const t = (v as string).trim(); if (t) { await updateNotes(ids, (n) => ({ topics: [...new Set([...(n.topics ?? []), t])] })); done(`已给 ${ids.length} 条加上话题「${t}」`); } }
+        if (batch === 'topic') { const t = (v as string).trim(); if (t) { await updateNotes(ids, (n) => ({ topics: [...new Set([...(n.topics ?? []), t])] })); done(`已给 ${ids.length} 条加上概念「${t}」`); } }
         if (batch === 'delete') { await deleteNotes(ids); done(`已删除 ${ids.length} 条`); }
       }} />}
     </div>
@@ -367,7 +370,7 @@ function BatchDialog({ kind, count, decks, clusters = [], onClose, onApply }: {
   const [themes, setThemes] = useState<Theme[]>([]);
   const [deck, setDeck] = useState(decks[0]?.id ?? '');
   const [day, setDay] = useState(new Date().toISOString().slice(0, 10));
-  const title = { theme: '设置主题', deck: '移到牌组', date: '修改创建日期', cluster: '设为表达群', topic: '加话题', delete: '确认删除' }[kind];
+  const title = { theme: '设置主题', deck: '移到牌组', date: '修改创建日期', cluster: '设为表达群', topic: '加概念', delete: '确认删除' }[kind];
   const value = { theme: themes, deck, date: day, cluster, topic: cluster, delete: null }[kind];
   return (
     <Modal title={title} onClose={onClose} footer={<>
@@ -382,7 +385,7 @@ function BatchDialog({ kind, count, decks, clusters = [], onClose, onApply }: {
         <datalist id="lib-clusters">{clusters.map((c) => <option key={c} value={c} />)}</datalist>
       </>}
       {kind === 'topic' && <>
-        <input value={cluster} list="lib-topics" autoFocus placeholder="话题名，例如：能力、做不到（已有的话题保留，这个加上去）" onChange={(e) => setCluster(e.target.value)} />
+        <input value={cluster} list="lib-topics" autoFocus placeholder="概念名，从概念表里选（已有的保留，这个加上去）" onChange={(e) => setCluster(e.target.value)} />
         <datalist id="lib-topics">{clusters.map((c) => <option key={c} value={c} />)}</datalist>
       </>}
       {kind === 'date' && <input type="date" value={day} onChange={(e) => e.target.value && setDay(e.target.value)} />}

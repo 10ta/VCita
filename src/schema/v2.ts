@@ -67,6 +67,10 @@ export const NoteV2 = z.looseObject({
   /** 话题：意思相关、但不能互相替换的说法放在同一个话题下（「能力」：être capable de、j'ai beau faire、inné）。
    *  一条笔记可以属于几个话题；背面「关联」里列出同话题的其他卡，只展示、不考。optional：同步文件不变 */
   topics: z.array(z.string()).optional(),
+  /** 关联里点了「不相关」的笔记 id：引擎不再把它们推荐为「可能相关」。optional：同步文件不变 */
+  relNo: z.array(z.string()).optional(),
+  /** 产出题面的换说法和答案的关系：下位 = 更朴素 / 更弱 / 更泛的说法；平替 = 意思等价、更简单。背面「朴素说法」标出来。optional */
+  promptKind: z.enum(['下位', '平替']).nullable().optional(),
   /** 义项：这张卡考的是这个词的哪一个意思（raison：理性，≠ 原因）。认读卡背面最先显示。optional：同步文件不变 */
   sense: z.string().nullable().optional(),
   /** 其他语境：这个词在别的搭配里的意思，一条一行「搭配 → 意思」（établissement scolaire → 学校）。只作参考、不考，
