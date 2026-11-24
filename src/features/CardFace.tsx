@@ -68,6 +68,12 @@ export function pickSentence(note: Note, kind: 'recognition' | 'cloze', variant 
 }
 /** 这次轮到的是不是主挖空句（笔记的挖空提示只为它写，备用例句挖的部分不同，用各自的 {{答案::提示}}） */
 const isMainCloze = (note: Note, variant: number) => variant % variantCount(note).sentences === 0;
+/** 情境题面：高亮里只有 … / ___（固定表达、习语没有能唯一指过去的朴素说法时用：句子铺情境 + 中文意图指路） */
+export const isScenePrompt = (promptFr: string | null | undefined) => {
+  const ts = clozeTargets(promptFr ?? '');
+  return ts.length > 0 && ts.every((t) => /^(…|\.{3}|_{2,})$/.test(t.trim()));
+};
+
 export interface Intent { promptFr: string | null; intentZh: string; answerFr: string; hint: string | null }
 const usable = (x: { promptFr?: string | null; intentZh?: string | null; answerFr?: string | null }) => !!(x.answerFr?.trim() && (x.promptFr?.trim() || x.intentZh?.trim()));
 /** 主题 + 备用题；和主题（或前面的备用题）一模一样的备用题只算一次，免得同一道题轮到两次 */
@@ -123,6 +129,8 @@ export interface CardView {
   meaningHint?: string | null;
   /** 产出卡：题面里被换掉的那个说法和题面整句（背面「也学这个」放进摘句篮用） */
   promptPhrase?: string | null;
+  /** 情境题：题面高亮写 {{…}}（不给换说法），中文意图直接显示在题面下面指路 */
+  sceneIntent?: string | null;
   promptFr?: string | null;
   /** 辨析卡的选项（易混组里几个词的词条，顺序每次复习换一次） */
   choices?: string[];
@@ -242,12 +250,14 @@ export function cardView(type: Card['type'], note: Note, s: Settings, labels: [s
     const a = it.answerFr;
     const answer: Face = { text: hasCloze(a) ? renderSentence(a) : a, speakText: plainSentence(a), lang: s.sourceLang, label: labels[0], raw: hasCloze(a) ? a : undefined };
     if (it.promptFr) {
+      const scene = isScenePrompt(it.promptFr);
       return {
         question: { text: renderSentence(it.promptFr), speakText: plainSentence(it.promptFr), lang: s.sourceLang, label: `${labels[0]}题面`, raw: it.promptFr },
         // 有法语题面时提示由答案句自动生成（笔记里手写的整句首字母提示会把题面上已有的词也遮住）
         hint: hasCloze(a) ? productionHint(a) : it.hint, cues: 'extra', answerFr: a,
-        meaningHint: plainSentence(it.intentZh).trim() || null,
-        promptPhrase: clozeTargets(it.promptFr).join(' … ') || null, promptFr: it.promptFr,
+        meaningHint: scene ? null : plainSentence(it.intentZh).trim() || null,
+        sceneIntent: scene ? plainSentence(it.intentZh).trim() || null : null,
+        promptPhrase: scene ? null : clozeTargets(it.promptFr).join(' … ') || null, promptFr: it.promptFr,
         answers: it.intentZh.trim() ? [answer, { text: plainSentence(it.intentZh), speakText: plainSentence(it.intentZh), lang: s.targetLang1, label: labels[1] }] : [answer],
       };
     }

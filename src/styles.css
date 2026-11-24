@@ -697,3 +697,4 @@ textarea.weights { width: 100%; font-family: var(--mono); font-size: 12px; }
 .d-sub.is-small ins { text-decoration-color: var(--warn); } .d-sub.is-small sup { color: var(--warn); }
 .d-flag, .stuck-btn { margin-left: 8px; font-size: 12px; padding: 1px 8px; }
 .stuck-btn { align-self: flex-start; margin: 6px 0 0; }
+.scene-intent { margin: 6px auto 0; padding: 3px 12px; width: fit-content; border-radius: 999px; font-size: 15px; color: #fdba74; background: rgba(251, 146, 60, .12); }

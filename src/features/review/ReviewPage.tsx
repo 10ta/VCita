@@ -359,6 +359,7 @@ export function ReviewPage({ deckId }: { deckId: string }) {
             {split.choices && <div className="cx-choices">{split.choices.map((c) => <span key={c} className="cx-choice">{c}</span>)}</div>}
             {card.type === 'production' ? (
               <>
+                {split.sceneIntent && <div className="scene-intent" title="情境题：句子给情境，这行中文指路，写出空格处的法语表达">{split.sceneIntent}</div>}
                 {!revealed && hintLevel >= 1 && split.meaningHint && <div className="cue">意思：{split.meaningHint}</div>}
                 {split.hint && (revealed || hintLevel >= hintSteps) && <div className="cue">提示：<Fr>{split.hint}</Fr></div>}
                 {!revealed && hintLevel < hintSteps && (

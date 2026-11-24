@@ -16,6 +16,8 @@ export interface RelatedSet<T extends N = N> {
   concepts: Array<{ concept: string; legacy: boolean; mates: T[] }>;
   /** 同类（弱）：大类名 + 几条 */
   weak: { group: string; mates: T[] } | null;
+  /** 同词另义：中心词相同的其他笔记（另一个义项 / 另一个搭配），放在关联最前面，复习一张顺带看另一张 */
+  sameWord: T[];
   family: T[];
   suspects: T[];
 }
@@ -108,13 +110,17 @@ export function relatedOf<T extends N>(note: T, notes: readonly T[], wikt?: Wikt
   const shown = new Set<string>([me.id]);
   const ok = (n: N) => n.id !== me.id && !blocked(me, n) && !sameCluster(me, n);
 
+  const myHead = ix.feat.get(me.id)?.head ?? '';
+  const sameWord = myHead ? (ix.byHead.get(myHead) ?? []).filter((n) => n.id !== me.id && !blocked(me, n)).slice(0, 6) : [];
+  sameWord.forEach((m) => shown.add(m.id));
+
   const concepts = (me.topics ?? []).map((t) => t.trim()).filter(Boolean).map((concept) => {
     const mates = (ix.byConcept.get(concept) ?? []).filter(ok)
       .sort((a, b) => similarity(me, b, notes, wikt) - similarity(me, a, notes, wikt)).slice(0, MATE_MAX);
     mates.forEach((m) => shown.add(m.id));
     return { concept, legacy: !isConcept(concept), mates };
   }).filter((x) => x.mates.length);
-  const strong = shown.size - 1;
+  const strong = shown.size - 1 - sameWord.length;
 
   let weak: RelatedSet['weak'] = null;
   if (strong < 3) {
@@ -135,7 +141,7 @@ export function relatedOf<T extends N>(note: T, notes: readonly T[], wikt?: Wikt
     if (n.id === me.id || shown.has(n.id) || blocked(me, n)) return false;
     const h = ix.feat.get(n.id)?.head ?? '';
     if (!h || h.length < 4) return false;
-    if (h === head || famHeads.has(h) || cueWords.has(h)) return true;
+    if (famHeads.has(h) || cueWords.has(h)) return true;
     const theirCue = (n.cueFamily ?? '').toLowerCase();
     return head.length >= 4 && new RegExp(`(^|[^a-zà-ÿ])${head.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}([^a-zà-ÿ]|$)`).test(theirCue);
   }).slice(0, 6);
@@ -150,5 +156,5 @@ export function relatedOf<T extends N>(note: T, notes: readonly T[], wikt?: Wikt
     .slice(0, 3)
     .map((x) => x.n);
 
-  return { concepts, weak, family, suspects } as unknown as RelatedSet<T>;
+  return { sameWord, concepts, weak, family, suspects } as unknown as RelatedSet<T>;
 }

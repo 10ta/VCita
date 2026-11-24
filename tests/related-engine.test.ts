@@ -44,12 +44,21 @@ describe('关联引擎', () => {
     expect(centerWord('mettre qqch en relief')).toBe('relief');
     expect(centerWord("sous l'emprise de qqch")).toBe('emprise');
     const fam = relatedOf(releve, all).family.map((n) => n.id);
-    expect(fam).toContain('relief');
+    expect(relatedOf(releve, all).sameWord.map((n) => n.id)).toContain('relief');
     expect(fam).not.toContain('avant');
   });
   it('同表达群的不列（它们在表达群回想里）', () => {
     const a = note('a', { topics: ['愤怒'], cluster: '生气' });
     const b = note('b', { topics: ['愤怒'], cluster: '生气' });
     expect(relatedOf(a, [a, b]).concepts).toEqual([]);
+  });
+});
+
+describe('同词另义、情境题面', () => {
+  it('confier / se confier：同一个中心词 → 同词另义，排在最前', () => {
+    const a = parseNote({ id: 'a', deckId: 'd', createdAt: T, updatedAt: T, lemma: 'confier qqch à qqn', meaningZh: '托付' });
+    const b = parseNote({ id: 'b', deckId: 'd', createdAt: T, updatedAt: T, lemma: 'se confier à qqn', meaningZh: '倾诉', sense: '吐露心事' });
+    expect(relatedOf(a, [a, b]).sameWord.map((n) => n.id)).toEqual(['b']);
+    expect(relatedOf(a, [a, b]).family).toEqual([]);
   });
 });

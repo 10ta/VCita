@@ -65,7 +65,7 @@ const marks = (s: string | null | undefined) => [...(s ?? '').matchAll(/\{\{(.*?
 /** 产出题的换说法 → 目标表达；没有法语题面时 null */
 export function plainPair(note: Pick<Note, 'promptFr' | 'answerFr' | 'promptKind'>): Entry | null {
   const p = marks(note.promptFr), a = marks(note.answerFr);
-  if (!p || !a || p === a) return null;
+  if (!p || !a || p === a || /^(…|\.{3}|_{2,})$/.test(p)) return null;
   return { fr: `${p} → ${a}`, zh: note.promptKind ? `朴素说法 · ${note.promptKind}` : '朴素说法' };
 }
 

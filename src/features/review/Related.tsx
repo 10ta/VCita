@@ -25,11 +25,17 @@ export function Related({ note, notes, onEdit }: { note: Note; notes: Note[]; on
     void updateNotes([m.id], (n) => ({ topics: [...new Set([...(n.topics ?? []), c])] })).then(() => toast(`已把「${m.lemma}」挂到概念「${c}」`));
   };
   const reject = (m: Note) => void updateNote(note.id, { relNo: [...new Set([...(note.relNo ?? []), m.id])] }).then(() => toast(`以后不再推荐「${m.lemma}」`));
-  const empty = !r.concepts.length && !r.weak && !r.family.length && !contrast.length && !r.suspects.length;
+  const empty = !r.sameWord.length && !r.concepts.length && !r.weak && !r.family.length && !contrast.length && !r.suspects.length;
   if (empty && !onEdit) return null;
   return (
     <Fr>
       <div className="related small">
+        {r.sameWord.length > 0 && (
+          <div className="rel-row">
+            <span className="rel-label" title="同一个词的其他义项、其他搭配：各是一张卡，复习这张顺带看一眼">同词另义</span>
+            <span className="rel-items">{r.sameWord.map((m) => <span key={m.id} className="rel-item"><span lang="fr">{m.lemma}</span> <span className="muted">{m.sense?.trim() || firstMeaning(m)}</span></span>)}</span>
+          </div>
+        )}
         {r.concepts.map(({ concept, legacy, mates }) => (
           <div key={concept} className="rel-row">
             <span className="rel-label" title={legacy ? '旧话题，还没换成概念表里的概念' : '同一个概念下的卡'}>{legacy ? '话题' : '概念'} · {concept}</span>
