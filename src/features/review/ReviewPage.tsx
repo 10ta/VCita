@@ -18,7 +18,7 @@ import { CardStats, cardView, SpeakBtn, TYPE_LABEL } from '../CardFace';
 import { BackZones, zoneHeadsOf } from '../BackZones';
 import { NoteEditor } from '../NoteEditor';
 import { ClusterStrip, undoClusterLeave } from './ClusterStrip';
-import { Related } from './Related';
+import { Related, useFamilyEntries } from './Related';
 import { Fr, useFrDictCtx, useNoteFreqs } from '../FrText';
 import { diffWords, pickReference, summarize, type DiffOp } from '../../lib/diff';
 import type { Card, Note } from '../../schema';
@@ -74,6 +74,7 @@ export function ReviewPage({ deckId }: { deckId: string }) {
   const customNext = custom ? pickCustom(custom.queue, cardById, recentNotes.current) : null;
   const nextId = custom ? customNext : q?.next?.id ?? null;
   const note = card ? noteMap.get(card.noteId) ?? null : null;
+  const famExtra = useFamilyEntries(note, notes);
 
   // 选下一张：当前没有卡、或当前卡已失效（被删除、暂停、换了牌组）
   useEffect(() => {
@@ -438,7 +439,7 @@ export function ReviewPage({ deckId }: { deckId: string }) {
                       用上了 +1（{note.usedCount}）
                     </button>
                   )}
-                  <BackZones note={note} heads={zoneHeadsOf(s)} plain={card.type !== 'production'} />
+                  <BackZones note={note} heads={zoneHeadsOf(s)} plain={card.type !== 'production'} famExtra={famExtra} />
                   {notes && cards && <ClusterStrip note={note} notes={notes} cards={cards} shown={split.question.speakText || split.promptFr || ''} recKey={rec.current.key} />}
                   {notes && <Related note={note} notes={notes} onEdit={() => setEditing(true)} />}
                 </div>

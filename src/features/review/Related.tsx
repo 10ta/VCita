@@ -1,5 +1,6 @@
 // 背面最下面的「关联」：由关联引擎（srs/related.ts）静态算出，只展示、不考、不记分。
-// 同概念（强）→ 同类（弱，强关联太少时才补）→ 同词族 → 易混组 → 可能相关（等你确认 ✓ 或否决 ✗）。
+// 同词另义 → 同概念（强）→ 同类（弱，强关联太少时才补）→ 易混组 → 可能相关（等你确认 ✓ 或否决 ✗）。
+// 同词族不在这里列：它并进上面的「词族」分区（手写的词族线索 + 库里同词族的卡），见 useFamilyEntries
 // 表达群的回想在它上面的 ClusterStrip 里，同群的不在这里重复列
 import type { Note } from '../../schema';
 import { Fr } from '../FrText';
@@ -9,6 +10,13 @@ import { isConcept } from '../../lib/concepts';
 import { useWiktLinks } from '../../lib/wikt';
 import { updateNote, updateNotes } from '../../db/actions';
 import { toast } from '../../ui/toast';
+
+/** 库里同词族的卡，给背面「词族」分区用（和手写的词族线索并在一起显示） */
+export function useFamilyEntries(note: Note | null | undefined, notes: Note[] | undefined): Array<{ fr: string; zh: string }> {
+  const wikt = useWiktLinks(true);
+  if (!note || !notes) return [];
+  return relatedOf(note, notes, wikt).family.map((m) => ({ fr: m.lemma, zh: firstMeaning(m) }));
+}
 
 function Items({ list }: { list: Note[] }) {
   return <>{list.map((m) => <span key={m.id} className="rel-item"><span lang="fr">{m.lemma}</span> <span className="muted">{firstMeaning(m)}</span></span>)}</>;
@@ -25,11 +33,13 @@ export function Related({ note, notes, onEdit }: { note: Note; notes: Note[]; on
     void updateNotes([m.id], (n) => ({ topics: [...new Set([...(n.topics ?? []), c])] })).then(() => toast(`已把「${m.lemma}」挂到概念「${c}」`));
   };
   const reject = (m: Note) => void updateNote(note.id, { relNo: [...new Set([...(note.relNo ?? []), m.id])] }).then(() => toast(`以后不再推荐「${m.lemma}」`));
-  const empty = !r.sameWord.length && !r.concepts.length && !r.weak && !r.family.length && !contrast.length && !r.suspects.length;
+  const empty = !r.sameWord.length && !r.concepts.length && !r.weak && !contrast.length && !r.suspects.length;
   if (empty && !onEdit) return null;
   return (
     <Fr>
       <div className="related small">
+        <div className="rel-head" title="和这张卡有关的其他卡：只看不考，不影响评分">关联<span className="muted"> · 只看不考</span></div>
+        {empty && <div className="muted">还没有关联：给这条挂上概念，同概念的卡就会出现在这里</div>}
         {r.sameWord.length > 0 && (
           <div className="rel-row">
             <span className="rel-label" title="同一个词的其他义项、其他搭配：各是一张卡，复习这张顺带看一眼">同词另义</span>
@@ -46,12 +56,6 @@ export function Related({ note, notes, onEdit }: { note: Note; notes: Note[]; on
           <div className="rel-row">
             <span className="rel-label" title="同一大类里意思最接近的几条（这条的同概念卡太少时才列）">同类 · {r.weak.group}</span>
             <span className="rel-items"><Items list={r.weak.mates} /></span>
-          </div>
-        )}
-        {r.family.length > 0 && (
-          <div className="rel-row">
-            <span className="rel-label">同词族</span>
-            <span className="rel-items"><Items list={r.family} /></span>
           </div>
         )}
         {contrast.length > 0 && (

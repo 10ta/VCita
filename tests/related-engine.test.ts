@@ -20,19 +20,21 @@ describe('关联引擎', () => {
   const colere = note('colere', { lemma: 'être hors de soi', meaningZh: '气得失去理智、怒不可遏', topics: ['愤怒'] });
   const rage = note('rage', { lemma: 'fou de rage', meaningZh: '气疯了', topics: ['愤怒'] });
   const peur = note('peur', { lemma: 'redouter qqch', meaningZh: '惧怕、担心', topics: ['恐惧担心'] });
+  const agace = note('agace', { lemma: 'exaspéré(e)', meaningZh: '忍无可忍、怒不可遏', topics: ['失望沮丧'] });
   const indigne = note('indigne', { lemma: 'être indigné(e) par qqch', meaningZh: '对……感到愤慨', meaningEn: 'to be outraged by' });
   const outre = note('outre', { lemma: 'outré(e)', meaningZh: '感到愤慨、气愤', meaningEn: 'outraged' });
   const releve = note('releve', { lemma: 'mettre qqch en relief', meaningZh: '突出', cueFamily: 'le relief 浮雕' });
   const relief = note('relief', { lemma: 'le relief', meaningZh: '浮雕；地形' });
   const avant = note('avant', { lemma: 'mettre qqch en avant', meaningZh: '突出、推到显眼位置' });
-  const all = [colere, rage, peur, indigne, outre, releve, relief, avant];
+  const all = [colere, rage, peur, agace, indigne, outre, releve, relief, avant];
 
-  it('同概念互相关联；强关联太少时同一大类按意思补上', () => {
+  it('同概念互相关联；强关联太少时同一大类按意思补上（不沾边的不补）', () => {
     const r = relatedOf(colere, all);
     expect(r.concepts[0]).toMatchObject({ concept: '愤怒', legacy: false });
     expect(r.concepts[0].mates.map((n) => n.id)).toEqual(['rage']);
     expect(r.weak?.group).toBe('情绪');
-    expect(r.weak?.mates.map((n) => n.id)).toEqual(['peur']);
+    // 同类只补意思沾边的：同属「情绪」但意思不沾边的 peur 不列
+    expect(r.weak?.mates.map((n) => n.id)).toEqual(['agace']);
   });
   it('没有共同概念、意思高度重合 → 可能相关；否决后不再推荐', () => {
     expect(similarity(indigne, outre, all)).toBeGreaterThanOrEqual(0.5);

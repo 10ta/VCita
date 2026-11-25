@@ -3,6 +3,7 @@
 // 「补充」字段按开头的标记拆进各区：高频 近义 同义 也说 → 用法；⚠ ❌ 已有卡 语法锁 → 注意；原文 句意 TCF 错题 → 出处；
 // 其他义 另义 → 其他语境（和笔记的其他语境重复的不再列）；认不出的放在出处下面的「补充」。
 // 标记前面可以是换行，也可以是 ；或 。
+import { centerWord } from '../srs/related';
 import type { ReactNode } from 'react';
 import type { Note, Settings } from '../schema';
 import { Fr } from './FrText';
@@ -170,8 +171,11 @@ function Labeled({ text }: { text: string }) {
   return m ? <><span className="z-lbl">{m[1]}</span>{neq(text.slice(m[0].length))}</> : <>{neq(text)}</>;
 }
 
-export function BackZones({ note, heads, plain = true }: { note: Note; heads: ZoneHeads; plain?: boolean }) {
+export function BackZones({ note, heads, plain = true, famExtra = [] }: { note: Note; heads: ZoneHeads; plain?: boolean; famExtra?: Entry[] }) {
   const z = backZones(note, plain);
+  // 词族 = 手写的词族线索 + 库里同词族的卡（关联引擎算出，已经写在线索里的不重复）
+  const cue = new Set(z.fam.flatMap((e) => e.fr.toLowerCase().split(/[^a-zà-ÿœæ-]+/)));
+  z.fam = [...z.fam, ...famExtra.filter((e) => !cue.has(centerWord(e.fr)))];
   const host = z.sourceUrl ? z.sourceUrl.replace(/^https?:\/\/(www\.)?/, '').split('/')[0] : '';
   return (
     <Fr>

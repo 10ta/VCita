@@ -1,6 +1,7 @@
 // 关联引擎（纯函数、纯静态，不用 AI）：
 // 1) 同概念（强）：note.topics 里的概念相同 → 互相关联。概念表见 lib/concepts.ts；不在表里的旧话题也照样按名字归组
 // 2) 同类（弱）：强关联不到 3 条时，同一大类里意思最接近的几条补上
+// 同类只列意思沾边的（相似度 > 0），整组都不沾边就不列
 // 3) 同词族：Wiktionnaire 词族（有数据时）、词族线索里写到对方的词、或同一个中心词
 // 4) 可能相关：没有共同概念、但中文 / 英文意思高度重合（或 Wiktionnaire 同义）的几条，等用户确认或否决。
 //    确认 = 把这条的概念加给对方；否决 = 记进 relNo，以后不再推荐
@@ -126,7 +127,7 @@ export function relatedOf<T extends N>(note: T, notes: readonly T[], wikt?: Wikt
   if (strong < 3) {
     const groups = [...new Set((me.topics ?? []).map((t) => conceptGroup(t)).filter((g): g is string => !!g))];
     const pool = groups.flatMap((g) => (ix.byGroup.get(g) ?? []).map((n) => ({ g, n }))).filter(({ n }) => ok(n) && !shown.has(n.id));
-    const ranked = pool.map((x) => ({ ...x, s: similarity(me, x.n, notes, wikt) })).sort((a, b) => b.s - a.s).slice(0, WEAK_MAX - Math.min(strong, WEAK_MAX - 1));
+    const ranked = pool.map((x) => ({ ...x, s: similarity(me, x.n, notes, wikt) })).filter((x) => x.s > 0).sort((a, b) => b.s - a.s).slice(0, WEAK_MAX - Math.min(strong, WEAK_MAX - 1));
     if (ranked.length) {
       weak = { group: ranked[0].g, mates: ranked.map((x) => x.n) };
       ranked.forEach((x) => shown.add(x.n.id));
