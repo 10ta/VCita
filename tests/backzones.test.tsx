@@ -64,13 +64,16 @@ describe('字段拆进各区', () => {
 
 describe('渲染', () => {
   const html = (n: Note, heads: 'text' | 'icon' | 'tint' = 'icon') => renderToStaticMarkup(<BackZones note={n} heads={heads} />);
-  it('四个格子永远都在、顺序固定；没内容的是虚线占位', () => {
-    const h = html(note({ etymology: 'verbal 口头的 → verbaliser' }));
-    const order = ['z-use', 'z-ctx', 'z-ety', 'z-fam'].map((c) => h.indexOf(`zone ${c}`));
+  it('只显示有内容的格子，顺序固定；出处没内容也不显示', () => {
+    const h = html(note({ etymology: 'verbal 口头的 → verbaliser', usage: 'verbaliser qqn：给某人开罚单', cueFamily: 'le verbe（动词）' }));
+    const order = ['z-use', 'z-ety', 'z-fam'].map((c) => h.indexOf(`zone ${c}`));
     expect(order.every((i) => i >= 0)).toBe(true);
     expect([...order].sort((a, b) => a - b)).toEqual(order);
-    expect((h.match(/is-empty/g) ?? []).length).toBe(3);
-    expect(h).toContain('出处');
+    expect(h).not.toContain('z-ctx');
+    expect(h).not.toContain('is-empty');
+    expect(h).not.toContain('出处');
+    expect(html(note({}))).not.toContain('z-grid');
+    expect(html(note({ source: 'TCF 1' }))).toContain('出处');
   });
   it('注意区只在有内容时出现', () => {
     expect(html(note({}))).not.toContain('z-warn');

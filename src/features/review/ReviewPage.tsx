@@ -408,7 +408,6 @@ export function ReviewPage({ deckId }: { deckId: string }) {
               <>
                 <div className="answer">
                   {(card.type === 'production' || card.type === 'frame') && typed.trim() && split.answerFr && <TypedDiff typed={typed} answerFr={split.answerFr} note={note} />}
-                  {card.type === 'production' && note && <StuckButton note={note} />}
                   {card.type === 'paraphrase' && typed.trim() && <div className="cue para-typed">你写的：{typed.trim()}</div>}
                   {split.answers.map((a, i) => (
                     <div key={i} className={i === 0 ? 'a1' : 'a2'}>
@@ -432,12 +431,16 @@ export function ReviewPage({ deckId }: { deckId: string }) {
                           .then((r) => { setPromptSaved(true); toast(r.existed ? '摘句篮里已经有这一条了' : '已放进摘句篮（添加 → 摘句篮）'); })}>
                         {promptSaved ? '已放进摘句篮 ✓' : '也学这个'}
                       </button>
+                      {card.type === 'production' && <StuckButton note={note} />}
                     </div>
                   )}
                   {(card.type === 'production' || card.type === 'frame' || card.type === 'apply') && (
-                    <button type="button" className="pill" title="这个表达在写作或口语里用上了一次" onClick={() => void bumpUsed(note.id).then(() => toast(`已记录，累计用上 ${note.usedCount + 1} 次`))}>
-                      用上了 +1（{note.usedCount}）
-                    </button>
+                    <div className="prompt-phrase small">
+                      {card.type === 'production' && !(split.promptPhrase && split.promptFr) && <StuckButton note={note} />}
+                      <button type="button" className="pill" title="这个表达在写作或口语里用上了一次" onClick={() => void bumpUsed(note.id).then(() => toast(`已记录，累计用上 ${note.usedCount + 1} 次`))}>
+                        用上了 +1（{note.usedCount}）
+                      </button>
+                    </div>
                   )}
                   <BackZones note={note} heads={zoneHeadsOf(s)} plain={card.type !== 'production'} famExtra={famExtra} />
                   {notes && cards && <ClusterStrip note={note} notes={notes} cards={cards} shown={split.question.speakText || split.promptFr || ''} recKey={rec.current.key} />}

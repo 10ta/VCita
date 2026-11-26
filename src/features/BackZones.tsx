@@ -180,26 +180,30 @@ export function BackZones({ note, heads, plain = true, famExtra = [] }: { note: 
   return (
     <Fr>
       <div className={`zones zh-${heads}`}>
-        <div className="z-grid">
-          <Zone k="use" count={z.use.length}>{z.use.length ? <Entries list={z.use} /> : null}</Zone>
-          <Zone k="ctx" count={z.ctx.length}>{z.ctx.length ? <Entries list={z.ctx} /> : null}</Zone>
-          <Zone k="ety">{z.ety ? <Etym text={z.ety} /> : null}</Zone>
-          <Zone k="fam" count={z.fam.length}>{z.fam.length ? <Entries list={z.fam} /> : null}</Zone>
-        </div>
+        {/* 只显示有内容的格子，顺序固定（用法 → 其他语境 → 词源 → 词族）；单数个时最后一格占满一行 */}
+        {(z.use.length || z.ctx.length || z.ety || z.fam.length) ? (
+          <div className="z-grid">
+            {!!z.use.length && <Zone k="use" count={z.use.length}><Entries list={z.use} /></Zone>}
+            {!!z.ctx.length && <Zone k="ctx" count={z.ctx.length}><Entries list={z.ctx} /></Zone>}
+            {z.ety && <Zone k="ety"><Etym text={z.ety} /></Zone>}
+            {!!z.fam.length && <Zone k="fam" count={z.fam.length}><Entries list={z.fam} /></Zone>}
+          </div>
+        ) : null}
         {!!z.warn.length && (
           <div className="z-warn">
             <Head k="warn" />
             <div className="z-warn-list">{z.warn.map((w, i) => <div key={i}><Labeled text={w} /></div>)}</div>
           </div>
         )}
-        <div className="z-src">
-          <Head k="src" />
-          <div className="z-src-list">
-            {!z.src.length && !z.sourceUrl && <span className="z-none">—</span>}
-            {z.src.map((x, i) => <div key={i}><Labeled text={x} /></div>)}
-            {z.sourceUrl && <div><a href={z.sourceUrl} target="_blank" rel="noreferrer">{host}</a></div>}
+        {(!!z.src.length || z.sourceUrl) && (
+          <div className="z-src">
+            <Head k="src" />
+            <div className="z-src-list">
+              {z.src.map((x, i) => <div key={i}><Labeled text={x} /></div>)}
+              {z.sourceUrl && <div><a href={z.sourceUrl} target="_blank" rel="noreferrer">{host}</a></div>}
+            </div>
           </div>
-        </div>
+        )}
         {!!z.more.length && (
           <div className="z-src z-more">
             <div className="z-head"><span className="z-title">补充</span></div>
