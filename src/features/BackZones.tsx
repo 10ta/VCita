@@ -180,15 +180,13 @@ export function BackZones({ note, heads, plain = true, famExtra = [] }: { note: 
   return (
     <Fr>
       <div className={`zones zh-${heads}`}>
-        {/* 只显示有内容的格子，顺序固定（用法 → 其他语境 → 词源 → 词族）；单数个时最后一格占满一行 */}
-        {(z.use.length || z.ctx.length || z.ety || z.fam.length) ? (
-          <div className="z-grid">
-            {!!z.use.length && <Zone k="use" count={z.use.length}><Entries list={z.use} /></Zone>}
-            {!!z.ctx.length && <Zone k="ctx" count={z.ctx.length}><Entries list={z.ctx} /></Zone>}
-            {z.ety && <Zone k="ety"><Etym text={z.ety} /></Zone>}
-            {!!z.fam.length && <Zone k="fam" count={z.fam.length}><Entries list={z.fam} /></Zone>}
-          </div>
-        ) : null}
+        {/* 四个格子位置固定，没内容就留虚线空位（找东西靠位置，不靠读标题） */}
+        <div className="z-grid">
+          <Zone k="use" count={z.use.length}>{z.use.length ? <Entries list={z.use} /> : null}</Zone>
+          <Zone k="ctx" count={z.ctx.length}>{z.ctx.length ? <Entries list={z.ctx} /> : null}</Zone>
+          <Zone k="ety">{z.ety ? <Etym text={z.ety} /> : null}</Zone>
+          <Zone k="fam" count={z.fam.length}>{z.fam.length ? <Entries list={z.fam} /> : null}</Zone>
+        </div>
         {!!z.warn.length && (
           <div className="z-warn">
             <Head k="warn" />
