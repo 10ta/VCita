@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { useCards, useDeckSettings, useMemories, useNotes, useTodayLogs } from '../../db/hooks';
 import { addClip, answerCard, bumpUsed, setSuspended, undoAnswer, updateNote, type AnswerResult } from '../../db/actions';
-import { buildQueue, newInfoText } from '../../srs/queue';
+import { newInfoText } from '../../srs/queue';
+import { upcomingCards } from '../../srs/upcoming';
 import { useDeckQueue } from './useDeckQueue';
 import { fmtNextIn, isDue, paramsFor, preview, type Rating } from '../../srs/scheduler';
 import { fmtDays, fmtLocalMoment, fmtMinutes, nextDayStartMs } from '../../lib/time';
@@ -141,9 +142,10 @@ export function ReviewPage({ deckId }: { deckId: string }) {
 
   // ---- 提前准备：让翻面、换卡时不用等网络 ----
   // 1) 这张卡题面和背面每一个能读的面：正面时就下载好
-  // 2) 下一张卡（按"这张已答"重排队列预测）的题面和背面：现在就下载好。不管设置会不会自动读——手动点喇叭也不用等
-  // 3) 这张卡的目标表达：现在就查好划词结果，翻面后悬停目标立即弹出
-  // 都只是预热缓存，预测错了也只是照旧现读、现查
+  // 2) 接下来可能出的卡，不管设置会不会自动读（手动点喇叭也不用等），见 upcomingCards：
+  //    按"这张已答"重排队列预测的下两张 + 15 分钟内到期、随时可能插进来的学习 / 重学卡
+  // 3) 这张卡和下一张的目标表达：现在就查好划词结果，翻面后悬停目标立即弹出
+  // 翻面时再跑一次：看正面的这段时间里又有学习卡快到期了。都只是预热缓存，已经有的不会重复下载
   useEffect(() => {
     if (!split || !card || !s || !note) return;
     for (const t of speakables(split)) preloadSpeech(t.text, t.lang);
@@ -154,19 +156,19 @@ export function ReviewPage({ deckId }: { deckId: string }) {
       for (const [t, ctx] of [...targets].slice(0, 4)) prefetchLookup(t, ctx, frDict, s.sourceLang, s.targetLang1);
     };
     lookAhead(split);
-    if (custom || !cards || !logs) return;
-    const sameNote = new Set(cards.filter((c) => c.noteId === card.noteId).map((c) => c.id));
-    const nq = buildQueue({ cards, todayLogs: logs, deckId, now, settings: s, skipped: new Set([...skipped, ...sameNote]), learnAheadAll, notes: noteMap, freq, newPlan: q?.newPlan });
-    const nc = nq.next;
-    const nn = nc ? noteMap.get(nc.noteId) : undefined;
-    if (!nc || !nn) return;
-    const nListen = listenCards === 'all' || (listenCards === 'core' && nn.layer === 'core');
-    const nGroup = nn.contrastGroup ? (notes ?? []).filter((x) => x.contrastGroup === nn.contrastGroup && x.id !== nn.id) : [];
-    const ns = cardView(nc.type, nn, s, labels, nc.reps, nListen, nGroup);
-    for (const t of speakables(ns)) preloadSpeech(t.text, t.lang);
-    // 下一张卡的目标表达也提前一张查好：到它的时候早就查完了
-    lookAhead(ns);
-  }, [currentId, split?.question.speakText]); // eslint-disable-line react-hooks/exhaustive-deps
+    if (!cards) return;
+    const ups = upcomingCards({ card, cards, logs: logs ?? [], deckId, settings: s, skipped, learnAheadAll, notes: noteMap, freq, newPlan: q?.newPlan, customQueue: custom?.queue ?? null });
+    ups.forEach((nc, i) => {
+      const nn = noteMap.get(nc.noteId);
+      if (!nn) return;
+      const nListen = listenCards === 'all' || (listenCards === 'core' && nn.layer === 'core');
+      const nGroup = nn.contrastGroup ? (notes ?? []).filter((x) => x.contrastGroup === nn.contrastGroup && x.id !== nn.id) : [];
+      const ns = cardView(nc.type, nn, s, labels, nc.reps, nListen, nGroup);
+      for (const t of speakables(ns)) preloadSpeech(t.text, t.lang);
+      // 最可能的下一张，目标表达也提前查好
+      if (i === 0) lookAhead(ns);
+    });
+  }, [currentId, split?.question.speakText, revealed]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     if (!split || !card) return;

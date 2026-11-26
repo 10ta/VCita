@@ -47,4 +47,33 @@ describe('发音缓存', () => {
     await speak('Encore une phrase.', 'fr');
     expect(fetchMock).toHaveBeenCalledTimes(1);
   });
+
+  it('预加载被限流（429）时隔一会儿再试一次', async () => {
+    let calls = 0;
+    const fetchMock = vi.fn(async () => (++calls === 1
+      ? new Response('slow down', { status: 429, headers: { 'content-type': 'text/plain' } })
+      : new Response(new Blob([new Uint8Array([1])], { type: 'audio/mpeg' }), { headers: { 'content-type': 'audio/mpeg' } })));
+    vi.stubGlobal('fetch', fetchMock);
+    const { preloadSpeech } = await import('../src/lib/speech');
+    const { db } = await import('../src/db/db');
+    preloadSpeech('Une phrase limitée.', 'fr');
+    await vi.waitFor(async () => expect(await db.audio.count()).toBe(1), { timeout: 4000 });
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+  });
+
+  it('一次预加载很多句：同时最多 3 个网络请求', async () => {
+    let live = 0, peak = 0;
+    const fetchMock = vi.fn(async () => {
+      live++; peak = Math.max(peak, live);
+      await new Promise((r) => setTimeout(r, 20));
+      live--;
+      return new Response(new Blob([new Uint8Array([1])], { type: 'audio/mpeg' }), { headers: { 'content-type': 'audio/mpeg' } });
+    });
+    vi.stubGlobal('fetch', fetchMock);
+    const { preloadSpeech } = await import('../src/lib/speech');
+    const { db } = await import('../src/db/db');
+    for (let i = 0; i < 8; i++) preloadSpeech(`Phrase numéro ${i}.`, 'fr');
+    await vi.waitFor(async () => expect(await db.audio.count()).toBe(8), { timeout: 4000 });
+    expect(peak).toBeLessThanOrEqual(3);
+  });
 });

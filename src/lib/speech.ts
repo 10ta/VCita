@@ -68,15 +68,44 @@ async function storeAudio(key: string, blob: Blob) {
     }
   } catch { /* 存不下（隐私模式、空间满）就不缓存 */ }
 }
-/** 经同站代理下载音频（本机有就直接返回）。代理不可用（本地开发、没部署函数）返回 null，以后不再试 */
-function fetchAudio(text: string, lang: string): Promise<Blob | null> {
+// 内存里再留最近的 MEM_MAX 条：一天里反复轮到的卡（学习、重学）连 IndexedDB 都不用读
+const MEM_MAX = 300;
+const mem = new Map<string, Blob>();
+function remember(key: string, blob: Blob) {
+  mem.delete(key);
+  mem.set(key, blob);
+  if (mem.size > MEM_MAX) mem.delete(mem.keys().next().value!);
+}
+
+// 同时最多 NET_MAX 个网络请求：预加载一次排好几张卡，并发太多容易被 Google 限流（429），反而全都要现下载。
+// 要马上播的插队到最前面
+const NET_MAX = 3;
+let inFlight = 0;
+const waiting: Array<{ run: () => void; urgent: boolean; key: string }> = [];
+function slot(urgent: boolean, key: string): Promise<() => void> {
+  return new Promise((resolve) => {
+    const run = () => { inFlight++; resolve(() => { inFlight--; waiting.shift()?.run(); }); };
+    if (inFlight < NET_MAX) run();
+    else if (urgent) waiting.unshift({ run, urgent, key }); else waiting.push({ run, urgent, key });
+  });
+}
+
+/** 经同站代理下载音频（内存 / 本机有就直接返回）。代理不可用（本地开发、没部署函数）返回 null，以后不再试 */
+function fetchAudio(text: string, lang: string, urgent = true): Promise<Blob | null> {
   const key = audioKey(text, lang);
+  const m = mem.get(key);
+  if (m) { remember(key, m); return Promise.resolve(m); }
   const hit = fetching.get(key);
-  if (hit) return hit;
+  if (hit) {
+    // 预加载还在排队时轮到播放：把它提到队首
+    if (urgent) { const i = waiting.findIndex((w) => w.key === key); if (i > 0) { const [w] = waiting.splice(i, 1); w.urgent = true; waiting.unshift(w); } }
+    return hit;
+  }
   const p = (async () => {
     const c = await cachedAudio(key);
-    if (c) return c;
+    if (c) { remember(key, c); return c; }
     if (proxyOk === false) return null;
+    const done = await slot(urgent, key);
     const ctrl = new AbortController();
     const timer = setTimeout(() => ctrl.abort(), TIMEOUT);
     try {
@@ -87,19 +116,25 @@ function fetchAudio(text: string, lang: string): Promise<Blob | null> {
       if (!r.ok || !type.startsWith('audio')) { if (r.status === 404 || (r.ok && !type.startsWith('audio'))) proxyOk = false; return null; }
       const blob = await r.blob();
       proxyOk = true;
-      if (blob.size > 0) void storeAudio(key, blob);
+      if (blob.size > 0) { remember(key, blob); void storeAudio(key, blob); }
       return blob.size > 0 ? blob : null;
-    } catch { return null; } finally { clearTimeout(timer); }
+    } catch { return null; } finally { clearTimeout(timer); done(); }
   })();
   fetching.set(key, p);
   void p.finally(() => fetching.delete(key));
   return p;
 }
-/** 提前下载一句的发音（下一张卡、翻面后要读的答案），播放时直接用本机的 */
+
+/** 提前下载一句的发音（这张卡的各面、接下来可能出的卡），播放时直接用内存 / 本机的。
+ *  这一次没下成（限流、超时）隔 2 秒再试一次，免得轮到它时还要现下载 */
 export function preloadSpeech(text: string, lang: string) {
   const t = text?.trim();
   if (!t || proxyOk === false) return;
-  for (const part of splitForTts(t)) void fetchAudio(part, lang);
+  for (const part of splitForTts(t)) {
+    void fetchAudio(part, lang, false).then((b) => {
+      if (!b && proxyOk !== false) setTimeout(() => void fetchAudio(part, lang, false), 2000);
+    });
+  }
 }
 
 const sources = [
@@ -225,6 +260,7 @@ async function speakOne(text: string, lang: string, my: number): Promise<One> {
         if (name === 'AbortError') return 'stale';
         if (name === 'NotAllowedError') return 'pending';
         // 本机缓存的音频坏了（解码失败）：删掉，下面从网络重来，下次也会重新下载
+        mem.delete(audioKey(text, lang));
         try { await db.audio.delete(audioKey(text, lang)); } catch { /* 忽略 */ }
       }
     }
