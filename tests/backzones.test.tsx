@@ -64,14 +64,28 @@ describe('字段拆进各区', () => {
 
 describe('渲染', () => {
   const html = (n: Note, heads: 'text' | 'icon' | 'tint' = 'icon') => renderToStaticMarkup(<BackZones note={n} heads={heads} />);
-  it('四个格子永远都在、顺序固定；没内容的是虚线占位；出处没内容不显示', () => {
+  it('六个格子永远都在、顺序固定；没内容的是虚线占位', () => {
     const h = html(note({ etymology: 'verbal 口头的 → verbaliser' }));
-    const order = ['z-use', 'z-ctx', 'z-ety', 'z-fam'].map((c) => h.indexOf(`zone ${c}`));
+    const order = ['z-use', 'z-ctx', 'z-ety', 'z-fam', 'z-alt', 'z-src'].map((c) => h.indexOf(`zone ${c}`));
     expect(order.every((i) => i >= 0)).toBe(true);
     expect([...order].sort((a, b) => a - b)).toEqual(order);
-    expect((h.match(/is-empty/g) ?? []).length).toBe(3);
-    expect(h).not.toContain('出处');
-    expect(html(note({ source: 'TCF 1' }))).toContain('出处');
+    expect((h.match(/is-empty/g) ?? []).length).toBe(5);
+    expect(html(note({ source: 'TCF 1' }))).toContain('TCF 1');
+  });
+  it('出处 · 补充合成一格：认不出的补充行带「补充」标签', () => {
+    const h = html(note({ source: 'TCF 1', extra: '语域：书面' }));
+    expect(h).toContain('出处 · 补充');
+    expect(h).toContain('补充</span>语域：书面');
+  });
+  it('替代说法：题面换说法、表达群成员标类型；✗ 和 ＋ 按钮', () => {
+    const n = note({ lemma: 'être hors de soi', promptFr: 'Il {{était très en colère}}.', answerFr: 'Il {{était hors de lui}}.', promptKind: '下位', cluster: '气坏了' });
+    const m = note({ id: 'm', lemma: 'furieux', meaningZh: '狂怒的', cluster: '气坏了' });
+    const h = renderToStaticMarkup(<BackZones note={n} heads="icon" notes={[n, m]} />);
+    expect(h).toContain('était très en colère');
+    expect(h).toContain('k-下位');
+    expect(h).toContain('furieux');
+    expect(h).toContain('在库');
+    expect(h).toContain('alt-no');
   });
   it('注意区只在有内容时出现', () => {
     expect(html(note({}))).not.toContain('z-warn');
@@ -109,8 +123,9 @@ describe('补充里用 。 隔开的标记、近义 / 另义', () => {
     expect(z.use[1]).toEqual({ fr: "s'affranchir des contraintes / des règles / de la tutelle de qqn", zh: '' });
     expect(z.src).toEqual(["原文：s'affranchir d'une histoire ancienne（摆脱一段旧事）"]);
   });
-  it('近义进用法、标上「近义」；另义进其他语境', () => {
-    expect(z.use.slice(2)).toEqual([{ fr: 'se libérer de', zh: '近义' }, { fr: 'se défaire de', zh: '近义' }]);
+  it('近义进替代说法；另义进其他语境', () => {
+    expect(z.use).toHaveLength(2);
+    expect(z.alt.map((a) => [a.fr, a.kind])).toEqual([['se libérer de', '近义'], ['se défaire de', '近义']]);
     expect(z.ctx).toEqual([{ fr: 'affranchir une lettre', zh: '贴邮票' }]);
     expect(z.more).toEqual([]);
   });
@@ -126,13 +141,14 @@ describe('图 5 / 图 7 的拆分', () => {
       { fr: 'preuve', zh: '证据' }, { fr: 'prouver', zh: '证明' }, { fr: 'éprouver', zh: '感受；考验' }, { fr: 'une épreuve', zh: '考验；考试科目' },
     ]);
   });
-  it('｜ 分开的几段、回译 / 误写 / 朴素版各回各区，和出处重复的不再列', () => {
+  it('｜ 分开的几段、回译 / 误写 / 朴素版（→ 替代说法）各回各区，和出处重复的不再列', () => {
     const z = backZones(note({
       source: '回译 202610T1',
       extra: '⚠ 无人称结构 mieux vaut + inf. 里不能放 toi-même ｜ ⚠ propre 放名词前、不加冠词 ｜ 朴素版：venir voir par toi-même ｜ 回译 202610T1，误写：mieux vaut regarder toi-même',
     }));
     expect(z.warn).toEqual(['无人称结构 mieux vaut + inf. 里不能放 toi-même', 'propre 放名词前、不加冠词', '误写：mieux vaut regarder toi-même']);
-    expect(z.use).toEqual([{ fr: 'venir voir par toi-même', zh: '朴素版' }]);
+    expect(z.use).toEqual([]);
+    expect(z.alt).toEqual([{ fr: 'venir voir par toi-même', kind: '下位', source: '补充' }]);
     expect(z.src).toEqual(['回译 202610T1']);
   });
 });

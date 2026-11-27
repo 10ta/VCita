@@ -38,7 +38,7 @@ export const linksOf = (idx: WiktIndex | null | undefined, lemma: string): WiktL
 /** 一个词条的词源原文（法语）；多词表达取第一个实词 */
 export const etymOf = (etym: WiktEtym | null | undefined, lemma: string): string | null => etym?.get(headWord(lemma)) ?? null;
 
-function lazy<T>(url: string, parse: (t: string) => T, what: string) {
+export function lazy<T>(url: string, parse: (t: string) => T, what: string) {
   let loading: Promise<T> | null = null;
   let loaded: T | null = null;
   const load = () => (loading ??= fetch(url).then((r) => {

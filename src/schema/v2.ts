@@ -71,6 +71,11 @@ export const NoteV2 = z.looseObject({
   relNo: z.array(z.string()).optional(),
   /** 产出题面的换说法和答案的关系：下位 = 更朴素 / 更弱 / 更泛的说法；平替 = 意思等价、更简单。背面「朴素说法」标出来。optional */
   promptKind: z.enum(['下位', '平替']).nullable().optional(),
+  /** 替代说法：相对这张卡的谜底，学习者应当掌握的其他说法。下位 = 更朴素、更泛、更弱（想不起谜底时的退路，B1 以内）；
+   *  平替 = 同义同语域；上位 = 更精确、更正式或更强（写作升级用）。背面「替代说法」区和静态来源（RL-fr、表达群、题面）合并显示。optional */
+  alts: z.array(z.object({ fr: z.string(), kind: z.enum(['下位', '平替', '上位']) })).optional(),
+  /** 替代说法里点了 ✗ 的说法（小写、去冠词后的形式）：以后不再显示。optional */
+  altNo: z.array(z.string()).optional(),
   /** 义项：这张卡考的是这个词的哪一个意思（raison：理性，≠ 原因）。认读卡背面最先显示。optional：同步文件不变 */
   sense: z.string().nullable().optional(),
   /** 其他语境：这个词在别的搭配里的意思，一条一行「搭配 → 意思」（établissement scolaire → 学校）。只作参考、不考，

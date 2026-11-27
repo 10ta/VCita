@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { isScenePrompt } from '../src/features/CardFace';
-import { plainPair } from '../src/features/BackZones';
+import { promptPlain } from '../src/features/BackZones';
 import { promptErrors } from '../src/schema/validate';
 import { parseNote, type Note } from '../src/schema';
 
@@ -11,7 +11,7 @@ describe('情境题面', () => {
   it('高亮只有 … 的题面是情境题：中文意图直接显示，不当提示、不列题面说法', () => {
     expect(isScenePrompt(n.promptFr)).toBe(true);
     expect(isScenePrompt('Il {{était très en colère}}.')).toBe(false);
-    expect(plainPair(n)).toBeNull();
+    expect(promptPlain(n)).toBeNull();
   });
   it("校验放行", () => { expect(promptErrors(n.promptFr ?? null, n.intentZh ?? null, n.answerFr ?? null, n.lemma)).toEqual([]); });
 });

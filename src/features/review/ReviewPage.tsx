@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { useCards, useDeckSettings, useMemories, useNotes, useTodayLogs } from '../../db/hooks';
-import { addClip, answerCard, bumpUsed, setSuspended, undoAnswer, updateNote, type AnswerResult } from '../../db/actions';
+import { answerCard, bumpUsed, setSuspended, undoAnswer, updateNote, type AnswerResult } from '../../db/actions';
 import { newInfoText } from '../../srs/queue';
 import { upcomingCards } from '../../srs/upcoming';
 import { useDeckQueue } from './useDeckQueue';
@@ -122,11 +122,10 @@ export function ReviewPage({ deckId }: { deckId: string }) {
   const [typed, setTyped] = useState('');
   // 产出卡的提示分两级，默认收起：第一下（H）中文意思——看不懂题面的换说法时用；第二下首字母
   const [hintLevel, setHintLevel] = useState(0);
-  const [promptSaved, setPromptSaved] = useState(false);
   // 听力卡偷看文字：0 没看；1 看了上下文（悬停）；2 连要听的部分也看了（点一下 / H）
   const [peek, setPeek] = useState<0 | 1 | 2>(0);
   const peekTimer = useRef<number | undefined>(undefined);
-  useEffect(() => { setTyped(''); setHintLevel(0); setPromptSaved(false); setPeek(0); }, [currentId]);
+  useEffect(() => { setTyped(''); setHintLevel(0); setPeek(0); }, [currentId]);
 
   // 自动发音只读学习语言（法语）：题面是法语就出题时读；题面是中文 / 英文 / 挖空，就翻面后读法语答案
   const frontIsSource = !!split && !!s && split.question.lang === s.sourceLang && !!split.question.speakText;
@@ -424,27 +423,15 @@ export function ReviewPage({ deckId }: { deckId: string }) {
                     </div>
                   )}
                   <MineBox note={note} />
-                  {split.promptPhrase && split.promptFr && (
-                    <div className="prompt-phrase small">
-                      <span className="muted" title="题面的说法和答案的关系：下位 = 更朴素、更弱、更泛；平替 = 意思等价、更简单">题面说法{note.promptKind && split.promptFr === note.promptFr ? ` · ${note.promptKind}` : ''} </span><b>{split.promptPhrase}</b>
-                      <button type="button" className={`pill${promptSaved ? ' is-on' : ''}`} disabled={promptSaved}
-                        title="题面这个说法也值得学：连同题面句子放进摘句篮，之后做成它自己的卡"
-                        onClick={() => void addClip({ kind: 'expr', text: split.promptPhrase!, context: split.promptFr!, source: `产出卡题面（${note.lemma}）` })
-                          .then((r) => { setPromptSaved(true); toast(r.existed ? '摘句篮里已经有这一条了' : '已放进摘句篮（添加 → 摘句篮）'); })}>
-                        {promptSaved ? '已放进摘句篮 ✓' : '也学这个'}
-                      </button>
-                      {card.type === 'production' && <StuckButton note={note} />}
-                    </div>
-                  )}
                   {(card.type === 'production' || card.type === 'frame' || card.type === 'apply') && (
                     <div className="prompt-phrase small">
-                      {card.type === 'production' && !(split.promptPhrase && split.promptFr) && <StuckButton note={note} />}
+                      {card.type === 'production' && <StuckButton note={note} />}
                       <button type="button" className="pill" title="这个表达在写作或口语里用上了一次" onClick={() => void bumpUsed(note.id).then(() => toast(`已记录，累计用上 ${note.usedCount + 1} 次`))}>
                         用上了 +1（{note.usedCount}）
                       </button>
                     </div>
                   )}
-                  <BackZones note={note} heads={zoneHeadsOf(s)} plain={card.type !== 'production'} famExtra={famExtra} />
+                  <BackZones note={note} heads={zoneHeadsOf(s)} famExtra={famExtra} notes={notes} />
                   {notes && cards && <ClusterStrip note={note} notes={notes} cards={cards} shown={split.question.speakText || split.promptFr || ''} recKey={rec.current.key} />}
                   {notes && <Related note={note} notes={notes} onEdit={() => setEditing(true)} />}
                 </div>
@@ -586,7 +573,7 @@ function StuckButton({ note }: { note: Note }) {
   );
 }
 
-const FIX_REASONS = ['题面推不出', '题面不唯一', '题面看不懂', '题面比答案难', '答案不值得考', '考错了部分', '介词错', '例句看不懂', '关联不对', '少了讲解'];
+const FIX_REASONS = ['补充替代说法', '题面推不出', '题面不唯一', '题面看不懂', '题面比答案难', '答案不值得考', '考错了部分', '介词错', '例句看不懂', '关联不对', '少了讲解'];
 const fixItems = (s: string | null | undefined) => (s ?? '').split('；').map((x) => x.trim()).filter(Boolean);
 /** ⚑ 待修：一键记下这张卡的问题（不评分、不打断复习），词库「待修」里集中处理。打开时列出已经记下的，点 × 删一条，再点原因也能取消 */
 function FixButton({ note, cardType }: { note: Note; cardType: string }) {

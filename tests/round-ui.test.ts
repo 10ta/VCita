@@ -28,7 +28,7 @@ describe('说明', () => {
   it('四组，每组都有小节，条目一条没丢', () => {
     expect(HELP.map((g) => g.title)).toEqual(['复习', '卡片', '排期', '工具']);
     expect(HELP.every((g) => g.sections.length >= 3)).toBe(true);
-    expect(HELP.flatMap((g) => g.sections.flatMap((s) => s.rows)).length).toBe(94);
+    expect(HELP.flatMap((g) => g.sections.flatMap((s) => s.rows)).length).toBe(95);
   });
   it('搜索跨组，按「组 · 小节」列出', () => {
     const hits = searchHelp('表达群');

@@ -581,10 +581,10 @@ textarea.weights { width: 100%; font-family: var(--mono); font-size: 12px; }
 .nf-cand.is-mine:not(.is-on) { color: var(--text); }
 .cluster-tips { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin: 0 0 10px; }
 
-/* ---------- 卡片背面固定分区：用法 | 其他语境 / 词源 | 词族 / 注意（按需）/ 出处 ---------- */
+/* ---------- 卡片背面固定分区：用法 | 其他语境 / 词源 | 词族 / 注意（按需）/ 替代说法 | 出处 · 补充 ---------- */
 .sense-tag { font-size: 12.5px; color: #c9c7c4; border: 1px solid #3a3a42; border-radius: 6px; padding: 1px 8px; }
 .zones { align-self: stretch; display: flex; flex-direction: column; gap: 10px; margin-top: 8px; text-align: left;
-  --z-use: #5fb3a8; --z-ctx: #a394e0; --z-ety: #8fbf6a; --z-fam: #6f9fd8; --z-warn: #e0a868; --z-src: var(--dim); }
+  --z-use: #5fb3a8; --z-ctx: #a394e0; --z-ety: #8fbf6a; --z-fam: #6f9fd8; --z-warn: #e0a868; --z-src: var(--dim); --z-alt: #d98fb0; }
 .z-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
 .zone { box-sizing: border-box; background: #151518; border: 1px solid var(--border); border-radius: 12px; padding: 10px 14px 12px; display: flex; flex-direction: column; gap: 8px; font-size: 14.5px; line-height: 1.45; min-width: 0; }
 .zone.is-empty { background: #121214; border-style: dashed; padding-bottom: 10px; }
@@ -604,9 +604,19 @@ textarea.weights { width: 100%; font-family: var(--mono); font-size: 12px; }
 .z-warn .z-head { color: var(--z-warn); flex: none; }
 .z-warn-list { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
 .z-neq { color: var(--z-warn); font-weight: 400; padding: 0 2px; }
-.z-src { padding: 2px 14px; display: flex; gap: 14px; align-items: baseline; font-size: 13px; line-height: 1.5; color: #a9a7a4; }
-.z-src .z-head { flex: none; width: 64px; }
-.z-src-list { display: flex; flex-direction: column; gap: 2px; min-width: 0; overflow-wrap: anywhere; }
+.z-src-list { display: flex; flex-direction: column; gap: 3px; min-width: 0; overflow-wrap: anywhere; font-size: 13px; line-height: 1.5; color: #a9a7a4; }
+/* 替代说法：类型小标签 + 法语 + 级别 + 在库；✗ 不再显示、＋ 放进摘句篮（悬停才显眼） */
+.z-alt-line { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px; }
+.alt-kind { flex: none; font-size: 11px; padding: 0 5px; border-radius: 4px; border: 1px solid #3a3a42; color: #a9a7a4; }
+.alt-kind.k-下位 { color: #7dc9a0; border-color: #2f5a44; } .alt-kind.k-平替 { color: #8fb4e0; border-color: #2f4560; }
+.alt-kind.k-近义 { color: #a9a7a4; } .alt-kind.k-上位 { color: #e0b070; border-color: #5a4424; }
+.alt-lv { font-family: var(--mono); font-size: 10.5px; color: #6c6c72; }
+.alt-lv.is-hard { color: var(--warn); }
+.alt-in { font-size: 11px; color: var(--z-alt); }
+.alt-btn { padding: 0 4px; font-size: 12px; line-height: 1.4; border-radius: 4px; color: #4a4a50; background: none; border: 0; cursor: pointer; }
+.z-alt-row:hover .alt-btn { color: var(--dim); }
+.alt-btn:hover { color: var(--text); background: rgba(255, 255, 255, .06); }
+.alt-no:hover { color: #f87171; background: rgba(248, 113, 113, .12); }
 .z-src a { color: var(--dim); }
 .z-lbl { color: #6c6c72; margin-right: 8px; font-size: 12px; }
 /* 标题样式（设置 → 界面 → 背面分区标题） */
@@ -614,6 +624,7 @@ textarea.weights { width: 100%; font-family: var(--mono); font-size: 12px; }
 .zh-text .z-head { font-family: var(--mono); font-size: 11px; letter-spacing: .6px; }
 .zh-tint .z-use .z-icon { color: var(--z-use); } .zh-tint .z-ctx .z-icon { color: var(--z-ctx); }
 .zh-tint .z-ety .z-icon { color: var(--z-ety); } .zh-tint .z-fam .z-icon { color: var(--z-fam); }
+.zh-tint .z-alt .z-icon { color: var(--z-alt); }
 .zh-tint .zone.is-empty .z-icon { color: #4a4a50; }
 .grade { position: relative; }
 .grade-tip { position: absolute; bottom: calc(100% + 8px); left: 50%; transform: translateX(-50%); z-index: 50; pointer-events: none; white-space: nowrap;
@@ -623,7 +634,7 @@ textarea.weights { width: 100%; font-family: var(--mono); font-size: 12px; }
 @keyframes tip-in { from { opacity: 0; transform: translate(-50%, 3px); } to { opacity: 1; transform: translate(-50%, 0); } }
 @media (max-width: 560px) {
   .z-grid { grid-template-columns: minmax(0, 1fr); }
-  .z-warn, .z-src { flex-direction: column; gap: 4px; }
+  .z-warn { flex-direction: column; gap: 4px; }
 }
 
 .merge-list { display: flex; flex-direction: column; gap: 6px; }

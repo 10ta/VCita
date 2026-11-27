@@ -58,6 +58,8 @@ export function planMerge(keep: Note, others: Note[], cards: Card[]): MergePlan 
     contexts: contexts.length ? contexts : undefined,
     topics: topics.length ? topics : undefined,
     relNo: uniq(all.flatMap((n) => n.relNo ?? []), (x) => x).filter((x) => !all.some((n) => n.id === x)).length ? uniq(all.flatMap((n) => n.relNo ?? []), (x) => x).filter((x) => !all.some((n) => n.id === x)) : undefined,
+    alts: uniq(all.flatMap((n) => n.alts ?? []), (a) => a.fr.toLowerCase()).length ? uniq(all.flatMap((n) => n.alts ?? []), (a) => a.fr.toLowerCase()) : undefined,
+    altNo: uniq(all.flatMap((n) => n.altNo ?? []), (x) => x).length ? uniq(all.flatMap((n) => n.altNo ?? []), (x) => x) : undefined,
     mine: joinUniq(all.map((n) => n.mine), '\n') || undefined,
     fixme: joinUniq(all.map((n) => n.fixme), '；') || undefined,
     cueFamily: joinUniq(all.map((n) => n.cueFamily), ' · '),

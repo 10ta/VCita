@@ -84,7 +84,7 @@ export async function ensureDeck(): Promise<string> {
 
 // ---------- 笔记与卡片 ----------
 
-type NoteContent = Pick<Note, 'lemma' | 'sentence' | 'meaningZh' | 'meaningEn' | 'cueFamily' | 'promptFr' | 'intentZh' | 'hint' | 'clozeHint' | 'clozeSentence' | 'etymology' | 'answerFr' | 'extra' | 'source' | 'origin' | 'layer' | 'cardTypes' | 'tags' | 'altSentences' | 'altIntents' | 'contrastGroup' | 'contrastNote' | 'frame' | 'usage' | 'cluster' | 'sense' | 'contexts' | 'paraphrase' | 'topics' | 'mine' | 'fixme' | 'promptKind'>;
+type NoteContent = Pick<Note, 'lemma' | 'sentence' | 'meaningZh' | 'meaningEn' | 'cueFamily' | 'promptFr' | 'intentZh' | 'hint' | 'clozeHint' | 'clozeSentence' | 'etymology' | 'answerFr' | 'extra' | 'source' | 'origin' | 'layer' | 'cardTypes' | 'tags' | 'altSentences' | 'altIntents' | 'contrastGroup' | 'contrastNote' | 'frame' | 'usage' | 'cluster' | 'sense' | 'contexts' | 'paraphrase' | 'topics' | 'mine' | 'fixme' | 'promptKind' | 'alts'>;
 export type NewNoteInput = { deckId: string; createdAtMs?: number } & Partial<NoteContent>;
 
 export function blankCard(note: Pick<Note, 'id' | 'deckId' | 'createdAt'>, type: Card['type'], s: Settings, stamp: string): Card {
@@ -124,6 +124,7 @@ export async function addNotes(inputs: NewNoteInput[]): Promise<Array<{ noteId: 
       ...(input.topics?.length ? { topics: [...new Set(input.topics.map((t) => t.trim()).filter(Boolean))] } : {}),
       ...(input.mine?.trim() ? { mine: input.mine.trim() } : {}), ...(input.fixme?.trim() ? { fixme: input.fixme.trim() } : {}),
       ...(input.promptKind ? { promptKind: input.promptKind } : {}),
+      ...(input.alts?.length ? { alts: input.alts } : {}),
     };
     notes.push(note);
     for (const t of note.cardTypes) cards.push(blankCard(note, t, s, stamp));

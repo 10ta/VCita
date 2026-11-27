@@ -363,6 +363,31 @@ Wiktionnaire 里的近音词（paronymes）、同音词（homophones）、同义
   也可以先下载再传路径：`node scripts/build-fr-wikt.mjs fr-extract.jsonl.gz`。跑完会打印两个文件的大小、词频前 5000 / 20000 的原形里各列非空的比例，以及几组验收词对（éminent / imminent、ver / verre / vert / vers、seau / sceau / sot / saut…）找没找到
 - 来源和许可：[kaikki.org](https://kaikki.org/dictionary/rawdata.html) 的法语维基词典提取（`fr-extract.jsonl.gz`，由 [wiktextract](https://github.com/tatuylonen/wiktextract) 生成，大约每周更新）。内容来自 Wiktionnaire（fr.wiktionary.org），CC BY-SA 4.0；`fr-links.txt`、`fr-etym.txt` 是它的衍生数据，沿用这个许可
 
+### 替代说法
+
+背面「替代说法 | 出处 · 补充」这一行的左格：相对谜底的下位（更朴素、更泛、更弱，B1 以内）/ 平替 / 近义 / 上位（更精确、更正式或更强），每类最多三条，标 CEFR 级别和「在库」。全部静态合并，不调用任何服务：
+
+| 来源 | 类型 |
+|---|---|
+| 笔记的 `alts`（做卡时写） | 写什么是什么 |
+| 产出题面高亮里的换说法 | `promptKind`（没写按平替） |
+| `extra` 里的「近义 / 同义 / 也说 / 朴素版」 | 近义 / 平替 / 平替 / 下位 |
+| 同表达群的其他笔记 | 平替 |
+| RL-fr 按义项分开的同义关系 | Syn⊂（意思更宽）= 下位，Syn = 平替，Syn∩ = 近义，Syn⊃（更窄、更强）= 上位 |
+
+- RL-fr 的词条有几个义项时，用卡片的例句（含备用句、补充、用法）和每个义项例句里的关键词比对，最高分明显领先才用；判不出来不列。只按整个词条查（去冠词、qqn / qqch、代词 se），不拿短语里的单个词去查
+- 级别：说法里每个实词都查得到时取最难的那个（查原形，变形先还原），有查不到的不标；下位超过 B1 标黄
+- ✗ 记进笔记的 `altNo`，以后不再显示；＋ 放进摘句篮
+- 数据文件在 `src/lib/alts/`，第一次显示替代说法时才下载：
+  - `rl-alts.txt`：`义项 \t 编号 \t 例句关键词 \t 下位 \t 平替 \t 近义 \t 上位`，同一列用 `|` 分隔（约 1.8 MB，gzip 后约 0.8 MB）
+  - `flelex.txt`：`原形 \t 级别`，级别 = FLELex 教材语料里每百万词 ≥ 3 次的最低级别（约 110 KB）
+- 重新生成（原始文件不进仓库）：下载 [RL-fr](https://hdl.handle.net/11403/lexical-system-fr) 解压，和 [FLELex-TT](https://cental.uclouvain.be/cefrlex/flelex/download/) 的 CSV，然后
+
+  ```
+  node scripts/build-alts-data.mjs <ls-fr-V3.2 目录> <FleLex_TT.csv>
+  ```
+- 来源和许可：Réseau Lexical du Français（ATILF，CNRS / Université de Lorraine），CC BY 4.0；FLELex（CENTAL，UCLouvain / Aix-Marseille Université），CC BY-NC-SA。两个文件是它们的衍生数据，沿用各自的许可
+
 ## 分拣（迁移后整理旧卡）
 
 词库顶部的筛选，配合"全选"和批量操作：

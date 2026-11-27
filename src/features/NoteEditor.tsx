@@ -143,7 +143,7 @@ function FrameEditor({ note, onClose }: { note: Note; onClose: () => void }) {
     cueFamily: note.cueFamily ?? '', source: note.source ?? '', extra: note.extra ?? '',
     promptFr: note.promptFr ?? '', intentZh: note.intentZh ?? '', hint: note.hint ?? '', clozeHint: note.clozeHint ?? '', clozeSentence: note.clozeSentence ?? '', etymology: note.etymology ?? '', answerFr: note.answerFr ?? '',
     layer: note.layer, origin: noteOrigin(note), cardTypes: note.cardTypes, tags: note.tags, deckId: note.deckId, day: note.createdAt.slice(0, 10),
-    alts: (note.altSentences ?? []).join('\n'),
+    altSents: (note.altSentences ?? []).join('\n'),
     altIntents: (note.altIntents ?? []).map(altIntentLine).join('\n'),
     contrastNote: note.contrastNote ?? '',
     fTask: note.frame?.task ?? '', fSlot: note.frame?.slot ?? '', fLens: note.frame?.lens ?? '', fRegister: note.frame?.register ?? '',
@@ -152,7 +152,7 @@ function FrameEditor({ note, onClose }: { note: Note; onClose: () => void }) {
   const TYPES = isFrame ? FRAME_TYPES : CARD_TYPES;
   const [confirmDel, setConfirmDel] = useState(false);
   const set = <K extends keyof typeof f>(k: K, v: (typeof f)[K]) => setF((x) => ({ ...x, [k]: v }));
-  const altSentences = f.alts.split('\n').map((x) => x.trim()).filter(Boolean);
+  const altSentences = f.altSents.split('\n').map((x) => x.trim()).filter(Boolean);
   const altIntents = f.altIntents.split('\n').map((x) => x.trim()).filter(Boolean).map(parseAltIntent);
   const errors = [
     ...noteErrors({ ...f, altSentences, frame: isFrame ? { task: f.fTask, slot: null, lens: null, register: null } : null }),
