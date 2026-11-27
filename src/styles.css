@@ -318,7 +318,6 @@ code { font-family: var(--mono); background: var(--surface2); padding: 0 4px; bo
 }
 .fw:hover { background: var(--surface2); border-radius: 3px; }
 b.g-m, .gp-g.g-m { color: var(--g-m); } b.g-f, .gp-g.g-f { color: var(--g-f); }
-.lp-gender { line-height: 1.55; text-align: left; font-family: var(--sans); font-weight: 400; }
 .gender-pop { position: fixed; z-index: 65; pointer-events: none; user-select: none; width: 320px; max-width: calc(100vw - 16px); padding: 10px 12px; border-radius: 10px; border: 1px solid var(--border);
   background: var(--surface2); box-shadow: 0 8px 30px #000a; font-size: 13px; line-height: 1.55; display: grid; gap: 4px; text-align: left; font-family: var(--sans); font-weight: 400; }
 .gender-pop.is-above { transform: translateY(-100%); }
@@ -699,8 +698,17 @@ textarea.weights { width: 100%; font-family: var(--mono); font-size: 12px; }
 .type-in-tip { font-size: 12px; color: var(--dim); }
 
 /* 悬停目标表达时：阴阳性并进查词气泡顶部，同一张卡 */
-.lp-gender-slot:empty { display: none; }
-.lp-gender { padding: 10px 14px; border-bottom: 1px solid var(--border); background: rgba(255, 255, 255, .02); font-size: 13px; display: flex; flex-direction: column; gap: 4px; }
+/* 划词气泡表头：词 ← 原形 [阴阳性]；值得看时下面多一行阴阳性说明 */
+.lk-base { font-size: 13px; color: var(--dim); white-space: nowrap; }
+.lk-base b { color: var(--text); font-weight: 500; }
+.lk-gchip { font-size: 12px; padding: 0 6px; border-radius: 5px; border: 1px solid #3a3a42; color: var(--dim); white-space: nowrap; }
+.lk-gchip.g-m { color: var(--g-m); border-color: color-mix(in srgb, var(--g-m) 40%, transparent); }
+.lk-gchip.g-f { color: var(--g-f); border-color: color-mix(in srgb, var(--g-f) 40%, transparent); }
+.lk-gnote { flex: none; display: flex; flex-direction: column; gap: 2px; padding: 6px 12px; border-bottom: 1px solid var(--border); background: rgba(255, 255, 255, .02); line-height: 1.5; }
+.lk-gnote .is-ex { color: var(--warn); }
+/* 还在查的部分：固定高度的灰条，查到后原地换成内容，不把下面的内容顶来顶去 */
+.lk-skel { height: 12px; margin: 6px 0; border-radius: 4px; background: rgba(255, 255, 255, .06); animation: pulse 1s infinite; }
+.lk-skel.is-short { width: 60%; }
 .rel-suspects .rel-item { display: inline-flex; align-items: baseline; gap: 4px; }
 .rel-yes, .rel-no { padding: 0 4px; font-size: 12px; line-height: 1.4; border-radius: 4px; color: var(--dim); }
 .rel-yes:hover { color: #4ade80; background: rgba(74, 222, 128, .12); }

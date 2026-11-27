@@ -203,7 +203,8 @@ export function genderInfo(dict: FrDict, word: string, prev?: string | null): Ge
     ? [...new Set(dict.formsOf(lemma).filter((x) => x.pos === e.pos && x.g === want && (x.n === e.n || !x.n || !e.n)).map((x) => x.form))]
     : [];
   // 原形是阳性形式，查阴性词的"另一个性"时原形本身也算（actrice → acteur）
-  if (want === 'm' && lemma !== e.form && !other.includes(lemma) && dict.nounOf(lemma)?.pos === e.pos) other.unshift(lemma);
+  // 原形要真是阳性才算（tiges 的原形 tige 也是阴性，不是「另一个性」）
+  if (want === 'm' && lemma !== e.form && !other.includes(lemma) && dict.nounOf(lemma)?.pos === e.pos && dict.nounOf(lemma)?.g === 'm') other.unshift(lemma);
   const homo = HOMOGRAPHS.find((h) => h.word === norm(e.form) || h.word === norm(lemma)) ?? null;
   let rule: RuleView | null = null;
   let fallback: GenderInfo['fallback'] = null;

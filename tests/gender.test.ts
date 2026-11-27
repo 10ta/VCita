@@ -82,3 +82,12 @@ describe('也是动词变位的名词（approche、marche、demande）', () => {
     expect(d.nounOf('maison')).toBe(d.get('maison'));
   });
 });
+
+describe('另一个性的形式', () => {
+  it('复数名词的原形是同一个性，不算「另一个性」（tiges ← tige 都是阴性）', () => {
+    expect(genderInfo(dict, 'tiges')?.other).toEqual([]);
+  });
+  it('指人名词照旧给出另一个性（actrice ↔ acteur）', () => {
+    expect(genderInfo(dict, 'actrice')?.other).toContain('acteur');
+  });
+});

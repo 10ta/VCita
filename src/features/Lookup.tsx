@@ -9,7 +9,7 @@ import { useDeckSettings, useKnown, useNotes } from '../db/hooks';
 import { usePrefs } from '../ui/prefs';
 import { isFrench } from '../ui/langs';
 import { addClip, recordEncounter, setKnown } from '../db/actions';
-import { canonicalLemma, lemmaCandidates, lemmaOf, loadVerbs, useFrVerbs, type FrDict, type FrVerbs } from '../lib/gender/dict';
+import { canonicalLemma, genderInfo, lemmaCandidates, lemmaOf, loadVerbs, useFrVerbs, type FrDict, type FrVerbs, type GenderInfo } from '../lib/gender/dict';
 import { MASKED_SELECTOR } from './FrText';
 import { isFunctionWord, useReadingIndex } from '../lib/reading';
 import type { Encounter } from '../schema';
@@ -73,32 +73,35 @@ function allowed(node: Node | null): boolean {
   return !el.closest('[data-no-lookup], input, textarea, select, [contenteditable="true"], .lookup-pop');
 }
 
-interface Found { dict: DictResult | null; zh: string[] | null; zhWhole: string | null; sentenceZh: string | null; textZh: string | null; error: boolean }
+interface DictPart { dict: DictResult | null; zh: string[] | null; zhWhole: string | null; error: boolean }
+interface Parts { wk: Promise<DictPart>; sentenceZh: Promise<string | null>; textZh: Promise<string | null> }
 interface Query { mode: Mode; bare: string; lemma: string | null; text: string; context: string; fr: boolean; sl: string; tl: string }
 
-/** 一次查询要的全部结果（Wiktionnaire 释义、释义机翻、整句机翻）。结果在本机缓存 4 周；进行中的同一查询共用一个请求 */
-const inflight = new Map<string, Promise<Found>>();
+/** 一次查询的三部分（Wiktionnaire 释义 + 释义机翻、整句机翻、所选文字机翻），各自独立：哪部分先回来先显示。
+ *  结果在本机缓存 4 周；进行中的同一查询共用请求 */
+const inflight = new Map<string, Parts>();
 /** 空白统一：出卡时预查用的句子和悬停时从页面上取的句子，空格 / 不换行空格可能不同 */
 const squash = (s: string) => s.replace(/[\s\u00a0\u202f]+/g, ' ').trim();
-function fetchFound(q0: Query): Promise<Found> {
+function fetchParts(q0: Query): Parts {
   const q = { ...q0, text: squash(q0.text), context: squash(q0.context), bare: squash(q0.bare) };
   const k = JSON.stringify(q);
   const hit = inflight.get(k);
   if (hit) return hit;
-  const p = (async (): Promise<Found> => {
+  const wk = (async (): Promise<DictPart> => {
+    if (q.mode === 'sentence' || !q.fr) return { dict: null, zh: null, zhWhole: null, error: false };
     let error = false;
-    const wk = q.mode === 'sentence' || !q.fr ? Promise.resolve(null) : lookupWiktionnaire(q.lemma && q.lemma !== q.bare ? [q.lemma, q.bare] : [q.bare]).catch(() => { error = true; return null; });
-    const sentenceZh = q.mode !== 'sentence' && q.context && q.context !== q.text ? translateCached(q.context, q.sl, q.tl) : Promise.resolve(null);
-    const textZh = q.mode === 'word' && q.fr ? Promise.resolve(null) : translateCached(q.text, q.sl, q.tl);
-    const d = await wk;
+    const d = await lookupWiktionnaire(q.lemma && q.lemma !== q.bare ? [q.lemma, q.bare] : [q.bare]).catch(() => { error = true; return null; });
     const defs = (d?.entries ?? []).slice(0, 2).flatMap((e) => e.senses.slice(0, 4).map((x) => x.def));
-    const [zh, sz, tz] = await Promise.all([translateSenses(defs, q.sl, q.tl), sentenceZh, textZh]);
-    return { dict: d, zh: zh.lines, zhWhole: zh.lines ? null : zh.whole, sentenceZh: sz, textZh: tz, error };
+    const zh = await translateSenses(defs, q.sl, q.tl);
+    return { dict: d, zh: zh.lines, zhWhole: zh.lines ? null : zh.whole, error };
   })();
-  inflight.set(k, p);
+  const sentenceZh = q.mode !== 'sentence' && q.context && q.context !== q.text ? translateCached(q.context, q.sl, q.tl) : Promise.resolve(null);
+  const textZh = q.mode === 'word' && q.fr ? Promise.resolve(null) : translateCached(q.text, q.sl, q.tl);
+  const parts: Parts = { wk, sentenceZh, textZh };
+  inflight.set(k, parts);
   // 网络失败的不留着，下次重查；成功的已进本机缓存，几分钟后从内存里清掉
-  p.then(() => window.setTimeout(() => inflight.delete(k), 5 * 60_000), () => inflight.delete(k));
-  return p;
+  Promise.all([wk, sentenceZh, textZh]).then(() => window.setTimeout(() => inflight.delete(k), 5 * 60_000), () => inflight.delete(k));
+  return parts;
 }
 function queryOf(text: string, context: string, dict: FrDict | null, verbs: FrVerbs | null, fr: boolean, sl: string, tl: string): Query {
   const mode = modeOf(text);
@@ -113,7 +116,7 @@ export function prefetchLookup(text: string, context: string, dict: FrDict | nul
   if (!t || !hasLetter(t)) return;
   const fr = sl.toLowerCase().startsWith('fr');
   // 单词要等动词表才知道原形（和打开气泡时的查询一致，才能命中同一份结果）
-  const go = (verbs: FrVerbs | null) => void fetchFound(queryOf(t, context.trim() || t, dict, verbs, fr, sl, tl)).catch(() => {});
+  const go = (verbs: FrVerbs | null) => { const p = fetchParts(queryOf(t, context.trim() || t, dict, verbs, fr, sl, tl)); for (const x of [p.wk, p.sentenceZh, p.textZh]) x.catch(() => {}); };
   if (modeOf(t) === 'word' && fr) loadVerbs().then(go, () => go(null));
   else go(null);
 }
@@ -170,7 +173,7 @@ export function LookupBubble({ dict }: { dict: FrDict | null }) {
       };
       cur.current = next;
       setSel(next);
-      // 悬停打开的（复习卡目标表达）：阴阳性迷你条可以同时开着，挪到气泡另一边；选中文字打开的：迷你条关掉
+      // 气泡自己的表头显示阴阳性：单独的阴阳性迷你条关掉
       window.dispatchEvent(new CustomEvent('vcita:lookup-open', { detail: { hover: !!extra.hover } }));
     };
 
@@ -259,8 +262,6 @@ export function LookupBubble({ dict }: { dict: FrDict | null }) {
   const place = placeBubble(sel.anchor, window.innerWidth, window.innerHeight);
   return (
     <div ref={box} className="lookup-pop" data-hover={sel.hover ? '' : undefined} style={place} role="dialog" aria-label={`查词：${sel.text}`}>
-      {/* 悬停打开时，阴阳性迷你条并进这里（FrText 的 GenderPopover 用 portal 渲染进来），看起来是同一张卡 */}
-      {sel.hover && <div className="lp-gender-slot" data-gender-slot="" />}
       <LookupBody key={`${sel.text}|${sel.context}`} sel={sel} dict={dict} onClose={() => { last.current = ''; cur.current = null; setSel(null); }} />
     </div>
   );
@@ -282,7 +283,10 @@ function LookupBody({ sel, dict, onClose }: { sel: Sel; dict: FrDict | null; onC
   const ready = mode !== 'word' || !fr || (!!dict && !!verbs);
   // 记遇见、标认识的键：和阅读页标色用同一个（候选原形里最常用的）
   const key = (mode === 'word' ? (dict && lemma ? canonicalLemma(dict, verbs, bare) : bare) : sel.text).toLowerCase();
-  const [found, setFound] = useState<Found | null>(null);
+  // 三部分各自到达：undefined = 还在查，null = 没有
+  const [wkp, setWkp] = useState<DictPart | undefined>(undefined);
+  const [sentenceZh, setSentenceZh] = useState<string | null | undefined>(undefined);
+  const [textZh, setTextZh] = useState<string | null | undefined>(undefined);
   const [clipped, setClipped] = useState(false);
   const [seen, setSeen] = useState<Encounter[] | null>(null);
   const [etymOpen, setEtymOpen] = useState(false);
@@ -298,8 +302,10 @@ function LookupBody({ sel, dict, onClose }: { sel: Sel; dict: FrDict | null; onC
   useEffect(() => {
     if (!s || !ready) return;
     let alive = true;
-    void fetchFound({ mode, bare, lemma, text: sel.text, context: sel.context, fr, sl: s.sourceLang, tl: s.targetLang1 })
-      .then((f) => alive && setFound(f), () => alive && setFound({ dict: null, zh: null, zhWhole: null, sentenceZh: null, textZh: null, error: true }));
+    const p = fetchParts({ mode, bare, lemma, text: sel.text, context: sel.context, fr, sl: s.sourceLang, tl: s.targetLang1 });
+    p.wk.then((x) => alive && setWkp(x), () => alive && setWkp({ dict: null, zh: null, zhWhole: null, error: true }));
+    p.sentenceZh.then((x) => alive && setSentenceZh(x), () => alive && setSentenceZh(null));
+    p.textZh.then((x) => alive && setTextZh(x), () => alive && setTextZh(null));
     return () => { alive = false; };
   }, [s, ready, mode, bare, lemma, sel.context, sel.text, fr]);
 
@@ -319,67 +325,74 @@ function LookupBody({ sel, dict, onClose }: { sel: Sel; dict: FrDict | null; onC
     const isSentence = mode === 'sentence';
     const i = sel.context.toLowerCase().indexOf(sel.text.toLowerCase());
     const context = isSentence || i < 0 ? sel.context : `${sel.context.slice(0, i)}{{${sel.context.slice(i, i + sel.text.length)}}}${sel.context.slice(i + sel.text.length)}`;
-    const first = found?.dict?.entries[0]?.senses[0];
-    const gloss = first ? [first.def, found?.zh?.[0]].filter(Boolean).join(' · ') : (found?.textZh ?? '');
+    const first = wkp?.dict?.entries[0]?.senses[0];
+    const gloss = first ? [first.def, wkp?.zh?.[0]].filter(Boolean).join(' · ') : (textZh ?? '');
     const r = await addClip({
       kind: isSentence ? 'sentence' : 'expr', text: isSentence ? sel.text : (lemma && mode === 'word' ? lemma : sel.text),
-      context, translation: (isSentence ? found?.textZh : found?.sentenceZh) ?? '', gloss, source: sel.source, textId: sel.textId,
+      context, translation: (isSentence ? textZh : sentenceZh) ?? '', gloss, source: sel.source, textId: sel.textId,
     });
     setClipped(true);
     toast(r.existed ? '摘句篮里已经有这一条了' : '已放进摘句篮（添加 → 摘句篮）');
   };
 
-  const entries = found?.dict?.entries.slice(0, 2) ?? [];
+  const entries = wkp?.dict?.entries.slice(0, 2) ?? [];
+  // 阴阳性：本地词典马上就有，放在表头；释义里的 féminin / masculin 不再重复
+  const g = mode === 'word' && fr && dict ? genderInfo(dict, bare, prevWord(sel.context, sel.text)) : null;
+  const base = mode !== 'sentence' ? (wkp?.dict?.title ?? lemma ?? g?.lemma ?? null) : null;
+  const waitDefs = mode !== 'sentence' && fr && wkp === undefined;
   let line = 0;
   return (
     <>
       <div className="lk-head">
         <b className="lk-word">{mode === 'sentence' ? '句子' : bare}</b>
-        {mode !== 'sentence' && (() => {
-          // 词条标题（原形）以 Wiktionnaire 实际查到的为准，没查到时用本地词典的原形
-          const base = found?.dict?.title ?? lemma;
-          return base && base.toLowerCase() !== bare.toLowerCase() ? <span className="muted small">原形 <b>{base}</b></span> : null;
-        })()}
+        {base && base.toLowerCase() !== bare.toLowerCase() && <span className="lk-base" title="原形">← <b>{base}</b></span>}
+        {g && <GenderChip info={g} />}
         <span className="grow" />
         <button type="button" className="icon" title="朗读" onClick={() => void speak(sel.text, s.sourceLang)}>🔊</button>
         <button type="button" className="icon lk-close" title="关闭（Esc）" aria-label="关闭" onClick={onClose}>✕</button>
       </div>
+      {g && <GenderNote info={g} />}
       <div className="lk-scroll">
-      {!found ? <p className="muted small pulse">查询中…</p> : (
         <div className="lk-body">
-          {found.textZh && <p className="lk-zh">{found.textZh}</p>}
-          {found.dict?.formNote && <p className="muted small lk-form">{bare}：{found.dict.formNote}</p>}
-          {entries.map((e, ei) => (
-            <div key={ei} className="lk-entry">
-              <div className="lk-pos">{e.pos}{e.gender && <span className={`lk-g g-${e.gender === 'féminin' ? 'f' : e.gender === 'masculin' ? 'm' : 'b'}`}> · {e.gender}</span>}</div>
-              <ol>
-                {e.senses.slice(0, 4).map((x, i) => {
-                  const zh = found.zh?.[line++];
-                  return (
-                    <li key={i}>
-                      <span className="lk-def">{x.def}</span>
-                      {zh && <span className="lk-def-zh">{zh}</span>}
-                      {i === 0 && ei === 0 && x.example && <span className="lk-ex">{x.example}</span>}
-                    </li>
-                  );
-                })}
-              </ol>
-            </div>
-          ))}
-          {found.zhWhole && <p className="lk-zh small">{found.zhWhole}</p>}
-          {mode !== 'sentence' && fr && !entries.length && (
-            <p className="muted small">{found.error ? '连不上 Wiktionnaire（网络问题），可以用下面的外部词典' : 'Wiktionnaire 里没有这个词条'}</p>
+          {textZh && <p className="lk-zh">{textZh}</p>}
+          {mode !== 'word' && textZh === undefined && <p className="lk-skel" aria-label="翻译中" />}
+          {waitDefs ? (
+            <div className="lk-entry" aria-label="查询中"><p className="lk-skel" /><p className="lk-skel is-short" /></div>
+          ) : wkp && (
+            <>
+              {wkp.dict?.formNote && <p className="muted small lk-form">{bare}：{wkp.dict.formNote}</p>}
+              {entries.map((e, ei) => (
+                <div key={ei} className="lk-entry">
+                  <div className="lk-pos">{e.pos}{e.gender && !g && <span className={`lk-g g-${e.gender === 'féminin' ? 'f' : e.gender === 'masculin' ? 'm' : 'b'}`}> · {e.gender}</span>}</div>
+                  <ol>
+                    {e.senses.slice(0, 4).map((x, i) => {
+                      const zh = wkp.zh?.[line++];
+                      return (
+                        <li key={i}>
+                          <span className="lk-def">{x.def}</span>
+                          {zh && <span className="lk-def-zh">{zh}</span>}
+                          {i === 0 && ei === 0 && x.example && <span className="lk-ex">{x.example}</span>}
+                        </li>
+                      );
+                    })}
+                  </ol>
+                </div>
+              ))}
+              {wkp.zhWhole && <p className="lk-zh small">{wkp.zhWhole}</p>}
+              {mode !== 'sentence' && fr && !entries.length && (
+                <p className="muted small">{wkp.error ? '连不上 Wiktionnaire（网络问题），可以用下面的外部词典' : 'Wiktionnaire 里没有这个词条'}</p>
+              )}
+              {wkp.dict?.etymology && (
+                <p className={`lk-etym small${etymOpen ? ' is-open' : ''}`} title={etymOpen ? undefined : '点击展开'} onClick={() => setEtymOpen(true)}>
+                  <span className="muted">词源 </span>{wkp.dict.etymology}
+                </p>
+              )}
+            </>
           )}
-          {found.dict?.etymology && (
-            <p className={`lk-etym small${etymOpen ? ' is-open' : ''}`} title={etymOpen ? undefined : '点击展开'} onClick={() => setEtymOpen(true)}>
-              <span className="muted">词源 </span>{found.dict.etymology}
-            </p>
-          )}
-          {found.sentenceZh && <p className="lk-sent small"><span className="muted">整句 </span>{found.sentenceZh}</p>}
+          {sentenceZh && <p className="lk-sent small"><span className="muted">整句 </span>{sentenceZh}</p>}
           {existing.length > 0 ? <p className="small"><span className="muted">已有卡 </span>{existing.map((n) => n.lemma).join('；')}</p>
             : hasCard && <p className="small muted">已有包含这个词的卡</p>}
         </div>
-      )}
       {seen && seen.length > 1 && (
         <div className={`lk-seen small${!hasCard ? ' is-hint' : ''}`}>
           <b>第 {seen.length} 次遇见</b>{!hasCard && '，还没有卡：建议摘句'}
@@ -401,4 +414,38 @@ function LookupBody({ sel, dict, onClose }: { sel: Sel; dict: FrDict | null; onC
       </div>
     </>
   );
+}
+
+/** 所选词前面的那个词（看冠词定阴阳：la / le、une / un） */
+function prevWord(context: string, text: string): string | null {
+  const i = context.toLowerCase().indexOf(text.toLowerCase());
+  if (i <= 0) return null;
+  const m = /([\p{L}]+)['’]?\s*$/u.exec(context.slice(0, i));
+  return m ? m[1].toLowerCase() : null;
+}
+
+const G_ZH = { m: '阳性', f: '阴性' } as const;
+/** 表头的阴阳性小标签：名词「阴性 · 复数」，形容词「形容词 · 阴性复数」 */
+function GenderChip({ info }: { info: GenderInfo }) {
+  const g = info.ctxGender ?? (info.gender === 'm' || info.gender === 'f' ? info.gender : null);
+  const num = info.number === 'p' ? '复数' : info.number === 's' ? '单数' : '';
+  const label = info.pos === 'A'
+    ? `形容词${g ? ` · ${G_ZH[g]}${num}` : ' · 阴阳同形'}`
+    : g ? `${G_ZH[g]}${num ? ` · ${num}` : ''}` : info.gender === 'b' ? '阴阳同形' : info.gender === 'h' ? '同形异义' : '未标性别';
+  const tip = info.rule && !info.rule.isException ? `规则：-${info.rule.suffix} → ${G_ZH[info.rule.gender]}（${info.rule.pct}%）` : undefined;
+  return <span className={`lk-gchip${g ? ` g-${g}` : ''}`} title={tip}>{label}</span>;
+}
+
+/** 阴阳性只在值得看时多一行：同形异义、指人名词的另一个性、特殊说明、规则的例外 / 不可靠、只能按词尾猜 */
+function GenderNote({ info }: { info: GenderInfo }) {
+  const rows: React.ReactNode[] = [];
+  if (info.homograph) rows.push(<span key="h"><b className="g-m">le</b> {info.homograph.m} · <b className="g-f">la</b> {info.homograph.f}</span>);
+  if (info.other.length) rows.push(<span key="o">{info.gender === 'f' ? '阳性' : '阴性'}：<b className={`g-${info.gender === 'f' ? 'm' : 'f'}`}>{info.other.join(' / ')}</b>{info.pos === 'N' && <span className="muted">（指人，性跟着所指的人）</span>}</span>);
+  if (info.special) rows.push(<span key="s">⚠ {info.special}</span>);
+  const r = info.rule;
+  if (r?.isException) rows.push(<span key="r" className="is-ex">⚠ 例外：-{r.suffix} 结尾通常是{G_ZH[r.gender]}（{r.pct}%）{r.exceptions.length > 0 && <span className="muted">，常见例外：{r.exceptions.slice(0, 4).join('、')}</span>}</span>);
+  else if (r && info.gender === '?') rows.push(<span key="r">按词尾推测：-{r.suffix} → {G_ZH[r.gender]}（{r.pct}%）</span>);
+  else if (r && r.pct < 75) rows.push(<span key="r" className="muted">-{r.suffix} 结尾两性都常见，要单独记</span>);
+  if (!rows.length) return null;
+  return <div className="lk-gnote small">{rows}</div>;
 }

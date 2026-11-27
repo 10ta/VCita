@@ -6,7 +6,6 @@ import { useDeckSettings, useNotes, useSettings } from '../db/hooks';
 import { usePrefs } from '../ui/prefs';
 import { isFrench } from '../ui/langs';
 import type { Settings } from '../schema';
-import { createPortal } from 'react-dom';
 import { LookupBubble } from './Lookup';
 
 interface Ctx { dict: FrDict | null }
@@ -163,10 +162,10 @@ export const isMasked = (el: Element) => !!el.closest(MASKED_SELECTOR);
 
 /** 全页只有一个迷你条：在 [data-fw] 上悬停时显示（手机上点一下）。
  *  迷你条不接收鼠标（pointer-events: none），点在它上面等于点在下面的按钮上；
- *  鼠标离开词、按任意键、点任何地方、滚动、或者词被换掉（翻面、评分换卡）时自动消失 */
+ *  鼠标离开词、按任意键、点任何地方、滚动、或者词被换掉（翻面、评分换卡）时自动消失。
+ *  划词气泡开着时不弹：气泡表头自己显示阴阳性（以前并进气泡，点气泡里的按钮会把它收起、气泡变矮后整个关掉） */
 function GenderPopover({ dict }: { dict: FrDict }) {
-  // slot：悬停打开的查词气泡里留的位置。有它时迷你条并进气泡（同一张卡），随气泡一起出现和消失
-  const [state, setState] = useState<{ info: GenderInfo; x: number; y: number; below: boolean; slot: Element | null } | null>(null);
+  const [state, setState] = useState<{ info: GenderInfo; x: number; y: number; below: boolean } | null>(null);
   const hide = useRef<number | undefined>(undefined);
   const anchor = useRef<HTMLElement | null>(null);
   useEffect(() => {
@@ -176,23 +175,18 @@ function GenderPopover({ dict }: { dict: FrDict }) {
       if (!info) return;
       window.clearTimeout(hide.current);
       anchor.current = el;
-      const slot = document.querySelector('.lookup-pop[data-hover] [data-gender-slot]');
-      if (slot) return setState({ info, x: 0, y: 0, below: true, slot });
       const r = el.getBoundingClientRect();
       const below = r.bottom + 180 < window.innerHeight;
-      setState({ info, x: Math.min(Math.max(8, r.left + r.width / 2 - 160), window.innerWidth - 328), y: below ? r.bottom + 6 : r.top - 6, below, slot: null });
+      setState({ info, x: Math.min(Math.max(8, r.left + r.width / 2 - 160), window.innerWidth - 328), y: below ? r.bottom + 6 : r.top - 6, below });
     };
-    const docked = () => !!document.querySelector('.lookup-pop[data-hover] [data-gender-slot]');
     const fwOf = (e: Event) => (e.target as HTMLElement | null)?.closest?.('[data-fw]') as HTMLElement | null;
     // 触屏点一下之后浏览器会补发 mouseover / mouseout，别让它把刚打开的迷你条关掉
     let touchedAt = 0;
     // 正在选文字（拖选中）或划词气泡开着时不弹，免得两个弹层叠在一起
-    // 悬停打开的气泡（data-hover）不算：目标表达的意思和里面某个名词的阴阳性要能同时看
-    const busy = () => !!document.querySelector('.lookup-pop:not([data-hover])') || !(window.getSelection()?.isCollapsed ?? true);
+    const busy = () => !!document.querySelector('.lookup-pop') || !(window.getSelection()?.isCollapsed ?? true);
     const over = (e: Event) => { const el = fwOf(e); if (el && !busy() && !isMasked(el)) show(el); };
     const out = (e: Event) => {
-      // 并进气泡后：鼠标离开词也留着（显示最后悬停的那个词），气泡关掉时一起消失
-      if (Date.now() - touchedAt < 1000 || !fwOf(e) || docked()) return;
+      if (Date.now() - touchedAt < 1000 || !fwOf(e)) return;
       window.clearTimeout(hide.current);
       hide.current = window.setTimeout(close, 120);
     };
@@ -203,21 +197,12 @@ function GenderPopover({ dict }: { dict: FrDict }) {
       if (el && e.pointerType === 'touch' && !isMasked(el)) show(el);
       else if (!el) close();
     };
-    // 词被换掉（评分换卡、翻面重渲染）时 mouseout 不会触发，定时检查锚点还在不在
-    // 选中文字打开气泡：关掉迷你条。悬停打开：气泡渲染出来后把迷你条并进气泡
-    let replace: number | undefined;
-    const onLookup = (e: Event) => {
-      if (!(e as CustomEvent<{ hover?: boolean }>).detail?.hover) return close();
-      window.clearTimeout(replace);
-      replace = window.setTimeout(() => { if (anchor.current?.isConnected) show(anchor.current); }, 30);
-    };
+    // 划词气泡打开（选中或悬停）：迷你条收起，阴阳性看气泡表头
+    const onLookup = () => close();
     window.addEventListener('vcita:lookup-open', onLookup);
-    // 锚点被换掉、或并进的气泡已经关掉：收起
-    const watch = window.setInterval(() => {
-      if (anchor.current && !anchor.current.isConnected) return close();
-      setState((st) => (st?.slot && !st.slot.isConnected ? null : st));
-    }, 150);
-    const key = (e: KeyboardEvent) => { if (!docked() || e.key === 'Escape') close(); };
+    // 词被换掉（评分换卡、翻面重渲染）时 mouseout 不会触发，定时检查锚点还在不在
+    const watch = window.setInterval(() => { if (anchor.current && !anchor.current.isConnected) close(); }, 150);
+    const key = () => close();
     document.addEventListener('mouseover', over);
     document.addEventListener('mouseout', out);
     document.addEventListener('pointerdown', down, true);
@@ -227,7 +212,6 @@ function GenderPopover({ dict }: { dict: FrDict }) {
     window.addEventListener('hashchange', close);
     return () => {
       window.clearInterval(watch);
-      window.clearTimeout(replace);
       window.removeEventListener('vcita:lookup-open', onLookup);
       window.clearTimeout(hide.current);
       document.removeEventListener('mouseover', over);
@@ -240,7 +224,6 @@ function GenderPopover({ dict }: { dict: FrDict }) {
     };
   }, [dict]);
   if (!state) return null;
-  if (state.slot) return state.slot.isConnected ? createPortal(<div className="lp-gender"><GenderBody info={state.info} /></div>, state.slot) : null;
   return (
     <div className={`gender-pop${state.below ? '' : ' is-above'}`} role="tooltip" aria-hidden="true" style={{ left: state.x, top: state.y }}>
       <GenderBody info={state.info} />
